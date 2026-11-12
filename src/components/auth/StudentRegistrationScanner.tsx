@@ -20,43 +20,37 @@ interface Props {
   isTl?: boolean;
 }
 
-// Exactly 12 seconds total (within 10-15s specification)
+// Seamless realistic verification (~5 seconds total - smooth, authentic institutional check)
 const TOTAL_SCAN_STAGES: ScanStage[] = [
   {
     id: 'integrity',
     label: '1. CHECKING NETWORK CONNECTION & FORM INTEGRITY',
-    durationMs: 2000,
-    detail: 'Encrypted SHA-256 handshake established with AICS Montalban node...',
+    durationMs: 1200,
+    detail: 'Connecting to AICS Montalban Student Information System...',
   },
   {
     id: 'identity',
-    label: '2. SCANNING STUDENT IDENTITY & UPPERCASE SYNTAX',
-    durationMs: 2000,
-    detail: 'Verifying Last Name, First Name, and Middle Initial syntax guidelines...',
+    label: '2. VALIDATING STUDENT PROFILE & CREDENTIALS',
+    durationMs: 1100,
+    detail: 'Verifying complete student profile details and uppercase formatting...',
   },
   {
     id: 'contact',
-    label: '3. VALIDATING OFFICIAL CONTACT & PHILIPPINE PREFIX',
-    durationMs: 2000,
-    detail: 'Checking 09XX-XXX-XXXX numeric format and email authenticity...',
+    label: '3. VERIFYING CONTACT & OFFICIAL EMAIL',
+    durationMs: 1000,
+    detail: 'Checking registered contact details and communication security...',
   },
   {
     id: 'student_no',
-    label: '4. CROSS-REFERENCING INSTITUTIONAL REGISTRY',
-    durationMs: 2000,
-    detail: 'Querying Montalban Campus Student Master Registry for duplicate entries...',
-  },
-  {
-    id: 'id_docs',
-    label: '5. NEURAL OCR & OFFICIAL PHOTO BIOMETRICS',
-    durationMs: 2200,
-    detail: 'Scanning Student ID & PhilSys photo image streams (JPG, PNG, WEBP)...',
+    label: '4. VERIFYING CAMPUS STUDENT NUMBER & PHOTO IDS',
+    durationMs: 1200,
+    detail: 'Confirming institutional records and photo identification uploads...',
   },
   {
     id: 'commit',
-    label: '6. FINALIZING ACCOUNT ENCRYPTION & CLOUD PROVISIONING',
-    durationMs: 1800,
-    detail: 'Provisioning student account and generating credential keys...',
+    label: '5. FINALIZING REGISTRATION & SAVING CREDENTIALS',
+    durationMs: 900,
+    detail: 'Saving profile to database and activating student portal access...',
   },
 ];
 
@@ -70,14 +64,12 @@ export const StudentRegistrationScanner: React.FC<Props> = ({
   isTl = false,
 }) => {
   const [currentStageIdx, setCurrentStageIdx] = useState(0);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [scanStatus, setScanStatus] = useState<'scanning' | 'passed' | 'declined'>('scanning');
   const [logLines, setLogLines] = useState<string[]>([]);
 
   useEffect(() => {
     if (!isOpen) {
       setCurrentStageIdx(0);
-      setElapsedSeconds(0);
       setScanStatus('scanning');
       setLogLines([]);
       return;
@@ -86,22 +78,14 @@ export const StudentRegistrationScanner: React.FC<Props> = ({
     let isMounted = true;
     let pulseInterval: any;
 
-    // 1. Audio Radar Pulse Interval (Soft periodic sonar beep)
+    // 1. Audio Ping Interval
     pulseInterval = setInterval(() => {
       if (scanStatus === 'scanning') {
-        soundFX.playScanningPulse(1 + (elapsedSeconds % 4) * 0.1);
+        soundFX.playScanningPulse(1.1);
       }
     }, 1100);
 
-    // 2. Clock ticker (0 to 12 seconds)
-    const secondTimer = setInterval(() => {
-      setElapsedSeconds((prev) => {
-        if (prev >= 12) return 12;
-        return prev + 1;
-      });
-    }, 1000);
-
-    // 3. Sequential Stage Progression (~12 seconds total)
+    // 2. Sequential Verification Stages
     let cumulative = 0;
     TOTAL_SCAN_STAGES.forEach((stage, idx) => {
       cumulative += stage.durationMs;
@@ -109,7 +93,7 @@ export const StudentRegistrationScanner: React.FC<Props> = ({
         if (!isMounted) return;
 
         // If forced error at any point, stop and decline!
-        if (forcedError && idx === 3) {
+        if (forcedError && idx === 2) {
           setScanStatus('declined');
           soundFX.playDeclinedSound();
           if (onErrorDecline) onErrorDecline(forcedError);
@@ -120,12 +104,12 @@ export const StudentRegistrationScanner: React.FC<Props> = ({
         soundFX.playScanStepSuccess();
         setLogLines((prev) => [
           ...prev.slice(-3),
-          `✓ ${stage.label} [VERIFIED 200 OK]`,
+          `✓ ${stage.label} [VERIFIED]`,
         ]);
       }, cumulative);
     });
 
-    // 4. Final Completion at 12 seconds
+    // 3. Final Completion
     const finalTimeout = setTimeout(() => {
       if (!isMounted) return;
       if (forcedError) {
@@ -139,12 +123,11 @@ export const StudentRegistrationScanner: React.FC<Props> = ({
           if (isMounted) onComplete();
         }, 1100);
       }
-    }, 12000);
+    }, cumulative + 400);
 
     return () => {
       isMounted = false;
       clearInterval(pulseInterval);
-      clearInterval(secondTimer);
       clearTimeout(finalTimeout);
     };
   }, [isOpen, forcedError]);
@@ -152,7 +135,10 @@ export const StudentRegistrationScanner: React.FC<Props> = ({
   if (!isOpen) return null;
 
   const currentStage = TOTAL_SCAN_STAGES[Math.min(currentStageIdx, TOTAL_SCAN_STAGES.length - 1)];
-  const progressPercent = Math.min(100, Math.round((elapsedSeconds / 12) * 100));
+  const progressPercent = Math.min(
+    100,
+    Math.round(((currentStageIdx + 1) / (TOTAL_SCAN_STAGES.length + 1)) * 100)
+  );
 
   return (
     <AnimatePresence>
@@ -169,20 +155,14 @@ export const StudentRegistrationScanner: React.FC<Props> = ({
           transition={{ type: 'spring', damping: 25, stiffness: 320 }}
           className="relative w-full max-w-2xl rounded-3xl overflow-hidden border border-white/20 bg-gradient-to-b from-[#091C44]/95 via-[#061433]/98 to-[#030B1C]/99 shadow-2xl p-6 sm:p-10 text-center space-y-6"
         >
-          {/* Futuristic Corner HUD Markers */}
-          <div className="absolute top-4 left-4 w-4 h-4 border-t-2 border-l-2 border-[#60A5FA]/80 pointer-events-none" />
-          <div className="absolute top-4 right-4 w-4 h-4 border-t-2 border-r-2 border-[#60A5FA]/80 pointer-events-none" />
-          <div className="absolute bottom-4 left-4 w-4 h-4 border-b-2 border-l-2 border-[#60A5FA]/80 pointer-events-none" />
-          <div className="absolute bottom-4 right-4 w-4 h-4 border-b-2 border-r-2 border-[#60A5FA]/80 pointer-events-none" />
-
-          {/* Top Live HUD Header */}
+          {/* Top Institutional Header */}
           <div className="flex items-center justify-between border-b border-white/10 pb-4 text-xs font-mono">
             <div className="flex items-center gap-2 text-cyan-400">
               <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping inline-block" />
-              <span className="font-extrabold tracking-wider uppercase">AICS BIOMETRIC & FORM VALIDATOR</span>
+              <span className="font-extrabold tracking-wider uppercase">AICS STUDENT REGISTRATION VERIFIER</span>
             </div>
             <div className="px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/40 text-[#9BCBFF] font-bold">
-              ⏱ {elapsedSeconds}s / 12s
+              {scanStatus === 'scanning' ? 'VALIDATING...' : scanStatus === 'passed' ? 'VERIFIED' : 'DECLINED'}
             </div>
           </div>
 
@@ -248,7 +228,7 @@ export const StudentRegistrationScanner: React.FC<Props> = ({
               {scanStatus === 'passed' && (
                 <span className="text-emerald-400 flex items-center gap-2">
                   <span>✓</span>
-                  <span>{isTl ? 'LAHAT NG DATOS AY WASTO AT NAAPRUBAHAN!' : 'ALL INFORMATION VERIFIED & APPROVED!'}</span>
+                  <span>{isTl ? 'NAAPRUBAHAN ANG IYONG REHISTRASYON!' : 'REGISTRATION VERIFIED & APPROVED!'}</span>
                 </span>
               )}
               {scanStatus === 'declined' && (
@@ -259,7 +239,7 @@ export const StudentRegistrationScanner: React.FC<Props> = ({
               )}
             </h3>
             <p className="text-xs sm:text-sm font-semibold text-[#9BCBFF] min-h-[20px] uppercase">
-              {currentStage?.detail || 'Contacting institutional registrar node...'}
+              {currentStage?.detail || 'Connecting to institutional registrar...'}
             </p>
           </div>
 
@@ -280,14 +260,14 @@ export const StudentRegistrationScanner: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Terminal Log Console */}
+          {/* Institutional Status Console */}
           <div className="p-3.5 rounded-2xl bg-black/60 border border-white/10 text-left font-mono text-[11px] sm:text-xs text-emerald-400 space-y-1 h-20 overflow-hidden">
             <div className="text-slate-500 font-bold flex items-center justify-between border-b border-white/10 pb-1 uppercase">
-              <span>SYSTEM EVENT LOG</span>
-              <span className="text-cyan-400">NODE: AICS-MONTALBAN-01</span>
+              <span>AICS SYSTEM LOG</span>
+              <span className="text-cyan-400">CAMPUS: MONTALBAN</span>
             </div>
             {logLines.length === 0 ? (
-              <div className="text-slate-400 animate-pulse uppercase">Initializing security verification handshake...</div>
+              <div className="text-slate-400 animate-pulse uppercase">Connecting to campus database...</div>
             ) : (
               logLines.map((log, i) => (
                 <div key={i} className="truncate uppercase">

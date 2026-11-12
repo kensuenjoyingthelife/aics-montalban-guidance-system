@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { postMail } from '../services/mailApi';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLanguage, LocaleSwitchPill } from '../context/LanguageContext';
 import { SkyThemePill } from '../context/ThemeContext';
@@ -273,13 +274,8 @@ export const LoginGate: React.FC<LoginGateProps> = ({
     };
 
     try {
-      const response = await fetch('/api/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: cleanedEmail, code: generatedCode, locale }),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || result?.ok === false) {
+      const result = await postMail('otp', { email: cleanedEmail, code: generatedCode, locale });
+      if (!result.ok) {
         setIsSendingEmail(false);
         soundFX.playError();
         setEmailError(

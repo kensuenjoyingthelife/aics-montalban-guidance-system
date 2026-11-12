@@ -221,8 +221,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       {/* Main Workspace Area */}
       <main className="relative z-20 flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 space-y-6">
         {/* Navigation Tabs */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-3">
-          <div className="inline-flex p-1 rounded-2xl bg-black/30 border border-white/15 gap-1.5">
+        <div className="flex items-center justify-between border-b border-white/10 dark:border-white/10 pb-3">
+          <div className="inline-flex p-1 rounded-2xl register-section-card gap-1.5">
             <button
               type="button"
               onClick={() => {
@@ -232,7 +232,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors ${
                 activeTab === 'submit'
                   ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-md'
-                  : 'text-[#9BCBFF]/80 hover:text-white'
+                  : 'card-subtitle-text hover:opacity-100 opacity-80'
               }`}
             >
               📝 {isTl ? 'Mag-report ng Concern / Bullying' : 'Report Concern / Bullying'}
@@ -247,14 +247,14 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors ${
                 activeTab === 'history'
                   ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-md'
-                  : 'text-[#9BCBFF]/80 hover:text-white'
+                  : 'card-subtitle-text hover:opacity-100 opacity-80'
               }`}
             >
               📁 {isTl ? 'Aking mga Reports' : 'My Submitted Reports'}
             </button>
           </div>
 
-          <span className="text-[11px] font-semibold text-[#9BCBFF]/80 hidden sm:inline">
+          <span className="text-[11px] font-semibold card-subtitle-text hidden sm:inline">
             🔒 RA 10173 Data Privacy Protected
           </span>
         </div>
@@ -264,13 +264,13 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-3xl bg-[#0B1E48]/85 backdrop-blur-xl border border-white/15 p-6 sm:p-8 space-y-6 shadow-2xl"
+            className="rounded-3xl cosmic-glass-card p-6 sm:p-8 space-y-6 shadow-2xl"
           >
             <div>
-              <h2 className="text-lg sm:text-xl font-extrabold text-white">
+              <h2 className="text-lg sm:text-xl font-extrabold card-title-text">
                 {isTl ? 'Magsumite ng Confidential Report sa Guidance' : 'Submit Confidential Concern Report'}
               </h2>
-              <p className="text-xs text-[#9BCBFF]/80 mt-0.5">
+              <p className="text-xs card-subtitle-text mt-0.5">
                 {isTl
                   ? 'Tanging ang AICS Guidance Associate lamang ang makakabasa nito. Ligtas ka rito.'
                   : 'Direct, private channel to the AICS Montalban Guidance Office.'}
@@ -278,7 +278,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
             </div>
 
             {submitError && (
-              <div className="p-3.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs font-semibold flex items-center gap-2">
+              <div className="p-3.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-600 dark:text-rose-200 text-xs font-semibold flex items-center gap-2">
                 <span>⚠️</span>
                 <span>{submitError}</span>
               </div>
@@ -287,13 +287,13 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
             <form onSubmit={handleSubmitConcern} className="space-y-5">
               {/* Report Category Selector */}
               <div className="space-y-1.5">
-                <label className="text-xs font-extrabold text-[#7CB8F7] uppercase tracking-wider">
+                <label className="text-xs font-extrabold register-section-title uppercase tracking-wider">
                   Category ng Insidente / Concern
                 </label>
                 <select
                   value={reportType}
                   onChange={(e) => setReportType(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/20 text-white font-semibold text-xs sm:text-sm focus:outline-none focus:border-[#4E92DF]"
+                  className="w-full px-4 py-3 rounded-xl cosmic-input text-xs sm:text-sm font-semibold focus:outline-none"
                 >
                   <option value="Bullying / Peer Harassment">Bullying / Peer Harassment (Physical, Verbal, or Cyber)</option>
                   <option value="Peer Conflict / Fighting">Peer Conflict / Away ng Magkaklase</option>
@@ -304,13 +304,13 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
               </div>
 
               {/* Self-Report vs Peer Referral Toggle */}
-              <div className="p-3.5 rounded-2xl bg-black/25 border border-white/15 space-y-3">
+              <div className="p-4 rounded-2xl register-section-card space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-extrabold text-white">
+                    <p className="text-xs font-extrabold register-label">
                       {isTl ? 'Sino ang apektado sa insidente?' : 'Who is involved in this report?'}
                     </p>
-                    <p className="text-[11px] text-white/60">
+                    <p className="text-[11px] card-subtitle-text">
                       {isPeerReferral
                         ? 'Peer Referral (Inirerefer mo ang kaklase mo para matulungan ng Guidance)'
                         : 'Self-Report (Ikaw mismo ang nakaranas o may concern)'}
@@ -323,31 +323,31 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                       onChange={(e) => setIsPeerReferral(e.target.checked)}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div className="w-11 h-6 bg-slate-300 dark:bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
 
                 {isPeerReferral && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-white/10">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-200 dark:border-white/10">
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-white">Pangalan ng Kaklase / Involved</label>
+                      <label className="text-xs font-bold register-label">Pangalan ng Kaklase / Involved</label>
                       <input
                         type="text"
                         required={isPeerReferral}
                         placeholder="Pangalan ng estudyanteng kailangan ng tulong"
                         value={targetStudentName}
                         onChange={(e) => setTargetStudentName(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-black/30 border border-white/20 text-white text-xs font-semibold focus:outline-none focus:border-[#4E92DF]"
+                        className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-white">Grade & Section</label>
+                      <label className="text-xs font-bold register-label">Grade & Section</label>
                       <input
                         type="text"
                         placeholder="hal. Grade 11 · ICT-1"
                         value={targetGradeSection}
                         onChange={(e) => setTargetGradeSection(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-black/30 border border-white/20 text-white text-xs font-semibold focus:outline-none focus:border-[#4E92DF]"
+                        className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
                       />
                     </div>
                   </div>
@@ -356,7 +356,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
               {/* Narrative of what happened */}
               <div className="space-y-1.5">
-                <label className="text-xs font-extrabold text-[#7CB8F7] uppercase tracking-wider">
+                <label className="text-xs font-extrabold register-section-title uppercase tracking-wider">
                   Salaysay ng Pangyayari (What Happened)
                 </label>
                 <textarea
@@ -369,42 +369,42 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   }
                   value={whatHappened}
                   onChange={(e) => setWhatHappened(e.target.value)}
-                  className="w-full p-4 rounded-xl bg-black/30 border border-white/20 text-white placeholder-white/40 text-xs sm:text-sm font-semibold focus:outline-none focus:border-[#4E92DF] leading-relaxed"
+                  className="w-full p-4 rounded-xl cosmic-input text-xs sm:text-sm font-semibold focus:outline-none leading-relaxed"
                 />
               </div>
 
               {/* Incident Context Details (When & Where) */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-white">Kailan Nangyari (When)</label>
+                  <label className="text-xs font-bold register-label">Kailan Nangyari (When)</label>
                   <input
                     type="text"
                     placeholder="hal. Kaninang 10:00 AM recess"
                     value={happenedWhen}
                     onChange={(e) => setHappenedWhen(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-black/30 border border-white/20 text-white text-xs font-semibold focus:outline-none focus:border-[#4E92DF]"
+                    className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-white">Saan Nangyari (Where)</label>
+                  <label className="text-xs font-bold register-label">Saan Nangyari (Where)</label>
                   <input
                     type="text"
                     placeholder="hal. Sa tapat ng Computer Lab 2"
                     value={happenedWhere}
                     onChange={(e) => setHappenedWhere(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-black/30 border border-white/20 text-white text-xs font-semibold focus:outline-none focus:border-[#4E92DF]"
+                    className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-white">Mga Saksi (Witnesses)</label>
+                  <label className="text-xs font-bold register-label">Mga Saksi (Witnesses)</label>
                   <input
                     type="text"
                     placeholder="hal. Mga kaklaseng nakakita"
                     value={witnesses}
                     onChange={(e) => setWitnesses(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-black/30 border border-white/20 text-white text-xs font-semibold focus:outline-none focus:border-[#4E92DF]"
+                    className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
                   />
                 </div>
               </div>
@@ -418,12 +418,12 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                     onChange={(e) => setIsUrgent(e.target.checked)}
                     className="w-4 h-4 rounded accent-rose-500"
                   />
-                  <span className="font-bold text-rose-300">
+                  <span className="font-bold text-rose-600 dark:text-rose-300">
                     ⚠️ Mark as URGENT (Kailangan ng mabilisang aksyon o may banta sa kaligtasan)
                   </span>
                 </label>
 
-                <label className="flex items-start gap-2.5 cursor-pointer text-xs text-white/80 leading-snug">
+                <label className="flex items-start gap-2.5 cursor-pointer text-xs register-label opacity-90 leading-snug">
                   <input
                     type="checkbox"
                     checked={truthfulAck}
@@ -441,7 +441,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
               <button
                 type="submit"
                 disabled={submitting || !truthfulAck || !whatHappened.trim()}
-                className="btn-press w-full py-4 rounded-xl bg-gradient-to-r from-[#1E469B] to-[#2557BE] hover:from-[#18387D] hover:to-[#1E469B] text-white text-sm font-extrabold shadow-lg shadow-blue-950/50 border border-white/10 disabled:opacity-45 transition-all flex items-center justify-center gap-2"
+                className="btn-press w-full py-4 rounded-xl bg-gradient-to-r from-[#1E469B] to-[#2557BE] hover:from-[#18387D] hover:to-[#1E469B] text-white text-sm font-extrabold shadow-lg shadow-blue-950/30 border border-white/10 disabled:opacity-45 transition-all flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <span>Submitting Confidential Report...</span>
@@ -461,33 +461,33 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-3xl bg-[#0B1E48]/85 backdrop-blur-xl border border-white/15 p-6 sm:p-8 space-y-4 shadow-2xl"
+            className="rounded-3xl cosmic-glass-card p-6 sm:p-8 space-y-4 shadow-2xl"
           >
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg sm:text-xl font-extrabold text-white">
+                <h2 className="text-lg sm:text-xl font-extrabold card-title-text">
                   Aking mga Naipasa na Concern Reports
                 </h2>
-                <p className="text-xs text-[#9BCBFF]/80">
+                <p className="text-xs card-subtitle-text">
                   Subaybayan ang aksyon ng Guidance Associate sa iyong mga isinumite.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => void fetchMyHistory()}
-                className="btn-press px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs font-bold text-white"
+                className="btn-press px-3 py-1.5 rounded-lg card-back-button text-xs font-bold"
               >
                 🔄 Refresh
               </button>
             </div>
 
             {loadingHistory ? (
-              <div className="p-8 text-center text-xs text-white/60">Loading your reports...</div>
+              <div className="p-8 text-center text-xs card-subtitle-text">Loading your reports...</div>
             ) : history.length === 0 ? (
-              <div className="p-10 rounded-2xl bg-black/20 border border-white/10 text-center space-y-2">
+              <div className="p-10 rounded-2xl register-section-card text-center space-y-2">
                 <span className="text-3xl">🕊️</span>
-                <p className="text-sm font-extrabold text-white">Wala ka pang naisusumiteng concern report.</p>
-                <p className="text-xs text-[#9BCBFF]/70 max-w-sm mx-auto">
+                <p className="text-sm font-extrabold register-label">Wala ka pang naisusumiteng concern report.</p>
+                <p className="text-xs card-subtitle-text max-w-sm mx-auto">
                   Kung ikaw o ang iyong kaklase ay nakararanas ng bullying, harassment, o matinding stress, huwag mag-atubiling mag-submit.
                 </p>
               </div>
@@ -496,24 +496,24 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 {history.map((item) => (
                   <div
                     key={item.id}
-                    className="p-4 rounded-2xl bg-black/30 border border-white/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    className="p-4 rounded-2xl register-inner-card flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-extrabold text-[#7CB8F7]">
+                        <span className="font-mono text-xs font-extrabold text-[#1E469B] dark:text-[#7CB8F7]">
                           {item.referralCode}
                         </span>
-                        <span className="text-xs font-extrabold text-white">
+                        <span className="text-xs font-extrabold register-label">
                           · {item.category}
                         </span>
                         {item.urgency === 'Urgent' && (
-                          <span className="px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 text-[10px] font-extrabold border border-rose-500/40">
+                          <span className="px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-600 dark:text-rose-300 text-[10px] font-extrabold border border-rose-500/40">
                             URGENT
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-white/80 line-clamp-2">{item.whatHappened}</p>
-                      <p className="text-[10px] text-white/50">
+                      <p className="text-xs register-label opacity-90 line-clamp-2">{item.whatHappened}</p>
+                      <p className="text-[10px] card-subtitle-text">
                         Date: {new Date(item.createdAt).toLocaleDateString()}
                       </p>
                     </div>
@@ -522,10 +522,10 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-extrabold border ${
                           item.status === 'Resolved' || item.status === 'Approved'
-                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40'
+                            ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border-emerald-400/40'
                             : item.status === 'In Counseling'
-                            ? 'bg-blue-500/20 text-blue-300 border-blue-400/40'
-                            : 'bg-amber-500/20 text-amber-300 border-amber-400/40'
+                            ? 'bg-blue-500/20 text-blue-600 dark:text-blue-300 border-blue-400/40'
+                            : 'bg-amber-500/20 text-amber-600 dark:text-amber-300 border-amber-400/40'
                         }`}
                       >
                         {item.status}
@@ -540,7 +540,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       </main>
 
       {/* Footer */}
-      <footer className="relative z-20 py-3 text-center text-xs text-[#9BCBFF]/70">
+      <footer className="relative z-20 py-3 text-center text-xs card-subtitle-text">
         AICS Montalban Student Guidance Office · All submissions are strictly confidential (RA 10173 Protected)
       </footer>
 

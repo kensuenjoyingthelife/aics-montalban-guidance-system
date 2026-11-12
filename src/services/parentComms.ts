@@ -1,3 +1,4 @@
+import { postMail, smsApiAvailable } from './mailApi';
 // One honest way to message parents (flowchart pages 5–7).
 // - SMS always in Filipino, never the offense (manuscript).
 // - Never says "sent" unless the SMS service / Gmail really accepted it.
@@ -64,6 +65,7 @@ let smsConfiguredCache: boolean | null = null;
 export async function isSmsConfigured(): Promise<boolean> {
   if (smsConfiguredCache !== null) return smsConfiguredCache;
   try {
+    if (!smsApiAvailable) return (smsConfiguredCache = false);
     const r = await fetch('/api/sms-status');
     smsConfiguredCache = Boolean((await r.json())?.configured);
   } catch {
@@ -89,7 +91,9 @@ export async function sendParentMessage(p: {
   const wantEmail = p.channel !== 'sms' && !!p.email;
   const result: SendResult = { anyDelivered: false, smsFailed: false, summaryEn: '', summaryTl: '' };
 
-  if (wantSms) {
+  if (wantSms && !smsApiAvailable) {
+    result.sms = { ok: false, code: 'not_configured', error: 'SMS is not set up yet.' };
+  } else if (wantSms) {
     try {
       const r = await fetch('/api/send-sms', {
         method: 'POST',
@@ -104,20 +108,15 @@ export async function sendParentMessage(p: {
   }
   if (wantEmail) {
     try {
-      const r = await fetch('/api/send-parent-notice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: p.email,
-          parentName: p.parentName,
-          studentName: p.studentName,
-          gradeSection: p.gradeSection,
-          scheduleText: p.scheduleText || '',
-          message: p.message,
-          locale: 'tl',
-        }),
+      const d = await postMail('parent-notice', {
+        email: p.email,
+        parentName: p.parentName,
+        studentName: p.studentName,
+        gradeSection: p.gradeSection,
+        scheduleText: p.scheduleText || '',
+        message: p.message,
+        locale: 'tl',
       });
-      const d = await r.json();
       result.email = { ok: !!d?.ok, error: d?.error };
     } catch (e) {
       result.email = { ok: false, error: e instanceof Error ? e.message : 'Network error' };
