@@ -750,6 +750,8 @@ export const LoginGate: React.FC<LoginGateProps> = ({
                               ref={(el) => {
                                 otpInputRefs.current[idx] = el;
                               }}
+                              // the first box is ready to type in as soon as it appears (even after a slow animation)
+                              autoFocus={idx === 0}
                               type="text"
                               maxLength={6}
                               value={ch}
