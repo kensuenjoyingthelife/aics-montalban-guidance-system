@@ -648,8 +648,8 @@ const ConcernDetail: React.FC<{
   const cardBox = 'rounded-2xl border border-[#DCE5F2] dark:border-[#1E3158] bg-white dark:bg-[#0F1A30] flex flex-col min-h-0';
   const cardHead = 'px-4 py-2.5 border-b border-[#DCE5F2] dark:border-[#1E3158] text-[11px] font-extrabold uppercase tracking-wide text-[#4A608A] dark:text-[#94A8D0]';
   const cardFoot = 'mt-auto px-4 py-3 border-t border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center gap-2';
-  const lab = 'text-[10.5px] font-extrabold uppercase tracking-wide text-[#4A608A] dark:text-[#94A8D0]';
-  const val = 'text-sm text-[#0B1F4D] dark:text-white break-words';
+  const lab = 'text-[10px] font-extrabold uppercase tracking-wide text-[#4A608A] dark:text-[#94A8D0]';
+  const val = 'text-[13px] leading-snug text-[#0B1F4D] dark:text-white break-words';
 
   const Photo = (p: { src: string; label: string; w: string; h: string; testId: string; fit: 'cover' | 'contain' }) =>
     p.src ? (
@@ -691,14 +691,14 @@ const ConcernDetail: React.FC<{
         </p>
       </div>
 
-      <div className="flex-1 min-h-0 p-4 grid grid-cols-2 gap-4 bg-[#F4F7FC] dark:bg-[#0B1527]">
+      <div className="flex-1 min-h-0 p-3 grid grid-cols-[1.25fr_1fr] gap-3 bg-[#F4F7FC] dark:bg-[#0B1527]">
         {/* ---------- LEFT: who sent it ---------- */}
         <section className={cardBox} data-concern-student>
           <p className={cardHead}>👤 {isTl ? 'Impormasyon ng estudyante' : 'Student information'}</p>
-          <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3" data-student-scroll>
             <div className="flex gap-3">
-              {Photo({ src: account?.photoUrl ?? '', label: photoLabel, w: 'w-[104px]', h: 'h-[104px]', testId: 'photo', fit: 'cover' })}
-              <div className="min-w-0 space-y-1.5">
+              {Photo({ src: account?.photoUrl ?? '', label: photoLabel, w: 'w-[88px]', h: 'h-[88px]', testId: 'photo', fit: 'cover' })}
+              <div className="min-w-0 space-y-1">
                 <div>
                   <p className={lab}>{isTl ? 'Pangalan' : 'Name'}</p>
                   <p className={`${val} font-extrabold`}>{c.studentName}</p>
@@ -712,15 +712,15 @@ const ConcernDetail: React.FC<{
               </div>
             </div>
             <div className="flex gap-3">
-              {Photo({ src: account?.idPhotoUrl ?? '', label: idLabel, w: 'w-[104px]', h: 'h-[160px]', testId: 'id', fit: 'contain' })}
-              <div className="min-w-0 space-y-1.5">
+              {Photo({ src: account?.idPhotoUrl ?? '', label: idLabel, w: 'w-[88px]', h: 'h-[132px]', testId: 'id', fit: 'contain' })}
+              <div className="min-w-0 space-y-1">
                 <div>
                   <p className={lab}>Masterlist</p>
                   {match ? (
-                    <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">✓ {match.fullName} · {match.gradeSection}</p>
+                    <p className="text-[13px] leading-snug font-bold text-emerald-700 dark:text-emerald-400">✓ {match.fullName} · {match.gradeSection}</p>
                   ) : (
-                    <p className="text-sm font-bold text-rose-700 dark:text-rose-300">
-                      ⚠ {isTl ? 'Wala sa masterlist. Ikumpara ang litrato at ID bago mag-approve.' : 'Not in the masterlist. Compare the photo and ID before approving.'}
+                    <p className="text-[13px] leading-snug font-bold text-rose-700 dark:text-rose-300">
+                      ⚠ {isTl ? 'Wala sa masterlist. Ikumpara muna ang litrato at ID.' : 'Not in the masterlist. Compare the photo and ID first.'}
                     </p>
                   )}
                 </div>
@@ -736,7 +736,7 @@ const ConcernDetail: React.FC<{
                     <p className={val}>{account.contactNumber}</p>
                   </div>
                 )}
-                {c.submittedBy && (
+                {c.submittedBy && !/^self-report/i.test(c.submittedBy.trim()) && (
                   <div>
                     <p className={lab}>{isTl ? 'Pinagmulan' : 'Sent as'}</p>
                     <p className={val}>{c.submittedBy}</p>
