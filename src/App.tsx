@@ -36,7 +36,19 @@ export const App: React.FC = () => {
   }, []);
 
   // Staff Session (Guidance Desktop App only)
-  const [activeStaffSession, setActiveStaffSession] = useState<StaffDirectoryAccount | null>(null);
+  // DEV ONLY: `?devskip` opens the desktop straight to the Dashboard while developing.
+  // import.meta.env.DEV is false in every build (installer), so this can never skip the login there.
+  const [activeStaffSession, setActiveStaffSession] = useState<StaffDirectoryAccount | null>(() =>
+    import.meta.env.DEV && new URLSearchParams(window.location.search).has('devskip')
+      ? {
+          email: 'aicsmontalbansafeguard@gmail.com',
+          fullName: 'AICS Montalban Guidance Associate',
+          role: 'Guidance Associate',
+          department: 'Guidance Office',
+          badgeCode: 'AICS-GA-001',
+        }
+      : null,
+  );
 
   // Student Session (Student Web/Mobile Portal only)
   const [activeStudentSession, setActiveStudentSession] = useState<StudentPortalUser | null>(null);
