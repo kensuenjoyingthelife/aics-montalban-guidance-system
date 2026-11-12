@@ -60,6 +60,18 @@ import {
 
 export type Stage3SubTab = 'add-report' | 'case-board' | 'students' | 'masterlist';
 
+/** A New Case started from a student's concern (Concerns > "+ Record a case") */
+export interface CasePrefill {
+  concernId: number;
+  concernCode: string;
+  place: string;
+  witnesses: string;
+  notes: string;
+  reportedBy: string;
+  /** names the student wrote under "Who was involved" (put in the student search) */
+  search: string;
+}
+
 interface Stage3CasesHubProps {
   students: StudentRecord[];
   setStudents: React.Dispatch<React.SetStateAction<StudentRecord[]>>;
@@ -84,6 +96,10 @@ interface Stage3CasesHubProps {
   initialSubTab?: Stage3SubTab;
   /** open the board already filtered (from a Dashboard alert) */
   initialCaseFlag?: 'overdue' | 'waiting' | null;
+  /** start the New Case form from a student concern */
+  prefill?: CasePrefill | null;
+  /** the cases saved from that prefill (so the concern can be linked to them) */
+  onPrefillSaved?: (caseCodes: string[]) => void;
 }
 
 
@@ -99,28 +115,30 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   onScheduleConference,
   initialSubTab,
   initialCaseFlag,
+  prefill,
+  onPrefillSaved,
 }) => {
   const { locale } = useLanguage();
   const isTl = locale === 'tl';
   const confirmChange = useConfirmChange();
 
-  const [subTab, setSubTab] = useState<Stage3SubTab>(initialSubTab ?? 'add-report');
+  const [subTab, setSubTab] = useState<Stage3SubTab>(prefill ? 'add-report' : initialSubTab ?? 'add-report');
 
   // ==========================================================================
   // SUB-TAB 1 STATE: ADD NEW CASE REPORT (PAGE 2)
   // - Starts clean for new users, with a 1-click "Fill Sample Data" helper
   // ==========================================================================
   const [selectedStudentNumbers, setSelectedStudentNumbers] = useState<string[]>([]);
-  const [studentPickerQuery, setStudentPickerQuery] = useState<string>('');
+  const [studentPickerQuery, setStudentPickerQuery] = useState<string>(prefill?.search ?? '');
   const [selectedPolicyCode, setSelectedPolicyCode] = useState<string>('MIN-01');
   // Group incident: a different offense per student (empty = same as the main offense)
   const [policyOverride, setPolicyOverride] = useState<Record<string, string>>({});
-  const [incidentDate, setIncidentDate] = useState<string>('2026-11-10');
-  const [reportedBy, setReportedBy] = useState<string>('');
-  const [incidentNotes, setIncidentNotes] = useState<string>('');
+  const [incidentDate, setIncidentDate] = useState<string>(() => new Date().toLocaleDateString('en-CA'));
+  const [reportedBy, setReportedBy] = useState<string>(prefill?.reportedBy ?? '');
+  const [incidentNotes, setIncidentNotes] = useState<string>(prefill?.notes ?? '');
   const [incidentTime, setIncidentTime] = useState<string>('');
-  const [incidentPlace, setIncidentPlace] = useState<string>('');
-  const [incidentWitness, setIncidentWitness] = useState<string>('');
+  const [incidentPlace, setIncidentPlace] = useState<string>(prefill?.place ?? '');
+  const [incidentWitness, setIncidentWitness] = useState<string>(prefill?.witnesses ?? '');
   const offenseSelectRef = useRef<HTMLSelectElement>(null);
   const [lastSavedCodes, setLastSavedCodes] = useState<string[]>([]);
   const [showDoneCases, setShowDoneCases] = useState<boolean>(false);
@@ -157,6 +175,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   };
   const DRAFT_KEY = 'aics_case_draft_v1';
   const [draftPrompt, setDraftPrompt] = useState<CaseDraft | null>(() => {
+    if (prefill) return null; // a concern fills the form; don't offer the old draft
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
       return raw ? (JSON.parse(raw) as CaseDraft) : null;
@@ -1005,6 +1024,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       /* ignore */
     }
     setLastSavedCodes(createdCases.map((c) => c.caseCode));
+    if (prefill && onPrefillSaved) onPrefillSaved(createdCases.map((c) => c.caseCode));
     setSubTab('case-board');
   };
 
@@ -1831,6 +1851,16 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
             }}
             className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch"
           >
+            {prefill && (
+              <div className="xl:col-span-12 rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-900 dark:text-amber-100" data-case-prefill={prefill.concernCode}>
+                📝 <b>{isTl ? `Galing sa report ${prefill.concernCode}.` : `From student report ${prefill.concernCode}.`}</b>{' '}
+                {isTl
+                  ? 'Nakapuno na ang lugar, mga saksi at kuwento. Piliin ang estudyanteng isinumbong'
+                  : 'The place, witnesses and story are filled in. Pick the student who was reported'}
+                {prefill.search ? <> ({isTl ? 'isinulat' : 'written as'}: <b>{prefill.search}</b>)</> : null}
+                {isTl ? ', tapos i-save. Kusang ili-link ang report sa kaso.' : ', then save. The report is linked to the case.'}
+              </div>
+            )}
             {draftPrompt && (
               <div className="xl:col-span-12 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-xs font-bold text-amber-900 dark:text-amber-200">

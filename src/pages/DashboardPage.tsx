@@ -29,7 +29,8 @@ import {
   INITIAL_DISCIPLINE_CASES,
   DisciplineCaseRecord,
 } from '../data/stage3MockData';
-import { Stage3CasesHub, type Stage3SubTab } from './Stage3CasesHub';
+import { Stage3CasesHub, type Stage3SubTab, type CasePrefill } from './Stage3CasesHub';
+import { updateConcern } from '../services/concernsDb';
 import { ParentsHub, type ParentsTab } from './ParentsHub';
 import ConcernsHub from './ConcernsHub';
 import { HelpAssistant } from '../components/help/HelpAssistant';
@@ -142,6 +143,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const [casesInitialTab, setCasesInitialTab] = useState<Stage3SubTab>('add-report');
   const [casesInitialFlag, setCasesInitialFlag] = useState<'overdue' | 'waiting' | null>(null);
   const [casesOpenKey, setCasesOpenKey] = useState<number>(0);
+  const [casesPrefill, setCasesPrefill] = useState<CasePrefill | null>(null);
 
   // Stage 3 Live State (Students Masterlist + Active Discipline Cases)
   const [students, setStudents] = useState<StudentRecord[]>([]);
@@ -489,8 +491,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const todoCount = attendanceStats.scheduled + activeFollowUpCount;
 
   /** Opens the Cases page on a given tab (used by "+ New Case" and the Open Cases card). */
-  const openCasesTab = (tab: Stage3SubTab, flag: 'overdue' | 'waiting' | null = null) => {
+  const openCasesTab = (tab: Stage3SubTab, flag: 'overdue' | 'waiting' | null = null, prefill: CasePrefill | null = null) => {
     soundFX.playStepUnlock();
+    setCasesPrefill(prefill);
     setCasesInitialTab(tab);
     setCasesInitialFlag(flag);
     setCasesOpenKey((k) => k + 1); // remount so the chosen tab opens even if Cases is already open
@@ -1511,6 +1514,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             key={casesOpenKey}
             initialSubTab={casesInitialTab}
             initialCaseFlag={casesInitialFlag}
+            prefill={casesPrefill}
+            onPrefillSaved={(codes) => {
+              const p = casesPrefill;
+              setCasesPrefill(null);
+              if (!p || !codes.length) return;
+              void updateConcern(p.concernId, { linked_case_code: codes[0] }, 'linkConcernCase').then((ok) => {
+                if (!ok) triggerToast(isTl ? `⚠️ Nagawa ang kaso, pero hindi na-link sa report ${p.concernCode}. I-link ito sa Concerns.` : `⚠️ The case was saved, but not linked to report ${p.concernCode}. Link it in Concerns.`);
+              });
+            }}
             students={students}
             setStudents={setStudents}
             cases={cases}
@@ -1543,6 +1555,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             cases={cases}
             onTriggerToast={triggerToast}
             onChanged={refreshBadges}
+            onCreateCase={(p) => openCasesTab('add-report', null, p)}
             onOpenCase={(code) => {
               setQuickSearch(code);
               openCasesTab('case-board');

@@ -5,6 +5,7 @@
 // - Students never see case records; the chat shows the office as "Guidance Office".
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import type { CasePrefill } from './Stage3CasesHub';
 import { useLanguage } from '../context/LanguageContext';
 import { useConfirmChange } from '../components/ui/ConfirmChange';
 import { soundFX } from '../services/soundEngine';
@@ -35,6 +36,8 @@ interface ConcernsHubProps {
   cases: DisciplineCaseRecord[];
   onTriggerToast: (msg: string, undo?: () => void, next?: ToastNextAction) => void;
   onOpenCase?: (caseCode: string) => void;
+  /** open New Case filled in from this concern */
+  onCreateCase?: (p: CasePrefill) => void;
   /** tell the shell to refresh the sidebar badge */
   onChanged?: () => void;
   initialTab?: ConcernsTab;
@@ -65,7 +68,7 @@ function officeOpenNow(): boolean {
   return isOfficeDay(todayISO()) && h >= 8 && h < 17;
 }
 
-const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToast, onOpenCase, onChanged, initialTab }) => {
+const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToast, onOpenCase, onCreateCase, onChanged, initialTab }) => {
   const { locale } = useLanguage();
   const isTl = locale === 'tl';
   const confirmChange = useConfirmChange();
@@ -514,6 +517,22 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
                   setChatId(selected.id);
                 }}
                 onOpenCase={onOpenCase}
+                onCreateCase={
+                  onCreateCase && selected.status !== 'Rejected'
+                    ? () => {
+                        const firstName = (selected.who || '').split(/,|;|\band\b|\bat\b|\n/i)[0].trim().slice(0, 40);
+                        onCreateCase({
+                          concernId: selected.id,
+                          concernCode: selected.code,
+                          place: selected.where || '',
+                          witnesses: selected.witnesses || '',
+                          reportedBy: `Student report ${selected.code} (${selected.studentName})`,
+                          notes: `From student report ${selected.code}${selected.when ? ` · When: ${selected.when}` : ''}${selected.who ? ` · Involved: ${selected.who}` : ''}\n${selected.whatHappened || ''}`.slice(0, 2000),
+                          search: firstName,
+                        });
+                      }
+                    : undefined
+                }
               />
             )}
           </section>
@@ -595,7 +614,12 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
           busy={busy}
           studentCases={cases.filter((k) => {
             const m = matchOf(approveFor);
-            return m ? k.studentNumber === m.studentNumber : k.studentName.trim().toLowerCase() === approveFor.studentName.trim().toLowerCase();
+            const own = m ? k.studentNumber === m.studentNumber : k.studentName.trim().toLowerCase() === approveFor.studentName.trim().toLowerCase();
+            // also the cases of the students the reporter named under "Who was involved"
+            const who = (approveFor.who || '').toLowerCase();
+            const last = k.studentName.split(',')[0].trim().toLowerCase();
+            const named = who.length > 2 && last.length > 2 && who.includes(last);
+            return own || named || k.caseCode === approveFor.linkedCaseCode;
           })}
           onCancel={() => setApproveFor(null)}
           onApprove={(code) => void doApprove(approveFor, code)}
@@ -630,7 +654,8 @@ const ConcernDetail: React.FC<{
   onDeactivate: () => void;
   onOpenChat: () => void;
   onOpenCase?: (code: string) => void;
-}> = ({ c, isTl, match, account, when, statusPill, matchPill, busy, onApprove, onReject, onDeactivate, onOpenChat, onOpenCase }) => {
+  onCreateCase?: () => void;
+}> = ({ c, isTl, match, account, when, statusPill, matchPill, busy, onApprove, onReject, onDeactivate, onOpenChat, onOpenCase, onCreateCase }) => {
   const none = isTl ? 'Hindi sinagot' : 'Not answered';
   const [view, setView] = useState<{ src: string; label: string } | null>(null);
   useEffect(() => {
@@ -774,6 +799,11 @@ const ConcernDetail: React.FC<{
               <Field label={isTl ? 'Saan' : 'Where'} value={c.where} empty={none} />
             </div>
             <Field label={isTl ? 'Sino ang sangkot' : 'Who was involved'} value={c.who} empty={none} />
+            {onCreateCase && !c.linkedCaseCode && (
+              <button type="button" data-action="case-from-concern" onClick={onCreateCase} className={`${btn} px-3 py-2 saas-card-subtle text-[#1E469B] dark:text-[#7CB8F7]`} title={isTl ? 'Bubuksan ang Bagong Kaso na nakapuno na. Ikaw ang pipili ng estudyanteng isinumbong.' : 'Opens New Case already filled in. You pick the student who was reported.'}>
+                ＋ {isTl ? 'Gumawa ng kaso para sa isinumbong' : 'Record a case for the reported student'}
+              </button>
+            )}
             <Field label={isTl ? 'Mga saksi' : 'Witnesses'} value={c.witnesses} empty={isTl ? 'Wala' : 'None'} />
             <p className={`text-xs font-bold ${c.truthful ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-300'}`}>
               {c.truthful
@@ -893,7 +923,7 @@ const ApproveWindow: React.FC<{
           </select>
           <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
             {studentCases.length === 0
-              ? isTl ? 'Walang kaso ang estudyanteng ito. Puwede kang gumawa ng bagong kaso mamaya sa "Mga Kaso".' : 'This student has no cases. You can add a new case later in "Cases".'
+              ? isTl ? 'Wala pang kaso para dito. Pagkatapos mag-approve, pindutin ang "＋ Gumawa ng kaso para sa isinumbong" sa report.' : 'No case yet. After approving, press "＋ Record a case for the reported student" in the report.'
               : isTl ? 'Hindi makikita ng estudyante ang kaso — sa office lang ito.' : 'The student never sees the case — it is for the office only.'}
           </p>
         </div>
