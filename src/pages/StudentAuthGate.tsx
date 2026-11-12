@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CelestialBackground } from '../components/auth/CelestialBackground';
 import { WavyBackground } from '../components/auth/WavyBackground';
 import { StudentRegistrationScanner } from '../components/auth/StudentRegistrationScanner';
+import { useStudentEncouragementWings } from '../components/auth/StudentEncouragementWing';
 import { SoundTogglePill, soundFX } from '../services/soundEngine';
 import { SkyThemePill } from '../context/ThemeContext';
 import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
@@ -25,6 +26,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 }) => {
   const { locale } = useLanguage();
   const isTl = locale === 'tl';
+  const { boyWing, girlWing } = useStudentEncouragementWings({ isTl });
 
   const [mode, setMode] = useState<PortalAuthMode>('login');
 
@@ -474,16 +476,30 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         </div>
       </header>
 
-      {/* Main Glassmorphic Container (Spacious width para straight-line ang Last Name, First Name, at M.I.) */}
-      <main className="relative z-20 flex-1 flex items-center justify-center p-3 sm:p-8 my-2 sm:my-4">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-          className={`w-full ${
-            mode === 'register' ? 'max-w-5xl' : 'max-w-xl'
-          } cosmic-glass-card p-5 sm:p-12 space-y-6 sm:space-y-8`}
-        >
+      {/* Main Glassmorphic Container with Left and Right Student Encouragement Wings */}
+      <main className="relative z-20 flex-1 flex items-center justify-center p-3 sm:p-6 lg:p-8 my-2 sm:my-4">
+        <div className="w-full max-w-7xl flex flex-col lg:flex-row items-center justify-center gap-6 xl:gap-12">
+          {/* Left Wing: Boy Student (Encouraging to speak up, report bullying, bravery) */}
+          {mode === 'login' && (
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="hidden lg:flex shrink-0 order-1 lg:order-none"
+            >
+              {boyWing}
+            </motion.div>
+          )}
+
+          {/* Central Login / Register Glass Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            className={`w-full ${
+              mode === 'register' ? 'max-w-5xl' : 'max-w-xl'
+            } cosmic-glass-card p-5 sm:p-12 space-y-6 sm:space-y-8 relative z-10`}
+          >
           {/* ====================================================
               MODE: LOGIN SCREEN
               ==================================================== */}
@@ -1117,7 +1133,20 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
             </div>
           )}
         </motion.div>
-      </main>
+
+        {/* Right Wing: Girl Student (Emotional healing, mental wellness, validation) */}
+        {mode === 'login' && (
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="hidden lg:flex shrink-0 order-3 lg:order-none"
+          >
+            {girlWing}
+          </motion.div>
+        )}
+      </div>
+    </main>
 
       {/* Footer */}
       <footer className="relative z-20 py-4 text-center text-xs text-[#9BCBFF]/75 border-t border-white/10 bg-[#0B1E48]/50">
