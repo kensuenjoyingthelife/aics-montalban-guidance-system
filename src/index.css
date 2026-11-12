@@ -253,9 +253,10 @@
   color: #FFFFFF !important;
 }
 
-/* LIGHT MODE CARD */
+/* LIGHT MODE CARD with Hardware-Accelerated Zero-Lag Glass Light Shimmer */
 :root:not(.dark) .cosmic-glass-card {
   position: relative;
+  overflow: hidden;
   background: rgba(255, 255, 255, 0.94) !important;
   backdrop-filter: blur(28px) saturate(190%);
   -webkit-backdrop-filter: blur(28px) saturate(190%);
@@ -266,6 +267,67 @@
     0 0 0 1px rgba(195, 220, 252, 0.6),
     inset 0 1.5px 2px 0 rgba(255, 255, 255, 1) !important;
   color: #0B1F4D !important;
+}
+
+/* Luminous Glass Light Sweep Effect (Light Mode Only, 60fps GPU Compositor, 0% Input Lag) */
+:root:not(.dark) .cosmic-glass-card::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: -120%;
+  width: 75%;
+  height: 140%;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 20%,
+    rgba(255, 255, 255, 0.55) 45%,
+    rgba(195, 225, 255, 0.75) 50%,
+    rgba(255, 255, 255, 0.55) 55%,
+    rgba(255, 255, 255, 0.05) 80%,
+    transparent 100%
+  );
+  transform: skewX(-24deg);
+  animation: aics-glass-light-sweep 6.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+  z-index: 1;
+  will-change: transform;
+}
+
+@keyframes aics-glass-light-sweep {
+  0%, 35% {
+    transform: translateX(0) skewX(-24deg);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.85;
+  }
+  65% {
+    transform: translateX(360%) skewX(-24deg);
+    opacity: 0.85;
+  }
+  70%, 100% {
+    transform: translateX(360%) skewX(-24deg);
+    opacity: 0;
+  }
+}
+
+/* Ensure card children stay cleanly above the glass light sweep */
+:root:not(.dark) .cosmic-glass-card > * {
+  position: relative;
+  z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.dark) .cosmic-glass-card::before {
+    animation: none !important;
+    display: none !important;
+  }
+}
+
+body.low-tier-device :root:not(.dark) .cosmic-glass-card::before {
+  animation: none !important;
+  display: none !important;
 }
 
 /* 4. TITLES & LABELS (Adaptive to Dark vs Light) */
