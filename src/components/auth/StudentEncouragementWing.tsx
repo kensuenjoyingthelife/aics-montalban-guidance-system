@@ -3,75 +3,36 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 /**
  * AICS Senior High School Student Mental Health & Anti-Bullying Encouragement Wing
- * Written with clinical empathy as Senior Mental Health Specialist / Adolescent Guidance Counselor.
- *
- * Left (Boy Student): Focused on encouraging students to open up, speak up about bullying, and break the silence.
- * Right (Girl Student): Focused on mental wellness, self-worth, emotional relief, validation, and healing.
+ * Written with clinical empathy as Senior Mental Health Counselor for students.
+ * Short, deep, 10-second Taglish messages with live animated characters (waving hands & talking mouths).
  */
 
-// Boy Student Messages: Breaking Silence, Anti-Bullying Courage, Speaking Up
+// Boy Student Messages: Breaking Silence, Anti-Bullying Bravery, Speaking Up (Short & Deep Taglish)
 export const BOY_ENCOURAGEMENTS = [
-  {
-    tl: 'Hindi mo kailangang sarilinin ang sakit. Ang pagsasabi ng totoo ay hindi karuwagan—ito ay tapang.',
-    en: "You don't have to carry the burden alone. Speaking up is never weakness—it takes real courage.",
-  },
-  {
-    tl: 'Kung nakaranas ka o ang kaibigan mo ng pambu-bully, ligtas ka rito. May mga guro at guidance na handang makinig.',
-    en: 'If you or your friend are facing bullying, you are safe here. Our guidance counselors are ready to protect you.',
-  },
-  {
-    tl: 'Ang pananahimik ay nagbibigay ng lakas sa nambu-bully. Putulin natin ang takot—ilapit mo ang iyong kwento.',
-    en: 'Silence protects the bully, not you. Break the fear—share your experience in complete confidentiality.',
-  },
-  {
-    tl: 'Hindi mo kasalanan ang ginawa nila sa iyo. Karapatan mong mag-aral nang mapayapa at may dignidad.',
-    en: 'What happened to you was never your fault. You have the full right to study in peace and dignity.',
-  },
-  {
-    tl: 'Maliit man o malaki ang nararanasan mong panunukso o pananakit, mahalaga ang boses mo sa amin.',
-    en: 'Whether it feels small or overwhelming, your safety and your voice matter deeply to us.',
-  },
-  {
-    tl: 'Walang makakaalam na ikaw ang nag-report. Ang iyong kaligtasan at tiwala ang aming unang tungkulin.',
-    en: 'Your identity stays strictly protected. Your safety and peace of mind are our highest commitment.',
-  },
+  'Huwag mong sarilinin. Ligtas ka rito at handa kaming makinig.',
+  'Hindi karuwagan ang magsumbong. Protektado ka sa guidance.',
+  'Kung may nambu-bully sa iyo o sa kaibigan mo, sabihin mo na.',
+  'Hindi mo kasalanan ang ginawa nila. Karapatan mong maging ligtas.',
+  'Walang makakaalam na ikaw ang nag-report. Safe ka dito.',
+  'Tapang ang kailangan para magsalita. Nandito kami para sa iyo.',
 ];
 
-// Girl Student Messages: Emotional Relief, Self-Worth, Healing & Mental Well-Being
+// Girl Student Messages: Emotional Relief, Self-Worth, Mental Health Healing (Short & Deep Taglish)
 export const GIRL_ENCOURAGEMENTS = [
-  {
-    tl: 'Huminga ka nang malalim. Valid ang lahat ng nararamdaman mo, at hindi ka nag-iisa sa laban na ito.',
-    en: 'Take a gentle breath. Everything you feel is completely valid, and you do not have to fight alone.',
-  },
-  {
-    tl: 'Walang sinumang salita o paninira ang makapagdidikta ng iyong tunay na halaga bilang tao.',
-    en: 'No cruel words or judgments can ever define your genuine worth and potential as a human being.',
-  },
-  {
-    tl: 'Gagaan din ang dibdib mo. Ang paghingi ng tulong sa guidance ay unang hakbang patungo sa paghilom.',
-    en: 'Your heart will feel light again. Reaching out to guidance is the first empowering step toward healing.',
-  },
-  {
-    tl: 'Magpahinga kung pagod, ngunit huwag susuko. May magandang kinabukasan na naghihintay sa iyo.',
-    en: 'Rest when you are exhausted, but never give up. A brighter, safer tomorrow is waiting for you.',
-  },
-  {
-    tl: 'Nandito kami hindi para humusga, kundi para makinig nang buong puso at gabayan ka nang ligtas.',
-    en: 'We are here not to judge, but to listen with complete compassion and keep you protected.',
-  },
-  {
-    tl: 'Mahalaga ka sa pamilya ng AICS. Karapatan mong maramdaman ang kaligtasan at pagmamalasakit araw-araw.',
-    en: 'You are valued in our AICS family. You deserve to feel safe, respected, and cared for every single day.',
-  },
+  'Huminga ka nang malalim. Valid ang nararamdaman mo.',
+  'Walang makakapagbawas sa halaga mo bilang tao. Kaya mo ito.',
+  'Gagaan din ang dibdib mo. Nandito kami para tulungan ka.',
+  'Okay lang mapagod, pero huwag susuko. May nagmamalasakit sa iyo.',
+  'Walang manghuhusga sa iyo. Safe space mo ang portal na ito.',
+  'Mahalaga ka sa AICS. Karapatan mong mag-aral nang payapa.',
 ];
 
 /**
- * Pure SVG AICS Boy Student Illustration
- * Based on the official AICS Senior High School uniform reference:
- * - Crisp White/Pale-Sky polo with open convertible collar & crisp short sleeves
- * - Royal Blue AICS neck lanyard with yellow ID accent ("AICS SENIOR HIGH SCHOOL")
- * - Left breast pocket with circular AICS institutional seal badge
- * - Smart black SHS trousers & neat youthful hairstyle
+ * Pure SVG AICS Boy Student Illustration with:
+ * - Animated Waving Hand / Gesticulating Arm (welcoming students to speak up)
+ * - Animated Talking Mouth (organic speaking movement like an authentic character gif)
+ * - Eye Blink Animation
+ * - Official AICS White SHS Polo + Royal Blue Lanyard with Yellow Accent
  */
 export const AicsBoyStudentSvg: React.FC<{ className?: string }> = ({ className = 'w-48 h-72' }) => (
   <svg
@@ -104,7 +65,7 @@ export const AicsBoyStudentSvg: React.FC<{ className?: string }> = ({ className 
       </linearGradient>
     </defs>
 
-    {/* Soft subtle ground shadow */}
+    {/* Ground Shadow */}
     <ellipse cx="80" cy="252" rx="36" ry="6" fill="#030A1C" opacity="0.4" />
 
     {/* SHS Black Trousers */}
@@ -113,14 +74,34 @@ export const AicsBoyStudentSvg: React.FC<{ className?: string }> = ({ className 
     <ellipse cx="68" cy="249" rx="10" ry="4.5" fill="#0A0E17" />
     <ellipse cx="93" cy="249" rx="10" ry="4.5" fill="#0A0E17" />
 
-    {/* Arms & Hands (Supportive / Welcoming Open Posture) */}
-    {/* Left Arm (Relaxed at side) */}
-    <path d="M48 94 C42 115 42 135 48 152" stroke="url(#boySkin)" strokeWidth="10" strokeLinecap="round" />
-    <circle cx="49" cy="155" r="5.5" fill="url(#boySkin)" />
+    {/* Left Arm (Relaxed at side, subtle sway) */}
+    <motion.g
+      animate={{ rotate: [0, 2.5, 0] }}
+      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+      style={{ transformOrigin: '48px 94px' }}
+    >
+      <path d="M48 94 C42 115 42 135 48 152" stroke="url(#boySkin)" strokeWidth="10" strokeLinecap="round" />
+      <circle cx="49" cy="155" r="5.5" fill="url(#boySkin)" />
+    </motion.g>
 
-    {/* Right Arm (Hand gesturing gently to heart / encouragement) */}
-    <path d="M112 94 C120 114 116 130 102 140" stroke="url(#boySkin)" strokeWidth="10" strokeLinecap="round" />
-    <circle cx="100" cy="141" r="5.5" fill="url(#boySkin)" />
+    {/* Right Arm: ACTIVELY WAVING / GESTURING HAND (Inviting the student to open up) */}
+    <motion.g
+      animate={{
+        rotate: [0, -18, 4, -18, 0],
+      }}
+      transition={{
+        duration: 2.2,
+        repeat: Infinity,
+        ease: 'easeInOut',
+      }}
+      style={{ transformOrigin: '112px 94px' }}
+    >
+      {/* Arm upper & forearm */}
+      <path d="M112 94 C124 105 132 112 128 128" stroke="url(#boySkin)" strokeWidth="9.5" strokeLinecap="round" />
+      {/* Waving Open Hand with fingers */}
+      <circle cx="128" cy="130" r="5.2" fill="url(#boySkin)" />
+      <path d="M125 127 L122 121 M128 126 L127 119 M131 127 L132 120 M133 129 L136 124" stroke="url(#boySkin)" strokeWidth="2.2" strokeLinecap="round" />
+    </motion.g>
 
     {/* White AICS SHS Polo Body */}
     <path
@@ -129,7 +110,7 @@ export const AicsBoyStudentSvg: React.FC<{ className?: string }> = ({ className 
       stroke="#CFD9EA"
       strokeWidth="0.8"
     />
-    {/* Shirt Placket (Center button line) */}
+    {/* Center Placket */}
     <line x1="80" y1="96" x2="80" y2="170" stroke="#CBD7EA" strokeWidth="2" />
     <circle cx="80" cy="116" r="1.6" fill="#A5B8D8" />
     <circle cx="80" cy="134" r="1.6" fill="#A5B8D8" />
@@ -145,9 +126,8 @@ export const AicsBoyStudentSvg: React.FC<{ className?: string }> = ({ className 
     <circle cx="98" cy="120" r="2.8" fill="#F4F8FD" />
     <circle cx="98" cy="120" r="1.2" fill="#1E469B" />
 
-    {/* Blue AICS Lanyard with Yellow Accent Text */}
+    {/* Blue AICS Lanyard with Yellow Accent */}
     <path d="M72 82 L77 142 M88 82 L83 142" stroke="url(#lanyardBlue)" strokeWidth="3.2" strokeLinecap="round" />
-    {/* Yellow lanyard text stripe */}
     <line x1="72.8" y1="90" x2="74.5" y2="114" stroke="#FBBF24" strokeWidth="1.2" />
     <line x1="87.2" y1="90" x2="85.5" y2="114" stroke="#FBBF24" strokeWidth="1.2" />
     {/* Hanging ID Badge */}
@@ -173,19 +153,46 @@ export const AicsBoyStudentSvg: React.FC<{ className?: string }> = ({ className 
     <ellipse cx="63" cy="55" rx="3.5" ry="5.5" fill="url(#boySkin)" />
     <ellipse cx="97" cy="55" rx="3.5" ry="5.5" fill="url(#boySkin)" />
 
-    {/* Kind, Empathetic Facial Expression */}
     {/* Eyebrows */}
     <path d="M68 45 Q73 43 77 46" stroke="#4A3B32" strokeWidth="1.5" strokeLinecap="round" fill="none" />
     <path d="M83 46 Q87 43 92 45" stroke="#4A3B32" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-    {/* Eyes (Warm & attentive) */}
-    <ellipse cx="73" cy="51" rx="2.2" ry="2.6" fill="#1E1915" />
-    <ellipse cx="87" cy="51" rx="2.2" ry="2.6" fill="#1E1915" />
-    <circle cx="74" cy="50" r="0.8" fill="#FFFFFF" />
-    <circle cx="88" cy="50" r="0.8" fill="#FFFFFF" />
+
+    {/* Eyes with Blinking Animation */}
+    <motion.g
+      animate={{ scaleY: [1, 1, 0.1, 1, 1] }}
+      transition={{ duration: 3.6, repeat: Infinity, times: [0, 0.45, 0.5, 0.55, 1] }}
+      style={{ transformOrigin: '80px 51px' }}
+    >
+      <ellipse cx="73" cy="51" rx="2.2" ry="2.6" fill="#1E1915" />
+      <ellipse cx="87" cy="51" rx="2.2" ry="2.6" fill="#1E1915" />
+      <circle cx="74" cy="50" r="0.8" fill="#FFFFFF" />
+      <circle cx="88" cy="50" r="0.8" fill="#FFFFFF" />
+    </motion.g>
+
     {/* Nose */}
     <path d="M80 52 L78.5 58 L81.5 58" stroke="#DDA888" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    {/* Gentle, Reassuring Smile */}
-    <path d="M75 63 Q80 67 85 63" stroke="#9E4D40" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+
+    {/* ANIMATED TALKING MOUTH (Simulates natural speech articulation / gif effect) */}
+    <motion.path
+      animate={{
+        d: [
+          'M76 63 Q80 66 84 63', // smile
+          'M77 62 Q80 68 83 62', // open o
+          'M75 64 Q80 65 85 64', // wider
+          'M76 62 Q80 67 84 62', // talking
+          'M76 63 Q80 66 84 63', // smile
+        ],
+      }}
+      transition={{
+        duration: 0.85,
+        repeat: Infinity,
+        ease: 'easeInOut',
+      }}
+      stroke="#9E4D40"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      fill="#6B1D2F"
+    />
 
     {/* Modern Boy Side-Part Hair */}
     <path
@@ -197,13 +204,11 @@ export const AicsBoyStudentSvg: React.FC<{ className?: string }> = ({ className 
 );
 
 /**
- * Pure SVG AICS Girl Student Illustration
- * Based on the official AICS Senior High School uniform reference:
- * - AICS Signature Gray Blouse with Royal Blue piping along collar, front, & sleeves
- * - Royal Blue AICS neck lanyard with yellow ID accent
- * - Left breast badge with official AICS seal
- * - AICS Royal Blue pleated SHS skirt
- * - Warm, attentive, compassionate counseling expression
+ * Pure SVG AICS Girl Student Illustration with:
+ * - Animated Comforting Waving / Gesturing Hand (warm welcoming motion)
+ * - Animated Talking Mouth (organic conversational cadence like a live gif)
+ * - Eye Blink Animation
+ * - Official AICS Signature Gray Blouse with Royal Blue Piping + Pleated Skirt
  */
 export const AicsGirlStudentSvg: React.FC<{ className?: string }> = ({ className = 'w-48 h-72' }) => (
   <svg
@@ -236,7 +241,7 @@ export const AicsGirlStudentSvg: React.FC<{ className?: string }> = ({ className
       </linearGradient>
     </defs>
 
-    {/* Soft ground shadow */}
+    {/* Ground Shadow */}
     <ellipse cx="80" cy="252" rx="36" ry="6" fill="#030A1C" opacity="0.4" />
 
     {/* Hair Layer (Back) */}
@@ -250,27 +255,34 @@ export const AicsGirlStudentSvg: React.FC<{ className?: string }> = ({ className
 
     {/* Royal Blue AICS SHS Skirt (Pleated) */}
     <path d="M57 146 L103 146 L112 198 L48 198 Z" fill="url(#girlBlueSkirt)" />
-    {/* Pleat Lines */}
     <line x1="64" y1="147" x2="59" y2="198" stroke="#163473" strokeWidth="1.2" />
     <line x1="75" y1="147" x2="73" y2="198" stroke="#163473" strokeWidth="1.2" />
     <line x1="85" y1="147" x2="87" y2="198" stroke="#163473" strokeWidth="1.2" />
     <line x1="96" y1="147" x2="101" y2="198" stroke="#163473" strokeWidth="1.2" />
 
-    {/* Arms holding school notebook / clipboard gently */}
-    {/* Left Arm */}
-    <path d="M52 94 C46 114 52 132 64 140" stroke="url(#girlSkin)" strokeWidth="8.5" strokeLinecap="round" />
-    {/* Right Arm */}
+    {/* Left Arm: ACTIVELY WAVING / GENTLE REASSURING HAND GESTURE */}
+    <motion.g
+      animate={{
+        rotate: [0, 16, -4, 16, 0],
+      }}
+      transition={{
+        duration: 2.4,
+        repeat: Infinity,
+        ease: 'easeInOut',
+      }}
+      style={{ transformOrigin: '52px 94px' }}
+    >
+      <path d="M52 94 C38 106 30 114 34 128" stroke="url(#girlSkin)" strokeWidth="8.5" strokeLinecap="round" />
+      <circle cx="34" cy="130" r="5" fill="url(#girlSkin)" />
+      <path d="M36 126 L39 120 M33 125 L34 118 M30 126 L29 119 M28 128 L25 123" stroke="url(#girlSkin)" strokeWidth="2" strokeLinecap="round" />
+    </motion.g>
+
+    {/* Right Arm: Holding notebook / comforting pose */}
     <path d="M108 94 C114 114 108 132 96 140" stroke="url(#girlSkin)" strokeWidth="8.5" strokeLinecap="round" />
-
-    {/* School Portfolio / Diary in Hands */}
-    <rect x="62" y="128" width="36" height="26" rx="3" fill="#1E469B" stroke="#7CB8F7" strokeWidth="1" />
-    <rect x="65" y="131" width="30" height="20" rx="1.5" fill="#FFFFFF" />
-    <line x1="70" y1="137" x2="88" y2="137" stroke="#94A3B8" strokeWidth="1.2" />
-    <line x1="70" y1="142" x2="84" y2="142" stroke="#94A3B8" strokeWidth="1.2" />
-
-    {/* Hands overlapping the notebook */}
-    <circle cx="65" cy="140" r="4.8" fill="url(#girlSkin)" />
-    <circle cx="95" cy="140" r="4.8" fill="url(#girlSkin)" />
+    {/* Notebook / folder */}
+    <rect x="74" y="128" width="28" height="24" rx="2.5" fill="#1E469B" stroke="#7CB8F7" strokeWidth="1" />
+    <rect x="77" y="131" width="22" height="18" rx="1.5" fill="#FFFFFF" />
+    <circle cx="95" cy="140" r="4.5" fill="url(#girlSkin)" />
 
     {/* AICS Gray Blouse Body */}
     <path
@@ -285,10 +297,9 @@ export const AicsGirlStudentSvg: React.FC<{ className?: string }> = ({ className
     <circle cx="80" cy="126" r="1.4" fill="#FFFFFF" />
     <circle cx="80" cy="140" r="1.4" fill="#FFFFFF" />
 
-    {/* Blouse Sleeves with Blue Piping at cuff */}
+    {/* Blouse Sleeves with Blue Piping */}
     <path d="M52 88 L40 114 L52 118 L58 94 Z" fill="url(#girlGrayBlouse)" />
     <line x1="40" y1="114" x2="52" y2="118" stroke="url(#pipingBlue)" strokeWidth="2.2" strokeLinecap="round" />
-
     <path d="M108 88 L120 114 L108 118 L102 94 Z" fill="url(#girlGrayBlouse)" />
     <line x1="120" y1="114" x2="108" y2="118" stroke="url(#pipingBlue)" strokeWidth="2.2" strokeLinecap="round" />
 
@@ -317,46 +328,75 @@ export const AicsGirlStudentSvg: React.FC<{ className?: string }> = ({ className
     {/* Head & Face */}
     <ellipse cx="80" cy="54" rx="14.5" ry="17.5" fill="url(#girlSkin)" />
 
-    {/* Gentle Warm Facial Features */}
     {/* Eyebrows */}
     <path d="M69 46 Q73 44 77 47" stroke="#4A3B32" strokeWidth="1.3" strokeLinecap="round" fill="none" />
     <path d="M83 47 Q87 44 91 46" stroke="#4A3B32" strokeWidth="1.3" strokeLinecap="round" fill="none" />
-    {/* Soft, Caring Eyes */}
-    <ellipse cx="73" cy="52" rx="2" ry="2.4" fill="#1E1915" />
-    <ellipse cx="87" cy="52" rx="2" ry="2.4" fill="#1E1915" />
-    <circle cx="74" cy="51" r="0.7" fill="#FFFFFF" />
-    <circle cx="88" cy="51" r="0.7" fill="#FFFFFF" />
-    {/* Gentle blush */}
+
+    {/* Eyes with Blinking Animation */}
+    <motion.g
+      animate={{ scaleY: [1, 1, 0.1, 1, 1] }}
+      transition={{ duration: 4.2, repeat: Infinity, times: [0, 0.5, 0.55, 0.6, 1], delay: 0.8 }}
+      style={{ transformOrigin: '80px 52px' }}
+    >
+      <ellipse cx="73" cy="52" rx="2" ry="2.4" fill="#1E1915" />
+      <ellipse cx="87" cy="52" rx="2" ry="2.4" fill="#1E1915" />
+      <circle cx="74" cy="51" r="0.7" fill="#FFFFFF" />
+      <circle cx="88" cy="51" r="0.7" fill="#FFFFFF" />
+    </motion.g>
+
+    {/* Soft blush */}
     <ellipse cx="69" cy="56" rx="3.5" ry="2" fill="#F48FB1" opacity="0.45" />
     <ellipse cx="91" cy="56" rx="3.5" ry="2" fill="#F48FB1" opacity="0.45" />
-    {/* Nose & Warm, Comforting Smile */}
-    <circle cx="80" cy="57" r="0.9" fill="#DDA888" />
-    <path d="M75 62 Q80 66 85 62" stroke="#C2415C" strokeWidth="1.6" strokeLinecap="round" fill="none" />
 
-    {/* Girl Hair Front Layer (Soft Bangs & Long Straight Cut) */}
+    {/* Nose */}
+    <circle cx="80" cy="57" r="0.9" fill="#DDA888" />
+
+    {/* ANIMATED TALKING MOUTH (Simulates natural speech articulation / gif effect) */}
+    <motion.path
+      animate={{
+        d: [
+          'M76 62 Q80 66 84 62', // gentle smile
+          'M77 61 Q80 67 83 61', // open gentle o
+          'M75 63 Q80 65 85 63', // wider speech
+          'M76 61 Q80 66 84 61', // talking
+          'M76 62 Q80 66 84 62', // smile
+        ],
+      }}
+      transition={{
+        duration: 0.9,
+        repeat: Infinity,
+        ease: 'easeInOut',
+        delay: 0.2,
+      }}
+      stroke="#C2415C"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      fill="#8E203C"
+    />
+
+    {/* Girl Hair Front Layer */}
     <path
       d="M62 48 C63 32 72 26 80 26 C88 26 97 32 98 48 C94 40 88 38 80 38 C72 38 66 40 62 48 Z"
       fill="url(#girlHair)"
     />
-    {/* Soft Bangs */}
     <path d="M68 40 Q75 48 80 43 Q85 48 92 40 Z" fill="#241914" />
   </svg>
 );
 
 /**
- * Animated Interactive Student Support Wing Hook / Component
- * Placed on Left and Right sides of the Login card.
- * Cycles inspiring, clinically thoughtful counseling messages every 5 seconds.
+ * Animated Interactive Student Support Wing Hook
+ * Cycles clean, short, deep Taglish messages every 10 seconds.
  */
-export const useStudentEncouragementWings = ({ isTl = true }: { isTl?: boolean }) => {
+export const useStudentEncouragementWings = () => {
   const [boyIndex, setBoyIndex] = useState(0);
   const [girlIndex, setGirlIndex] = useState(0);
 
   useEffect(() => {
+    // 10 SECONDS INTERVAL per user request
     const timer = setInterval(() => {
       setBoyIndex((prev) => (prev + 1) % BOY_ENCOURAGEMENTS.length);
       setGirlIndex((prev) => (prev + 1) % GIRL_ENCOURAGEMENTS.length);
-    }, 5000);
+    }, 10000);
 
     return () => clearInterval(timer);
   }, []);
@@ -366,96 +406,69 @@ export const useStudentEncouragementWings = ({ isTl = true }: { isTl?: boolean }
 
   return {
     boyWing: (
-      <div className="flex flex-col items-center justify-end text-center space-y-3 w-64 xl:w-72 select-none">
-        {/* Animated Speech Bubble (Boy - Anti-Bullying Courage) */}
-        <div className="relative min-h-[110px] w-full flex items-center justify-center">
+      <div className="flex flex-col items-center justify-end text-center space-y-2 w-60 xl:w-68 select-none">
+        {/* Animated Speech Bubble (Boy - Clean, Short Taglish, No unneeded headers) */}
+        <div className="relative min-h-[78px] w-full flex items-center justify-center">
           <AnimatePresence mode="wait">
             <motion.div
               key={boyIndex}
-              initial={{ opacity: 0, y: 12, scale: 0.95 }}
+              initial={{ opacity: 0, y: 10, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              exit={{ opacity: 0, y: -8, scale: 0.96 }}
               transition={{ duration: 0.45, ease: 'easeOut' }}
-              className="relative p-4 rounded-2xl bg-blue-950/80 border border-blue-400/40 text-blue-100 shadow-xl shadow-blue-950/60 backdrop-blur-md text-xs leading-relaxed font-semibold text-center"
+              className="relative px-4 py-3 rounded-2xl bg-blue-950/85 border border-sky-400/40 text-white shadow-xl shadow-blue-950/60 backdrop-blur-md text-xs sm:text-[13px] leading-snug font-semibold text-center"
             >
-              <div className="flex items-center justify-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-amber-300 font-extrabold mb-1.5">
-                <span>🛡️</span>
-                <span>{isTl ? 'Lakas ng Loob at Katotohanan' : 'Courage to Speak Up'}</span>
-              </div>
-              <p className="text-white/95">
-                &ldquo;{isTl ? currentBoyMsg.tl : currentBoyMsg.en}&rdquo;
+              <p className="text-sky-100">
+                &ldquo;{currentBoyMsg}&rdquo;
               </p>
 
-              {/* Chat bubble tail pointing downward to student */}
-              <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[10px] border-t-blue-950/90" />
+              {/* Chat bubble tail */}
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[8px] border-t-blue-950/90" />
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {/* Boy Student SVG Illustration with gentle hovering breathing animation */}
+        {/* Boy Student SVG Illustration with animated waving hand & talking mouth */}
         <motion.div
-          animate={{
-            y: [0, -6, 0],
-          }}
-          transition={{
-            duration: 4.2,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-          className="relative pt-2"
+          animate={{ y: [0, -5, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+          className="relative"
         >
-          <AicsBoyStudentSvg className="w-48 sm:w-52 h-64 sm:h-72" />
-          <div className="mt-1 text-[11px] font-extrabold tracking-wide uppercase text-blue-300/80">
-            AICS SHS Peer Advocate
-          </div>
+          <AicsBoyStudentSvg className="w-44 sm:w-48 h-60 sm:h-68" />
         </motion.div>
       </div>
     ),
 
     girlWing: (
-      <div className="flex flex-col items-center justify-end text-center space-y-3 w-64 xl:w-72 select-none">
-        {/* Animated Speech Bubble (Girl - Mental Health & Relief) */}
-        <div className="relative min-h-[110px] w-full flex items-center justify-center">
+      <div className="flex flex-col items-center justify-end text-center space-y-2 w-60 xl:w-68 select-none">
+        {/* Animated Speech Bubble (Girl - Clean, Short Taglish, No unneeded headers) */}
+        <div className="relative min-h-[78px] w-full flex items-center justify-center">
           <AnimatePresence mode="wait">
             <motion.div
               key={girlIndex}
-              initial={{ opacity: 0, y: 12, scale: 0.95 }}
+              initial={{ opacity: 0, y: 10, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              exit={{ opacity: 0, y: -8, scale: 0.96 }}
               transition={{ duration: 0.45, ease: 'easeOut' }}
-              className="relative p-4 rounded-2xl bg-indigo-950/80 border border-teal-400/40 text-teal-100 shadow-xl shadow-indigo-950/60 backdrop-blur-md text-xs leading-relaxed font-semibold text-center"
+              className="relative px-4 py-3 rounded-2xl bg-indigo-950/85 border border-teal-400/40 text-white shadow-xl shadow-indigo-950/60 backdrop-blur-md text-xs sm:text-[13px] leading-snug font-semibold text-center"
             >
-              <div className="flex items-center justify-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-teal-300 font-extrabold mb-1.5">
-                <span>🌱</span>
-                <span>{isTl ? 'Kagalingan at Halaga Mo' : 'Healing & Mental Wellness'}</span>
-              </div>
-              <p className="text-white/95">
-                &ldquo;{isTl ? currentGirlMsg.tl : currentGirlMsg.en}&rdquo;
+              <p className="text-teal-100">
+                &ldquo;{currentGirlMsg}&rdquo;
               </p>
 
-              {/* Chat bubble tail pointing downward to student */}
-              <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[10px] border-t-indigo-950/90" />
+              {/* Chat bubble tail */}
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[8px] border-t-indigo-950/90" />
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {/* Girl Student SVG Illustration with gentle hovering breathing animation */}
+        {/* Girl Student SVG Illustration with animated waving hand & talking mouth */}
         <motion.div
-          animate={{
-            y: [0, -6, 0],
-          }}
-          transition={{
-            duration: 4.6,
-            repeat: Infinity,
-            ease: 'easeInOut',
-            delay: 0.5,
-          }}
-          className="relative pt-2"
+          animate={{ y: [0, -5, 0] }}
+          transition={{ duration: 4.4, repeat: Infinity, ease: 'easeInOut', delay: 0.4 }}
+          className="relative"
         >
-          <AicsGirlStudentSvg className="w-48 sm:w-52 h-64 sm:h-72" />
-          <div className="mt-1 text-[11px] font-extrabold tracking-wide uppercase text-teal-300/80">
-            AICS Peer Wellness Ally
-          </div>
+          <AicsGirlStudentSvg className="w-44 sm:w-48 h-60 sm:h-68" />
         </motion.div>
       </div>
     ),

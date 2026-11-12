@@ -26,7 +26,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 }) => {
   const { locale } = useLanguage();
   const isTl = locale === 'tl';
-  const { boyWing, girlWing } = useStudentEncouragementWings({ isTl });
+  const { boyWing, girlWing } = useStudentEncouragementWings();
 
   const [mode, setMode] = useState<PortalAuthMode>('login');
 
