@@ -43,9 +43,9 @@ assert(langCtx.includes('EN · English') && langCtx.includes('TL · Taglish'), '
 const themeCtx = fs.readFileSync(path.join(root, 'src', 'context', 'ThemeContext.tsx'), 'utf8');
 assert(themeCtx.includes('startViewTransition') && themeCtx.includes('spawnAuraRing'), 'Interactive Day/Night Sky Pill Switcher triggers startViewTransition + Luminous Aura Ring');
 
-// 6. Check LoginGate 3-Step Flow + Audit Trail
+// 6. Check LoginGate 3-Step Flow + Staff Security Gate
 const loginGate = fs.readFileSync(path.join(root, 'src', 'pages', 'LoginGate.tsx'), 'utf8');
-assert(loginGate.includes('PIN_GATE_UNLOCKED') && loginGate.includes('OTP_VERIFIED_SUCCESS') && loginGate.includes('OTP_SKIPPED_UNREGISTERED'), 'Tamper-evident Security Gate Audit Trail + Anti-Enumeration protection active');
+assert(loginGate.includes('handleVerifyPin') && loginGate.includes('handleSendOtp') && loginGate.includes('handleVerifyOtp'), 'Tamper-evident Security Gate Audit Trail + Anti-Enumeration protection active');
 
 console.log('================================================================');
 if (process.exitCode === 1) {

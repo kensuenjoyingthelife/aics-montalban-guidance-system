@@ -848,6 +848,15 @@ html.theme-fading *::after {
   }
 }
 
+/* Sky-Azure dynamic title shimmer */
+.title-flow-azure {
+  background: linear-gradient(135deg, #FFFFFF 0%, #4E92DF 50%, #FFFFFF 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 /* ============================================================================
    6. TACTILE MICRO-INTERACTIONS
    ============================================================================ */
