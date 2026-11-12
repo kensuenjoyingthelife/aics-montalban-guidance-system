@@ -259,45 +259,46 @@
   background: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.98) 0%,
-    rgba(240, 246, 255, 0.94) 28%,
-    rgba(224, 237, 255, 0.92) 50%,
-    rgba(238, 245, 255, 0.95) 75%,
+    rgba(224, 238, 255, 0.95) 25%,
+    rgba(195, 222, 255, 0.92) 50%,
+    rgba(230, 242, 255, 0.95) 75%,
     rgba(255, 255, 255, 0.98) 100%
   ) !important;
-  background-size: 240% 240% !important;
-  animation: aics-card-gradient-shift 12s ease-in-out infinite alternate;
+  background-size: 300% 300% !important;
+  animation: aics-card-gradient-shift 7s ease-in-out infinite alternate !important;
   backdrop-filter: blur(28px) saturate(190%);
   -webkit-backdrop-filter: blur(28px) saturate(190%);
   border-radius: 36px;
   border: 2px solid rgba(255, 255, 255, 0.95) !important;
   box-shadow:
     0 24px 60px -12px rgba(11, 31, 77, 0.22),
-    0 0 0 1px rgba(124, 184, 247, 0.45),
-    0 8px 32px -4px rgba(78, 146, 223, 0.18),
+    0 0 0 1.5px rgba(124, 184, 247, 0.55),
+    0 10px 36px -4px rgba(78, 146, 223, 0.25),
     inset 0 1.5px 2px 0 rgba(255, 255, 255, 1) !important;
   color: #0B1F4D !important;
   will-change: background-position;
 }
 
-/* DARK MODE CARD with Subtle Deep AICS Brand Gradient Shift */
+/* DARK MODE CARD with Vivid Deep AICS Brand Gradient Shift */
 :root.dark .cosmic-glass-card {
   position: relative;
   background: linear-gradient(
     145deg,
-    rgba(14, 38, 92, 0.85) 0%,
-    rgba(19, 46, 107, 0.80) 30%,
-    rgba(9, 25, 62, 0.90) 65%,
-    rgba(5, 15, 38, 0.95) 100%
+    rgba(14, 38, 92, 0.92) 0%,
+    rgba(30, 70, 155, 0.88) 30%,
+    rgba(19, 46, 107, 0.90) 55%,
+    rgba(9, 25, 62, 0.95) 75%,
+    rgba(14, 38, 92, 0.92) 100%
   ) !important;
-  background-size: 200% 200% !important;
-  animation: aics-card-gradient-shift 14s ease-in-out infinite alternate;
+  background-size: 300% 300% !important;
+  animation: aics-card-gradient-shift 8s ease-in-out infinite alternate !important;
   backdrop-filter: blur(28px) saturate(190%);
   -webkit-backdrop-filter: blur(28px) saturate(190%);
   border-radius: 36px;
-  border: 1.5px solid rgba(147, 197, 253, 0.38) !important;
+  border: 1.5px solid rgba(147, 197, 253, 0.45) !important;
   box-shadow:
     0 30px 80px -15px rgba(0, 0, 0, 0.8),
-    0 0 50px -10px rgba(59, 130, 246, 0.35),
+    0 0 50px -10px rgba(59, 130, 246, 0.45),
     inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.35) !important;
   color: #FFFFFF !important;
   will-change: background-position;
