@@ -1,0 +1,1002 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --aics-navy: #0B1F4D;
+  --aics-navy-mid: #132E6B;
+  --aics-royal: #1E469B;
+  --aics-royal-light: #2557BE;
+  --aics-azure: #4E92DF;
+  --aics-sky: #7CB8F7;
+  --aics-periwinkle: #CFD9F2;
+  --aics-ice: #E4ECFC;
+  --aics-silver: #F4F7FC;
+}
+
+@layer base {
+  html {
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    overflow-x: hidden;
+    background-color: #122B60;
+    color: #FFFFFF;
+  }
+
+  .dark body {
+    background-color: #020611;
+    color: #FFFFFF;
+  }
+}
+
+/* ============================================================================
+   1. DAY SKY (LIGHT MODE) vs NIGHT SKY (DARK MODE) BACKGROUNDS
+   ============================================================================ */
+.aics-sky-canvas {
+  background:
+    radial-gradient(960px 580px at 16% 20%, rgba(124, 184, 247, 0.34), transparent 62%),
+    radial-gradient(880px 520px at 82% 78%, rgba(78, 146, 223, 0.30), transparent 62%),
+    linear-gradient(135deg, #122B64 0%, #1D4396 48%, #285BC4 100%);
+}
+
+.dark .aics-sky-canvas {
+  background:
+    radial-gradient(950px 580px at 18% 20%, rgba(29, 78, 216, 0.24), transparent 62%),
+    radial-gradient(880px 540px at 80% 80%, rgba(14, 116, 144, 0.18), transparent 62%),
+    linear-gradient(135deg, #02050E 0%, #050D22 50%, #09183A 100%);
+}
+
+/* ============================================================================
+   2. HIGH-CONTRAST FROSTED GRADIENT GLASS CARD (WCAG AAA READABILITY)
+      - Light Mode: Frosted Pearl-Ice Gradient Glass with Deep Oxford Navy (#0B1F4D) Text
+      - Dark Mode: Frosted Midnight-Sapphire Gradient Glass with Crisp White (#FFFFFF) Text
+   ============================================================================ */
+.aics-true-glass {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(235, 243, 255, 0.88) 55%,
+    rgba(222, 235, 255, 0.84) 100%
+  );
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1.5px solid rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 30px 72px -12px rgba(6, 18, 48, 0.52),
+    inset 0 1px 2px rgba(255, 255, 255, 1);
+  color: #0B1F4D;
+}
+
+.dark .aics-true-glass {
+  background: linear-gradient(
+    145deg,
+    rgba(17, 35, 76, 0.86) 0%,
+    rgba(11, 24, 54, 0.80) 55%,
+    rgba(8, 18, 42, 0.88) 100%
+  );
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 1.5px solid rgba(124, 184, 247, 0.36);
+  box-shadow:
+    0 34px 80px -12px rgba(0, 0, 0, 0.85),
+    inset 0 1px 2px rgba(186, 230, 253, 0.28);
+  color: #FFFFFF;
+}
+
+/* Left Panel Feature Tile Glass */
+.aics-hero-tile {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.07) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.28);
+}
+
+.aics-hero-tile:hover {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.24) 0%,
+    rgba(255, 255, 255, 0.12) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+/* Card Inner Keypad, Pill & Input Tiles (Crystal Clear Contrast in Both Modes!) */
+.aics-card-tile {
+  background: linear-gradient(
+    145deg,
+    rgba(235, 242, 254, 0.95) 0%,
+    rgba(222, 233, 252, 0.85) 100%
+  );
+  border: 1.5px solid rgba(180, 202, 242, 0.9);
+  color: #0B1F4D;
+  box-shadow: 0 2px 5px rgba(11, 31, 77, 0.06);
+}
+
+.aics-card-tile:hover:not(:disabled) {
+  background: linear-gradient(
+    145deg,
+    rgba(216, 229, 252, 1) 0%,
+    rgba(202, 219, 248, 0.95) 100%
+  );
+  border-color: #2557BE;
+}
+
+.dark .aics-card-tile {
+  background: linear-gradient(
+    145deg,
+    rgba(28, 54, 110, 0.72) 0%,
+    rgba(19, 38, 82, 0.62) 100%
+  );
+  border: 1.5px solid rgba(124, 184, 247, 0.32);
+  color: #FFFFFF;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.12);
+}
+
+.dark .aics-card-tile:hover:not(:disabled) {
+  background: linear-gradient(
+    145deg,
+    rgba(38, 72, 145, 0.85) 0%,
+    rgba(26, 52, 110, 0.78) 100%
+  );
+  border-color: #7CB8F7;
+}
+
+/* ============================================================================
+   2C. ULTRA-PREMIUM COSMIC FROSTED GLASSSMORPHISM (INSPIRED BY FIGMA/MACOS)
+   ============================================================================ */
+.cosmic-glass-card {
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.04) 45%,
+    rgba(14, 38, 88, 0.42) 100%
+  );
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border-radius: 36px;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(124, 184, 247, 0.25),
+    0 25px 60px -12px rgba(2, 6, 23, 0.85),
+    0 0 50px -10px rgba(78, 146, 223, 0.35),
+    inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -2px 6px 0 rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+/* ============================================================================
+   PERFECT THEME SWITCHING: DARK MODE vs LIGHT MODE
+   - Dark Mode Toggle:
+       Background = Deep Midnight Celestial Space
+       Card = Luminous Cosmic Midnight Glass
+       Text = Solid White & Electric Cyan
+   - Light Mode Toggle:
+       Background = Soft Medium Twilight-Azure Space (hindi sobrang puti, parang twilight!)
+       Card = Clean Frosted Pearl Light Card
+       Text = Deep Oxford Navy (#0B1F4D) & Royal Blue (#1E469B) (100% Readable!)
+   ============================================================================ */
+
+/* 1. BACKGROUND CANVAS */
+/* DARK MODE BACKGROUND */
+:root.dark .student-portal-canvas {
+  background:
+    radial-gradient(1100px 700px at 15% 15%, rgba(37, 99, 235, 0.28), transparent 60%),
+    radial-gradient(900px 600px at 85% 85%, rgba(79, 70, 229, 0.24), transparent 60%),
+    linear-gradient(145deg, #050D24 0%, #0A1B44 50%, #102A6B 100%) !important;
+  color: #FFFFFF !important;
+}
+
+/* LIGHT MODE BACKGROUND: Soft Twilight-Azure (Hindi sobrang puti, sakto lang para lumitaw ang light card!) */
+:root:not(.dark) .student-portal-canvas {
+  background:
+    radial-gradient(960px 600px at 20% 20%, rgba(59, 130, 246, 0.28), transparent 65%),
+    radial-gradient(880px 540px at 80% 80%, rgba(99, 102, 241, 0.22), transparent 65%),
+    linear-gradient(135deg, #A8C7F7 0%, #BBD6FC 50%, #CDE3FD 100%) !important;
+  color: #0B1F4D !important;
+}
+
+/* 2. TOP HEADER BAR */
+/* Dark Mode Header */
+:root.dark .student-portal-header {
+  background: rgba(5, 13, 36, 0.85) !important;
+  border-color: rgba(147, 197, 253, 0.2) !important;
+  color: #FFFFFF !important;
+}
+:root.dark .student-portal-header h1 {
+  color: #FFFFFF !important;
+}
+:root.dark .student-portal-header p {
+  color: #93C5FD !important;
+}
+
+/* Light Mode Header */
+:root:not(.dark) .student-portal-header {
+  background: rgba(255, 255, 255, 0.82) !important;
+  border-color: rgba(30, 70, 155, 0.18) !important;
+  color: #0B1F4D !important;
+}
+:root:not(.dark) .student-portal-header h1 {
+  color: #0B1F4D !important;
+}
+:root:not(.dark) .student-portal-header p {
+  color: #1E469B !important;
+}
+
+/* 3. CARD SURFACES (DARK CARD in Dark Mode vs LIGHT CARD in Light Mode) */
+/* DARK MODE CARD */
+:root.dark .cosmic-glass-card {
+  position: relative;
+  background: linear-gradient(
+    145deg,
+    rgba(14, 38, 92, 0.78) 0%,
+    rgba(9, 25, 62, 0.88) 60%,
+    rgba(5, 15, 38, 0.94) 100%
+  ) !important;
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border-radius: 36px;
+  border: 1.5px solid rgba(147, 197, 253, 0.38) !important;
+  box-shadow:
+    0 30px 80px -15px rgba(0, 0, 0, 0.8),
+    0 0 50px -10px rgba(59, 130, 246, 0.35),
+    inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.35) !important;
+  color: #FFFFFF !important;
+}
+
+/* LIGHT MODE CARD */
+:root:not(.dark) .cosmic-glass-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.94) !important;
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border-radius: 36px;
+  border: 2px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow:
+    0 24px 60px -12px rgba(11, 31, 77, 0.22),
+    0 0 0 1px rgba(195, 220, 252, 0.6),
+    inset 0 1.5px 2px 0 rgba(255, 255, 255, 1) !important;
+  color: #0B1F4D !important;
+}
+
+/* 4. TITLES & LABELS (Adaptive to Dark vs Light) */
+/* Titles */
+:root.dark .card-title-text {
+  color: #FFFFFF !important;
+  font-weight: 800 !important;
+}
+:root:not(.dark) .card-title-text {
+  color: #0B1F4D !important;
+  font-weight: 900 !important;
+}
+
+/* Subtitles */
+:root.dark .card-subtitle-text {
+  color: #93C5FD !important;
+  font-weight: 500 !important;
+}
+:root:not(.dark) .card-subtitle-text {
+  color: #1E469B !important;
+  font-weight: 700 !important;
+}
+
+/* Labels */
+:root.dark .register-label {
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+}
+:root:not(.dark) .register-label {
+  color: #0B1F4D !important;
+  font-weight: 800 !important;
+}
+
+/* Section Titles (1. Student Identity, etc) */
+:root.dark .register-section-title {
+  color: #60A5FA !important;
+  font-weight: 800 !important;
+}
+:root:not(.dark) .register-section-title {
+  color: #1E469B !important;
+  font-weight: 900 !important;
+}
+
+/* Back Button */
+:root.dark .card-back-button {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  color: #FFFFFF !important;
+}
+:root.dark .card-back-button:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+:root:not(.dark) .card-back-button {
+  background: #FFFFFF !important;
+  border: 1.5px solid #BAD7FA !important;
+  color: #0B1F4D !important;
+  box-shadow: 0 2px 5px rgba(11, 31, 77, 0.06) !important;
+}
+:root:not(.dark) .card-back-button:hover {
+  background: #F0F6FF !important;
+  border-color: #1E469B !important;
+}
+
+/* 5. INPUT FIELDS (Dark in Dark Mode vs Solid White in Light Mode) */
+/* Dark Mode Inputs */
+:root.dark .cosmic-input {
+  background: rgba(3, 11, 30, 0.8) !important;
+  border: 1.5px solid rgba(147, 197, 253, 0.3) !important;
+  color: #FFFFFF !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45) !important;
+}
+:root.dark .cosmic-input::placeholder {
+  color: rgba(147, 197, 253, 0.45) !important;
+}
+:root.dark .cosmic-input:focus {
+  background: rgba(4, 15, 42, 0.95) !important;
+  border-color: #60A5FA !important;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.32) !important;
+}
+
+/* Light Mode Inputs */
+:root:not(.dark) .cosmic-input {
+  background: #FFFFFF !important;
+  border: 2px solid #BAD2F7 !important;
+  color: #0B1F4D !important;
+  box-shadow: 0 1.5px 3px rgba(11, 31, 77, 0.05) !important;
+}
+:root:not(.dark) .cosmic-input::placeholder {
+  color: #94A3B8 !important;
+  font-weight: 500 !important;
+}
+:root:not(.dark) .cosmic-input:focus {
+  background: #FFFFFF !important;
+  border-color: #1E469B !important;
+  box-shadow: 0 0 0 3px rgba(30, 70, 155, 0.22) !important;
+}
+
+/* 6. FORM SECTION CARDS (Dark in Dark Mode vs Soft Pearl in Light Mode) */
+/* Dark Mode Section Cards */
+:root.dark .register-section-card {
+  background: rgba(3, 11, 28, 0.5) !important;
+  border: 1.5px solid rgba(147, 197, 253, 0.25) !important;
+}
+:root.dark .register-inner-card {
+  background: rgba(2, 8, 22, 0.6) !important;
+  border: 1.5px solid rgba(147, 197, 253, 0.25) !important;
+}
+
+/* Light Mode Section Cards */
+:root:not(.dark) .register-section-card {
+  background: #F7FAFF !important;
+  border: 2px solid #C4DAFC !important;
+  box-shadow: 0 3px 10px rgba(11, 31, 77, 0.04) !important;
+}
+:root:not(.dark) .register-inner-card {
+  background: #FFFFFF !important;
+  border: 2px solid #C4DAFC !important;
+  box-shadow: 0 2px 6px rgba(11, 31, 77, 0.03) !important;
+}
+
+/* 7. UPLOAD DROPZONES */
+:root.dark .upload-dropzone {
+  border-color: rgba(96, 165, 250, 0.4) !important;
+  background: rgba(30, 58, 138, 0.2) !important;
+  color: #FFFFFF !important;
+}
+:root.dark .upload-dropzone:hover {
+  background: rgba(37, 99, 235, 0.3) !important;
+  border-color: #93C5FD !important;
+}
+:root:not(.dark) .upload-dropzone {
+  border-color: rgba(30, 70, 155, 0.35) !important;
+  background: rgba(235, 244, 255, 0.8) !important;
+  color: #0B1F4D !important;
+}
+:root:not(.dark) .upload-dropzone:hover {
+  background: rgba(225, 238, 255, 1) !important;
+  border-color: #1E469B !important;
+}
+
+/* 8. CHECKLIST BAR */
+:root.dark .checklist-bar {
+  background: rgba(2, 9, 26, 0.7) !important;
+  border: 1.5px solid rgba(147, 197, 253, 0.25) !important;
+}
+:root.dark .checklist-dim {
+  color: rgba(147, 197, 253, 0.55) !important;
+}
+:root:not(.dark) .checklist-bar {
+  background: #FFFFFF !important;
+  border: 1.5px solid #BAD2F7 !important;
+}
+:root:not(.dark) .checklist-dim {
+  color: #64748B !important;
+}
+
+/* 9. LIVE STATUS BADGES */
+:root.dark .badge-correct {
+  background: rgba(16, 185, 129, 0.2) !important;
+  border: 1px solid rgba(52, 211, 153, 0.6) !important;
+  color: #34D399 !important;
+  font-weight: 800 !important;
+}
+:root:not(.dark) .badge-correct {
+  background: #DCFCE7 !important;
+  border: 1px solid #86EFAC !important;
+  color: #15803D !important;
+  font-weight: 800 !important;
+}
+
+:root.dark .badge-wrong {
+  background: rgba(244, 63, 94, 0.25) !important;
+  border: 1px solid rgba(251, 113, 133, 0.6) !important;
+  color: #FDA4AF !important;
+  font-weight: 800 !important;
+}
+:root:not(.dark) .badge-wrong {
+  background: #FFE4E6 !important;
+  border: 1px solid #FECDD3 !important;
+  color: #BE123C !important;
+  font-weight: 800 !important;
+}
+
+:root.dark .badge-not-input {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-weight: 700 !important;
+}
+:root:not(.dark) .badge-not-input {
+  background: #F1F5F9 !important;
+  border: 1px solid #CBD5E1 !important;
+  color: #334155 !important;
+  font-weight: 700 !important;
+}
+
+/* Mobile responsive padding and radius for Capacitor & PWA phones */
+@media (max-width: 640px) {
+  .cosmic-glass-card {
+    border-radius: 24px;
+    padding: 1.25rem !important;
+  }
+}
+
+/* Capacitor & Mobile Notch Safe-Areas */
+.safe-area-top {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+
+.safe-area-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.safe-area-inset {
+  padding-top: max(1rem, env(safe-area-inset-top));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+/* Diagonal reflection highlight along the card edge */
+.cosmic-glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.03) 70%,
+    transparent 100%
+  );
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+  pointer-events: none;
+}
+
+/* Glowing perimeter border accent */
+.cosmic-glass-card::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.75) 0%,
+    rgba(124, 184, 247, 0.4) 30%,
+    rgba(59, 130, 246, 0.15) 70%,
+    rgba(147, 197, 253, 0.55) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Cosmic Input styling */
+.cosmic-input {
+  background: rgba(4, 14, 38, 0.65);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.4),
+    0 1px 2px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cosmic-input:focus {
+  background: rgba(6, 20, 52, 0.85);
+  border-color: #60A5FA;
+  box-shadow:
+    0 0 0 3px rgba(96, 165, 250, 0.35),
+    0 0 25px rgba(96, 165, 250, 0.25),
+    inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Low-End / Battery Saver / Reduced-Motion mode: eliminates heavy backdrop blur & glow */
+body.low-tier-device .cosmic-glass-card,
+body.low-tier-device .cosmic-input,
+body.low-tier-device [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
+}
+
+body.low-tier-device .cosmic-glass-card {
+  background: #091738 !important;
+  border-color: rgba(124, 184, 247, 0.4) !important;
+}
+
+body.low-tier-device .cosmic-input {
+  background: #050E24 !important;
+}
+
+body.low-tier-device .anim-float-slow,
+body.low-tier-device .anim-float-reverse,
+body.low-tier-device .meteor-streak,
+body.low-tier-device [style*="animation: twinkleGlow"] {
+  animation: none !important;
+  transform: none !important;
+}
+
+/* ============================================================================
+   2B. CALM ENTERPRISE SaaS WORKSPACE SURFACES (ZERO EYE STRAIN / ZERO GLARE)
+   ============================================================================ */
+.saas-workspace-canvas {
+  background-color: #F3F6FB;
+  color: #0B1F4D;
+}
+
+.dark .saas-workspace-canvas {
+  background-color: #080E1E;
+  color: #F8FAFC;
+}
+
+.saas-card {
+  background-color: #FFFFFF;
+  border: 1px solid #DCE5F2;
+  box-shadow: 0 1px 3px rgba(11, 31, 77, 0.04), 0 4px 12px rgba(11, 31, 77, 0.03);
+  color: #0B1F4D;
+}
+
+.dark .saas-card {
+  background-color: #0F1A30;
+  border: 1px solid #1E3158;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  color: #FFFFFF;
+}
+
+.saas-card-subtle {
+  background-color: #F8FAFE;
+  border: 1px solid #E2E9F5;
+  color: #0B1F4D;
+}
+
+.dark .saas-card-subtle {
+  background-color: #14223E;
+  border: 1px solid #243B6B;
+  color: #FFFFFF;
+}
+
+/* Clean custom scrollbar for Sidebar & Modals */
+.clean-scroll::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.clean-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.clean-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 9999px;
+}
+
+.clean-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+/* Gentle Zero-Lag Floating Keyframes for Planets & Computers */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(0, -12px, 0) rotate(3deg);
+  }
+}
+
+@keyframes floatReverse {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(0, 11px, 0) rotate(-3deg);
+  }
+}
+
+.anim-float-slow {
+  will-change: transform;
+  animation: floatSlow 7.5s ease-in-out infinite;
+}
+
+.anim-float-reverse {
+  will-change: transform;
+  animation: floatReverse 8.5s ease-in-out infinite;
+}
+
+/* ============================================================================
+   3. CLEAN PASSING LIGHT-SHEEN ACROSS BOTH TITLE LINES (NO NEON BLUR)
+   ============================================================================ */
+.title-light-sweep-white {
+  background: linear-gradient(
+    105deg,
+    #DCEBFF 0%,
+    #DCEBFF 38%,
+    #FFFFFF 48%,
+    #FFFFFF 52%,
+    #DCEBFF 62%,
+    #DCEBFF 100%
+  );
+  background-size: 240% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: lightBeamSweep 5.2s ease-in-out infinite;
+}
+
+.title-light-sweep-azure {
+  background: linear-gradient(
+    105deg,
+    #8CC5FF 0%,
+    #8CC5FF 36%,
+    #FFFFFF 49%,
+    #FFFFFF 51%,
+    #8CC5FF 64%,
+    #8CC5FF 100%
+  );
+  background-size: 240% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: lightBeamSweep 5.2s ease-in-out infinite;
+}
+
+@keyframes lightBeamSweep {
+  0% {
+    background-position: 130% center;
+  }
+  65%, 100% {
+    background-position: -70% center;
+  }
+}
+
+/* ============================================================================
+   4. VIEW TRANSITION: LUMINOUS AICS AURA RING + CIRCULAR VIEW TRANSITION REVEAL
+   ============================================================================ */
+::view-transition-group(root) {
+  animation: none;
+  transform: none !important;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  transform: none !important;
+  will-change: clip-path;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
+@keyframes auraRingExpand {
+  0% {
+    transform: translate(-50%, -50%) scale(0.1);
+    opacity: 0.95;
+  }
+  40% {
+    opacity: 0.85;
+  }
+  80% {
+    opacity: 0.45;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(28);
+    opacity: 0;
+  }
+}
+
+.theme-aura-ring {
+  position: fixed;
+  width: 96px;
+  height: 96px;
+  border-radius: 9999px;
+  pointer-events: none;
+  z-index: 10000;
+  border: 2.5px solid rgba(124, 184, 247, 0.85);
+  box-shadow:
+    0 0 32px 6px rgba(78, 146, 223, 0.55),
+    inset 0 0 22px 4px rgba(207, 217, 242, 0.45);
+  will-change: transform, opacity;
+  animation: auraRingExpand 520ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+html.theme-fading *,
+html.theme-fading *::before,
+html.theme-fading *::after {
+  transition: none !important;
+}
+
+/* ============================================================================
+   5. CELESTIAL STARS, METEORS & BOTTOM WAVES
+   ============================================================================ */
+@keyframes twinkleGlow {
+  0% {
+    opacity: 0.25;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 0.92;
+    transform: scale(1.22);
+  }
+}
+
+@keyframes meteorFly {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(-32deg) scaleX(0.2);
+  }
+  10% {
+    opacity: 0.92;
+  }
+  35% {
+    opacity: 0.82;
+    transform: translate3d(-360px, 225px, 0) rotate(-32deg) scaleX(1);
+  }
+  48%, 100% {
+    opacity: 0;
+    transform: translate3d(-520px, 325px, 0) rotate(-32deg) scaleX(0.3);
+  }
+}
+
+.waves {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 300px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.wave {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 200%;
+  height: 100%;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+}
+
+.wave-a {
+  animation: waveDrift 24s linear infinite;
+  opacity: 0.4;
+}
+
+.wave-b {
+  animation: waveDrift 17s linear infinite reverse;
+  opacity: 0.3;
+  bottom: -12px;
+}
+
+.wave-c {
+  animation: waveDrift 30s linear infinite;
+  opacity: 0.2;
+  bottom: -24px;
+}
+
+@keyframes waveDrift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+/* ============================================================================
+   6. TACTILE MICRO-INTERACTIONS
+   ============================================================================ */
+.btn-press {
+  transition:
+    transform 120ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.btn-press:hover:not(:disabled) {
+  transform: translateY(-1.5px);
+}
+
+.btn-press:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+@keyframes shakeError {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  18% { transform: translate3d(-6px, 0, 0); }
+  36% { transform: translate3d(5px, 0, 0); }
+  54% { transform: translate3d(-4px, 0, 0); }
+  72% { transform: translate3d(3px, 0, 0); }
+  90% { transform: translate3d(-1px, 0, 0); }
+}
+
+.anim-shake {
+  animation: shakeError 340ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.anim-pop {
+  animation: popIn 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wave-a,
+  .wave-b,
+  .wave-c,
+  .meteor-streak,
+  .anim-float-slow,
+  .anim-float-reverse,
+  .title-light-sweep-white,
+  .title-light-sweep-azure {
+    animation: none !important;
+  }
+}
+
+/* Masterlist import: scanning shimmer over the progress bar (transform-only, GPU friendly) */
+@keyframes import-scan {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(300%); }
+}
+.import-scan {
+  left: 0;
+  animation: import-scan 1.1s ease-in-out infinite;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .import-scan { animation: none; opacity: 0; }
+}
+
+/* ===== Masterlist import: AICS profile-scanning scene (transform/opacity only) ===== */
+.scan-scene .scan-feed { animation: scan-feed 1.8s linear infinite; }
+@keyframes scan-feed { from { transform: translateY(0); } to { transform: translateY(-42px); } }
+
+.scan-scene .scan-beam { animation: scan-beam 0.9s ease-in-out infinite; }
+@keyframes scan-beam { from { transform: translateX(0); } to { transform: translateX(172px); } }
+
+.scan-scene .scan-check { animation: scan-check 1.8s ease-out infinite; }
+@keyframes scan-check {
+  0%, 45% { transform: scale(0); opacity: 0; }
+  58% { transform: scale(1.15); opacity: 1; }
+  66%, 88% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.6); opacity: 0; }
+}
+
+.scan-scene .scan-point { animation: scan-point 1.8s ease-in-out infinite; }
+@keyframes scan-point { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-6deg); } }
+
+.scan-scene .scan-tablet { animation: scan-tablet 2.4s ease-in-out infinite; }
+@keyframes scan-tablet { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(4deg); } }
+
+.scan-scene .scan-blink { animation: scan-blink 3.6s ease-in-out infinite; }
+@keyframes scan-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+
+.scan-scene .scan-dots { animation: scan-dots 3s ease-in-out infinite; }
+@keyframes scan-dots { 0%, 100% { transform: translateY(0); opacity: 0.9; } 50% { transform: translateY(-5px); opacity: 0.5; } }
+
+.scan-scene .scan-done-badge { transform: scale(0); opacity: 0; transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), opacity 0.2s; }
+.scan-scene.is-done .scan-done-badge { transform: scale(1); opacity: 1; }
+.scan-scene.is-done .scan-feed,
+.scan-scene.is-done .scan-beam,
+.scan-scene.is-done .scan-check { animation-play-state: paused; }
+.scan-scene.is-done .scan-beam,
+.scan-scene.is-done .scan-check { opacity: 0; }
+
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-scene .scan-feed, .scan-scene .scan-beam, .scan-scene .scan-check,
+  .scan-scene .scan-point, .scan-scene .scan-tablet, .scan-scene .scan-blink, .scan-scene .scan-dots { animation: none; }
+  .scan-scene .scan-check { transform: scale(1); opacity: 1; }
+}
+/* Pivots relative to each shape's own box */
+.scan-scene .scan-point { transform-box: fill-box; transform-origin: 0% 100%; }   /* shoulder = bottom-left of raised arm */
+.scan-scene .scan-tablet { transform-box: fill-box; transform-origin: 0% 0%; }    /* shoulder = top-left of arm */
+.scan-scene .scan-blink,
+.scan-scene .scan-check,
+.scan-scene .scan-done-badge { transform-box: fill-box; transform-origin: 50% 50%; }
+.scan-scene .scan-led { animation: scan-led 0.9s ease-in-out infinite; }
+@keyframes scan-led { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.scan-scene.is-done .scan-led { animation: none; opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .scan-scene .scan-led { animation: none; } }
+/* Keep the scene's per-frame work inside its own box (no page-wide layout/paint) */
+.scan-scene { contain: layout paint style; isolation: isolate; }
+
+/* Splash: light that passes through the wordmark letters only (gradient clipped to text) */
+.splash-shine p {
+  color: transparent;
+  background-image: linear-gradient(
+    105deg,
+    transparent 0%,
+    transparent 36%,
+    #ffffff 47%,
+    #ffffff 53%,
+    transparent 64%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  background-position: var(--shine-x, 140%) 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+
+/* ===== Text size (Laki ng letra): the page is zoomed, so "full screen height" must be divided by the zoom ===== */
+:root { --app-zoom: 1; }
+.h-screen { height: calc(100vh / var(--app-zoom)) !important; }
+.min-h-screen { min-height: calc(100vh / var(--app-zoom)) !important; }

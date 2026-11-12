@@ -1,0 +1,11 @@
+node_modules
+dist
+*.tsbuildinfo
+
+# secrets — never commit
+.env
+.env.local
+.env.*.local
+
+# Tauri build output
+src-tauri/target

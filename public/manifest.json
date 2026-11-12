@@ -1,0 +1,24 @@
+{
+  "name": "AICS Montalban Student Concern Portal",
+  "short_name": "AICS Portal",
+  "description": "Official Safe & Confidential Student Concern, Bullying and Peer Reporting System of Asian Institute of Computer Studies Montalban",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#05112B",
+  "theme_color": "#0B1E48",
+  "icons": [
+    {
+      "src": "/aics-logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/aics-logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
