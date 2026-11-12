@@ -44,7 +44,7 @@ update is requested, do not change code without asking.
 - Offense details in any SMS/email; the Priority Follow-Up mark in SMS
 - Students or parents seeing any case record; concern chat before approval
 - Removed FOREVER by the user (2026-11-12, crossed out = never build, never in the manuscript): Community Service page, Clearance page/badges, refer-out safeguard,
-  ID image view log. (Manual add/edit student was crossed out but RESTORED on 2026-11-12 at the Guidance Office's request.)
+  ID image view log, ID Holds (page, alert, Settings rule — removed by the user 2026-11-12). (Manual add/edit student was crossed out but RESTORED on 2026-11-12 at the Guidance Office's request.)
 
 ## Required anchors (manuscript)
 

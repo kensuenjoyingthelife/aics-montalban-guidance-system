@@ -62,12 +62,12 @@ const FEATURE_TILES: FeatureTileItem[] = [
 ];
 
 interface LoginGateProps {
-  onReplaySplash: () => void;
+  /** kept for App.tsx; the login screen no longer shows a replay button */
+  onReplaySplash?: () => void;
   onEnterDashboard: (staff: StaffDirectoryAccount) => void;
 }
 
 export const LoginGate: React.FC<LoginGateProps> = ({
-  onReplaySplash,
   onEnterDashboard,
 }) => {
   const { locale, t } = useLanguage();
@@ -382,55 +382,6 @@ export const LoginGate: React.FC<LoginGateProps> = ({
       <CelestialBackground />
 
       {/* ====================================================================
-          TOP NAVIGATION BAR
-          ==================================================================== */}
-      <header className="relative z-30 w-full max-w-7xl mx-auto px-6 sm:px-10 pt-5 sm:pt-7 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={() => {
-              // The intro has its own score; this click also unlocks browser audio for it
-              onReplaySplash();
-            }}
-            className="btn-press inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 border border-white/30 backdrop-blur-md text-white text-xs sm:text-sm font-bold shadow-sm"
-          >
-            <img
-              src="/aics-logo.jpg"
-              alt="AICS Seal"
-              className="w-6 h-6 rounded-full object-cover ring-1 ring-white/70"
-            />
-            <span>{t.replaySplashBtn}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              soundFX.playVerifiedFanfare();
-              onEnterDashboard({
-                email: 'aicsmontalbansafeguard@gmail.com',
-                fullName: 'AICS Montalban Guidance Associate',
-                role: 'Guidance Associate & System Administrator',
-                department: 'Guidance & Counseling Office · Montalban',
-                badgeCode: 'AICS-GA-001',
-              });
-            }}
-            className="btn-press inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/25 hover:bg-emerald-500/40 border border-emerald-300/50 backdrop-blur-md text-white text-xs sm:text-sm font-extrabold shadow-sm"
-          >
-            <span>⚡</span>
-            <span>
-              {locale === 'tl' ? 'Buksan ang Stage 2 Dashboard →' : 'Open Stage 2 Dashboard →'}
-            </span>
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2.5 sm:gap-3">
-          <SoundTogglePill />
-          <LocaleSwitchPill />
-          <SkyThemePill />
-        </div>
-      </header>
-
-      {/* ====================================================================
           MAIN 2-COLUMN SPLIT LAYOUT
           ==================================================================== */}
       <main className="relative z-20 w-full max-w-7xl mx-auto px-6 sm:px-10 py-6 my-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-10 items-center">
@@ -511,6 +462,12 @@ export const LoginGate: React.FC<LoginGateProps> = ({
             - Locked Uniform Size Across All 4 Steps: max-w-[440px] h-[590px]
             ================================================================== */}
         <section className="lg:col-span-5 flex flex-col items-center">
+          {/* Sound · language · theme — exactly as wide as the sign-in card */}
+          <div className="w-full max-w-[440px] mb-3 flex items-center justify-between gap-2" data-login-toggles>
+            <SoundTogglePill />
+            <LocaleSwitchPill />
+            <SkyThemePill />
+          </div>
           <div className="relative z-10 w-full max-w-[440px] h-[590px] rounded-[32px] aics-true-glass overflow-hidden flex flex-col transition-all duration-300">
             {/* Top Accent Rim */}
             <div className="h-1.5 w-full shrink-0 bg-gradient-to-r from-[#1E469B] via-[#4E92DF] to-[#7CB8F7]" />

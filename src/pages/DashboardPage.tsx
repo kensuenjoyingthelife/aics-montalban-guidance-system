@@ -32,6 +32,8 @@ import {
 import { Stage3CasesHub, type Stage3SubTab } from './Stage3CasesHub';
 import { ParentsHub, type ParentsTab } from './ParentsHub';
 import ConcernsHub from './ConcernsHub';
+import { HelpAssistant } from '../components/help/HelpAssistant';
+import type { HelpTarget } from '../services/helpKB';
 import { SortControl, SortKey, loadSort, saveSort, timeOf, addedLabel } from '../components/ui/SortControl';
 import ReferralQueue from './ReferralQueue';
 import AuditTrail from './AuditTrail';
@@ -158,6 +160,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const [concernAcknowledged, setConcernAcknowledged] = useState<boolean>(false);
   const [showConcernModal, setShowConcernModal] = useState<boolean>(false);
   const [showQuickGuideModal, setShowQuickGuideModal] = useState<boolean>(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // Analytics Timeframe state
   const [timeframe, setTimeframe] = useState<TimeframeKey>('month');
@@ -336,7 +339,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   // Esc closes the top-most popup (Golden Rule 6: same behaviour everywhere)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || document.querySelector('[data-confirm-open], [data-statement-station]')) return;
+      if (e.key !== 'Escape' || document.querySelector('[data-confirm-open], [data-statement-station], [data-help-assistant]')) return;
       if (toastBanner) setToastBanner(null);
       else if (composerOpen) setComposerOpen(false);
       else if (callLogTarget) setCallLogTarget(null);
@@ -505,6 +508,31 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     setParentsKey((k) => k + 1);
     const item = MAIN_SIDEBAR_CATEGORIES.find((c) => c.id === 'parents-hub');
     if (item) setActiveCategory(item);
+  };
+
+  /** Help Assistant "Open the page" buttons */
+  const helpGo = (t: HelpTarget) => {
+    setHelpOpen(false);
+    const goId = (id: string) => {
+      soundFX.playStepUnlock();
+      const item = MAIN_SIDEBAR_CATEGORIES.find((c) => c.id === id);
+      if (item) setActiveCategory(item);
+    };
+    if (t === 'dashboard') goId('dashboard');
+    else if (t === 'new-case') openCasesTab('add-report');
+    else if (t === 'cases') openCasesTab('case-board');
+    else if (t === 'students') openCasesTab('students');
+    else if (t === 'masterlist') openCasesTab('masterlist');
+    else if (t === 'parents-schedule') openParents('schedule');
+    else if (t === 'parents-conferences') openParents('conferences');
+    else if (t === 'parents-followups') openParents('followups');
+    else if (t === 'parents-messages') openParents('messages');
+    else if (t === 'concerns') goId('support-hub');
+    else if (t === 'counselor') goId('referrals-hub');
+    else if (t === 'reports') goId('records-hub');
+    else if (t === 'audit') goId('audit-hub');
+    else if (t === 'settings') goId('settings-hub');
+    else if (t === 'guide') setShowQuickGuideModal(true);
   };
 
   /** Shows the "Today" tab and scrolls to a panel (conferences or follow-ups). */
@@ -1268,9 +1296,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
           {/* Zone 3: Calm, Uncluttered Counselor Actions + Quick Guide */}
           <div className="flex items-center gap-2.5 shrink-0">
-            <div className="hidden xl:block">
+            <div className="hidden 2xl:block">
               <Clock24 />
             </div>
+
+            <button
+              type="button"
+              data-open-help
+              onClick={() => {
+                soundFX.playToggleSwitch(true);
+                setHelpOpen(true);
+              }}
+              title={isTl ? 'Itanong kung paano gamitin ang system' : 'Ask how to use the system'}
+              className="btn-press inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full saas-card-subtle hover:border-[#1E469B] text-xs font-extrabold text-[#1E469B] dark:text-[#7CB8F7] whitespace-nowrap"
+            >
+              <span>💬</span>
+              <span>{isTl ? 'Magtanong' : 'Ask Help'}</span>
+            </button>
 
             <button
               type="button"
@@ -3047,6 +3089,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       {/* ====================================================================
           MODAL 6: NEW USER QUICK GUIDE MODAL (4-STEP WORKFLOW HELPER)
           ==================================================================== */}
+      {helpOpen && <HelpAssistant isTl={isTl} onClose={() => setHelpOpen(false)} onGo={helpGo} />}
       <AnimatePresence>
         {showQuickGuideModal && (
           <motion.div

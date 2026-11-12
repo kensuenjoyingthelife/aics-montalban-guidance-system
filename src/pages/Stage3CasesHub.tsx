@@ -198,7 +198,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   // Esc closes the top-most popup of this page (same as Case Details)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || document.querySelector('[data-confirm-open], [data-evidence-viewer], [data-student-form], [data-print-forms], [data-statement-station]')) return;
+      if (e.key !== 'Escape' || document.querySelector('[data-confirm-open], [data-evidence-viewer], [data-student-form], [data-print-forms], [data-statement-station], [data-help-assistant]')) return;
       if (callSlipCase) setCallSlipCase(null);
       else if (selectedStudentProfile) setSelectedStudentProfile(null);
     };
@@ -208,7 +208,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   useEffect(() => {
     if (!openCaseCode) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !caseEditing && !document.querySelector('[data-confirm-open], [data-evidence-viewer], [data-print-forms], [data-statement-station]')) setOpenCaseCode(null);
+      if (e.key === 'Escape' && !caseEditing && !document.querySelector('[data-confirm-open], [data-evidence-viewer], [data-print-forms], [data-statement-station], [data-help-assistant]')) setOpenCaseCode(null);
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
@@ -3584,7 +3584,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
             className="fixed inset-0 !m-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
             onClick={() => !caseEditing && setOpenCaseCode(null)}
             onKeyDown={(e) => {
-              if (e.key === 'Escape' && !caseEditing && !document.querySelector('[data-evidence-viewer], [data-print-forms], [data-statement-station]')) setOpenCaseCode(null);
+              if (e.key === 'Escape' && !caseEditing && !document.querySelector('[data-evidence-viewer], [data-print-forms], [data-statement-station], [data-help-assistant]')) setOpenCaseCode(null);
             }}
           >
             <motion.div
