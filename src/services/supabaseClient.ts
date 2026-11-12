@@ -911,41 +911,14 @@ export async function fetchCaseHistoryFromDb(caseCode: string): Promise<CaseHist
 }
 
 
-export interface HeldId {
-  holdCode: string;
-  studentName: string;
-  reason: string;
-  since: string; // YYYY-MM-DD
-}
-/** IDs the office is still holding (days are counted from the date, never from a stored number) */
-export async function fetchHeldIdsFromDb(): Promise<HeldId[] | null> {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/confiscated_ids?select=hold_code,student_name,reason,date_confiscated&status=eq.Held%20at%20Guidance&order=date_confiscated.asc&limit=1000`, {
-      headers: getHeaders(),
-    });
-    if (!res.ok) return null;
-    return ((await res.json()) as Record<string, unknown>[]).map((r) => ({
-      holdCode: String(r.hold_code ?? ''),
-      studentName: String(r.student_name ?? ''),
-      reason: String(r.reason ?? ''),
-      since: String(r.date_confiscated ?? '').slice(0, 10),
-    }));
-  } catch {
-    return null;
-  }
-}
-
 /** Real numbers for the sidebar badges (never literals) */
-export async function fetchBadgeCountsFromDb(): Promise<{ pendingConcerns: number; idsHeld: number } | null> {
+export async function fetchBadgeCountsFromDb(): Promise<{ pendingConcerns: number } | null> {
   try {
     const h = { ...getHeaders(), Prefer: 'count=exact', Range: '0-0' } as Record<string, string>;
-    const [c, i] = await Promise.all([
-      fetch(`${SUPABASE_URL}/rest/v1/student_concerns?select=id&status=in.(Pending,Pending%20Review,New,Submitted)`, { headers: h }),
-      fetch(`${SUPABASE_URL}/rest/v1/confiscated_ids?select=id&status=eq.Held%20at%20Guidance`, { headers: h }),
-    ]);
-    if (!c.ok || !i.ok) return null;
+    const c = await fetch(`${SUPABASE_URL}/rest/v1/student_concerns?select=id&status=in.(Pending,Pending%20Review,New,Submitted)`, { headers: h });
+    if (!c.ok) return null;
     const total = (r: Response) => Number((r.headers.get('content-range') || '*/0').split('/')[1]) || 0;
-    return { pendingConcerns: total(c), idsHeld: total(i) };
+    return { pendingConcerns: total(c) };
   } catch {
     return null;
   }

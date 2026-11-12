@@ -17,7 +17,6 @@ export interface CaseRules {
   escalateAfterMinors: number; // minors in a row that count as Serious (manuscript: 2)
   overdueDays: number; // open longer than this = overdue
   pendingSanctionDays: number; // a sanction waiting for the parent longer than this = alert
-  idHoldDays: number; // an ID kept longer than this = alert
 }
 export interface SecuritySettings {
   autoSignOutMinutes: number;
@@ -109,7 +108,7 @@ export interface AppConfig {
 export const DEFAULTS: AppConfig = {
   loaded: false,
   officeHours: { days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], start: '08:00', end: '16:00', lunchStart: '11:45', lunchEnd: '13:00', slotMinutes: 45 },
-  caseRules: { escalateAfterMinors: 2, overdueDays: 14, pendingSanctionDays: 3, idHoldDays: 3 },
+  caseRules: { escalateAfterMinors: 2, overdueDays: 14, pendingSanctionDays: 3 },
   security: { autoSignOutMinutes: 15, pinMaxTries: 5, pinLockMinutes: 5 },
   smsTemplates: {
     notice: 'AICS Guidance Office: Magandang araw po. Inaanyayahan po kayo sa pag-uusap tungkol kay {student} sa {when}. Salamat po.',

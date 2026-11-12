@@ -158,7 +158,7 @@ export async function registerStudentPortalAccount(params: RegisterStudentParams
         contact_number: cleanPhone,
         password_hash: passwordHash,
         student_id_image: studentIdUrl || 'UPLOADED_STUDENT_ID',
-        national_id_image: nationalIdUrl || 'UPLOADED_NATIONAL_ID',
+        national_id_image: nationalIdUrl || null,
         status: 'Active', // Automatic Approved!
         is_practice: false,
       }),

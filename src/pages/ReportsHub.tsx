@@ -714,7 +714,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                       value={draft}
                       onChange={(e) => setDraft(e.target.value.slice(0, 1000))}
                       rows={3}
-                      placeholder={isTl ? 'hal. Tinawagan ang nanay, babalik siya sa Biyernes. Hintayin ang ID ng estudyante.' : 'e.g. Called the mother, she will come on Friday. Waiting for the student ID.'}
+                      placeholder={isTl ? 'hal. Tinawagan ang nanay, babalik siya sa Biyernes. Hintayin ang sagot ng tatay.' : 'e.g. Called the mother, she will come on Friday. The father will reply soon.'}
                       className="w-full px-3 py-2 rounded-xl border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-sm text-[#0B1F4D] dark:text-white leading-relaxed"
                     />
                     <div className="flex flex-wrap items-center justify-between gap-2">

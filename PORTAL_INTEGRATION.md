@@ -13,6 +13,11 @@ The desktop app (Guidance Office) is built in parallel. Follow these rules so bo
 
 Never run code formatters on the whole repo.
 
+**Git: never undo the desktop's work.** Both tools edit this folder at the same time, and desktop changes are often not committed yet.
+- Do **not** run `git checkout -- <file>`, `git restore`, `git reset --hard`, `git stash`, or `git clean` on files you do not own (or on the whole repo). On 2026-11-12 22:31 this erased desktop work in `DashboardPage.tsx` and `stage3MockData.ts`.
+- Commit only your own files: `git add <your files>`, never `git add -A` / `git commit -a` when desktop files show as changed.
+- If a desktop file blocks you, leave it and tell the user.
+
 ## 2. A concern sent from the portal must use these tables (already in Supabase)
 
 ### `student_concerns`: one row per concern

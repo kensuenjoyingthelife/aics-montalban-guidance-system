@@ -58,8 +58,6 @@ import {
   updateAppointmentInDb,
   insertContactLogInDb,
   fetchBadgeCountsFromDb,
-  fetchHeldIdsFromDb,
-  HeldId,
   setAuditActor,
   updateCaseFlowInDb,
   ACTIVITY_ADDED,
@@ -177,7 +175,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   // 'loading' → 'ok' | 'offline' (could not reach the database) | 'unsaved' (a save failed)
   const [syncState, setSyncState] = useState<'loading' | 'ok' | 'offline' | 'unsaved'>('loading');
 
-  const [badgeCounts, setBadgeCounts] = useState<{ pendingConcerns: number; idsHeld: number }>({ pendingConcerns: 0, idsHeld: 0 });
+  const [badgeCounts, setBadgeCounts] = useState<{ pendingConcerns: number }>({ pendingConcerns: 0 });
   // every save carries the signed-in staff email → Audit Trail shows who made the change
   useEffect(() => setAuditActor(staffEmail), [staffEmail]);
 
@@ -234,10 +232,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     });
   };
   const [referralRows, setReferralRows] = useState<ReferralRow[] | null>(null);
-  const [heldIds, setHeldIds] = useState<HeldId[]>([]);
   const refreshBadges = React.useCallback(() => {
     void fetchBadgeCountsFromDb().then((c) => c && setBadgeCounts(c));
-    void fetchHeldIdsFromDb().then((r) => r && setHeldIds(r));
     void fetchReferrals().then((r) => r && setReferralRows(r));
   }, []);
   useEffect(() => {
@@ -413,11 +409,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     const r = appConfig.caseRules;
     const overdue = cases.filter((c) => c.status !== 'Resolved' && dayCount(c.incidentDate) > (r.overdueDays || 14));
     const waiting = cases.filter((c) => c.sanctionStatus === 'Pending parent notice' && c.decidedAt && dayCount(c.decidedAt) > (r.pendingSanctionDays ?? 3));
-    const ids = heldIds.filter((h) => h.since && dayCount(h.since) > (r.idHoldDays ?? 3));
-    return { overdue, waiting, ids };
+    return { overdue, waiting };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cases, heldIds, appConfig.caseRules]);
-  const [showIdList, setShowIdList] = useState(false);
+  }, [cases, appConfig.caseRules]);
 
   // The Dashboard shows TODAY's conferences only (other days live on the Parents page)
   const todayStr = todayISO();
@@ -1168,7 +1162,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         openCasesCount={cases.filter((c) => c.status !== 'Resolved').length}
         todayAppointmentsCount={todayAppointments.filter((a) => a.status === 'Scheduled').length}
         pendingConcernsCount={badgeCounts.pendingConcerns}
-        confiscatedIdsCount={badgeCounts.idsHeld}
         referralsWaitingCount={referralsWaiting}
       />
 
@@ -1592,10 +1585,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 1. COMPACT PRIORITY BANNER (LOCKED HEIGHT — NEVER JUMPS)
                 ================================================================ */}
             {/* Needs attention first (Golden Rule 4) — every alert opens the list behind it (Rule 5) */}
-            {(alerts.overdue.length > 0 || alerts.waiting.length > 0 || alerts.ids.length > 0) && (
+            {(alerts.overdue.length > 0 || alerts.waiting.length > 0) && (
               <section aria-label={isTl ? 'Kailangang aksyunan' : 'Needs attention'} className="shrink-0 rounded-2xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/20 px-4 py-3 space-y-2" data-alerts>
                 <p className="text-[13px] font-extrabold text-rose-900 dark:text-rose-200">⚠ {isTl ? 'Kailangang aksyunan' : 'Needs attention'}</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {alerts.overdue.length > 0 && (
                     <button type="button" data-alert="overdue" onClick={() => openCasesTab('case-board', 'overdue')} className="btn-press text-left rounded-xl bg-white dark:bg-[#0F1A30] border border-rose-200 dark:border-rose-900/60 px-3 py-2 hover:border-rose-400">
                       <span className="block text-sm font-extrabold text-[#0B1F4D] dark:text-white">
@@ -1616,27 +1609,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                       </span>
                     </button>
                   )}
-                  {alerts.ids.length > 0 && (
-                    <button type="button" data-alert="ids" aria-expanded={showIdList} onClick={() => setShowIdList((v) => !v)} className="btn-press text-left rounded-xl bg-white dark:bg-[#0F1A30] border border-rose-200 dark:border-rose-900/60 px-3 py-2 hover:border-rose-400">
-                      <span className="block text-sm font-extrabold text-[#0B1F4D] dark:text-white">
-                        {isTl ? `${alerts.ids.length} ID na matagal nang hawak` : `${alerts.ids.length} ID${alerts.ids.length === 1 ? '' : 's'} kept too long`}
-                      </span>
-                      <span className="block text-xs text-[#4A608A] dark:text-[#94A8D0]">
-                        {isTl ? `Higit ${appConfig.caseRules.idHoldDays} araw · ${showIdList ? 'Itago' : 'Ipakita'}` : `Over ${appConfig.caseRules.idHoldDays} day${appConfig.caseRules.idHoldDays === 1 ? '' : 's'} · ${showIdList ? 'Hide' : 'Show'}`}
-                      </span>
-                    </button>
-                  )}
                 </div>
-                {showIdList && alerts.ids.length > 0 && (
-                  <ul className="rounded-xl bg-white dark:bg-[#0F1A30] border border-rose-200 dark:border-rose-900/60 divide-y divide-rose-100 dark:divide-rose-900/40" data-id-list>
-                    {alerts.ids.slice(0, 20).map((h) => (
-                      <li key={h.holdCode} className="px-3 py-2 text-xs flex flex-wrap justify-between gap-2">
-                        <span className="font-bold text-[#0B1F4D] dark:text-white">{h.studentName} · {h.reason}</span>
-                        <span className="text-rose-700 dark:text-rose-300 font-bold">{isTl ? `${dayCount(h.since)} araw nang hawak` : `held ${dayCount(h.since)} day${dayCount(h.since) === 1 ? '' : 's'}`}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
               </section>
             )}
             {/* First visit: 3 clickable steps (Golden Rule 10) */}
@@ -3088,22 +3061,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.94, opacity: 0, y: 8 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-2xl rounded-2xl saas-card p-6 sm:p-7 space-y-5 shadow-2xl"
+              className="w-full max-w-4xl max-h-[calc(100vh-2rem)] overflow-y-auto rounded-2xl saas-card p-6 space-y-4 shadow-2xl" data-quick-guide
             >
-              <div className="flex items-start justify-between gap-4 border-b border-[#DCE5F2] dark:border-[#1E3158] pb-4">
+              <div className="flex items-start justify-between gap-4 border-b border-[#DCE5F2] dark:border-[#1E3158] pb-3">
                 <div>
                   <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#E4ECFC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7] text-[11px] font-extrabold mb-1">
-                    {isTl ? 'GABAY PARA SA BAGONG USER' : 'NEW USER QUICK START GUIDE'}
+                    {isTl ? 'PAANO GAMITIN' : 'QUICK GUIDE'}
                   </span>
                   <h3 className="text-lg font-extrabold text-[#0B1F4D] dark:text-white">
-                    {isTl
-                      ? 'Paano Gamitin ang AICS Guidance System sa 4 na Hakbang'
-                      : 'How to Use the AICS Guidance System in 4 Easy Steps'}
+                    {isTl ? 'Ang araw-araw na trabaho sa 6 na hakbang' : 'Your daily work in 6 steps'}
                   </h3>
                   <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
-                    {isTl
-                      ? 'Pumili ng kahit anong hakbang sa ibaba para buksan agad ang pahina.'
-                      : 'Click any step below to jump directly to that task.'}
+                    {isTl ? 'Pindutin ang isang hakbang para buksan agad ang page na iyon.' : 'Press a step to open that page right away.'}
                   </p>
                 </div>
                 <button
@@ -3117,122 +3086,138 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-left">
-                {/* Step 1 */}
-                <div className="p-4 rounded-xl saas-card-subtle space-y-2 flex flex-col justify-between">
-                  <div className="space-y-1">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#1E469B] text-white text-xs font-extrabold">
-                      1
-                    </span>
-                    <h4 className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
-                      {isTl ? 'Mag-log ng Offense o Kaso' : 'Log a Student Offense'}
-                    </h4>
-                    <p className="text-xs text-[#4A608A] dark:text-[#94A8D0] leading-relaxed">
-                      {isTl
-                        ? 'Piliin ang estudyante at offense. Kusang bibilangin ng system kung 1st, 2nd, o 3rd Offense (Major Case).'
-                        : 'Select the student and offense. The system automatically counts 1st, 2nd, or 3rd Offense (Major Case).'}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playKeyClick(1);
-                      openCasesTab('add-report');
-                      setShowQuickGuideModal(false);
-                    }}
-                    className="btn-press w-full py-2 rounded-lg bg-[#1E469B] text-white text-xs font-extrabold"
-                  >
-                    {isTl ? 'Gumawa ng bagong kaso →' : 'Start a new case →'}
-                  </button>
-                </div>
+              {(() => {
+                const go = (fn: () => void) => () => {
+                  setShowQuickGuideModal(false);
+                  fn();
+                };
+                const goPage = (id: string) =>
+                  go(() => {
+                    soundFX.playStepUnlock();
+                    const item = MAIN_SIDEBAR_CATEGORIES.find((c) => c.id === id);
+                    if (item) setActiveCategory(item);
+                  });
+                const steps: { key: string; en: string; tl: string; dEn: string; dTl: string; aEn: string; aTl: string; run: () => void }[] = [
+                  {
+                    key: 'dashboard',
+                    en: 'Start on the Dashboard',
+                    tl: 'Magsimula sa Dashboard',
+                    dEn: '"Needs attention" shows overdue cases and sanctions waiting for the parent. Press one to open the list.',
+                    dTl: 'Ipinapakita ng "Kailangang asikasuhin" ang mga overdue na kaso at ang mga sanction na naghihintay sa magulang. Pindutin para buksan ang listahan.',
+                    aEn: 'Open the Dashboard',
+                    aTl: 'Buksan ang Dashboard',
+                    run: goPage('dashboard'),
+                  },
+                  {
+                    key: 'new-case',
+                    en: 'Record a new case',
+                    tl: 'Mag-record ng bagong kaso',
+                    dEn: 'Pick the student and the offense. The system counts the offense and suggests the sanction from the handbook.',
+                    dTl: 'Piliin ang estudyante at offense. Bibilangin ng system ang offense at magmumungkahi ng sanction mula sa handbook.',
+                    aEn: '+ New Case',
+                    aTl: '+ Bagong Kaso',
+                    run: go(() => openCasesTab('add-report')),
+                  },
+                  {
+                    key: 'flow',
+                    en: 'Follow the 7 steps of the case',
+                    tl: 'Sundan ang 7 hakbang ng kaso',
+                    dEn: 'Open a case. "Next step" tells you what to do: call the student, get their statement, tell the parent, decide, follow up, close. Each step has Undo.',
+                    dTl: 'Buksan ang kaso. Sasabihin ng "Susunod na gagawin" ang gagawin: tawagin ang estudyante, kunin ang salaysay, ipaalam sa magulang, magdesisyon, mag-follow-up, isara. May Undo bawat hakbang.',
+                    aEn: 'Open the cases',
+                    aTl: 'Buksan ang mga kaso',
+                    run: go(() => openCasesTab('case-board')),
+                  },
+                  {
+                    key: 'station',
+                    en: 'Let the student type their statement',
+                    tl: 'Ipa-type sa estudyante ang salaysay',
+                    dEn: 'In the "Explanation" step, press 🖥 Let the student type it. The screen locks, and only the staff PIN opens it again.',
+                    dTl: 'Sa hakbang na "Paliwanag", pindutin ang 🖥 Ipa-type sa estudyante. Magla-lock ang screen, at PIN lang ng staff ang makakapagbukas ulit.',
+                    aEn: 'Open the cases',
+                    aTl: 'Buksan ang mga kaso',
+                    run: go(() => openCasesTab('case-board')),
+                  },
+                  {
+                    key: 'parents',
+                    en: 'Hold the parent conference',
+                    tl: 'Gawin ang parent conference',
+                    dEn: 'Schedule it and send the notice. On the day, press Attended or Did not attend. A follow-up is made when the parent does not come.',
+                    dTl: 'I-schedule at padalhan ng abiso. Sa araw mismo, pindutin ang Dumalo o Hindi dumalo. May follow-up kapag hindi dumating ang magulang.',
+                    aEn: 'Open Parents',
+                    aTl: 'Buksan ang Parents',
+                    run: go(() => openParents()),
+                  },
+                  {
+                    key: 'print',
+                    en: 'Print forms and attach evidence',
+                    tl: 'Mag-print ng form at maglagay ng ebidensya',
+                    dEn: 'Inside a case: "Print a form…" (call slip, conference form, contract, kasunduan, suspension letter), and add photos or PDF files as evidence.',
+                    dTl: 'Sa loob ng kaso: "Mag-print ng form…" (call slip, conference form, contract, kasunduan, suspension letter), at magdagdag ng litrato o PDF bilang ebidensya.',
+                    aEn: 'Open the cases',
+                    aTl: 'Buksan ang mga kaso',
+                    run: go(() => openCasesTab('case-board')),
+                  },
+                ];
+                const others: { key: string; en: string; tl: string; run: () => void }[] = [
+                  { key: 'students', en: 'Students & master list', tl: 'Mga estudyante at master list', run: go(() => openCasesTab('students')) },
+                  { key: 'support-hub', en: 'Concerns from students', tl: 'Concerns ng estudyante', run: goPage('support-hub') },
+                  { key: 'referrals-hub', en: 'Counselor referrals', tl: 'Referral sa counselor', run: goPage('referrals-hub') },
+                  { key: 'records-hub', en: 'Reports & graphs', tl: 'Reports at graphs', run: goPage('records-hub') },
+                  { key: 'audit-hub', en: 'Audit Trail (every change)', tl: 'Audit Trail (bawat pagbabago)', run: goPage('audit-hub') },
+                  { key: 'settings-hub', en: 'Settings (PIN needed)', tl: 'Settings (kailangan ng PIN)', run: goPage('settings-hub') },
+                ];
+                return (
+                  <>
+                    <ol className="grid grid-cols-2 gap-2.5 text-left">
+                      {steps.map((st, i) => (
+                        <li key={st.key}>
+                          <button
+                            type="button"
+                            data-guide-step={st.key}
+                            onClick={st.run}
+                            className="btn-press w-full h-full text-left p-3 rounded-xl saas-card-subtle hover:border-[#1E469B] flex gap-3 items-start"
+                          >
+                            <span className="shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#1E469B] text-white text-xs font-extrabold">{i + 1}</span>
+                            <span className="min-w-0 space-y-0.5">
+                              <span className="block text-sm font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? st.tl : st.en}</span>
+                              <span className="block text-xs text-[#4A608A] dark:text-[#94A8D0] leading-relaxed">{isTl ? st.dTl : st.dEn}</span>
+                              <span className="block text-xs font-extrabold text-[#1E469B] dark:text-[#7CB8F7]">{isTl ? st.aTl : st.aEn} →</span>
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ol>
 
-                {/* Step 2 */}
-                <div className="p-4 rounded-xl saas-card-subtle space-y-2 flex flex-col justify-between">
-                  <div className="space-y-1">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#1E469B] text-white text-xs font-extrabold">
-                      2
-                    </span>
-                    <h4 className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
-                      {isTl ? 'Magpadala ng SMS at Email sa Magulang' : 'Send Parent SMS & Email Notice'}
-                    </h4>
-                    <p className="text-xs text-[#4A608A] dark:text-[#94A8D0] leading-relaxed">
-                      {isTl
-                        ? 'Magpadala ng imbitasyon sa magulang na ligtas sa Data Privacy Act (RA 10173).'
-                        : 'Send a privacy-safe parent conference invitation via SMS and live Gmail.'}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowQuickGuideModal(false);
-                      openComposerForParent({
-                        studentName: 'Jansen K. Dela Cruz',
-                        gradeSection: 'Grade 11 · STEM-1',
-                        parentName: 'Mr. Roberto Dela Cruz',
-                        parentPhone: '0918-553-9104',
-                        parentEmail: 'aicsmontalbansafeguard@gmail.com',
-                        scheduleText: '',
-                      });
-                    }}
-                    className="btn-press w-full py-2 rounded-lg bg-[#1E469B] text-white text-xs font-extrabold"
-                  >
-                    {isTl ? 'Buksan ang Send Notice →' : 'Open Notice Composer →'}
-                  </button>
-                </div>
-
-                {/* Step 3 */}
-                <div className="p-4 rounded-xl saas-card-subtle space-y-2 flex flex-col justify-between">
-                  <div className="space-y-1">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-extrabold">
-                      3
-                    </span>
-                    <h4 className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
-                      {isTl ? 'Markahan ang Pagdalo ng Magulang' : 'Mark Parent Attendance'}
-                    </h4>
-                    <p className="text-xs text-[#4A608A] dark:text-[#94A8D0] leading-relaxed">
-                      {isTl
-                        ? 'Sa Dashboard, pindutin ang "Dumalo" kapag dumating ang magulang, o "Hindi dumalo" para gumawa ng follow-up.'
-                        : 'On the Dashboard, press "Attended" when a parent arrives, or "Did not attend" to create a follow-up.'}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playKeyClick(2);
-                      setActiveCategory(MAIN_SIDEBAR_CATEGORIES[0]);
-                      setActiveTab('queue');
-                      setShowQuickGuideModal(false);
-                    }}
-                    className="btn-press w-full py-2 rounded-lg bg-emerald-600 text-white text-xs font-extrabold"
-                  >
-                    {isTl ? 'Tingnan ang Iskedyul Ngayon →' : "View Today's Schedule →"}
-                  </button>
-                </div>
-
-                {/* Step 4 */}
-                <div className="p-4 rounded-xl saas-card-subtle space-y-2 flex flex-col justify-between">
-                  <div className="space-y-1">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-500 text-[#0B1F4D] text-xs font-extrabold">
-                      4
-                    </span>
-                    <h4 className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
-                      {isTl ? 'Tingnan ang Kulay ng Badges' : 'Color Guide (Easy to Read)'}
-                    </h4>
-                    <div className="space-y-1 pt-0.5 text-xs text-[#4A608A] dark:text-[#94A8D0]">
-                      <p>🟢 <strong>Green:</strong> Cleared / Attended / Resolved</p>
-                      <p>🟡 <strong>Amber:</strong> 2nd Minor Offense / Needs Reminder</p>
-                      <p>🔴 <strong>Red:</strong> Major Offense / Urgent Action Today</p>
+                    <div className="space-y-1.5">
+                      <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Iba pang page' : 'Other pages'}</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {others.map((o) => (
+                          <button key={o.key} type="button" data-guide-page={o.key} onClick={o.run} className="btn-press px-3 py-2 rounded-lg saas-card-subtle hover:border-[#1E469B] text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7] text-left whitespace-nowrap">
+                            {isTl ? o.tl : o.en} →
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowQuickGuideModal(false)}
-                    className="btn-press w-full py-2 rounded-lg saas-card-subtle text-xs font-extrabold text-[#0B1F4D] dark:text-white"
-                  >
-                    {isTl ? 'OK, Naintindihan Ko!' : 'Got It, Close Guide'}
-                  </button>
-                </div>
-              </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#DCE5F2] dark:border-[#1E3158]">
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#4A608A] dark:text-[#94A8D0]" data-guide-colors aria-label={isTl ? 'Ibig sabihin ng mga kulay' : 'What the colours mean'}>
+                        <span>🔴 {isTl ? 'Serious o major / naghihintay 7+ araw' : 'Serious or major / waiting 7+ days'}</span>
+                        <span>🟡 {isTl ? 'Ika-2 minor (bantayan) / 3–6 araw' : '2nd minor (watch) / 3–6 days'}</span>
+                        <span>🟢 {isTl ? 'Tapos na / Dumalo' : 'Done / Attended'}</span>
+                      </div>
+                      <button
+                        type="button"
+                        data-guide-close
+                        onClick={() => setShowQuickGuideModal(false)}
+                        className="btn-press px-5 py-2 rounded-lg bg-[#1E469B] text-white text-xs font-extrabold whitespace-nowrap"
+                      >
+                        {isTl ? 'OK, naintindihan ko' : 'Got it'}
+                      </button>
+                    </div>
+                  </>
+                );
+              })()}
             </motion.div>
           </motion.div>
         )}

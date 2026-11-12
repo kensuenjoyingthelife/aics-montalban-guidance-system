@@ -556,8 +556,6 @@ const OffensesSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
       ? isTl ? 'Ang overdue ay 3 hanggang 60 araw.' : 'Overdue must be 3 to 60 days.'
       : !((rules.pendingSanctionDays ?? 3) >= 1 && (rules.pendingSanctionDays ?? 3) <= 30)
       ? isTl ? 'Ang alert sa sanction ay 1 hanggang 30 araw.' : 'Sanction alert must be 1 to 30 days.'
-      : !((rules.idHoldDays ?? 3) >= 1 && (rules.idHoldDays ?? 3) <= 30)
-      ? isTl ? 'Ang alert sa ID ay 1 hanggang 30 araw.' : 'ID alert must be 1 to 30 days.'
       : '';
   const rulesChanged = JSON.stringify(rules) !== JSON.stringify(cfg.caseRules);
   const saveRules = async () => {
@@ -567,7 +565,6 @@ const OffensesSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
         { label: isTl ? 'Ilang minor sa sunod-sunod = Serious' : 'Minors in a row = Serious', before: String(cfg.caseRules.escalateAfterMinors), after: String(rules.escalateAfterMinors) },
         { label: isTl ? 'Overdue pagkatapos ng' : 'Overdue after', before: `${cfg.caseRules.overdueDays} ${isTl ? 'araw' : 'days'}`, after: `${rules.overdueDays} ${isTl ? 'araw' : 'days'}` },
         { label: isTl ? 'Alert: sanction na naghihintay' : 'Alert: sanction waiting', before: `${cfg.caseRules.pendingSanctionDays ?? 3} ${isTl ? 'araw' : 'days'}`, after: `${rules.pendingSanctionDays ?? 3} ${isTl ? 'araw' : 'days'}` },
-        { label: isTl ? 'Alert: ID na hawak' : 'Alert: ID kept', before: `${cfg.caseRules.idHoldDays ?? 3} ${isTl ? 'araw' : 'days'}`, after: `${rules.idHoldDays ?? 3} ${isTl ? 'araw' : 'days'}` },
       ],
       note: isTl ? 'Para lang sa mga bagong kaso. Hindi binabago ang mga naitala na.' : 'Applies to new cases only. Saved cases do not change.',
       confirmLabel: isTl ? 'Oo, i-save' : 'Yes, save',
@@ -612,10 +609,6 @@ const OffensesSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
           <label>
             <span className={label}>{isTl ? 'Alert kapag ang sanction ay naghihintay sa magulang nang higit (araw)' : 'Alert when a sanction waits for the parent more than (days)'}</span>
             <input type="number" min={1} max={30} data-rule="pending" value={rules.pendingSanctionDays ?? 3} onChange={(e) => setRules({ ...rules, pendingSanctionDays: Number(e.target.value) })} className={input} />
-          </label>
-          <label>
-            <span className={label}>{isTl ? 'Alert kapag hawak ang ID nang higit (araw)' : 'Alert when an ID is kept more than (days)'}</span>
-            <input type="number" min={1} max={30} data-rule="idhold" value={rules.idHoldDays ?? 3} onChange={(e) => setRules({ ...rules, idHoldDays: Number(e.target.value) })} className={input} />
           </label>
         </div>
         {rulesBad && <p className={errText}>⚠ {rulesBad}</p>}
@@ -1354,7 +1347,6 @@ const BACKUP_TABLES = [
   'concern_messages',
   'counselor_referrals',
   'case_handover_notes',
-  'confiscated_ids',
   'offense_policies',
   'school_closed_days',
   'people_schedules',

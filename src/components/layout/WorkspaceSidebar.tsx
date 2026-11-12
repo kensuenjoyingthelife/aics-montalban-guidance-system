@@ -20,7 +20,6 @@ interface WorkspaceSidebarProps {
   openCasesCount: number;
   todayAppointmentsCount: number;
   pendingConcernsCount: number;
-  confiscatedIdsCount: number;
   referralsWaitingCount?: number;
 }
 
@@ -34,7 +33,6 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
   openCasesCount,
   todayAppointmentsCount,
   pendingConcernsCount,
-  confiscatedIdsCount,
   referralsWaitingCount,
 }) => {
   const { locale, setLocale } = useLanguage();
@@ -48,7 +46,6 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
     if (item.badgeKey === 'cases') return openCasesCount;
     if (item.badgeKey === 'parents') return todayAppointmentsCount;
     if (item.badgeKey === 'concerns') return pendingConcernsCount;
-    if (item.badgeKey === 'ids') return confiscatedIdsCount;
     if (item.badgeKey === 'referrals') return referralsWaitingCount;
     return undefined;
   };
@@ -59,14 +56,12 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
       cases: `${n} open case${n === 1 ? '' : 's'}`,
       parents: `${n} conference${n === 1 ? '' : 's'} today`,
       concerns: `${n} concern${n === 1 ? '' : 's'} waiting for review`,
-      ids: `${n} ID${n === 1 ? '' : 's'} on hold`,
       referrals: `${n} student${n === 1 ? '' : 's'} waiting for the counselor`,
     };
     const tl: Record<string, string> = {
       cases: `${n} bukas na kaso`,
       parents: `${n} conference ngayong araw`,
       concerns: `${n} concern na naghihintay`,
-      ids: `${n} ID na naka-hold`,
       referrals: `${n} estudyanteng naghihintay sa counselor`,
     };
     return (isTl ? tl : en)[item.badgeKey ?? ''] ?? '';
