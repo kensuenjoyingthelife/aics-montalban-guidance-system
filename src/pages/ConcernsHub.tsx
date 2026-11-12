@@ -401,8 +401,8 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
 
       {/* ================= SUBMITTED REPORTS ================= */}
       {tab === 'reports' && (
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(320px,420px)_1fr] gap-4 items-start">
-          <section className={card}>
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(300px,380px)_1fr] gap-4 items-stretch h-[calc(100vh-245px)] min-h-[520px]" data-concern-grid>
+          <section className={`${card} flex flex-col min-h-0`}>
             <div className="px-4 py-3 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap gap-1.5">
               {(
                 [
@@ -436,7 +436,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
                 { color: '#8B5CF6', label: isTl ? '🔒 Confidential' : '🔒 Confidential', shape: 'box' },
               ]}
             />
-            <div className="max-h-[calc(100vh-300px)] min-h-[300px] overflow-y-auto p-2 space-y-1.5 bg-[#F4F7FC] dark:bg-[#0B1527]">
+            <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1.5 bg-[#F4F7FC] dark:bg-[#0B1527]">
               {concerns === null && !loadError && <p className={`${sub} p-6 text-center`}>{isTl ? 'Kinukuha ang mga concern…' : 'Loading concerns…'}</p>}
               {concerns !== null && shown.length === 0 && (
                 <div className="p-6 text-center space-y-1">
@@ -490,7 +490,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
             </div>
           </section>
 
-          <section className={card}>
+          <section className={`${card} flex flex-col min-h-0`}>
             {!selected ? (
               <div className="p-10 text-center">
                 <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Pumili ng concern sa kaliwa.' : 'Pick a concern on the left.'}</p>
@@ -632,8 +632,48 @@ const ConcernDetail: React.FC<{
   onOpenCase?: (code: string) => void;
 }> = ({ c, isTl, match, account, when, statusPill, matchPill, busy, onApprove, onReject, onDeactivate, onOpenChat, onOpenCase }) => {
   const none = isTl ? 'Hindi sinagot' : 'Not answered';
+  const [view, setView] = useState<{ src: string; label: string } | null>(null);
+  useEffect(() => {
+    if (!view) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopImmediatePropagation();
+        setView(null);
+      }
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [view]);
+
+  const cardBox = 'rounded-2xl border border-[#DCE5F2] dark:border-[#1E3158] bg-white dark:bg-[#0F1A30] flex flex-col min-h-0';
+  const cardHead = 'px-4 py-2.5 border-b border-[#DCE5F2] dark:border-[#1E3158] text-[11px] font-extrabold uppercase tracking-wide text-[#4A608A] dark:text-[#94A8D0]';
+  const cardFoot = 'mt-auto px-4 py-3 border-t border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center gap-2';
+  const lab = 'text-[10.5px] font-extrabold uppercase tracking-wide text-[#4A608A] dark:text-[#94A8D0]';
+  const val = 'text-sm text-[#0B1F4D] dark:text-white break-words';
+
+  const Photo = (p: { src: string; label: string; w: string; h: string; testId: string; fit: 'cover' | 'contain' }) =>
+    p.src ? (
+      <button
+        type="button"
+        data-concern-photo={p.testId}
+        onClick={() => setView({ src: p.src, label: p.label })}
+        title={isTl ? 'Pindutin para palakihin' : 'Press to enlarge'}
+        className={`${p.w} ${p.h} shrink-0 rounded-xl overflow-hidden border border-[#C9D6EC] dark:border-[#253B66] bg-[#EEF3FC] dark:bg-[#0B1527] hover:ring-4 hover:ring-[#1E469B]/20`}
+      >
+        <img src={p.src} alt={p.label} loading="lazy" className={`w-full h-full ${p.fit === 'cover' ? 'object-cover' : 'object-contain'}`} />
+      </button>
+    ) : (
+      <div data-concern-photo-missing={p.testId} className={`${p.w} ${p.h} shrink-0 rounded-xl border-2 border-dashed border-[#C9D6EC] dark:border-[#253B66] bg-[#F4F7FC] dark:bg-[#0B1527] flex flex-col items-center justify-center text-center px-2`}>
+        <span className="text-xl" aria-hidden>🖼️</span>
+        <span className="text-[10.5px] font-bold text-[#4A608A] dark:text-[#94A8D0] leading-tight">{isTl ? `Walang ${p.label.toLowerCase()}` : `No ${p.label.toLowerCase()}`}</span>
+      </div>
+    );
+
+  const photoLabel = isTl ? 'Actual na litrato' : 'Actual photo';
+  const idLabel = isTl ? 'Student ID' : 'Student ID';
+
   return (
-    <div data-concern-detail={c.code}>
+    <div data-concern-detail={c.code} className="h-full flex flex-col">
       <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] space-y-1.5">
         <div className="flex flex-wrap items-center gap-1.5">
           {c.urgent && c.status === 'Pending' && <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-600 text-white">URGENT · {isTl ? 'Nangyayari ngayon' : 'Happening now'}</span>}
@@ -651,95 +691,148 @@ const ConcernDetail: React.FC<{
         </p>
       </div>
 
-      <div className="p-6 grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <div className="space-y-3">
-          <Field label={isTl ? 'Ano ang nangyari' : 'What happened'} value={c.whatHappened} empty={none} />
-          <div className="grid grid-cols-2 gap-3">
-            <Field label={isTl ? 'Kailan' : 'When'} value={c.when} empty={none} />
-            <Field label={isTl ? 'Saan' : 'Where'} value={c.where} empty={none} />
-          </div>
-          <Field label={isTl ? 'Sino ang sangkot' : 'Who was involved'} value={c.who} empty={none} />
-          <Field label={isTl ? 'Mga saksi' : 'Witnesses'} value={c.witnesses} empty={isTl ? 'Wala' : 'None'} />
-          <p className={`text-xs font-bold ${c.truthful ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-300'}`}>
-            {c.truthful
-              ? isTl ? '✓ Nangako ang estudyante na totoo ang sinabi niya.' : '✓ The student promised this is true.'
-              : isTl ? '⚠ Walang pangako na totoo ang sinabi.' : '⚠ No promise that this is true.'}
-          </p>
-        </div>
-
-        <div className="space-y-3">
-          <div className="rounded-xl saas-card-subtle p-4 space-y-2">
-            <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Account ng nagpadala' : 'Sender account'}</p>
-            <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">{c.studentName}</p>
-            <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
-              {c.studentNumber || (isTl ? 'Walang student no.' : 'No student no.')} · {c.gradeSection || '—'}
-            </p>
-            {c.submittedBy && <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Pinagmulan' : 'From'}: {c.submittedBy}</p>}
-            <div className="pt-1 border-t border-[#DCE5F2] dark:border-[#1E3158]">
-              <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#4A608A] dark:text-[#94A8D0]">Masterlist</p>
-              {match ? (
-                <p className="text-xs text-[#0B1F4D] dark:text-white">
-                  ✓ {match.fullName} · {match.studentNumber} · {match.gradeSection}
-                </p>
-              ) : (
-                <p className="text-xs font-bold text-rose-700 dark:text-rose-300">
-                  {isTl ? 'Walang ganitong estudyante sa masterlist. Baka fake account ito.' : 'No such student in the masterlist. This may be a fake account.'}
-                </p>
-              )}
+      <div className="flex-1 min-h-0 p-4 grid grid-cols-2 gap-4 bg-[#F4F7FC] dark:bg-[#0B1527]">
+        {/* ---------- LEFT: who sent it ---------- */}
+        <section className={cardBox} data-concern-student>
+          <p className={cardHead}>👤 {isTl ? 'Impormasyon ng estudyante' : 'Student information'}</p>
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+            <div className="flex gap-3">
+              {Photo({ src: account?.photoUrl ?? '', label: photoLabel, w: 'w-[104px]', h: 'h-[104px]', testId: 'photo', fit: 'cover' })}
+              <div className="min-w-0 space-y-1.5">
+                <div>
+                  <p className={lab}>{isTl ? 'Pangalan' : 'Name'}</p>
+                  <p className={`${val} font-extrabold`}>{c.studentName}</p>
+                </div>
+                <div>
+                  <p className={lab}>{isTl ? 'Student no. · Grade at section' : 'Student no. · Grade & section'}</p>
+                  <p className={val}>
+                    {c.studentNumber || (isTl ? 'Walang student no.' : 'No student no.')} · {c.gradeSection || '—'}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              {Photo({ src: account?.idPhotoUrl ?? '', label: idLabel, w: 'w-[104px]', h: 'h-[160px]', testId: 'id', fit: 'contain' })}
+              <div className="min-w-0 space-y-1.5">
+                <div>
+                  <p className={lab}>Masterlist</p>
+                  {match ? (
+                    <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">✓ {match.fullName} · {match.gradeSection}</p>
+                  ) : (
+                    <p className="text-sm font-bold text-rose-700 dark:text-rose-300">
+                      ⚠ {isTl ? 'Wala sa masterlist. Ikumpara ang litrato at ID bago mag-approve.' : 'Not in the masterlist. Compare the photo and ID before approving.'}
+                    </p>
+                  )}
+                </div>
+                {account?.email && (
+                  <div>
+                    <p className={lab}>Email</p>
+                    <p className={val}>{account.email}</p>
+                  </div>
+                )}
+                {account?.contactNumber && (
+                  <div>
+                    <p className={lab}>{isTl ? 'Mobile' : 'Mobile'}</p>
+                    <p className={val}>{account.contactNumber}</p>
+                  </div>
+                )}
+                {c.submittedBy && (
+                  <div>
+                    <p className={lab}>{isTl ? 'Pinagmulan' : 'Sent as'}</p>
+                    <p className={val}>{c.submittedBy}</p>
+                  </div>
+                )}
+              </div>
             </div>
             {account?.status === 'Deactivated' && (
               <p className="text-xs font-bold text-rose-700 dark:text-rose-300">🚫 {isTl ? 'Naka-block na ang account na ito.' : 'This account is already blocked.'}</p>
             )}
+            {!account && <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Walang portal account na naka-link (hal. ipinasok ng office).' : 'No portal account linked (e.g. entered by the office).'}</p>}
           </div>
-
-          {c.status === 'Rejected' && (
-            <div className="rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 p-3">
-              <p className="text-[11px] font-extrabold uppercase text-rose-800 dark:text-rose-300">{isTl ? 'Dahilan (nakikita ng estudyante)' : 'Reason (the student sees this)'}</p>
-              <p className="text-sm text-rose-900 dark:text-rose-100">{c.rejectReason || '—'}</p>
+          {account && account.status !== 'Deactivated' && (
+            <div className={cardFoot}>
+              <button
+                type="button"
+                data-action="deactivate"
+                onClick={onDeactivate}
+                className={`${btn} px-4 py-2.5 saas-card-subtle text-rose-700 dark:text-rose-300`}
+                title={isTl ? 'Para sa account na hindi totoong estudyante' : 'For accounts that are not real students'}
+              >
+                🚫 {isTl ? 'I-block ang fake account' : 'Block fake account'}
+              </button>
             </div>
           )}
-          {c.status === 'Approved' && c.linkedCaseCode && (
-            <p className="text-xs text-[#0B1F4D] dark:text-white">
-              {isTl ? 'Naka-link sa kaso' : 'Linked to case'}:{' '}
-              {onOpenCase ? (
-                <button type="button" onClick={() => onOpenCase(c.linkedCaseCode)} className="font-extrabold text-[#1E469B] dark:text-[#7CB8F7] underline">
-                  {c.linkedCaseCode}
-                </button>
-              ) : (
-                <b>{c.linkedCaseCode}</b>
-              )}
+        </section>
+
+        {/* ---------- RIGHT: the report ---------- */}
+        <section className={cardBox} data-concern-report>
+          <p className={cardHead}>📝 {isTl ? 'Report ng estudyante' : 'Case report'}</p>
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
+            <Field label={isTl ? 'Ano ang nangyari' : 'What happened'} value={c.whatHappened} empty={none} />
+            <div className="grid grid-cols-2 gap-3">
+              <Field label={isTl ? 'Kailan' : 'When'} value={c.when} empty={none} />
+              <Field label={isTl ? 'Saan' : 'Where'} value={c.where} empty={none} />
+            </div>
+            <Field label={isTl ? 'Sino ang sangkot' : 'Who was involved'} value={c.who} empty={none} />
+            <Field label={isTl ? 'Mga saksi' : 'Witnesses'} value={c.witnesses} empty={isTl ? 'Wala' : 'None'} />
+            <p className={`text-xs font-bold ${c.truthful ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-300'}`}>
+              {c.truthful
+                ? isTl ? '✓ Nangako ang estudyante na totoo ang sinabi niya.' : '✓ The student promised this is true.'
+                : isTl ? '⚠ Walang pangako na totoo ang sinabi.' : '⚠ No promise that this is true.'}
             </p>
+            {c.status === 'Rejected' && (
+              <div className="rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 p-3">
+                <p className="text-[11px] font-extrabold uppercase text-rose-800 dark:text-rose-300">{isTl ? 'Dahilan (nakikita ng estudyante)' : 'Reason (the student sees this)'}</p>
+                <p className="text-sm text-rose-900 dark:text-rose-100">{c.rejectReason || '—'}</p>
+              </div>
+            )}
+            {c.status === 'Approved' && c.linkedCaseCode && (
+              <p className="text-xs text-[#0B1F4D] dark:text-white">
+                {isTl ? 'Naka-link sa kaso' : 'Linked to case'}:{' '}
+                {onOpenCase ? (
+                  <button type="button" onClick={() => onOpenCase(c.linkedCaseCode)} className="font-extrabold text-[#1E469B] dark:text-[#7CB8F7] underline">
+                    {c.linkedCaseCode}
+                  </button>
+                ) : (
+                  <b>{c.linkedCaseCode}</b>
+                )}
+              </p>
+            )}
+          </div>
+          {(c.status === 'Pending' || c.chatStatus === 'Open' || c.chatStatus === 'Closed') && (
+            <div className={`${cardFoot} justify-end`}>
+              {c.status === 'Pending' ? (
+                <>
+                  <button type="button" disabled={busy} data-action="reject" onClick={onReject} className={`${btn} px-4 py-2.5 saas-card-subtle text-rose-700 dark:text-rose-300`}>
+                    {isTl ? 'I-reject' : 'Reject'}
+                  </button>
+                  <button type="button" disabled={busy} data-action="approve" onClick={onApprove} className={`${btn} px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50`}>
+                    ✓ {isTl ? 'I-approve' : 'Approve'}
+                  </button>
+                </>
+              ) : (
+                <button type="button" onClick={onOpenChat} className={`${btn} px-5 py-2.5 bg-[#1E469B] text-white`}>
+                  💬 {c.chatStatus === 'Open' ? (isTl ? 'Buksan ang chat' : 'Open the chat') : isTl ? 'Tingnan ang chat (sarado)' : 'View chat (closed)'}
+                </button>
+              )}
+            </div>
           )}
-        </div>
+        </section>
       </div>
 
-      <div className="px-6 py-4 border-t border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center gap-2">
-        {c.status === 'Pending' ? (
-          <>
-            <button type="button" disabled={busy} data-action="approve" onClick={onApprove} className={`${btn} px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50`}>
-              ✓ {isTl ? 'I-approve' : 'Approve'}
-            </button>
-            <button type="button" disabled={busy} data-action="reject" onClick={onReject} className={`${btn} px-4 py-2.5 saas-card-subtle text-rose-700 dark:text-rose-300`}>
-              {isTl ? 'I-reject' : 'Reject'}
-            </button>
-          </>
-        ) : c.chatStatus === 'Open' || c.chatStatus === 'Closed' ? (
-          <button type="button" onClick={onOpenChat} className={`${btn} px-5 py-2.5 bg-[#1E469B] text-white`}>
-            💬 {c.chatStatus === 'Open' ? (isTl ? 'Buksan ang chat' : 'Open the chat') : isTl ? 'Tingnan ang chat (sarado)' : 'View chat (closed)'}
-          </button>
-        ) : null}
-        {account && account.status !== 'Deactivated' && (
-          <button
-            type="button"
-            data-action="deactivate"
-            onClick={onDeactivate}
-            className={`${btn} ml-auto px-4 py-2.5 text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40`}
-            title={isTl ? 'Para sa account na hindi totoong estudyante' : 'For accounts that are not real students'}
-          >
-            🚫 {isTl ? 'I-block ang fake account' : 'Block fake account'}
-          </button>
+      {view &&
+        createPortal(
+          <div className="fixed inset-0 z-[90] !m-0 bg-black/80 flex flex-col items-center justify-center p-6 gap-3" data-photo-viewer onMouseDown={(e) => e.target === e.currentTarget && setView(null)}>
+            <img src={view.src} alt={view.label} className="max-w-[90vw] max-h-[80vh] object-contain rounded-xl bg-white" />
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-bold text-white">{view.label} · {c.studentName}</span>
+              <button type="button" onClick={() => setView(null)} className="px-4 py-2 rounded-lg bg-white text-[#0B1F4D] text-xs font-extrabold">
+                {isTl ? 'Isara (Esc)' : 'Close (Esc)'}
+              </button>
+            </div>
+          </div>,
+          document.body,
         )}
-      </div>
     </div>
   );
 };

@@ -47,7 +47,15 @@ export interface PortalAccount {
   status: string;
   deactivatedReason: string;
   practice: boolean;
+  /** live photo taken at sign-up (2x2), when the portal saved one */
+  photoUrl: string;
+  /** photo of the school ID (portrait) */
+  idPhotoUrl: string;
+  contactNumber: string;
+  createdAt: string;
 }
+/** only real links count (the portal sometimes saves a placeholder word) */
+const photo = (v: unknown) => (typeof v === 'string' && /^https?:\/\//.test(v) ? v : '');
 
 const headers = (ret = false): HeadersInit => ({
   apikey: SUPABASE_ANON_KEY,
@@ -210,6 +218,10 @@ export async function fetchAccounts(): Promise<PortalAccount[] | null> {
       status: s(r.status) || 'Active',
       deactivatedReason: s(r.deactivated_reason),
       practice: !!r.is_practice,
+      photoUrl: photo(r.national_id_image),
+      idPhotoUrl: photo(r.student_id_image),
+      contactNumber: s(r.contact_number),
+      createdAt: s(r.created_at),
     }));
   } catch {
     return null;

@@ -29,7 +29,7 @@
         "script-src": "'self'",
         "style-src": "'self' 'unsafe-inline'",
         "font-src": "'self' data:",
-        "img-src": "'self' data: blob:",
+        "img-src": "'self' data: blob: https://mfkudukapnvbmwcfhhzn.supabase.co",
         "media-src": "'self' data: blob:",
         "worker-src": "'self' blob:",
         "connect-src": "'self' ipc: http://ipc.localhost https://mfkudukapnvbmwcfhhzn.supabase.co wss://mfkudukapnvbmwcfhhzn.supabase.co"
