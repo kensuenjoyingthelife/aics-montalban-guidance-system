@@ -276,36 +276,39 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       <WavyBackground />
 
       {/* Top Navigation Bar */}
-      <header className="relative z-20 w-full px-4 sm:px-6 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 student-portal-header bg-[#0B1E48]/80 backdrop-blur-md safe-area-top">
-        <div className="flex items-center gap-2.5 sm:gap-3">
+      <header className="relative z-20 w-full px-4 sm:px-8 py-3.5 sm:py-5 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 student-portal-header bg-[#0B1E48]/80 backdrop-blur-md safe-area-top">
+        <div className="flex items-center gap-2.5 sm:gap-3.5">
           <img
             src="/aics-logo.jpg"
             alt="AICS Logo"
-            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover ring-2 ring-white/30 bg-white p-0.5 shadow-lg shrink-0"
+            className="w-9 h-9 sm:w-12 sm:h-12 rounded-full object-cover ring-2 ring-white/40 bg-white p-0.5 shadow-xl shrink-0"
           />
           <div>
-            <h1 className="text-xs sm:text-sm font-extrabold tracking-tight text-white flex items-center gap-1.5 sm:gap-2">
-              AICS MONTALBAN
-              <span className="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+            <h1 className="text-xs sm:text-base font-extrabold tracking-tight text-white dark:text-white flex items-center gap-1.5 sm:gap-2">
+              <span>AICS MONTALBAN</span>
+              <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
                 ACTIVE
               </span>
             </h1>
-            <p className="text-[10px] sm:text-[11px] text-[#9BCBFF]/90 font-medium truncate max-w-[190px] sm:max-w-none">
-              {user.fullName} · #{user.studentNumber}
+            <p className="text-[10px] sm:text-xs text-[#9BCBFF] font-semibold truncate max-w-[200px] sm:max-w-none">
+              Safe & Confidential Concern Reporting
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2.5 ml-auto">
+        <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+          {/* High-Visibility Dedicated Sign Out Button */}
           <button
             type="button"
             onClick={() => {
               soundFX.playBackspace();
               onSignOut();
             }}
-            className="btn-press px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-xl bg-white/10 hover:bg-rose-500/20 hover:border-rose-400/40 border border-white/15 text-[11px] sm:text-xs font-bold text-white transition-colors"
+            className="btn-press px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-rose-950/40 border border-rose-400/40 flex items-center gap-1.5 transition-all"
+            title={isTl ? 'Mag-sign out sa portal' : 'Sign out from portal'}
           >
-            {isTl ? 'Sign Out' : 'Sign Out'}
+            <span>🚪</span>
+            <span>{isTl ? 'Sign Out' : 'Sign Out'}</span>
           </button>
           <SoundTogglePill />
           <LocaleSwitchPill />
