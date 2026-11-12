@@ -1300,55 +1300,55 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               </div>
 
               {/* Scrollable Terms Content */}
-              <div className="flex-1 overflow-y-auto pr-2 space-y-4 text-xs sm:text-sm text-slate-300 dark:text-slate-300 register-inner-card p-4 sm:p-5 rounded-2xl leading-relaxed">
-                <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-400/30 text-blue-200 text-xs font-semibold">
+              <div className="flex-1 overflow-y-auto pr-2 space-y-4 text-xs sm:text-sm register-inner-card p-4 sm:p-5 rounded-2xl leading-relaxed text-slate-800 dark:text-slate-200">
+                <div className="p-3.5 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 border border-blue-400/40 text-blue-900 dark:text-blue-200 text-xs font-semibold">
                   🛡️ {isTl
                     ? 'Mahalaga: Ang portal na ito ay nilikha para protektahan ang iyong kaligtasan at kapakanan bilang mag-aaral ng AICS Montalban. Basahin ang sumusunod na kasunduan bago magparehistro.'
                     : 'Important: This portal is created to safeguard your well-being and privacy as an AICS Montalban student. Please review the following agreement prior to account creation.'}
                 </div>
 
-                <div className="space-y-2">
-                  <h4 className="font-extrabold text-white text-xs sm:text-sm flex items-center gap-2">
+                <div className="space-y-1.5 p-3 rounded-xl bg-slate-100/60 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                  <h4 className="font-extrabold text-[#0B1F4D] dark:text-white text-xs sm:text-sm flex items-center gap-2">
                     <span>1.</span>
                     <span>{isTl ? 'Proteksyon sa ilalim ng RA 10173 (Data Privacy Act)' : 'Protection under RA 10173 (Data Privacy Act)'}</span>
                   </h4>
-                  <p className="text-xs opacity-90">
+                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                     {isTl
                       ? 'Ang lahat ng personal na impormasyon (Pangalan, Contact Number, Student ID, at Larawan) na iyong ilalagay ay ituturing na mahigpit na kumpidensyal. Tanging ang lisensyadong Guidance Associate at Counseling Office lamang ang may pahintulot na humawak ng iyong datos.'
                       : 'All personal data provided (Name, Contact Number, Student ID, and Photo Uploads) will be treated with absolute confidentiality. Only authorized Guidance Associates and Counselors are granted access to your records.'}
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <h4 className="font-extrabold text-white text-xs sm:text-sm flex items-center gap-2">
+                <div className="space-y-1.5 p-3 rounded-xl bg-slate-100/60 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                  <h4 className="font-extrabold text-[#0B1F4D] dark:text-white text-xs sm:text-sm flex items-center gap-2">
                     <span>2.</span>
                     <span>{isTl ? 'Proteksyon Laban sa Retaliation o Pagganti' : 'Non-Retaliation & Safety Assurance'}</span>
                   </h4>
-                  <p className="text-xs opacity-90">
+                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                     {isTl
                       ? 'Ginawa ang sistema upang mapigilan ang anumang uri ng paghihiganti o harassment. Ang iyong isinumiteng reklamo o chat history ay HINDI kailanman ibubunyag sa inirereklamong kaklase, estudyante, o hindi awtorisadong kawani ng paaralan.'
                       : 'The system strictly prohibits retaliation. Your reports and counseling discussions will NEVER be disclosed to reported individuals, fellow students, or unauthorized school personnel.'}
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <h4 className="font-extrabold text-white text-xs sm:text-sm flex items-center gap-2">
+                <div className="space-y-1.5 p-3 rounded-xl bg-slate-100/60 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                  <h4 className="font-extrabold text-[#0B1F4D] dark:text-white text-xs sm:text-sm flex items-center gap-2">
                     <span>3.</span>
                     <span>{isTl ? 'Awtomatikong Pag-Logout para sa Iyong Kaligtasan' : 'Automatic Session Termination for Discretion'}</span>
                   </h4>
-                  <p className="text-xs opacity-90">
+                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                     {isTl
                       ? 'Para sa iyong seguridad sakaling maiwan mo ang iyong cellphone o computer na nakabukas sa silid-aralan o internet shop, awtomatikong magla-lock out ang iyong account pagkatapos ng 15 minuto ng walang aktibidad upang walang makakita ng iyong mga ulat.'
                       : 'To protect you in case you leave your device unattended in a classroom or computer laboratory, your session will automatically terminate after 15 minutes of inactivity so no evidence is left visible.'}
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <h4 className="font-extrabold text-white text-xs sm:text-sm flex items-center gap-2">
+                <div className="space-y-1.5 p-3 rounded-xl bg-slate-100/60 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                  <h4 className="font-extrabold text-[#0B1F4D] dark:text-white text-xs sm:text-sm flex items-center gap-2">
                     <span>4.</span>
                     <span>{isTl ? 'Tapat at Makatotohanang Pag-uulat' : 'Truthfulness of Information'}</span>
                   </h4>
-                  <p className="text-xs opacity-90">
+                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                     {isTl
                       ? 'Sumasang-ayon ka na maging tapat sa lahat ng impormasyong ilalagay. Ang sadyang pagpapasa ng gawa-gawang paratang laban sa kapwa estudyante ay may karampatang disiplina alinsunod sa AICS Student Handbook.'
                       : 'You agree to provide factual and truthful information. Malicious or fabricated reports against peers are subject to institutional disciplinary measures under the AICS Student Handbook.'}
