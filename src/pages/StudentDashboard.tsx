@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CelestialBackground } from '../components/auth/CelestialBackground';
 import { WavyBackground } from '../components/auth/WavyBackground';
@@ -7,6 +7,12 @@ import { SkyThemePill } from '../context/ThemeContext';
 import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
 import { StudentPortalUser } from '../services/studentAuthService';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../services/supabaseClient';
+import {
+  ConcernMessage,
+  fetchMessages,
+  fetchMessagesAfter,
+  sendMessage,
+} from '../services/concernsDb';
 
 interface StudentDashboardProps {
   user: StudentPortalUser;
@@ -20,6 +26,8 @@ interface StudentConcernHistory {
   whatHappened: string;
   status: string;
   urgency: string;
+  chatStatus: 'None' | 'Open' | 'Closed';
+  chatClosedAt: string;
   createdAt: string;
 }
 
@@ -27,7 +35,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   const { locale } = useLanguage();
   const isTl = locale === 'tl';
 
-  const [activeTab, setActiveTab] = useState<'submit' | 'history'>('submit');
+  const [activeTab, setActiveTab] = useState<'submit' | 'history' | 'chat'>('submit');
 
   // Submit Concern Form State
   const [reportType, setReportType] = useState<string>('Bullying / Peer Harassment');
@@ -49,6 +57,19 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   const [history, setHistory] = useState<StudentConcernHistory[]>([]);
   const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
 
+  // Direct Student-Guidance Chat State
+  const [selectedChatConcern, setSelectedChatConcern] = useState<StudentConcernHistory | null>(null);
+  const [chatMessages, setChatMessages] = useState<ConcernMessage[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState<boolean>(false);
+  const [chatInputText, setChatInputText] = useState<string>('');
+  const [sendingMsg, setSendingMsg] = useState<boolean>(false);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom of chat
+  const scrollToBottom = () => {
+    chatScrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   const fetchMyHistory = async () => {
     setLoadingHistory(true);
     try {
@@ -65,17 +86,24 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       );
       if (res.ok) {
         const rows = await res.json();
-        setHistory(
-          rows.map((r: Record<string, unknown>) => ({
-            id: Number(r.id),
-            referralCode: String(r.referral_code || 'CON-REF'),
-            category: String(r.category || r.concern_type || 'General Concern'),
-            whatHappened: String(r.what_happened || r.summary_en || ''),
-            status: String(r.status || 'Pending'),
-            urgency: String(r.urgency || 'Normal'),
-            createdAt: String(r.created_at || new Date().toISOString()),
-          }))
-        );
+        const mapped: StudentConcernHistory[] = rows.map((r: Record<string, unknown>) => ({
+          id: Number(r.id),
+          referralCode: String(r.referral_code || 'CON-REF'),
+          category: String(r.category || r.concern_type || 'General Concern'),
+          whatHappened: String(r.what_happened || r.summary_en || ''),
+          status: String(r.status || 'Pending'),
+          urgency: String(r.urgency || 'Normal'),
+          chatStatus: (String(r.chat_status || 'None') as 'None' | 'Open' | 'Closed'),
+          chatClosedAt: String(r.chat_closed_at || ''),
+          createdAt: String(r.created_at || new Date().toISOString()),
+        }));
+        setHistory(mapped);
+
+        // If no chat is selected yet, automatically select the most recent concern with an Open or Closed chat
+        if (!selectedChatConcern && mapped.length > 0) {
+          const firstWithChat = mapped.find((c) => c.chatStatus === 'Open') || mapped[0];
+          setSelectedChatConcern(firstWithChat);
+        }
       }
     } catch {
       // ignore
@@ -85,11 +113,78 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   };
 
   useEffect(() => {
-    if (activeTab === 'history') {
-      void fetchMyHistory();
+    void fetchMyHistory();
+  }, []);
+
+  // Poll for new messages when in Chat tab with a selected concern
+  useEffect(() => {
+    if (!selectedChatConcern) return;
+    let isMounted = true;
+    let lastMsgId = 0;
+
+    const loadInitialMessages = async () => {
+      setLoadingMessages(true);
+      const msgs = await fetchMessages(selectedChatConcern.id);
+      if (!isMounted) return;
+      if (msgs) {
+        setChatMessages(msgs);
+        if (msgs.length > 0) lastMsgId = msgs[msgs.length - 1].id;
+        setTimeout(scrollToBottom, 100);
+      }
+      setLoadingMessages(false);
+    };
+
+    void loadInitialMessages();
+
+    // Check for new office responses every 3.5 seconds
+    const interval = setInterval(async () => {
+      if (document.visibilityState !== 'visible' || !isMounted) return;
+      if (lastMsgId > 0) {
+        const newer = await fetchMessagesAfter(selectedChatConcern.id, lastMsgId);
+        if (isMounted && newer && newer.length > 0) {
+          lastMsgId = newer[newer.length - 1].id;
+          soundFX.playStepUnlock();
+          setChatMessages((prev) => {
+            const existingIds = new Set(prev.map((m) => m.id));
+            const fresh = newer.filter((m) => !existingIds.has(m.id));
+            return [...prev, ...fresh];
+          });
+          setTimeout(scrollToBottom, 100);
+        }
+      }
+    }, 3500);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [selectedChatConcern?.id]);
+
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!selectedChatConcern || !chatInputText.trim() || sendingMsg) return;
+
+    const textToSend = chatInputText.trim();
+    setSendingMsg(true);
+    soundFX.playToggleSwitch(true);
+
+    const saved = await sendMessage(selectedChatConcern.id, 'student', textToSend);
+    setSendingMsg(false);
+
+    if (saved) {
+      setChatInputText('');
+      setChatMessages((prev) => [...prev, saved]);
+      setTimeout(scrollToBottom, 100);
+    } else {
+      soundFX.playError();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  };
+
+  const openConcernChat = (item: StudentConcernHistory) => {
+    setSelectedChatConcern(item);
+    setActiveTab('chat');
+    soundFX.playToggleSwitch(true);
+  };
 
   const handleSubmitConcern = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -221,21 +316,21 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       {/* Main Workspace Area */}
       <main className="relative z-20 flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 space-y-6">
         {/* Navigation Tabs */}
-        <div className="flex items-center justify-between border-b border-white/10 dark:border-white/10 pb-3">
-          <div className="inline-flex p-1 rounded-2xl register-section-card gap-1.5">
+        <div className="flex items-center justify-between border-b border-white/10 dark:border-white/10 pb-3 flex-wrap gap-2">
+          <div className="inline-flex p-1 rounded-2xl register-section-card gap-1.5 flex-wrap">
             <button
               type="button"
               onClick={() => {
                 soundFX.playToggleSwitch(true);
                 setActiveTab('submit');
               }}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors ${
                 activeTab === 'submit'
                   ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-md'
                   : 'card-subtitle-text hover:opacity-100 opacity-80'
               }`}
             >
-              📝 {isTl ? 'Mag-report ng Concern / Bullying' : 'Report Concern / Bullying'}
+              📝 {isTl ? 'Mag-report ng Concern' : 'Report Concern'}
             </button>
 
             <button
@@ -243,14 +338,33 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
               onClick={() => {
                 soundFX.playToggleSwitch(true);
                 setActiveTab('history');
+                void fetchMyHistory();
               }}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors ${
                 activeTab === 'history'
                   ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-md'
                   : 'card-subtitle-text hover:opacity-100 opacity-80'
               }`}
             >
-              📁 {isTl ? 'Aking mga Reports' : 'My Submitted Reports'}
+              📁 {isTl ? 'Aking mga Reports' : 'My Reports'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playToggleSwitch(true);
+                setActiveTab('chat');
+              }}
+              className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors flex items-center gap-1.5 ${
+                activeTab === 'chat'
+                  ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-md'
+                  : 'card-subtitle-text hover:opacity-100 opacity-80'
+              }`}
+            >
+              <span>💬 {isTl ? 'Kausapin ang Guidance' : 'Guidance Chat'}</span>
+              {history.some((c) => c.chatStatus === 'Open') && (
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              )}
             </button>
           </div>
 
@@ -518,7 +632,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                       </p>
                     </div>
 
-                    <div className="shrink-0">
+                    <div className="shrink-0 flex items-center gap-2">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-extrabold border ${
                           item.status === 'Resolved' || item.status === 'Approved'
@@ -530,9 +644,183 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                       >
                         {item.status}
                       </span>
+                      {item.chatStatus === 'Open' && (
+                        <button
+                          type="button"
+                          onClick={() => openConcernChat(item)}
+                          className="btn-press px-3 py-1 rounded-full bg-[#1E469B] hover:bg-[#2557BE] text-white text-xs font-bold shadow flex items-center gap-1"
+                        >
+                          <span>💬 Chat</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* TAB 3: CONFIDENTIAL GUIDANCE CHAT */}
+        {activeTab === 'chat' && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-3xl cosmic-glass-card p-4 sm:p-6 space-y-4 shadow-2xl"
+          >
+            {/* Chat Header & Selector */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-white/10 dark:border-white/10 gap-3">
+              <div>
+                <h2 className="text-lg sm:text-xl font-extrabold card-title-text flex items-center gap-2">
+                  <span>💬</span>
+                  <span>{isTl ? 'Kumpidensyal na Chat sa Guidance Office' : 'Confidential Guidance Office Chat'}</span>
+                </h2>
+                <p className="text-xs card-subtitle-text">
+                  {isTl
+                    ? 'Direktang mensahe sa AICS Guidance Associate. Ligtas at protektado ng Data Privacy.'
+                    : 'Direct, private conversation with the Guidance Associate. Protected by RA 10173.'}
+                </p>
+              </div>
+
+              {/* Selector for multi-concern students */}
+              {history.length > 1 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs card-subtitle-text font-bold">Topic:</span>
+                  <select
+                    value={selectedChatConcern?.id || ''}
+                    onChange={(e) => {
+                      const found = history.find((h) => h.id === Number(e.target.value));
+                      if (found) setSelectedChatConcern(found);
+                    }}
+                    className="px-3 py-1.5 rounded-xl cosmic-input text-xs font-bold"
+                  >
+                    {history.map((h) => (
+                      <option key={h.id} value={h.id}>
+                        {h.referralCode} — {h.category.slice(0, 24)} ({h.chatStatus})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* Chat Body */}
+            {!selectedChatConcern ? (
+              <div className="p-10 rounded-2xl register-section-card text-center space-y-2">
+                <span className="text-3xl">🕊️</span>
+                <p className="text-sm font-extrabold register-label">
+                  {isTl ? 'Walang aktibong chat session.' : 'No active chat session.'}
+                </p>
+                <p className="text-xs card-subtitle-text max-w-sm mx-auto">
+                  {isTl
+                    ? 'Magsumite muna ng report sa "Mag-report ng Concern". Kapag binuksan ng Guidance Office ang chat, maaari ka nang makipag-usap dito.'
+                    : 'Submit a concern report first. Once the Guidance Office opens the channel, you can communicate directly here.'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Chat Topic Banner */}
+                <div className="p-3 rounded-2xl register-inner-card flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-extrabold text-[#1E469B] dark:text-[#7CB8F7]">
+                      {selectedChatConcern.referralCode}
+                    </span>
+                    <span className="font-bold register-label truncate max-w-[220px] sm:max-w-md">
+                      · {selectedChatConcern.category}
+                    </span>
+                  </div>
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full font-extrabold text-[11px] ${
+                      selectedChatConcern.chatStatus === 'Open'
+                        ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-400/30'
+                        : 'bg-slate-500/20 text-slate-600 dark:text-slate-300 border border-slate-400/30'
+                    }`}
+                  >
+                    {selectedChatConcern.chatStatus === 'Open'
+                      ? isTl ? 'Bukas ang Chat' : 'Chat Open'
+                      : isTl ? 'Sarado ang Chat' : 'Chat Closed'}
+                  </span>
+                </div>
+
+                {/* Message Stream */}
+                <div className="h-[380px] sm:h-[440px] overflow-y-auto p-4 rounded-2xl register-section-card space-y-3">
+                  {loadingMessages ? (
+                    <div className="h-full flex items-center justify-center text-xs card-subtitle-text">
+                      Loading messages...
+                    </div>
+                  ) : chatMessages.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-2">
+                      <span className="text-3xl">🤝</span>
+                      <p className="text-sm font-bold register-label">
+                        {isTl ? 'Magsimula ng pag-uusap sa Guidance Office' : 'Start the conversation with Guidance'}
+                      </p>
+                      <p className="text-xs card-subtitle-text max-w-sm">
+                        {isTl
+                          ? 'Maaari kang mag-iwan ng karagdagang impormasyon o magtanong. Sasagutin ito ng Guidance Associate sa oras ng opisina.'
+                          : 'Leave any additional details or questions. The Guidance Associate will respond during office hours.'}
+                      </p>
+                    </div>
+                  ) : (
+                    chatMessages.map((msg) => {
+                      const isStudent = msg.sender === 'student';
+                      return (
+                        <div
+                          key={msg.id}
+                          className={`flex ${isStudent ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed shadow-sm ${
+                              isStudent
+                                ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white rounded-br-xs'
+                                : 'register-inner-card border register-label rounded-bl-xs'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-3 text-[10px] font-extrabold pb-1 opacity-80 border-b border-white/10 dark:border-white/10 mb-1">
+                              <span>{isStudent ? 'Ikaw (Student)' : '🏛️ AICS Guidance Office'}</span>
+                              <span className="font-mono">
+                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                            <p className="whitespace-pre-wrap">{msg.body}</p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                  <div ref={chatScrollRef} />
+                </div>
+
+                {/* Chat Input Field */}
+                {selectedChatConcern.chatStatus === 'Closed' ? (
+                  <div className="p-3.5 rounded-xl bg-slate-500/10 border border-slate-500/20 text-center text-xs font-semibold card-subtitle-text">
+                    🔒 {isTl ? 'Isinara na ng Guidance Office ang chat session na ito. Nananatiling nakatago ang mga mensahe.' : 'This chat session has been closed by the Guidance Office. Messages are securely archived.'}
+                  </div>
+                ) : (
+                  <form onSubmit={handleSendMessage} className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder={isTl ? 'Isulat ang iyong mensahe sa Guidance Office...' : 'Type your message to the Guidance Office...'}
+                      value={chatInputText}
+                      onChange={(e) => setChatInputText(e.target.value)}
+                      disabled={sendingMsg}
+                      className="flex-1 px-4 py-3 rounded-2xl cosmic-input text-xs sm:text-sm font-semibold focus:outline-none"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!chatInputText.trim() || sendingMsg}
+                      className="btn-press px-5 sm:px-6 py-3 rounded-2xl bg-gradient-to-r from-[#1E469B] to-[#2557BE] hover:opacity-95 text-white font-extrabold text-xs sm:text-sm shadow-lg disabled:opacity-40 transition-all flex items-center gap-1.5"
+                    >
+                      {sendingMsg ? (
+                        <span>...</span>
+                      ) : (
+                        <>
+                          <span>Send</span>
+                          <span>↗</span>
+                        </>
+                      )}
+                    </button>
+                  </form>
+                )}
               </div>
             )}
           </motion.div>
