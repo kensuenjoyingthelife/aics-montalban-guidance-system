@@ -56,7 +56,9 @@ export const CaseFlowPanel: React.FC<{
   busy: boolean;
   suggestedSanction: string;
   onAction: (a: FlowAction) => void;
-}> = ({ c, isTl, busy, suggestedSanction, onAction }) => {
+  /** open the locked Student Statement Station for this case */
+  onOpenStation?: () => void;
+}> = ({ c, isTl, busy, suggestedSanction, onAction, onOpenStation }) => {
   const { done, next } = useMemo(() => flowState(c), [c]);
   const [text, setText] = useState(c.explanation ?? '');
   const [how, setHow] = useState('');
@@ -132,9 +134,16 @@ export const CaseFlowPanel: React.FC<{
               <textarea data-flow-text value={text} onChange={(e) => setText(e.target.value.slice(0, 2000))} rows={3} className={`${input} leading-relaxed`} placeholder={isTl ? 'hal. Na-late po ako dahil walang masakyan…' : 'e.g. I was late because there was no ride…'} />
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">{text.trim().length < 10 ? (isTl ? 'Kahit 10 letra.' : 'At least 10 letters.') : `${text.trim().length}/2000`}</span>
+                <span className="flex items-center gap-2">
+                {onOpenStation && (
+                  <button type="button" data-flow="station" disabled={busy} onClick={onOpenStation} title={isTl ? 'Bubukas ang naka-lock na screen kung saan ang estudyante mismo ang magta-type. PIN ng staff ang kailangan para makalabas.' : 'Opens a locked screen where the student types it. The staff PIN is needed to leave it.'} className={`${btn} border border-[#C9D6EC] dark:border-[#253B66] text-[#1E469B] dark:text-[#7CB8F7]`}>
+                    🖥 {isTl ? 'Ipa-type sa estudyante' : 'Let the student type it'}
+                  </button>
+                )}
                 <button type="button" data-flow="explanation" disabled={busy || text.trim().length < 10} onClick={() => onAction({ kind: 'explanation', text: text.trim() })} className={primary}>
                   {isTl ? 'I-save ang paliwanag' : 'Save the explanation'}
                 </button>
+                </span>
               </div>
             </div>
           )}

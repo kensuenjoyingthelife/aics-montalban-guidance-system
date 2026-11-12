@@ -405,18 +405,28 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
               {/* Report Category Selector */}
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold register-section-title uppercase tracking-wider">
-                  Category ng Insidente / Concern
+                  {isTl ? 'Category ng Insidente / Concern' : 'Incident / Concern Category'}
                 </label>
                 <select
                   value={reportType}
                   onChange={(e) => setReportType(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl cosmic-input text-xs sm:text-sm font-semibold focus:outline-none"
                 >
-                  <option value="Bullying / Peer Harassment">Bullying / Peer Harassment (Physical, Verbal, or Cyber)</option>
-                  <option value="Peer Conflict / Fighting">Peer Conflict / Away ng Magkaklase</option>
-                  <option value="Academic & Attendance Stress">Academic Stress / Madalas na Absent</option>
-                  <option value="Personal Welfare & Emotional Support">Personal / Family Welfare Support</option>
-                  <option value="Other Student Discipline Concern">Iba Pang Concern sa Disiplina</option>
+                  <option value="Bullying / Peer Harassment">
+                    {isTl ? 'Bullying / Peer Harassment (Physical, Verbal, o Cyber)' : 'Bullying / Peer Harassment (Physical, Verbal, or Cyber)'}
+                  </option>
+                  <option value="Peer Conflict / Fighting">
+                    {isTl ? 'Peer Conflict / Away ng Magkaklase' : 'Peer Conflict / Student Disputes'}
+                  </option>
+                  <option value="Academic & Attendance Stress">
+                    {isTl ? 'Academic Stress / Madalas na Absent' : 'Academic & Attendance Stress'}
+                  </option>
+                  <option value="Personal Welfare & Emotional Support">
+                    {isTl ? 'Personal / Family Welfare Support' : 'Personal Welfare & Emotional Support'}
+                  </option>
+                  <option value="Other Student Discipline Concern">
+                    {isTl ? 'Iba Pang Concern sa Disiplina' : 'Other Student Discipline Concern'}
+                  </option>
                 </select>
               </div>
 
@@ -429,8 +439,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                     </p>
                     <p className="text-[11px] card-subtitle-text">
                       {isPeerReferral
-                        ? 'Peer Referral (Inirerefer mo ang kaklase mo para matulungan ng Guidance)'
-                        : 'Self-Report (Ikaw mismo ang nakaranas o may concern)'}
+                        ? (isTl ? 'Peer Referral (Inirerefer mo ang kaklase mo para matulungan ng Guidance)' : 'Peer Referral (Referring a classmate who needs guidance help)')
+                        : (isTl ? 'Self-Report (Ikaw mismo ang nakaranas o may concern)' : 'Self-Report (You personally experienced or witnessed the concern)')}
                     </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -447,11 +457,13 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 {isPeerReferral && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-200 dark:border-white/10">
                     <div className="space-y-1">
-                      <label className="text-xs font-bold register-label">Pangalan ng Kaklase / Involved</label>
+                      <label className="text-xs font-bold register-label">
+                        {isTl ? 'Pangalan ng Kaklase / Involved' : 'Classmate / Involved Student Name'}
+                      </label>
                       <input
                         type="text"
                         required={isPeerReferral}
-                        placeholder="Pangalan ng estudyanteng kailangan ng tulong"
+                        placeholder={isTl ? 'Pangalan ng estudyanteng kailangan ng tulong' : 'Name of student who needs assistance'}
                         value={targetStudentName}
                         onChange={(e) => setTargetStudentName(e.target.value)}
                         className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
@@ -461,7 +473,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                       <label className="text-xs font-bold register-label">Grade & Section</label>
                       <input
                         type="text"
-                        placeholder="hal. Grade 11 · ICT-1"
+                        placeholder="e.g. Grade 11 · ICT-1"
                         value={targetGradeSection}
                         onChange={(e) => setTargetGradeSection(e.target.value)}
                         className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
@@ -474,7 +486,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
               {/* Narrative of what happened */}
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold register-section-title uppercase tracking-wider">
-                  Salaysay ng Pangyayari (What Happened)
+                  {isTl ? 'Salaysay ng Pangyayari (What Happened)' : 'Incident Narrative (What Happened)'}
                 </label>
                 <textarea
                   rows={4}
@@ -493,10 +505,12 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
               {/* Incident Context Details (When & Where) */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold register-label">Kailan Nangyari (When)</label>
+                  <label className="text-xs font-bold register-label">
+                    {isTl ? 'Kailan Nangyari (When)' : 'When It Happened'}
+                  </label>
                   <input
                     type="text"
-                    placeholder="hal. Kaninang 10:00 AM recess"
+                    placeholder={isTl ? 'hal. Kaninang 10:00 AM recess' : 'e.g. Today during 10:00 AM recess'}
                     value={happenedWhen}
                     onChange={(e) => setHappenedWhen(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
@@ -504,10 +518,12 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold register-label">Saan Nangyari (Where)</label>
+                  <label className="text-xs font-bold register-label">
+                    {isTl ? 'Saan Nangyari (Where)' : 'Where It Happened'}
+                  </label>
                   <input
                     type="text"
-                    placeholder="hal. Sa tapat ng Computer Lab 2"
+                    placeholder={isTl ? 'hal. Sa tapat ng Computer Lab 2' : 'e.g. Near Computer Lab 2'}
                     value={happenedWhere}
                     onChange={(e) => setHappenedWhere(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
@@ -515,10 +531,12 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold register-label">Mga Saksi (Witnesses)</label>
+                  <label className="text-xs font-bold register-label">
+                    {isTl ? 'Mga Saksi (Witnesses)' : 'Witnesses Present'}
+                  </label>
                   <input
                     type="text"
-                    placeholder="hal. Mga kaklaseng nakakita"
+                    placeholder={isTl ? 'hal. Mga kaklaseng nakakita' : 'e.g. Classmates who saw the event'}
                     value={witnesses}
                     onChange={(e) => setWitnesses(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
@@ -536,7 +554,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                     className="w-4 h-4 rounded accent-rose-500"
                   />
                   <span className="font-bold text-rose-600 dark:text-rose-300">
-                    ⚠️ Mark as URGENT (Kailangan ng mabilisang aksyon o may banta sa kaligtasan)
+                    {isTl
+                      ? '⚠️ Mark as URGENT (Kailangan ng mabilisang aksyon o may banta sa kaligtasan)'
+                      : '⚠️ Mark as URGENT (Immediate intervention needed / Safety threat)'}
                   </span>
                 </label>
 
@@ -548,8 +568,17 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                     className="w-4 h-4 rounded accent-emerald-500 mt-0.5"
                   />
                   <span>
-                    Pinatutunayan ko na totoo ang aking isinusumite at nauunawaan ko na protektado ng{' '}
-                    <strong>Data Privacy Act (RA 10173)</strong> ang aking pagkakakilanlan.
+                    {isTl ? (
+                      <>
+                        Pinatutunayan ko na totoo ang aking isinusumite at nauunawaan ko na protektado ng{' '}
+                        <strong>Data Privacy Act (RA 10173)</strong> ang aking pagkakakilanlan.
+                      </>
+                    ) : (
+                      <>
+                        I certify that this report is truthful and understand that my identity is protected under the{' '}
+                        <strong>Data Privacy Act (RA 10173)</strong>.
+                      </>
+                    )}
                   </span>
                 </label>
               </div>
@@ -561,10 +590,10 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 className="btn-press w-full py-4 rounded-xl bg-gradient-to-r from-[#1E469B] to-[#2557BE] hover:from-[#18387D] hover:to-[#1E469B] text-white text-sm font-extrabold shadow-lg shadow-blue-950/30 border border-white/10 disabled:opacity-45 transition-all flex items-center justify-center gap-2"
               >
                 {submitting ? (
-                  <span>Submitting Confidential Report...</span>
+                  <span>{isTl ? 'Isinusumite ang Confidential Report...' : 'Submitting Confidential Report...'}</span>
                 ) : (
                   <>
-                    <span>📨 Submit Report to Guidance Office</span>
+                    <span>{isTl ? '📨 Isumite ang Report sa Guidance Office' : '📨 Submit Report to Guidance Office'}</span>
                     <span>→</span>
                   </>
                 )}
@@ -583,10 +612,12 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg sm:text-xl font-extrabold card-title-text">
-                  Aking mga Naipasa na Concern Reports
+                  {isTl ? 'Aking mga Naipasa na Concern Reports' : 'My Submitted Concern Reports'}
                 </h2>
                 <p className="text-xs card-subtitle-text">
-                  Subaybayan ang aksyon ng Guidance Associate sa iyong mga isinumite.
+                  {isTl
+                    ? 'Subaybayan ang aksyon ng Guidance Associate sa iyong mga isinumite.'
+                    : 'Track the status and actions taken by the Guidance Associate.'}
                 </p>
               </div>
               <button
@@ -594,18 +625,24 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 onClick={() => void fetchMyHistory()}
                 className="btn-press px-3 py-1.5 rounded-lg card-back-button text-xs font-bold"
               >
-                🔄 Refresh
+                🔄 {isTl ? 'I-refresh' : 'Refresh'}
               </button>
             </div>
 
             {loadingHistory ? (
-              <div className="p-8 text-center text-xs card-subtitle-text">Loading your reports...</div>
+              <div className="p-8 text-center text-xs card-subtitle-text">
+                {isTl ? 'Kinukuha ang iyong mga reports...' : 'Loading your reports...'}
+              </div>
             ) : history.length === 0 ? (
               <div className="p-10 rounded-2xl register-section-card text-center space-y-2">
                 <span className="text-3xl">🕊️</span>
-                <p className="text-sm font-extrabold register-label">Wala ka pang naisusumiteng concern report.</p>
+                <p className="text-sm font-extrabold register-label">
+                  {isTl ? 'Wala ka pang naisusumiteng concern report.' : 'You have not submitted any concern reports yet.'}
+                </p>
                 <p className="text-xs card-subtitle-text max-w-sm mx-auto">
-                  Kung ikaw o ang iyong kaklase ay nakararanas ng bullying, harassment, o matinding stress, huwag mag-atubiling mag-submit.
+                  {isTl
+                    ? 'Kung ikaw o ang iyong kaklase ay nakararanas ng bullying, harassment, o matinding stress, huwag mag-atubiling mag-submit.'
+                    : 'If you or a classmate are experiencing bullying, harassment, or distress, feel safe to file a report.'}
                 </p>
               </div>
             ) : (

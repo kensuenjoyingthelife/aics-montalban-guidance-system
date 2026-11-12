@@ -340,7 +340,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   // Esc closes the top-most popup (Golden Rule 6: same behaviour everywhere)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || document.querySelector('[data-confirm-open]')) return;
+      if (e.key !== 'Escape' || document.querySelector('[data-confirm-open], [data-statement-station]')) return;
       if (toastBanner) setToastBanner(null);
       else if (composerOpen) setComposerOpen(false);
       else if (callLogTarget) setCallLogTarget(null);

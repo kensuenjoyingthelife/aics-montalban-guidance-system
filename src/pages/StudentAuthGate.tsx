@@ -543,10 +543,12 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/15 dark:border-white/15 pb-5">
                 <div>
                   <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight card-title-text">
-                    Create Student Account
+                    {isTl ? 'Gumawa ng Student Account' : 'Create Student Account'}
                   </h2>
                   <p className="text-sm font-semibold mt-1 card-subtitle-text">
-                    Automatic approved upon completing required identity and security fields
+                    {isTl
+                      ? 'Awtomatikong aprubado kapag nakumpleto ang mga kinakailangang impormasyon'
+                      : 'Automatic approved upon completing required identity and security fields'}
                   </p>
                 </div>
                 <button
@@ -557,7 +559,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   }}
                   className="btn-press px-5 py-2.5 rounded-xl card-back-button text-xs font-extrabold self-start sm:self-auto"
                 >
-                  ← Back to Login
+                  {isTl ? '← Bumalik sa Sign In' : '← Back to Login'}
                 </button>
               </div>
 
@@ -572,12 +574,12 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 {/* 1. STUDENT IDENTITY */}
                 <div className="space-y-3 p-5 rounded-2xl register-section-card">
                   <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase">
-                    1. Student Identity (Full Name)
+                    {isTl ? '1. Pagkakakilanlan ng Estudyante (Buong Pangalan)' : '1. Student Identity (Full Name)'}
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
                     <div className="sm:col-span-5 space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold register-label">Last Name</label>
+                        <label className="text-sm font-bold register-label">{isTl ? 'Apelyido (Last Name)' : 'Last Name'}</label>
                         {renderBadge(lastNameStatus)}
                       </div>
                       <input
@@ -592,7 +594,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
                     <div className="sm:col-span-5 space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold register-label">First Name</label>
+                        <label className="text-sm font-bold register-label">{isTl ? 'Pangalan (First Name)' : 'First Name'}</label>
                         {renderBadge(firstNameStatus)}
                       </div>
                       <input
@@ -625,12 +627,12 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 {/* 2. CONTACT DETAILS & STUDENT ID */}
                 <div className="space-y-3 p-5 rounded-2xl register-section-card">
                   <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase">
-                    2. Contact Details & Official Student Number
+                    {isTl ? '2. Detalye ng Pakikipag-ugnayan at Opisyal na Student Number' : '2. Contact Details & Official Student Number'}
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold register-label">Contact No.</label>
+                        <label className="text-sm font-bold register-label">{isTl ? 'Contact No.' : 'Contact No.'}</label>
                         {renderBadge(phoneStatus)}
                       </div>
                       <input
@@ -646,7 +648,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold register-label">Email Address</label>
+                        <label className="text-sm font-bold register-label">{isTl ? 'Email Address' : 'Email Address'}</label>
                         {renderBadge(emailStatus)}
                       </div>
                       <input
@@ -661,7 +663,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold register-label">Student Number</label>
+                        <label className="text-sm font-bold register-label">{isTl ? 'Student Number' : 'Student Number'}</label>
                         {renderBadge(studentNumberStatus)}
                       </div>
                       <input
@@ -679,14 +681,14 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 {/* 3. UPLOAD IDENTIFICATION (LARGE CARDS) */}
                 <div className="space-y-3 p-5 rounded-2xl register-section-card">
                   <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase">
-                    3. Required Official ID Verification (Upload Photos)
+                    {isTl ? '3. Kinakailangang Opisyal na ID Verification (Mag-upload ng Litrato)' : '3. Required Official ID Verification (Upload Photos)'}
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Student ID Card */}
                     <div className="p-4 rounded-2xl register-inner-card space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-extrabold register-label flex items-center gap-2">
-                          <span>📷</span> Student ID Photo
+                          <span>📷</span> {isTl ? 'Litrato ng Student ID' : 'Student ID Photo'}
                         </span>
                         {renderBadge(studentIdStatus)}
                       </div>
@@ -705,16 +707,16 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                             }}
                             className="absolute top-2 right-2 px-3 py-1 rounded-lg bg-black/80 hover:bg-rose-600 text-white text-xs font-bold transition-colors"
                           >
-                            Change Photo
+                            {isTl ? 'Palitan ang Litrato' : 'Change Photo'}
                           </button>
                         </div>
                       ) : (
                         <label className="btn-press flex flex-col items-center justify-center h-32 rounded-xl border-2 border-dashed upload-dropzone cursor-pointer text-center p-3 transition-colors">
                           <span className="text-2xl">📤</span>
                           <span className="text-xs font-extrabold register-label mt-1.5">
-                            Click to Upload Student ID
+                            {isTl ? 'Pindutin para i-upload ang Student ID' : 'Click to Upload Student ID'}
                           </span>
-                          <span className="text-[11px] opacity-70">REAL PHOTO ONLY (JPG, PNG)</span>
+                          <span className="text-[11px] opacity-70">{isTl ? 'TOTOONG LITRATO LAMANG (JPG, PNG)' : 'REAL PHOTO ONLY (JPG, PNG)'}</span>
                           <input
                             type="file"
                             accept="image/jpeg,image/png,image/webp,image/jpg"
@@ -729,7 +731,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     <div className="p-4 rounded-2xl register-inner-card space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-extrabold register-label flex items-center gap-2">
-                          <span>🪪</span> National ID Photo
+                          <span>🪪</span> {isTl ? 'Litrato ng National ID' : 'National ID Photo'}
                         </span>
                         {renderBadge(nationalIdStatus)}
                       </div>
@@ -748,16 +750,16 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                             }}
                             className="absolute top-2 right-2 px-3 py-1 rounded-lg bg-black/80 hover:bg-rose-600 text-white text-xs font-bold transition-colors"
                           >
-                            Change Photo
+                            {isTl ? 'Palitan ang Litrato' : 'Change Photo'}
                           </button>
                         </div>
                       ) : (
                         <label className="btn-press flex flex-col items-center justify-center h-32 rounded-xl border-2 border-dashed upload-dropzone cursor-pointer text-center p-3 transition-colors">
                           <span className="text-2xl">📤</span>
                           <span className="text-xs font-extrabold register-label mt-1.5">
-                            Click to Upload National ID
+                            {isTl ? 'Pindutin para i-upload ang National ID' : 'Click to Upload National ID'}
                           </span>
-                          <span className="text-[11px] opacity-70">REAL PHOTO ONLY (JPG, PNG)</span>
+                          <span className="text-[11px] opacity-70">{isTl ? 'TOTOONG LITRATO LAMANG (JPG, PNG)' : 'REAL PHOTO ONLY (JPG, PNG)'}</span>
                           <input
                             type="file"
                             accept="image/jpeg,image/png,image/webp,image/jpg"
@@ -773,19 +775,19 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 {/* 4. PASSWORD & SECURITY CHECKLIST */}
                 <div className="space-y-3 p-5 rounded-2xl register-section-card">
                   <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase">
-                    4. Account Password & Security
+                    {isTl ? '4. Password at Seguridad ng Account' : '4. Account Password & Security'}
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold register-label">Type Password</label>
+                        <label className="text-sm font-bold register-label">{isTl ? 'Gumawa ng Password' : 'Type Password'}</label>
                         {renderBadge(passwordStatus)}
                       </div>
                       <div className="relative">
                         <input
                           type={showRegPassword ? 'text' : 'password'}
                           required
-                          placeholder="At least 6 characters"
+                          placeholder={isTl ? 'Hindi bababa sa 6 na karakter' : 'At least 6 characters'}
                           value={regPassword}
                           onChange={(e) => setRegPassword(e.target.value)}
                           className="w-full pl-4 pr-11 py-3 rounded-xl cosmic-input text-sm font-semibold focus:outline-none"
@@ -806,14 +808,14 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold register-label">Confirm Password</label>
+                        <label className="text-sm font-bold register-label">{isTl ? 'Ulitin ang Password' : 'Confirm Password'}</label>
                         {renderBadge(confirmPasswordStatus)}
                       </div>
                       <div className="relative">
                         <input
                           type={showRegConfirmPassword ? 'text' : 'password'}
                           required
-                          placeholder="Repeat password"
+                          placeholder={isTl ? 'Ulitin ang password' : 'Repeat password'}
                           value={regConfirmPassword}
                           onChange={(e) => setRegConfirmPassword(e.target.value)}
                           className="w-full pl-4 pr-11 py-3 rounded-xl cosmic-input text-sm font-semibold focus:outline-none"
@@ -836,16 +838,16 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   {/* Password Checklist Bar */}
                   <div className="p-3.5 rounded-xl checklist-bar grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                     <div className={passwordCriteria.length ? 'text-emerald-500 dark:text-emerald-400 font-extrabold' : 'checklist-dim'}>
-                      {passwordCriteria.length ? '✓' : '○'} 6+ characters
+                      {passwordCriteria.length ? '✓' : '○'} {isTl ? '6+ karakter' : '6+ characters'}
                     </div>
                     <div className={passwordCriteria.number ? 'text-emerald-500 dark:text-emerald-400 font-extrabold' : 'checklist-dim'}>
-                      {passwordCriteria.number ? '✓' : '○'} 1+ Number (0-9)
+                      {passwordCriteria.number ? '✓' : '○'} {isTl ? '1+ Numero (0-9)' : '1+ Number (0-9)'}
                     </div>
                     <div className={passwordCriteria.uppercase ? 'text-emerald-500 dark:text-emerald-400 font-extrabold' : 'checklist-dim'}>
-                      {passwordCriteria.uppercase ? '✓' : '○'} 1+ Uppercase (A-Z)
+                      {passwordCriteria.uppercase ? '✓' : '○'} {isTl ? '1+ Malaking Letra (A-Z)' : '1+ Uppercase (A-Z)'}
                     </div>
                     <div className={passwordCriteria.special ? 'text-emerald-500 dark:text-emerald-400 font-extrabold' : 'checklist-dim'}>
-                      {passwordCriteria.special ? '✓' : '○'} 1+ Special (!@#$)
+                      {passwordCriteria.special ? '✓' : '○'} {isTl ? '1+ Simbolo (!@#$)' : '1+ Special (!@#$)'}
                     </div>
                   </div>
                 </div>
@@ -857,10 +859,10 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   className="btn-press w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:opacity-95 text-white text-base font-extrabold shadow-xl shadow-emerald-950/60 border border-white/20 disabled:opacity-45 transition-all flex items-center justify-center gap-2.5"
                 >
                   {regLoading ? (
-                    <span>Creating & Approving Account...</span>
+                    <span>{isTl ? 'Inaapruba at Ginagawa ang Account...' : 'Creating & Approving Account...'}</span>
                   ) : (
                     <>
-                      <span>✓ Create Account (Automatic Approved)</span>
+                      <span>{isTl ? '✓ Gumawa ng Account (Awtomatikong Aprubado)' : '✓ Create Account (Automatic Approved)'}</span>
                       <span>→</span>
                     </>
                   )}

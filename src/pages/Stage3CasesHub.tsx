@@ -8,6 +8,7 @@ import { useAppConfig, activeOffenses } from '../services/appConfig';
 import { Legend } from '../components/ui/Charts';
 import { StudentForm, StudentFormValue } from '../components/students/StudentForm';
 import { CaseFlowPanel, FlowAction, flowState } from '../components/cases/CaseFlowPanel';
+import { StatementStation } from '../components/cases/StatementStation';
 import { PrintFormsWindow } from '../components/cases/PrintFormsWindow';
 import { EvidencePanel } from '../components/cases/EvidencePanel';
 import { FORM_TITLES } from '../services/printForms';
@@ -188,13 +189,16 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   const [caseHistory, setCaseHistory] = useState<CaseHistoryEntry[] | null | 'loading'>('loading');
   const [caseEditing, setCaseEditing] = useState<boolean>(false);
   const [flowBusy, setFlowBusy] = useState(false);
+  /** Student Statement Station: the case it is open for, and the case as it was before the student saved */
+  const [stationCase, setStationCase] = useState<DisciplineCaseRecord | null>(null);
+  const stationBefore = useRef<DisciplineCaseRecord | null>(null);
   const [editDate, setEditDate] = useState<string>('');
   const [editReportedBy, setEditReportedBy] = useState<string>('');
   const [editNotes, setEditNotes] = useState<string>('');
   // Esc closes the top-most popup of this page (same as Case Details)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || document.querySelector('[data-confirm-open], [data-evidence-viewer], [data-student-form], [data-print-forms]')) return;
+      if (e.key !== 'Escape' || document.querySelector('[data-confirm-open], [data-evidence-viewer], [data-student-form], [data-print-forms], [data-statement-station]')) return;
       if (callSlipCase) setCallSlipCase(null);
       else if (selectedStudentProfile) setSelectedStudentProfile(null);
     };
@@ -204,7 +208,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   useEffect(() => {
     if (!openCaseCode) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !caseEditing && !document.querySelector('[data-confirm-open], [data-evidence-viewer], [data-print-forms]')) setOpenCaseCode(null);
+      if (e.key === 'Escape' && !caseEditing && !document.querySelector('[data-confirm-open], [data-evidence-viewer], [data-print-forms], [data-statement-station]')) setOpenCaseCode(null);
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
@@ -1258,6 +1262,26 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     return isTl ? pick[1] : pick[0];
   };
 
+  /** Statement Station: the student's statement is the case's explanation step */
+  const saveStationStatement = async (c: DisciplineCaseRecord, text: string): Promise<boolean> => {
+    const ok = await updateCaseFlowInDb(c.caseCode, { explanation: text, step: 'Explanation' });
+    if (!ok) return false;
+    stationBefore.current = c;
+    setCases((prev) => prev.map((x) => (x.caseCode === c.caseCode ? { ...x, explanation: text, step: 'Explanation' } : x)));
+    void insertActivityLogInDb({ actor: 'Student (Statement Station)', actionEn: `${c.caseCode}: Student typed their statement at the Statement Station`, actionTl: `${c.caseCode}: Nag-type ang estudyante ng salaysay sa Statement Station`, tag: c.caseCode, tone: 'blue' }).then(() => void loadCaseHistory(c.caseCode));
+    return true;
+  };
+  const closeStation = () => {
+    setStationCase(null);
+    const before = stationBefore.current;
+    stationBefore.current = null;
+    soundFX.playSuccessCheck();
+    if (!before) return onTriggerToast(isTl ? 'Isinara ang Statement Station. Walang na-save.' : 'Statement Station closed. Nothing was saved.');
+    onTriggerToast(isTl ? '✓ Na-save ang salaysay ng estudyante. Susunod: ipaalam sa magulang.' : '✓ The student’s statement is saved. Next: let the parent know.', async () => {
+      if (await updateCaseFlowInDb(before.caseCode, { explanation: before.explanation || null, step: before.step ?? 'Reported' })) setCases((prev) => prev.map((x) => (x.caseCode === before.caseCode ? { ...x, explanation: before.explanation, step: before.step } : x)));
+    });
+  };
+
   /** one step of the 7-step flow: save → show → Undo */
   const applyFlow = async (c: DisciplineCaseRecord, a: FlowAction) => {
     const now = new Date().toISOString();
@@ -1323,7 +1347,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     // Undo = put back exactly the fields that changed
     const back: Record<string, unknown> = {
       student_called_at: c.studentCalledAt ?? null,
-      explanation: c.explanation ?? null,
+      explanation: c.explanation || null,
       parent_notified_at: c.parentNotifiedAt ?? null,
       parent_notified_how: c.parentNotifiedHow ?? null,
       decision: c.decision ?? null,
@@ -3560,7 +3584,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
             className="fixed inset-0 !m-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
             onClick={() => !caseEditing && setOpenCaseCode(null)}
             onKeyDown={(e) => {
-              if (e.key === 'Escape' && !caseEditing && !document.querySelector('[data-evidence-viewer], [data-print-forms]')) setOpenCaseCode(null);
+              if (e.key === 'Escape' && !caseEditing && !document.querySelector('[data-evidence-viewer], [data-print-forms], [data-statement-station]')) setOpenCaseCode(null);
             }}
           >
             <motion.div
@@ -3611,7 +3635,10 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
 
               {/* body */}
               <div className="overflow-y-auto clean-scroll">
-              <CaseFlowPanel key={openCase.caseCode + (openCase.step ?? '') + (openCase.decidedAt ?? '')} c={openCase} isTl={isTl} busy={flowBusy} suggestedSanction={suggestedSanctionFor(openCase)} onAction={(a) => void applyFlow(openCase, a)} />
+              <CaseFlowPanel key={openCase.caseCode + (openCase.step ?? '') + (openCase.decidedAt ?? '')} c={openCase} isTl={isTl} busy={flowBusy} suggestedSanction={suggestedSanctionFor(openCase)} onAction={(a) => void applyFlow(openCase, a)} onOpenStation={() => setStationCase(openCase)} />
+              {stationCase && (
+                <StatementStation studentName={stationCase.studentName} gradeSection={stationCase.gradeSection} isTl={isTl} onSubmit={(s) => saveStationStatement(stationCase, s.text)} onClose={closeStation} />
+              )}
               <div className="px-6 py-4 space-y-4 text-xs">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="col-span-2">

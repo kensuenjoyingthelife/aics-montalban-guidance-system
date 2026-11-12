@@ -78,7 +78,9 @@ export function buildFormHtml(f: FormInput, origin = ''): string {
   } else if (f.kind === 'contract') {
     const promises = (f.promises || '').split('\n').map((x) => x.trim()).filter(Boolean);
     body = `${who}
-      <p>I, <b>${esc(c.studentName)}</b>, understand that my behavior (<b>${esc(c.offenseTitleEn)}</b>) is against the school rules. I promise to:</p>
+      <p>I, <b>${esc(c.studentName)}</b>, understand that my behavior (<b>${esc(c.offenseTitleEn)}</b>, ${esc(long(c.incidentDate))}) is against the school rules.</p>
+      <h3>My statement</h3>${c.explanation ? `<p class="box">${esc(c.explanation)}</p>` : lines(4)}
+      <p>I promise to:</p>
       <ol>${(promises.length ? promises : ['Follow the school rules and the Student Handbook.', 'Respect my teachers, classmates and school staff.', 'Report to the Guidance Office when called.']).map((p) => `<li>${esc(p)}</li>`).join('')}</ol>
       <p>I understand that if I break this contract, the school may give a heavier sanction based on the Student Handbook.</p>
       <p>Signed on ${esc(today)}.</p>
