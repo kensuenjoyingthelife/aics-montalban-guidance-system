@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { installNoInspect } from './services/noInspect';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { SoundProvider } from './services/soundEngine';
@@ -15,6 +16,8 @@ import { applyAdaptivePerformanceClass } from './services/devicePerformance';
 export const App: React.FC = () => {
   // Opening sequence plays every time the app starts
   const [showSplash, setShowSplash] = useState<boolean>(true);
+  // no right-click (except in text boxes) and no inspect shortcuts in real builds
+  useEffect(() => installNoInspect(), []);
 
   // Auto-tune performance class for device (low-end phones vs high-end PC)
   useEffect(() => {
