@@ -61,14 +61,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   const [studentIdFile, setStudentIdFile] = useState<File | null>(null);
   const [studentIdPreview, setStudentIdPreview] = useState<string | null>(null);
 
-  // Live Camera / Webcam State
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
-  const [cameraFacingMode, setCameraFacingMode] = useState<'user' | 'environment'>('user');
-  const [cameraErrorNotice, setCameraErrorNotice] = useState<string | null>(null);
-  const [showNoWebcamConfirmation, setShowNoWebcamConfirmation] = useState(false);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-
   const [regLoading, setRegLoading] = useState(false);
   const [regError, setRegError] = useState<string | null>(null);
   const [show20sScanner, setShow20sScanner] = useState(false);
@@ -231,92 +223,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       soundFX.playToggleSwitch(true);
     }
   };
-
-  // Camera stream controls
-  const stopCameraStream = () => {
-    if (cameraStream) {
-      cameraStream.getTracks().forEach((track) => track.stop());
-      setCameraStream(null);
-    }
-  };
-
-  const startCamera = async (facing: 'user' | 'environment' = 'user') => {
-    setCameraErrorNotice(null);
-    try {
-      // Check if mediaDevices is supported
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setShowNoWebcamConfirmation(true);
-        return;
-      }
-
-      // Check available video devices
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter((d) => d.kind === 'videoinput');
-      if (videoDevices.length === 0) {
-        setShowNoWebcamConfirmation(true);
-        return;
-      }
-
-      // Request live stream
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false,
-      });
-
-      stopCameraStream();
-      setCameraStream(stream);
-      setIsCameraOpen(true);
-      setCameraFacingMode(facing);
-
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play().catch(() => {});
-        }
-      }, 100);
-    } catch (err: any) {
-      console.warn('Camera access denied or unavailable:', err);
-      // If error is NotFoundError or DevicesNotFoundError, show no webcam confirmation
-      if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        setShowNoWebcamConfirmation(true);
-      } else {
-        setCameraErrorNotice(
-          isTl
-            ? 'Hindi ma-access ang camera. Pakisigurong binigyan mo ng camera permission ang browser o gamitin ang file picker.'
-            : 'Unable to access camera. Please allow camera permissions in browser settings or proceed with file upload.'
-        );
-      }
-    }
-  };
-
-  const capturePhoto = () => {
-    if (!videoRef.current) return;
-    const video = videoRef.current;
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Draw frame
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      const file = new File([blob], `live_student_${Date.now()}.jpg`, { type: 'image/jpeg' });
-      setStudentIdFile(file);
-      setStudentIdPreview(URL.createObjectURL(file));
-      soundFX.playToggleSwitch(true);
-      stopCameraStream();
-      setIsCameraOpen(false);
-    }, 'image/jpeg', 0.92);
-  };
-
-  useEffect(() => {
-    return () => {
-      stopCameraStream();
-    };
-  }, []);
 
   // ==========================================
   // ACTION: HANDLE REGISTER
@@ -506,18 +412,18 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
           {mode === 'login' && (
             <div className="space-y-7">
               <div className="text-center space-y-3">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-500/20 border border-blue-400/40 shadow-lg shadow-blue-500/20 text-blue-300">
-                  <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
+                <div className="w-16 h-16 rounded-full overflow-hidden mx-auto shadow-xl ring-2 ring-blue-400/40 bg-white p-0.5">
+                  <img
+                    src="/aics-logo.jpg"
+                    alt="AICS Logo"
+                    className="w-full h-full object-cover rounded-full"
+                  />
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight card-title-text">
-                  {isTl ? 'Student Portal Sign-In' : 'Student Portal Sign-In'}
+                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight card-title-text uppercase">
+                  AICS SAFEZONE
                 </h2>
                 <p className="text-sm font-semibold card-subtitle-text">
-                  {isTl
-                    ? 'Mag-sign in gamit ang iyong Student ID Number at Password'
-                    : 'Sign in with your Student ID Number and Password'}
+                  Every Concern Deserves Care.
                 </p>
               </div>
 
@@ -532,7 +438,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 <div className="space-y-2">
                   <label className="text-sm font-extrabold register-label flex items-center justify-between">
                     <span>Student ID Number</span>
-                    <span className="text-xs card-subtitle-text font-normal">hal. 2025-11098</span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/50 text-base pointer-events-none">
@@ -772,17 +677,17 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   </div>
                 </div>
 
-                {/* 3. STUDENT PHOTO & ID VERIFICATION (LIVE CAMERA / WEBCAM OR UPLOAD) */}
+                {/* 3. STUDENT ID PHOTO UPLOAD */}
                 <div className="space-y-4 p-5 rounded-2xl register-section-card">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                       <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase">
-                        {isTl ? '3. Live Verification & Litrato ng Estudyante' : '3. Live Student Verification & ID'}
+                        {isTl ? '3. Litrato ng Student ID' : '3. Student ID Photo Verification'}
                       </h3>
                       <p className="text-xs opacity-75 mt-0.5">
                         {isTl
-                          ? 'Kumuha ng live na litrato gamit ang camera ng cellphone o webcam ng computer upang mapatunayang totoong estudyante ka.'
-                          : 'Capture a live photo using your phone camera or computer webcam to prove genuine student identity.'}
+                          ? 'I-upload ang malinaw na litrato ng iyong opisyal na AICS Student ID (JPG o PNG).'
+                          : 'Upload a clear photo of your official AICS Student ID (JPG or PNG).'}
                       </p>
                     </div>
                     <div>{renderBadge(studentIdStatus)}</div>
@@ -793,12 +698,12 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       <div className="relative rounded-2xl overflow-hidden border-2 border-emerald-500/50 bg-black/60 flex flex-col items-center justify-center p-3">
                         <img
                           src={studentIdPreview}
-                          alt="Student Verification Preview"
+                          alt="Student ID Preview"
                           className="max-h-72 w-full object-contain rounded-xl"
                         />
                         <div className="mt-3 flex items-center justify-between w-full px-2">
                           <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                            <span>✓</span> {isTl ? 'Litrato Handa Na' : 'Photo Captured & Ready'}
+                            <span>✓</span> {isTl ? 'Student ID Handa Na' : 'Student ID Uploaded & Ready'}
                           </span>
                           <button
                             type="button"
@@ -809,77 +714,26 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                             }}
                             className="px-3 py-1.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-bold transition-colors"
                           >
-                            {isTl ? 'Palitan / Kumuha Uli' : 'Retake / Change Photo'}
+                            {isTl ? 'Palitan ang File' : 'Change File'}
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {/* Option A: Live Camera / Webcam */}
-                        <div className="p-4 rounded-xl border border-sky-500/30 bg-sky-500/10 flex flex-col justify-between space-y-3 text-center">
-                          <div className="space-y-1">
-                            <span className="text-3xl block">📷</span>
-                            <h4 className="text-sm font-extrabold text-sky-400">
-                              {isTl ? 'Live Camera / Webcam Capture' : 'Live Camera / Webcam'}
-                            </h4>
-                            <p className="text-xs opacity-80">
-                              {isTl
-                                ? 'Mag-selfie o itapat ang mukha at ID gamit ang camera.'
-                                : 'Take a live snapshot with your phone camera or PC webcam.'}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              soundFX.playToggleSwitch(true);
-                              startCamera('user');
-                            }}
-                            className="btn-press w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-extrabold shadow-md flex items-center justify-center gap-2"
-                          >
-                            <span>📸</span>
-                            <span>{isTl ? 'Buksan ang Camera / Webcam' : 'Open Camera / Webcam'}</span>
-                          </button>
-                        </div>
-
-                        {/* Option B: File Upload (Fallback or Direct) */}
-                        <div className="p-4 rounded-xl border border-white/15 bg-white/5 flex flex-col justify-between space-y-3 text-center">
-                          <div className="space-y-1">
-                            <span className="text-3xl block">📁</span>
-                            <h4 className="text-sm font-extrabold text-slate-300">
-                              {isTl ? 'Mag-upload Mula sa Device' : 'Upload From Device'}
-                            </h4>
-                            <p className="text-xs opacity-80">
-                              {isTl
-                                ? 'Kung walang nakasaksak na camera o may kopya ka na.'
-                                : 'Upload your student ID photo directly if no webcam is available.'}
-                            </p>
-                          </div>
-                          <label className="btn-press w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-extrabold border border-white/20 cursor-pointer flex items-center justify-center gap-2">
-                            <span>📤</span>
-                            <span>{isTl ? 'Pumili ng File' : 'Select Photo File'}</span>
-                            <input
-                              type="file"
-                              accept="image/jpeg,image/png,image/webp,image/jpg"
-                              capture="user"
-                              onChange={handleStudentIdUpload}
-                              className="hidden"
-                            />
-                          </label>
-                        </div>
-                      </div>
-                    )}
-
-                    {cameraErrorNotice && (
-                      <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-semibold flex items-center justify-between">
-                        <span>{cameraErrorNotice}</span>
-                        <button
-                          type="button"
-                          onClick={() => setCameraErrorNotice(null)}
-                          className="text-white hover:underline text-xs ml-2"
-                        >
-                          ✕
-                        </button>
-                      </div>
+                      <label className="btn-press flex flex-col items-center justify-center h-40 rounded-2xl border-2 border-dashed upload-dropzone cursor-pointer text-center p-4 transition-colors">
+                        <span className="text-3xl">📤</span>
+                        <span className="text-sm font-extrabold register-label mt-2">
+                          {isTl ? 'Pindutin para i-upload ang Student ID' : 'Click to Upload Student ID'}
+                        </span>
+                        <span className="text-xs opacity-70 mt-1">
+                          {isTl ? 'TOTOONG LITRATO LAMANG (JPG, PNG)' : 'REAL PHOTO ONLY (JPG, PNG)'}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/jpg"
+                          onChange={handleStudentIdUpload}
+                          className="hidden"
+                        />
+                      </label>
                     )}
                   </div>
                 </div>
@@ -1381,155 +1235,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 >
                   <span>✓</span>
                   <span>{isTl ? 'Nauunawaan Ko at Sumasang-ayon Ako' : 'I Understand & Agree to Terms'}</span>
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ====================================================
-          LIVE CAMERA / WEBCAM CAPTURE MODAL
-          ==================================================== */}
-      <AnimatePresence>
-        {isCameraOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-[#06122B]/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-6"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-lg rounded-3xl bg-[#0B1E48] border-2 border-sky-400 p-5 sm:p-6 text-white shadow-2xl flex flex-col space-y-4"
-            >
-              <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">📸</span>
-                  <h3 className="text-base font-extrabold text-white">
-                    {isTl ? 'Kumuha ng Live Litrato' : 'Live Camera / Webcam Viewfinder'}
-                  </h3>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFX.playBackspace();
-                    stopCameraStream();
-                    setIsCameraOpen(false);
-                  }}
-                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {/* Viewfinder Video Stream */}
-              <div className="relative rounded-2xl overflow-hidden bg-black aspect-4/3 flex items-center justify-center border border-sky-400/30">
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className={`w-full h-full object-cover ${cameraFacingMode === 'user' ? 'scale-x-[-1]' : ''}`}
-                />
-                {/* Visual Target Frame */}
-                <div className="absolute inset-6 sm:inset-10 border-2 border-dashed border-sky-400/50 rounded-2xl pointer-events-none flex items-center justify-center">
-                  <span className="text-[11px] font-mono tracking-wider bg-black/60 px-3 py-1 rounded-full text-sky-300">
-                    {isTl ? 'Itapat ang mukha o Student ID rito' : 'Align face or Student ID here'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Camera Controls */}
-              <div className="flex items-center justify-between gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFX.playToggleSwitch(true);
-                    const nextFacing = cameraFacingMode === 'user' ? 'environment' : 'user';
-                    startCamera(nextFacing);
-                  }}
-                  className="btn-press px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 flex items-center gap-1.5"
-                  title="Switch Front/Back Camera"
-                >
-                  <span>🔄</span>
-                  <span className="hidden sm:inline">{isTl ? 'Palitan ang Camera' : 'Flip Camera'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    capturePhoto();
-                  }}
-                  className="btn-press flex-1 py-3 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-sm font-extrabold shadow-lg shadow-sky-950/50 flex items-center justify-center gap-2"
-                >
-                  <span className="w-4 h-4 rounded-full bg-white animate-pulse" />
-                  <span>{isTl ? 'Kumuha ng Litrato (Capture)' : 'Capture Photo'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFX.playBackspace();
-                    stopCameraStream();
-                    setIsCameraOpen(false);
-                  }}
-                  className="btn-press px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-bold"
-                >
-                  {isTl ? 'Kanselahin' : 'Cancel'}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ====================================================
-          CONFIRMATION DIALOG: NO WEBCAM DETECTED
-          Graceful optional fallback without blocking the user
-          ==================================================== */}
-      <AnimatePresence>
-        {showNoWebcamConfirmation && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-[#06122B]/85 backdrop-blur-md flex items-center justify-center p-6"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 14 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-md rounded-3xl bg-[#0B1E48] border-2 border-amber-400/70 p-6 text-white shadow-2xl space-y-5"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-400/40 mx-auto flex items-center justify-center text-2xl">
-                📷
-              </div>
-
-              <div className="text-center space-y-2">
-                <h3 className="text-lg font-extrabold text-white">
-                  {isTl ? 'Walang Nakitang Webcam o Camera' : 'No Webcam or Camera Detected'}
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                  {isTl
-                    ? 'Wala kaming nakitang nakasaksak na webcam o camera sa iyong computer o browser. Maaari mong ipagpatuloy ang pagpaparehistro sa pamamagitan ng pag-upload ng litrato mula sa iyong computer files.'
-                    : 'No webcam hardware was detected on this device. You may proceed with student registration by uploading a photo directly from your local storage.'}
-                </p>
-              </div>
-
-              <div className="pt-2 flex flex-col sm:flex-row items-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFX.playToggleSwitch(true);
-                    setShowNoWebcamConfirmation(false);
-                  }}
-                  className="btn-press w-full py-3 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 text-white text-xs font-extrabold shadow-md flex items-center justify-center gap-1.5"
-                >
-                  <span>✓</span>
-                  <span>{isTl ? 'Sige, Mag-Upload ng File' : 'Proceed with File Upload'}</span>
                 </button>
               </div>
             </motion.div>

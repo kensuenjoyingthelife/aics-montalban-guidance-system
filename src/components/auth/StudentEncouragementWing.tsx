@@ -29,7 +29,10 @@ export const GIRL_ENCOURAGEMENTS = [
 
 /**
  * Pure SVG AICS Boy Student Illustration
- * Scale & Viewport tuned for prominent, balanced stature beside the login card
+ * FIXED & TAILORED:
+ * - Natural anatomical fit: Uniform polo is naturally worn over torso, shoulders, and chest
+ * - White AICS SHS Polo with collar, placket buttons, pocket seal & Royal Blue lanyard
+ * - Clean black trousers and shoes
  */
 export const AicsBoyStudentSvg: React.FC<{ className?: string }> = ({ className = 'w-64 h-96' }) => (
   <svg
@@ -45,7 +48,7 @@ export const AicsBoyStudentSvg: React.FC<{ className?: string }> = ({ className 
       </linearGradient>
       <linearGradient id="boyShirt" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0%" stopColor="#FFFFFF" />
-        <stop offset="50%" stopColor="#F0F4FA" />
+        <stop offset="50%" stopColor="#F2F6FC" />
         <stop offset="100%" stopColor="#DCE6F5" />
       </linearGradient>
       <linearGradient id="boyPants" x1="0" y1="0" x2="0" y2="1">
@@ -65,23 +68,65 @@ export const AicsBoyStudentSvg: React.FC<{ className?: string }> = ({ className 
     {/* Ground Shadow */}
     <ellipse cx="80" cy="252" rx="42" ry="7" fill="#030A1C" opacity="0.35" />
 
-    {/* SHS Black Trousers */}
-    <path d="M57 168 L59 248 L76 248 L79 178 L82 178 L85 248 L102 248 L104 168 Z" fill="url(#boyPants)" />
-    {/* Clean black shoes */}
+    {/* 1. LOWER BODY: SHS Black Trousers & Clean Shoes */}
+    <path d="M57 166 L59 248 L76 248 L79 174 L82 174 L85 248 L102 248 L104 166 Z" fill="url(#boyPants)" />
     <ellipse cx="67" cy="249" rx="11" ry="5" fill="#0A0E17" />
     <ellipse cx="94" cy="249" rx="11" ry="5" fill="#0A0E17" />
 
-    {/* Left Arm (Relaxed at side, subtle sway) */}
+    {/* 2. BASE TORSO & NECK (Under the shirt) */}
+    <rect x="73" y="66" width="14" height="20" rx="3" fill="url(#boySkin)" />
+
+    {/* 3. SHIRT MAIN BODY (Naturally worn, fully wrapping the torso and shoulders) */}
+    <path
+      d="M44 82 C56 78 70 77 80 77 C90 77 104 78 116 82 L115 168 C96 172 64 172 45 168 Z"
+      fill="url(#boyShirt)"
+      stroke="#CFD9EA"
+      strokeWidth="1"
+    />
+
+    {/* Shirt Placket (Center button line) */}
+    <line x1="80" y1="92" x2="80" y2="168" stroke="#CBD7EA" strokeWidth="2.4" />
+    <circle cx="80" cy="112" r="1.8" fill="#A5B8D8" />
+    <circle cx="80" cy="130" r="1.8" fill="#A5B8D8" />
+    <circle cx="80" cy="148" r="1.8" fill="#A5B8D8" />
+
+    {/* Left Breast Pocket with AICS Round Seal */}
+    <rect x="91" y="108" width="14" height="16" rx="2" fill="#F4F8FD" stroke="#CBD7EA" strokeWidth="0.9" />
+    <circle cx="98" cy="116" r="4.4" fill="#1E469B" />
+    <circle cx="98" cy="116" r="3" fill="#F4F8FD" />
+    <circle cx="98" cy="116" r="1.3" fill="#1E469B" />
+
+    {/* Blue AICS Lanyard with Yellow Accent */}
+    <path d="M72 82 L77 140 M88 82 L83 140" stroke="url(#lanyardBlue)" strokeWidth="3.4" strokeLinecap="round" />
+    <line x1="72.8" y1="90" x2="74.5" y2="114" stroke="#FBBF24" strokeWidth="1.3" />
+    <line x1="87.2" y1="90" x2="85.5" y2="114" stroke="#FBBF24" strokeWidth="1.3" />
+    {/* Hanging ID Badge */}
+    <rect x="73" y="140" width="14" height="20" rx="2.5" fill="#FFFFFF" stroke="#CBD5E1" strokeWidth="0.9" />
+    <rect x="73" y="140" width="14" height="5" rx="2" fill="#1E469B" />
+    <text x="80" y="143.8" textAnchor="middle" fontSize="3.3" fontWeight="800" fill="#FFFFFF" fontFamily="sans-serif">
+      AICS
+    </text>
+    <circle cx="80" cy="149.5" r="2.5" fill="#94A3B8" />
+    <rect x="76" y="154" width="8" height="1.6" rx="0.8" fill="#CBD5E1" />
+
+    {/* Open Convertible Polo Collar (Lays realistically on the chest & collarbone) */}
+    <path d="M64 80 L80 100 L72 78 Z" fill="#FFFFFF" stroke="#CBD7EA" strokeWidth="1.2" strokeLinejoin="round" />
+    <path d="M96 80 L80 100 L88 78 Z" fill="#FFFFFF" stroke="#CBD7EA" strokeWidth="1.2" strokeLinejoin="round" />
+
+    {/* 4. SLEEVES & ARMS (Sleeves naturally wrap around arms at shoulder seams) */}
+    {/* Left Arm & Sleeve */}
+    <path d="M47 82 L32 110 L48 116 L53 87 Z" fill="url(#boyShirt)" stroke="#CFD9EA" strokeWidth="1" />
     <motion.g
       animate={{ rotate: [0, 2.5, 0] }}
       transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-      style={{ transformOrigin: '48px 94px' }}
+      style={{ transformOrigin: '40px 112px' }}
     >
-      <path d="M48 94 C42 115 42 135 48 152" stroke="url(#boySkin)" strokeWidth="10.5" strokeLinecap="round" />
-      <circle cx="49" cy="155" r="5.8" fill="url(#boySkin)" />
+      <path d="M40 114 C36 128 38 142 46 154" stroke="url(#boySkin)" strokeWidth="9.5" strokeLinecap="round" />
+      <circle cx="47" cy="156" r="5.5" fill="url(#boySkin)" />
     </motion.g>
 
-    {/* Right Arm: ACTIVELY WAVING / GESTURING HAND */}
+    {/* Right Arm & Sleeve: ACTIVELY WAVING / GESTURING HAND */}
+    <path d="M113 82 L128 110 L112 116 L107 87 Z" fill="url(#boyShirt)" stroke="#CFD9EA" strokeWidth="1" />
     <motion.g
       animate={{
         rotate: [0, -20, 5, -20, 0],
@@ -91,60 +136,15 @@ export const AicsBoyStudentSvg: React.FC<{ className?: string }> = ({ className 
         repeat: Infinity,
         ease: 'easeInOut',
       }}
-      style={{ transformOrigin: '112px 94px' }}
+      style={{ transformOrigin: '120px 112px' }}
     >
-      <path d="M112 94 C124 105 133 112 129 128" stroke="url(#boySkin)" strokeWidth="10" strokeLinecap="round" />
-      <circle cx="129" cy="130" r="5.5" fill="url(#boySkin)" />
-      <path d="M126 127 L123 120 M129 126 L128 118 M132 127 L133 119 M134 129 L137 123" stroke="url(#boySkin)" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M120 114 C128 120 133 124 130 138" stroke="url(#boySkin)" strokeWidth="9.5" strokeLinecap="round" />
+      <circle cx="130" cy="140" r="5.2" fill="url(#boySkin)" />
+      <path d="M127 137 L124 130 M130 136 L129 128 M133 137 L134 129 M135 139 L138 133" stroke="url(#boySkin)" strokeWidth="2.3" strokeLinecap="round" />
     </motion.g>
 
-    {/* White AICS SHS Polo Body */}
-    <path
-      d="M48 88 L112 88 L116 172 L44 172 Z"
-      fill="url(#boyShirt)"
-      stroke="#CFD9EA"
-      strokeWidth="0.9"
-    />
-    {/* Center Placket */}
-    <line x1="80" y1="96" x2="80" y2="170" stroke="#CBD7EA" strokeWidth="2.2" />
-    <circle cx="80" cy="116" r="1.8" fill="#A5B8D8" />
-    <circle cx="80" cy="134" r="1.8" fill="#A5B8D8" />
-    <circle cx="80" cy="152" r="1.8" fill="#A5B8D8" />
-
-    {/* Short Sleeves */}
-    <path d="M48 88 L35 118 L50 122 L57 95 Z" fill="url(#boyShirt)" stroke="#CFD9EA" strokeWidth="0.9" />
-    <path d="M112 88 L125 118 L110 122 L103 95 Z" fill="url(#boyShirt)" stroke="#CFD9EA" strokeWidth="0.9" />
-
-    {/* Left Breast Pocket with AICS Round Seal */}
-    <rect x="91" y="112" width="14" height="16" rx="2" fill="#F4F8FD" stroke="#CBD7EA" strokeWidth="0.9" />
-    <circle cx="98" cy="120" r="4.4" fill="#1E469B" />
-    <circle cx="98" cy="120" r="3" fill="#F4F8FD" />
-    <circle cx="98" cy="120" r="1.3" fill="#1E469B" />
-
-    {/* Blue AICS Lanyard with Yellow Accent */}
-    <path d="M72 82 L77 142 M88 82 L83 142" stroke="url(#lanyardBlue)" strokeWidth="3.4" strokeLinecap="round" />
-    <line x1="72.8" y1="90" x2="74.5" y2="114" stroke="#FBBF24" strokeWidth="1.3" />
-    <line x1="87.2" y1="90" x2="85.5" y2="114" stroke="#FBBF24" strokeWidth="1.3" />
-    {/* Hanging ID Badge */}
-    <rect x="73" y="142" width="14" height="20" rx="2.5" fill="#FFFFFF" stroke="#CBD5E1" strokeWidth="0.9" />
-    <rect x="73" y="142" width="14" height="5" rx="2" fill="#1E469B" />
-    <text x="80" y="145.8" textAnchor="middle" fontSize="3.3" fontWeight="800" fill="#FFFFFF" fontFamily="sans-serif">
-      AICS
-    </text>
-    <circle cx="80" cy="151.5" r="2.5" fill="#94A3B8" />
-    <rect x="76" y="156" width="8" height="1.6" rx="0.8" fill="#CBD5E1" />
-
-    {/* Open Convertible Polo Collar */}
-    <path d="M66 84 L80 102 L70 82 Z" fill="#FFFFFF" stroke="#CBD7EA" strokeWidth="1" />
-    <path d="M94 84 L80 102 L90 82 Z" fill="#FFFFFF" stroke="#CBD7EA" strokeWidth="1" />
-
-    {/* Neck */}
-    <rect x="73" y="66" width="14" height="18" rx="3" fill="url(#boySkin)" />
-
-    {/* Head & Face */}
+    {/* 5. HEAD & FACE */}
     <ellipse cx="80" cy="54" rx="16.5" ry="19.5" fill="url(#boySkin)" />
-
-    {/* Ears */}
     <ellipse cx="63" cy="55" rx="3.6" ry="5.8" fill="url(#boySkin)" />
     <ellipse cx="97" cy="55" rx="3.6" ry="5.8" fill="url(#boySkin)" />
 
@@ -200,9 +200,10 @@ export const AicsBoyStudentSvg: React.FC<{ className?: string }> = ({ className 
 
 /**
  * Pure SVG AICS Girl Student Illustration
- * FIXED & ENHANCED:
- * - Rich, lush, natural long hair with voluminous crown, flowing side locks down past shoulders, and full bangs (hindi kalbo!)
- * - Signature AICS Gray Blouse with Royal Blue piping & AICS Blue pleated skirt
+ * FIXED & TAILORED:
+ * - Natural anatomical fit: Gray blouse naturally tailored onto torso, shoulders and arms with authentic blue piping
+ * - Royal Blue pleated skirt naturally worn around waist
+ * - Rich, lush, natural long hair with bangs
  * - Waving hand & animated talking mouth
  */
 export const AicsGirlStudentSvg: React.FC<{ className?: string }> = ({ className = 'w-64 h-96' }) => (
@@ -240,75 +241,45 @@ export const AicsGirlStudentSvg: React.FC<{ className?: string }> = ({ className
     {/* Ground Shadow */}
     <ellipse cx="80" cy="252" rx="42" ry="7" fill="#030A1C" opacity="0.35" />
 
-    {/* 1. DEEP BACK HAIR LAYER (LUSH, FULL, REACHING PAST SHOULDERS) */}
+    {/* 1. DEEP BACK HAIR LAYER (LUSH, FLOWING DOWN PAST SHOULDERS) */}
     <path
       d="M50 50 C44 76 46 122 55 146 L105 146 C114 122 116 76 110 50 C108 30 98 20 80 20 C62 20 52 30 50 50 Z"
       fill="url(#girlHair)"
     />
-    {/* Cascading shoulder locks behind blouse */}
     <path d="M47 70 C43 96 46 130 54 148 C56 142 56 120 52 90 Z" fill="#1C130E" />
     <path d="M113 70 C117 96 114 130 106 148 C104 142 104 120 108 90 Z" fill="#1C130E" />
 
-    {/* Legs with clean black school shoes */}
+    {/* 2. LOWER BODY: Legs, Black Shoes & Pleated Skirt */}
     <rect x="67" y="195" width="8.5" height="48" rx="4" fill="url(#girlSkin)" />
     <rect x="85" y="195" width="8.5" height="48" rx="4" fill="url(#girlSkin)" />
     <ellipse cx="70" cy="247" rx="9.5" ry="4.5" fill="#111827" />
     <ellipse cx="90" cy="247" rx="9.5" ry="4.5" fill="#111827" />
 
-    {/* Royal Blue AICS SHS Skirt (Pleated) */}
-    <path d="M57 146 L103 146 L112 198 L48 198 Z" fill="url(#girlBlueSkirt)" />
-    <line x1="64" y1="147" x2="59" y2="198" stroke="#163473" strokeWidth="1.3" />
-    <line x1="75" y1="147" x2="73" y2="198" stroke="#163473" strokeWidth="1.3" />
-    <line x1="85" y1="147" x2="87" y2="198" stroke="#163473" strokeWidth="1.3" />
-    <line x1="96" y1="147" x2="101" y2="198" stroke="#163473" strokeWidth="1.3" />
+    {/* Royal Blue AICS SHS Skirt (Pleated, neatly fitted onto the waist) */}
+    <path d="M55 144 L105 144 L114 198 L46 198 Z" fill="url(#girlBlueSkirt)" />
+    <line x1="63" y1="145" x2="58" y2="198" stroke="#163473" strokeWidth="1.4" />
+    <line x1="74" y1="145" x2="72" y2="198" stroke="#163473" strokeWidth="1.4" />
+    <line x1="86" y1="145" x2="88" y2="198" stroke="#163473" strokeWidth="1.4" />
+    <line x1="97" y1="145" x2="102" y2="198" stroke="#163473" strokeWidth="1.4" />
 
-    {/* Left Arm: ACTIVELY WAVING / GENTLE REASSURING HAND GESTURE */}
-    <motion.g
-      animate={{
-        rotate: [0, 18, -4, 18, 0],
-      }}
-      transition={{
-        duration: 2.4,
-        repeat: Infinity,
-        ease: 'easeInOut',
-      }}
-      style={{ transformOrigin: '52px 94px' }}
-    >
-      <path d="M52 94 C38 106 30 114 34 128" stroke="url(#girlSkin)" strokeWidth="9" strokeLinecap="round" />
-      <circle cx="34" cy="130" r="5.2" fill="url(#girlSkin)" />
-      <path d="M36 126 L39 120 M33 125 L34 117 M30 126 L29 118 M28 128 L25 122" stroke="url(#girlSkin)" strokeWidth="2.2" strokeLinecap="round" />
-    </motion.g>
-
-    {/* Right Arm: Holding notebook / comforting pose */}
-    <path d="M108 94 C114 114 108 132 96 140" stroke="url(#girlSkin)" strokeWidth="9" strokeLinecap="round" />
-    {/* Notebook / folder */}
-    <rect x="74" y="128" width="28" height="24" rx="2.5" fill="#1E469B" stroke="#7CB8F7" strokeWidth="1" />
-    <rect x="77" y="131" width="22" height="18" rx="1.5" fill="#FFFFFF" />
-    <circle cx="95" cy="140" r="4.8" fill="url(#girlSkin)" />
-
-    {/* AICS Gray Blouse Body */}
+    {/* 3. NECK & BLOUSE BODY (Fitted around the torso) */}
+    <rect x="75" y="66" width="10" height="20" rx="2.5" fill="url(#girlSkin)" />
     <path
-      d="M52 88 L108 88 L104 148 L56 148 Z"
+      d="M48 82 C58 78 70 77 80 77 C90 77 102 78 112 82 L105 146 C90 148 70 148 55 146 Z"
       fill="url(#girlGrayBlouse)"
       stroke="#94A3B8"
-      strokeWidth="0.9"
+      strokeWidth="1"
     />
     {/* Center Placket */}
-    <line x1="80" y1="96" x2="80" y2="148" stroke="#8A96A8" strokeWidth="1.8" />
-    <circle cx="80" cy="112" r="1.5" fill="#FFFFFF" />
-    <circle cx="80" cy="126" r="1.5" fill="#FFFFFF" />
-    <circle cx="80" cy="140" r="1.5" fill="#FFFFFF" />
-
-    {/* Blouse Sleeves with Blue Piping */}
-    <path d="M52 88 L40 114 L52 118 L58 94 Z" fill="url(#girlGrayBlouse)" />
-    <line x1="40" y1="114" x2="52" y2="118" stroke="url(#pipingBlue)" strokeWidth="2.4" strokeLinecap="round" />
-    <path d="M108 88 L120 114 L108 118 L102 94 Z" fill="url(#girlGrayBlouse)" />
-    <line x1="120" y1="114" x2="108" y2="118" stroke="url(#pipingBlue)" strokeWidth="2.4" strokeLinecap="round" />
+    <line x1="80" y1="92" x2="80" y2="146" stroke="#8A96A8" strokeWidth="2" />
+    <circle cx="80" cy="110" r="1.6" fill="#FFFFFF" />
+    <circle cx="80" cy="124" r="1.6" fill="#FFFFFF" />
+    <circle cx="80" cy="138" r="1.6" fill="#FFFFFF" />
 
     {/* Left Breast Emblem (AICS Seal) */}
-    <circle cx="94" cy="110" r="4" fill="#1E469B" />
-    <circle cx="94" cy="110" r="2.6" fill="#FFFFFF" />
-    <circle cx="94" cy="110" r="1.2" fill="#1E469B" />
+    <circle cx="94" cy="108" r="4" fill="#1E469B" />
+    <circle cx="94" cy="108" r="2.6" fill="#FFFFFF" />
+    <circle cx="94" cy="108" r="1.2" fill="#1E469B" />
 
     {/* Blue Lanyard + ID */}
     <path d="M73 82 L77 122 M87 82 L83 122" stroke="url(#pipingBlue)" strokeWidth="3" strokeLinecap="round" />
@@ -321,13 +292,38 @@ export const AicsGirlStudentSvg: React.FC<{ className?: string }> = ({ className
     </text>
 
     {/* Convertible Collar with Royal Blue Piping */}
-    <path d="M68 84 L80 100 L72 82 Z" fill="#DCE2EA" stroke="url(#pipingBlue)" strokeWidth="1.5" strokeLinejoin="round" />
-    <path d="M92 84 L80 100 L88 82 Z" fill="#DCE2EA" stroke="url(#pipingBlue)" strokeWidth="1.5" strokeLinejoin="round" />
+    <path d="M66 82 L80 98 L72 80 Z" fill="#DCE2EA" stroke="url(#pipingBlue)" strokeWidth="1.6" strokeLinejoin="round" />
+    <path d="M94 82 L80 98 L88 80 Z" fill="#DCE2EA" stroke="url(#pipingBlue)" strokeWidth="1.6" strokeLinejoin="round" />
 
-    {/* Neck */}
-    <rect x="75" y="66" width="11" height="18" rx="2.5" fill="url(#girlSkin)" />
+    {/* 4. SLEEVES & ARMS */}
+    {/* Left Arm: Waving / Reassuring Hand Gesture */}
+    <path d="M50 82 L38 108 L50 114 L55 86 Z" fill="url(#girlGrayBlouse)" />
+    <line x1="38" y1="108" x2="50" y2="114" stroke="url(#pipingBlue)" strokeWidth="2.4" strokeLinecap="round" />
+    <motion.g
+      animate={{
+        rotate: [0, 18, -4, 18, 0],
+      }}
+      transition={{
+        duration: 2.4,
+        repeat: Infinity,
+        ease: 'easeInOut',
+      }}
+      style={{ transformOrigin: '44px 110px' }}
+    >
+      <path d="M44 112 C34 122 30 128 34 138" stroke="url(#girlSkin)" strokeWidth="8.5" strokeLinecap="round" />
+      <circle cx="34" cy="140" r="5" fill="url(#girlSkin)" />
+      <path d="M36 136 L39 130 M33 135 L34 127 M30 136 L29 128 M28 138 L25 132" stroke="url(#girlSkin)" strokeWidth="2.2" strokeLinecap="round" />
+    </motion.g>
 
-    {/* Head & Face */}
+    {/* Right Arm: Holding notebook / comforting pose */}
+    <path d="M110 82 L122 108 L110 114 L105 86 Z" fill="url(#girlGrayBlouse)" />
+    <line x1="122" y1="108" x2="110" y2="114" stroke="url(#pipingBlue)" strokeWidth="2.4" strokeLinecap="round" />
+    <path d="M116 112 C116 124 108 132 96 140" stroke="url(#girlSkin)" strokeWidth="8.5" strokeLinecap="round" />
+    <rect x="74" y="128" width="28" height="24" rx="2.5" fill="#1E469B" stroke="#7CB8F7" strokeWidth="1" />
+    <rect x="77" y="131" width="22" height="18" rx="1.5" fill="#FFFFFF" />
+    <circle cx="95" cy="140" r="4.8" fill="url(#girlSkin)" />
+
+    {/* 5. HEAD & FACE */}
     <ellipse cx="80" cy="54" rx="15" ry="18" fill="url(#girlSkin)" />
 
     {/* Eyebrows */}
@@ -376,13 +372,11 @@ export const AicsGirlStudentSvg: React.FC<{ className?: string }> = ({ className
       fill="#8E203C"
     />
 
-    {/* 2. FRONT HAIR CROWN, SOFT BANGS & FRONT STRANDS (FULL & NATURAL) */}
-    {/* Full Top Hair Volume (Generously covers forehead & sides so she is never bald) */}
+    {/* 6. FRONT HAIR CROWN, SOFT BANGS & FRONT STRANDS (FULL & NATURAL) */}
     <path
       d="M57 52 C56 28 66 18 80 18 C94 18 104 28 103 52 C101 44 96 38 88 36 C80 34 72 35 65 42 C60 46 58 50 57 52 Z"
       fill="url(#girlHair)"
     />
-    {/* Side locks framing cheeks */}
     <path d="M57 48 C55 64 56 86 60 98 C61 98 62 80 62 65 C62 55 59 50 57 48 Z" fill="#2E1F18" />
     <path d="M103 48 C105 64 104 86 100 98 C99 98 98 80 98 65 C98 55 101 50 103 48 Z" fill="#2E1F18" />
 
@@ -405,7 +399,6 @@ export const useStudentEncouragementWings = () => {
   const [girlIndex, setGirlIndex] = useState(0);
 
   useEffect(() => {
-    // 10 SECONDS INTERVAL
     const timer = setInterval(() => {
       setBoyIndex((prev) => (prev + 1) % BOY_ENCOURAGEMENTS.length);
       setGirlIndex((prev) => (prev + 1) % GIRL_ENCOURAGEMENTS.length);
@@ -434,14 +427,12 @@ export const useStudentEncouragementWings = () => {
               <p className="text-sky-100">
                 &ldquo;{currentBoyMsg}&rdquo;
               </p>
-
-              {/* Chat bubble tail */}
               <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[9px] border-t-blue-950" />
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {/* Prominent Boy Student SVG Illustration (Larger scale, lifelike presence) */}
+        {/* Boy Student SVG Illustration */}
         <motion.div
           animate={{ y: [0, -6, 0] }}
           transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
@@ -468,14 +459,12 @@ export const useStudentEncouragementWings = () => {
               <p className="text-teal-100">
                 &ldquo;{currentGirlMsg}&rdquo;
               </p>
-
-              {/* Chat bubble tail */}
               <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[9px] border-t-indigo-950" />
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {/* Prominent Girl Student SVG Illustration (Larger scale, full lush hair, lifelike presence) */}
+        {/* Girl Student SVG Illustration */}
         <motion.div
           animate={{ y: [0, -6, 0] }}
           transition={{ duration: 4.4, repeat: Infinity, ease: 'easeInOut', delay: 0.4 }}
