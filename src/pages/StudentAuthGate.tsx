@@ -51,6 +51,10 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
 
+  // Privacy Terms & Conditions Modal State
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [privacyAgreed, setPrivacyAgreed] = useState(false);
+
   // ID Files
   const [studentIdFile, setStudentIdFile] = useState<File | null>(null);
   const [nationalIdFile, setNationalIdFile] = useState<File | null>(null);
@@ -524,7 +528,11 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   type="button"
                   onClick={() => {
                     soundFX.playToggleSwitch(true);
-                    setMode('register');
+                    if (!privacyAgreed) {
+                      setShowPrivacyModal(true);
+                    } else {
+                      setMode('register');
+                    }
                   }}
                   className="btn-press px-6 py-2.5 rounded-xl card-back-button font-extrabold transition-all"
                 >
@@ -1123,6 +1131,141 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 <span>Proceed to Student Dashboard</span>
                 <span>→</span>
               </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ====================================================
+          DATA PRIVACY TERMS & CONDITIONS MODAL
+          (Appears strictly before opening Create Account form)
+          ==================================================== */}
+      <AnimatePresence>
+        {showPrivacyModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-[#06122B]/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 16 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', damping: 24, stiffness: 340 }}
+              className="w-full max-w-2xl rounded-3xl cosmic-glass-card p-6 sm:p-8 space-y-6 shadow-2xl max-h-[90vh] flex flex-col"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/10 dark:border-white/10 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-400 text-xl">
+                    📜
+                  </div>
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-extrabold card-title-text">
+                      {isTl ? 'Kasunduan sa Data Privacy at Paggamit ng Portal' : 'Data Privacy Agreement & Terms of Use'}
+                    </h2>
+                    <p className="text-xs card-subtitle-text">
+                      Republic Act No. 10173 (Data Privacy Act of 2012)
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playBackspace();
+                    setShowPrivacyModal(false);
+                  }}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Scrollable Terms Content */}
+              <div className="flex-1 overflow-y-auto pr-2 space-y-4 text-xs sm:text-sm text-slate-300 dark:text-slate-300 register-inner-card p-4 sm:p-5 rounded-2xl leading-relaxed">
+                <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-400/30 text-blue-200 text-xs font-semibold">
+                  🛡️ {isTl
+                    ? 'Mahalaga: Ang portal na ito ay nilikha para protektahan ang iyong kaligtasan at kapakanan bilang mag-aaral ng AICS Montalban. Basahin ang sumusunod na kasunduan bago magparehistro.'
+                    : 'Important: This portal is created to safeguard your well-being and privacy as an AICS Montalban student. Please review the following agreement prior to account creation.'}
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="font-extrabold text-white text-xs sm:text-sm flex items-center gap-2">
+                    <span>1.</span>
+                    <span>{isTl ? 'Proteksyon sa ilalim ng RA 10173 (Data Privacy Act)' : 'Protection under RA 10173 (Data Privacy Act)'}</span>
+                  </h4>
+                  <p className="text-xs opacity-90">
+                    {isTl
+                      ? 'Ang lahat ng personal na impormasyon (Pangalan, Contact Number, Student ID, at Larawan) na iyong ilalagay ay ituturing na mahigpit na kumpidensyal. Tanging ang lisensyadong Guidance Associate at Counseling Office lamang ang may pahintulot na humawak ng iyong datos.'
+                      : 'All personal data provided (Name, Contact Number, Student ID, and Photo Uploads) will be treated with absolute confidentiality. Only authorized Guidance Associates and Counselors are granted access to your records.'}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="font-extrabold text-white text-xs sm:text-sm flex items-center gap-2">
+                    <span>2.</span>
+                    <span>{isTl ? 'Proteksyon Laban sa Retaliation o Pagganti' : 'Non-Retaliation & Safety Assurance'}</span>
+                  </h4>
+                  <p className="text-xs opacity-90">
+                    {isTl
+                      ? 'Ginawa ang sistema upang mapigilan ang anumang uri ng paghihiganti o harassment. Ang iyong isinumiteng reklamo o chat history ay HINDI kailanman ibubunyag sa inirereklamong kaklase, estudyante, o hindi awtorisadong kawani ng paaralan.'
+                      : 'The system strictly prohibits retaliation. Your reports and counseling discussions will NEVER be disclosed to reported individuals, fellow students, or unauthorized school personnel.'}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="font-extrabold text-white text-xs sm:text-sm flex items-center gap-2">
+                    <span>3.</span>
+                    <span>{isTl ? 'Awtomatikong Pag-Logout para sa Iyong Kaligtasan' : 'Automatic Session Termination for Discretion'}</span>
+                  </h4>
+                  <p className="text-xs opacity-90">
+                    {isTl
+                      ? 'Para sa iyong seguridad sakaling maiwan mo ang iyong cellphone o computer na nakabukas sa silid-aralan o internet shop, awtomatikong magla-lock out ang iyong account pagkatapos ng 15 minuto ng walang aktibidad upang walang makakita ng iyong mga ulat.'
+                      : 'To protect you in case you leave your device unattended in a classroom or computer laboratory, your session will automatically terminate after 15 minutes of inactivity so no evidence is left visible.'}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="font-extrabold text-white text-xs sm:text-sm flex items-center gap-2">
+                    <span>4.</span>
+                    <span>{isTl ? 'Tapat at Makatotohanang Pag-uulat' : 'Truthfulness of Information'}</span>
+                  </h4>
+                  <p className="text-xs opacity-90">
+                    {isTl
+                      ? 'Sumasang-ayon ka na maging tapat sa lahat ng impormasyong ilalagay. Ang sadyang pagpapasa ng gawa-gawang paratang laban sa kapwa estudyante ay may karampatang disiplina alinsunod sa AICS Student Handbook.'
+                      : 'You agree to provide factual and truthful information. Malicious or fabricated reports against peers are subject to institutional disciplinary measures under the AICS Student Handbook.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-white/10 dark:border-white/10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playBackspace();
+                    setShowPrivacyModal(false);
+                  }}
+                  className="btn-press w-full sm:w-auto px-5 py-2.5 rounded-xl card-back-button text-xs font-bold"
+                >
+                  {isTl ? 'Hindi Sumasang-ayon (Bumalik)' : 'Decline & Go Back'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playSuccessCheck();
+                    setPrivacyAgreed(true);
+                    setShowPrivacyModal(false);
+                    setMode('register');
+                  }}
+                  className="btn-press w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2"
+                >
+                  <span>✓</span>
+                  <span>{isTl ? 'Nauunawaan Ko at Sumasang-ayon Ako' : 'I Understand & Agree to Terms'}</span>
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}

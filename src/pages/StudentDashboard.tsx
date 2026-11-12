@@ -65,6 +65,47 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   const [sendingMsg, setSendingMsg] = useState<boolean>(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
+  // Auto-Logout Inactivity Timer: 15 minutes (900 seconds)
+  // Protects students so no evidence of reporting is left open on shared phones or school computers
+  const [secondsRemaining, setSecondsRemaining] = useState<number>(15 * 60);
+  const [showIdleWarning, setShowIdleWarning] = useState<boolean>(false);
+
+  // Reset timer on any active user interaction
+  const resetInactivityTimer = () => {
+    setSecondsRemaining(15 * 60);
+    if (showIdleWarning) setShowIdleWarning(false);
+  };
+
+  useEffect(() => {
+    const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+    const handleActivity = () => {
+      resetInactivityTimer();
+    };
+
+    activityEvents.forEach((ev) => window.addEventListener(ev, handleActivity, { passive: true }));
+
+    const timer = setInterval(() => {
+      setSecondsRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          soundFX.playBackspace();
+          onSignOut();
+          return 0;
+        }
+        // Show silent discrete banner when only 60 seconds left
+        if (prev <= 60 && !showIdleWarning) {
+          setShowIdleWarning(true);
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      clearInterval(timer);
+      activityEvents.forEach((ev) => window.removeEventListener(ev, handleActivity));
+    };
+  }, [showIdleWarning, onSignOut]);
+
   // Auto-scroll to bottom of chat
   const scrollToBottom = () => {
     chatScrollRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -297,6 +338,19 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+          {/* Discretion & Auto-Logout Security Indicator */}
+          <div
+            title={
+              isTl
+                ? `Awtomatikong magla-logout sa loob ng ${Math.ceil(secondsRemaining / 60)} minuto upang walang makakita ng iyong mga ulat kapag naiwan ang device.`
+                : `Auto-logout in ${Math.ceil(secondsRemaining / 60)} minutes of inactivity to keep your reports strictly confidential.`
+            }
+            className="hidden md:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/30 border border-white/10 text-[10px] font-mono text-[#9BCBFF]"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>⏱ {Math.floor(secondsRemaining / 60)}:{(secondsRemaining % 60).toString().padStart(2, '0')}</span>
+          </div>
+
           {/* High-Visibility Dedicated Sign Out Button */}
           <button
             type="button"
@@ -315,6 +369,25 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
           <SkyThemePill />
         </div>
       </header>
+
+      {/* Inactivity Warning Banner (Discreetly alerts student when only 60s left) */}
+      <AnimatePresence>
+        {showIdleWarning && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="relative z-30 w-full bg-amber-500/20 border-b border-amber-400/40 px-4 py-2 text-center text-xs text-amber-200 font-semibold flex items-center justify-center gap-2"
+          >
+            <span>🔒</span>
+            <span>
+              {isTl
+                ? `Para sa iyong kaligtasan, magla-logout ang portal sa loob ng ${secondsRemaining}s dahil walang galaw. Pindutin ang kahit saan upang manatiling naka-login.`
+                : `For your safety and privacy, you will be logged out in ${secondsRemaining}s due to inactivity. Click anywhere to stay signed in.`}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main Workspace Area */}
       <main className="relative z-20 flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 space-y-6">
