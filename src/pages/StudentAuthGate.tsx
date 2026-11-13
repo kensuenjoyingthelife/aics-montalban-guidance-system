@@ -113,12 +113,13 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   const [isCarouselPaused, setIsCarouselPaused] = useState(false);
 
   useEffect(() => {
-    if (isCarouselPaused) return;
+    // Automatically pause carousel while student is registering to ensure 100% smooth, stutter-free input typing
+    if (isCarouselPaused || mode === 'register') return;
     const interval = setInterval(() => {
       setAffirmationIndex((prev) => (prev + 1) % MENTAL_HEALTH_AFFIRMATIONS.length);
-    }, 3500);
+    }, 4500);
     return () => clearInterval(interval);
-  }, [isCarouselPaused]);
+  }, [isCarouselPaused, mode]);
 
   // ==========================================
   // LOGIN FORM STATE & SECURITY
@@ -142,14 +143,14 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const CLOUDFLARE_SITE_KEY = '0x4AAAAAAF_QjZNhxaPTV-5U';
 
-  // Check rate limit timer tick
+  // Check rate limit timer tick - Highly optimized to never trigger re-renders unless locked
   useEffect(() => {
     const checkLimits = () => {
       const loginStatus = studentLoginRateLimiter.isLocked();
-      setLoginCooldownSeconds(loginStatus.remainingSeconds);
-
       const forgotStatus = studentForgotRateLimiter.isLocked();
-      setForgotCooldownSeconds(forgotStatus.remainingSeconds);
+
+      setLoginCooldownSeconds((prev) => (prev !== loginStatus.remainingSeconds ? loginStatus.remainingSeconds : prev));
+      setForgotCooldownSeconds((prev) => (prev !== forgotStatus.remainingSeconds ? forgotStatus.remainingSeconds : prev));
     };
 
     checkLimits();

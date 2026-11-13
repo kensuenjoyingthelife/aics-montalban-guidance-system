@@ -38,7 +38,7 @@ interface Meteor {
  *   - Completely pauses heavy CSS 3D transforms & infinite loops
  *   - Renders lightweight, crisp static SVGs so CPU/GPU load is virtually 0%
  */
-export const CelestialBackground: React.FC = () => {
+const CelestialBackgroundComponent: React.FC = () => {
   const [isLowTier, setIsLowTier] = useState<boolean>(false);
 
   useEffect(() => {
@@ -357,3 +357,5 @@ export const CelestialBackground: React.FC = () => {
     </div>
   );
 };
+
+export const CelestialBackground = React.memo(CelestialBackgroundComponent);

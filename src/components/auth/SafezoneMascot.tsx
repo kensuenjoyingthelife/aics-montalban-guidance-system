@@ -16,7 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 type MascotStage = 'wave-start' | 'run-right' | 'run-left' | 'trip' | 'getup' | 'safe-center';
 
-export const SafezoneMascot: React.FC = () => {
+const SafezoneMascotComponent: React.FC = () => {
   const [stage, setStage] = useState<MascotStage>('wave-start');
 
   useEffect(() => {
@@ -354,3 +354,5 @@ export const SafezoneMascot: React.FC = () => {
     </div>
   );
 };
+
+export const SafezoneMascot = React.memo(SafezoneMascotComponent);

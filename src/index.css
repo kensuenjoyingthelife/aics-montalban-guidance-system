@@ -1106,3 +1106,24 @@ body.capacitor-mobile * {
   animation: none !important;
   transition: none !important;
 }
+
+/* ===================================================
+   INSTANT INPUT RESPONSIVENESS (ZERO-LAG HARDENING)
+   Prevents layout thrashing & stuttering during fast typing
+   =================================================== */
+.cosmic-input {
+  contain: layout style paint;
+  transform: translateZ(0);
+  -webkit-appearance: none;
+  transition: border-color 0.1s ease, box-shadow 0.1s ease !important;
+}
+
+.cosmic-input:focus {
+  outline: none !important;
+}
+
+/* Optimize badges so they don't trigger layout shifts */
+.badge-correct, .badge-wrong, .badge-not-input {
+  contain: layout style;
+  transform: translateZ(0);
+}

@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const WavyBackground: React.FC = () => {
+const WavyBackgroundComponent: React.FC = () => {
   return (
     <div className="waves" aria-hidden="true">
       {/* Wave Layer A - Deep Sky Azure */}
@@ -41,3 +41,5 @@ export const WavyBackground: React.FC = () => {
     </div>
   );
 };
+
+export const WavyBackground = React.memo(WavyBackgroundComponent);
