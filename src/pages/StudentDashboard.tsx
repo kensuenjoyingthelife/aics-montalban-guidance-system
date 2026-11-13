@@ -1455,8 +1455,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
         )}
       </main>
 
-      {/* Footer (Automatically hidden or pushed down on mobile keypad pop-up) */}
-      <footer className="relative z-20 py-3 text-center text-xs card-subtitle-text mt-auto student-footer">
+      {/* Footer (Messenger-Style Clean: hidden on mobile phones so keyboard never pushes or squishes it) */}
+      <footer className="relative z-20 py-3 text-center text-xs card-subtitle-text mt-auto student-footer hidden sm:block">
         AICS Montalban Student Guidance Office · All submissions are strictly confidential (RA 10173 Protected)
       </footer>
 

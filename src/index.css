@@ -1181,11 +1181,16 @@ body.capacitor-mobile * {
     background: #F4F8FD !important;
   }
 
-  /* Prevent virtual keypad from pushing or squishing footer into the viewport */
-  @media (max-height: 520px) {
-    .student-footer {
-      display: none !important;
-      visibility: hidden !important;
-    }
+  /* Messenger-Clean Mobile Keyboard Responsiveness:
+     Completely suppress footers on mobile screens and during keyboard focus,
+     so the screen operates like Messenger or native mobile chat without any footer popping up */
+  .student-footer {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  body:has(input:focus, textarea:focus) .student-footer {
+    display: none !important;
+    visibility: hidden !important;
   }
 }
