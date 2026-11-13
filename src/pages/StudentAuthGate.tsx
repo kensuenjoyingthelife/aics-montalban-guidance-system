@@ -207,13 +207,14 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     return { type: 'correct', label: 'Correct (11 digits)' };
   }, [regContactNumber]);
 
-  // 4. Email
+  // 4. Personal Gmail Account (Used for contact & password recovery)
   const emailStatus = useMemo(() => {
-    const e = regEmail.trim();
+    const e = regEmail.trim().toLowerCase();
     if (!e) return { type: 'not_input', label: 'Not Input' };
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(e)) return { type: 'wrong', label: 'Invalid email' };
-    return { type: 'correct', label: 'Correct' };
+    if (!emailRegex.test(e)) return { type: 'wrong', label: 'Invalid Email' };
+    if (!e.endsWith('@gmail.com')) return { type: 'wrong', label: 'Must be @gmail.com' };
+    return { type: 'correct', label: 'Valid Gmail ✓' };
   }, [regEmail]);
 
   // 5. Student Number
@@ -850,17 +851,22 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold register-label">{isTl ? 'Email Address' : 'Email Address'}</label>
+                        <label className="text-sm font-bold register-label">
+                          {isTl ? 'Personal Gmail Account' : 'Personal Gmail Account'}
+                        </label>
                         {renderBadge(emailStatus)}
                       </div>
                       <input
                         type="email"
                         required
-                        placeholder="name@gmail.com"
+                        placeholder="yourname@gmail.com"
                         value={regEmail}
                         onChange={(e) => setRegEmail(e.target.value)}
                         className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-semibold focus:outline-none"
                       />
+                      <p className="text-[10px] text-sky-200/80 font-medium">
+                        {isTl ? 'Gagamitin para sa contact at recovery ng Forgot Password' : 'Used for official contact & Forgot Password OTP recovery'}
+                      </p>
                     </div>
 
                     <div className="space-y-1.5">
