@@ -442,9 +442,58 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       </div>
       <WavyBackground />
 
-      {/* Top Floating Glass Island Navbar (Apple/Linear-Style Capsule with Campus Ambient Background) */}
+      {/* Top Floating Glass Island Navbar */}
       <header className="relative z-30 w-full px-3 sm:px-6 pt-3 sm:pt-4 safe-area-top">
-        <div className="relative max-w-6xl mx-auto rounded-3xl overflow-hidden border border-white/25 dark:border-white/15 shadow-2xl shadow-blue-950/50 transition-all">
+        {/* ====================================================
+            DESKTOP NAVBAR: Original Classic Glass Capsule (Hidden on mobile)
+            ==================================================== */}
+        <div className="hidden lg:flex max-w-6xl mx-auto rounded-full bg-[#0B1E48]/85 dark:bg-[#07132B]/85 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-2xl shadow-blue-950/40 px-6 py-3 items-center justify-between gap-4 transition-all">
+          {/* Left: Official Brand Seal & Campus Title */}
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="relative shrink-0">
+              <img
+                src="/aics-logo.jpg"
+                alt="AICS Logo"
+                className="w-11 h-11 rounded-full object-cover ring-2 ring-white/50 bg-white p-0.5 shadow-md"
+              />
+              {/* Live Security Shield Dot */}
+              <span
+                className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-[#0B1E48] dark:ring-[#07132B]"
+                title="100% Confidential & RA 10173 Protected"
+              />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm font-black tracking-tight text-white uppercase truncate">
+                  AICS MONTALBAN
+                </h1>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-[10px] font-bold text-emerald-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  RA 10173
+                </span>
+              </div>
+              <p className="text-xs text-[#9BCBFF] font-medium truncate">
+                {isTl ? 'Ligtas at Kumpidensyal na Guidance Portal' : 'Safe & Confidential Concern Reporting'}
+              </p>
+            </div>
+          </div>
+
+          {/* Right: Unified Sleek Controls Cluster */}
+          <div className="flex items-center gap-2 ml-auto shrink-0">
+            <div className="flex items-center p-1 rounded-full bg-white/10 dark:bg-white/5 border border-white/15 dark:border-white/10 shadow-inner">
+              <SoundTogglePill />
+              <div className="h-4 w-[1px] bg-white/20 mx-1" />
+              <LocaleSwitchPill />
+              <div className="h-4 w-[1px] bg-white/20 mx-1" />
+              <SkyThemePill />
+            </div>
+          </div>
+        </div>
+
+        {/* ====================================================
+            MOBILE APP NAVBAR: Custom Stretched Campus Background & Layout (Visible only on mobile)
+            ==================================================== */}
+        <div className="lg:hidden relative max-w-6xl mx-auto rounded-3xl overflow-hidden border border-white/25 dark:border-white/15 shadow-2xl shadow-blue-950/50 transition-all">
           {/* Campus Photo Ambient Layer stretched to fill with blue tint */}
           <div
             className="absolute inset-0 bg-no-repeat pointer-events-none"
@@ -458,49 +507,47 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
           <div className="absolute inset-0 bg-[#072464]/65 mix-blend-multiply pointer-events-none" />
           <div className="absolute inset-0 bg-gradient-to-b from-[#020b24]/40 via-[#0a2769]/35 to-[#020b24]/70 pointer-events-none" />
 
-          {/* Inner Content: 2-column layout - Logo vertically centered on the left, Titles on top-right, Toggles on bottom-right */}
-          <div className="relative z-10 px-4 sm:px-8 py-3 sm:py-4 flex items-center gap-4 sm:gap-6 min-h-[110px] sm:min-h-[125px]">
-            {/* Left Column: Prominent Circular Logo filling the yellow circle boundary */}
+          {/* Inner Content: 2-column mobile layout with centered circular logo */}
+          <div className="relative z-10 px-4 py-3 flex items-center gap-3.5 min-h-[105px]">
+            {/* Left: Prominent Circular Logo */}
             <div className="relative shrink-0 flex items-center justify-center my-auto">
-              <div className="w-[84px] h-[84px] sm:w-[98px] sm:h-[98px] rounded-full p-1 bg-white/20 backdrop-blur-md ring-2 ring-white/75 shadow-2xl flex items-center justify-center">
+              <div className="w-[80px] h-[80px] rounded-full p-1 bg-white/20 backdrop-blur-md ring-2 ring-white/75 shadow-2xl flex items-center justify-center">
                 <img
                   src="/aics-logo.jpg"
                   alt="AICS Logo"
                   className="w-full h-full rounded-full object-cover shadow-inner"
                 />
               </div>
-              {/* Live Security Shield Dot */}
               <span
-                className="absolute bottom-1 right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-400 ring-2 ring-[#020b24] shadow-md"
+                className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-400 ring-2 ring-[#020b24] shadow-md"
                 title="100% Confidential & RA 10173 Protected"
               />
             </div>
 
-            {/* Right Column: Top row = AICS MONTALBAN & Description (Pink Box); Bottom row = Toggles (Green Box) */}
-            <div className="flex-1 flex flex-col justify-between gap-2.5 sm:gap-3 min-w-0">
-              {/* Top Row: Title + Security Badge + Description */}
+            {/* Right: Titles on top, Toggles on bottom */}
+            <div className="flex-1 flex flex-col justify-between gap-2.5 min-w-0">
               <div className="space-y-0.5 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-sm sm:text-base md:text-lg font-black tracking-wide text-white uppercase truncate drop-shadow-md">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h1 className="text-sm font-black tracking-wide text-white uppercase truncate drop-shadow-md">
                     AICS MONTALBAN
                   </h1>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/25 border border-emerald-400/40 text-[10px] sm:text-xs font-bold text-emerald-300 backdrop-blur-sm shadow-sm">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/25 border border-emerald-400/40 text-[10px] font-bold text-emerald-300 backdrop-blur-sm shadow-sm">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     RA 10173
                   </span>
                 </div>
-                <p className="text-[11px] sm:text-xs md:text-sm text-sky-100 font-semibold truncate drop-shadow-md">
-                  {isTl ? 'Ligtas at Kumpidensyal na Guidance Portal' : 'Safe & Confidential Concern Reporting'}
+                <p className="text-[11px] text-sky-100 font-semibold truncate drop-shadow-md">
+                  {isTl ? 'Ligtas at Kumpidensyal na Portal' : 'Safe & Confidential Concern Reporting'}
                 </p>
               </div>
 
-              {/* Bottom Row: Controls / Toggles (Green Box position) with spacing */}
+              {/* Toggles cluster */}
               <div className="flex items-center">
-                <div className="flex items-center p-1 sm:p-1.5 rounded-full bg-slate-950/70 border border-white/25 shadow-xl backdrop-blur-md">
+                <div className="flex items-center p-1 rounded-full bg-slate-950/70 border border-white/25 shadow-xl backdrop-blur-md">
                   <SoundTogglePill />
-                  <div className="h-3.5 sm:h-4 w-[1px] bg-white/20 mx-1 sm:mx-1.5" />
+                  <div className="h-3.5 w-[1px] bg-white/20 mx-1" />
                   <LocaleSwitchPill />
-                  <div className="h-3.5 sm:h-4 w-[1px] bg-white/20 mx-1 sm:mx-1.5" />
+                  <div className="h-3.5 w-[1px] bg-white/20 mx-1" />
                   <SkyThemePill />
                 </div>
               </div>
