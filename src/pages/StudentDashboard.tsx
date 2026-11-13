@@ -387,29 +387,29 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   };
 
   return (
-    <div className="min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none student-portal-canvas bg-[#05112B] text-white">
+    <div className="min-h-[100dvh] w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none student-portal-canvas bg-[#F4F8FD] dark:bg-[#05112B] text-slate-900 dark:text-white transition-colors duration-150">
       <WavyBackground />
 
       {/* Top Navigation Bar - Clean, Organized & Non-Congested Header */}
-      <header className="relative z-20 w-full px-3 sm:px-8 py-3 sm:py-4 border-b border-white/10 student-portal-header bg-[#0B1E48]/90 backdrop-blur-md safe-area-top">
+      <header className="relative z-20 w-full px-3 sm:px-8 py-3 sm:py-4 border-b border-sky-200/60 dark:border-white/10 student-portal-header bg-white/90 dark:bg-[#0B1E48]/90 backdrop-blur-md safe-area-top shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
           {/* Left Brand & Identification */}
           <div className="flex items-center gap-2.5 sm:gap-3.5">
             <img
               src="/aics-logo.jpg"
               alt="AICS Logo"
-              className="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover ring-2 ring-white/40 bg-white p-0.5 shadow-xl shrink-0"
+              className="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover ring-2 ring-sky-300 dark:ring-white/40 bg-white p-0.5 shadow-xl shrink-0"
             />
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h1 className="text-xs sm:text-base font-extrabold tracking-tight text-white uppercase truncate">
+                <h1 className="text-xs sm:text-base font-extrabold tracking-tight text-[#0B1F4D] dark:text-white uppercase truncate">
                   AICS MONTALBAN
                 </h1>
-                <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
                   ACTIVE
                 </span>
               </div>
-              <p className="text-[10px] sm:text-xs text-[#9BCBFF] font-medium truncate">
+              <p className="text-[10px] sm:text-xs text-[#1E469B] dark:text-[#9BCBFF] font-medium truncate">
                 {isTl ? 'Ligtas at Kumpidensyal na Portal' : 'Safe & Confidential Concern Reporting'}
               </p>
             </div>
@@ -425,7 +425,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 window.location.reload();
               }}
               title={isTl ? 'I-refresh ang pahina' : 'Refresh page'}
-              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-white/10 hover:bg-white/20 text-sky-200 border border-white/20 shadow-md flex items-center gap-1.5 font-bold text-xs cursor-pointer transition-all"
+              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-sky-100 hover:bg-sky-200 dark:bg-white/10 dark:hover:bg-white/20 text-[#0B1F4D] dark:text-sky-200 border border-sky-300/70 dark:border-white/20 shadow-sm flex items-center gap-1.5 font-bold text-xs cursor-pointer transition-all"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{isTl ? 'Refresh' : 'Refresh'}</span>
@@ -443,7 +443,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 soundFX.playToggleSwitch(true);
                 setIsMenuOpen(true);
               }}
-              className="btn-press px-3 py-2 rounded-xl bg-[#1E469B]/80 hover:bg-[#2557BE] text-white border border-sky-400/40 shadow-lg flex items-center gap-2 font-bold text-xs"
+              className="btn-press px-3 py-2 rounded-xl bg-[#1E469B] hover:bg-[#2557BE] text-white border border-sky-300 dark:border-sky-400/40 shadow-lg flex items-center gap-2 font-bold text-xs cursor-pointer"
               aria-label="Open Navigation Menu"
             >
               <Menu className="w-4 h-4 text-sky-200" />
@@ -684,7 +684,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       {/* Main Workspace Area */}
       <main className="relative z-20 flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 space-y-6">
         {/* Navigation Tabs (Hidden on Mobile < 768px because everything is neatly in the Right Menu Drawer) */}
-        <div className="hidden md:flex items-center justify-between border-b border-white/10 dark:border-white/10 pb-3 flex-wrap gap-2">
+        <div className="hidden md:flex items-center justify-between border-b border-sky-200/60 dark:border-white/10 pb-3 flex-wrap gap-2">
           <div className="inline-flex p-1 rounded-2xl register-section-card gap-1.5 flex-wrap">
             <button
               type="button"
@@ -692,7 +692,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 soundFX.playToggleSwitch(true);
                 setActiveTab('submit');
               }}
-              className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors cursor-pointer ${
                 activeTab === 'submit'
                   ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-md'
                   : 'card-subtitle-text hover:opacity-100 opacity-80'
@@ -708,7 +708,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 setActiveTab('history');
                 void fetchMyHistory();
               }}
-              className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors cursor-pointer ${
                 activeTab === 'history'
                   ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-md'
                   : 'card-subtitle-text hover:opacity-100 opacity-80'
@@ -723,7 +723,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 soundFX.playToggleSwitch(true);
                 setActiveTab('chat');
               }}
-              className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors flex items-center gap-1.5 ${
+              className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'chat'
                   ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-md'
                   : 'card-subtitle-text hover:opacity-100 opacity-80'
@@ -848,18 +848,18 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                           soundFX.playToggleSwitch(true);
                           setReportingRole('self');
                         }}
-                        className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 ${
+                        className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 cursor-pointer ${
                           reportingRole === 'self'
-                            ? 'bg-blue-600/25 border-blue-400 shadow-md ring-1 ring-blue-400'
-                            : 'bg-white/5 border-white/10 hover:bg-white/10'
+                            ? 'bg-blue-600/15 dark:bg-blue-600/25 border-[#1E469B] dark:border-blue-400 shadow-md ring-1 ring-[#1E469B] dark:ring-blue-400'
+                            : 'bg-white dark:bg-white/5 border-slate-300 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'
                         }`}
                       >
                         <span className="text-xl">🙋</span>
                         <div>
-                          <p className="text-xs font-extrabold text-white">
+                          <p className="text-xs font-extrabold text-[#0B1F4D] dark:text-white">
                             {isTl ? 'Para sa Sarili Ko' : 'For Myself (Self-Report)'}
                           </p>
-                          <p className="text-[11px] text-sky-200/80 mt-0.5">
+                          <p className="text-[11px] text-[#1E469B] dark:text-sky-200/80 mt-0.5">
                             {isTl ? 'Ako mismo ang nakaranas o may concern' : 'I personally experienced or have this concern'}
                           </p>
                         </div>
@@ -871,18 +871,18 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                           soundFX.playToggleSwitch(true);
                           setReportingRole('peer');
                         }}
-                        className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 ${
+                        className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 cursor-pointer ${
                           reportingRole === 'peer'
-                            ? 'bg-blue-600/25 border-blue-400 shadow-md ring-1 ring-blue-400'
-                            : 'bg-white/5 border-white/10 hover:bg-white/10'
+                            ? 'bg-blue-600/15 dark:bg-blue-600/25 border-[#1E469B] dark:border-blue-400 shadow-md ring-1 ring-[#1E469B] dark:ring-blue-400'
+                            : 'bg-white dark:bg-white/5 border-slate-300 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'
                         }`}
                       >
                         <span className="text-xl">🤝</span>
                         <div>
-                          <p className="text-xs font-extrabold text-white">
+                          <p className="text-xs font-extrabold text-[#0B1F4D] dark:text-white">
                             {isTl ? 'Para sa Aking Kaibigan / Kaklase' : 'For a Friend / Classmate'}
                           </p>
-                          <p className="text-[11px] text-sky-200/80 mt-0.5">
+                          <p className="text-[11px] text-[#1E469B] dark:text-sky-200/80 mt-0.5">
                             {isTl ? 'Irereport ko ang nangyari sa aking kaibigan' : 'Reporting an incident that happened to my friend'}
                           </p>
                         </div>
@@ -969,10 +969,10 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                             soundFX.playToggleSwitch(true);
                             setKnowsSuspect(opt.id as any);
                           }}
-                          className={`px-3 py-3 rounded-xl border text-xs font-bold transition-all text-center ${
+                          className={`px-3 py-3 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer ${
                             knowsSuspect === opt.id
-                              ? 'bg-blue-600/25 border-blue-400 text-white shadow-sm ring-1 ring-blue-400'
-                              : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                              ? 'bg-blue-600/15 dark:bg-blue-600/25 border-[#1E469B] dark:border-blue-400 text-[#0B1F4D] dark:text-white shadow-sm ring-1 ring-[#1E469B] dark:ring-blue-400'
+                              : 'bg-white dark:bg-white/5 border-slate-300 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10'
                           }`}
                         >
                           {isTl ? opt.labelTl : opt.labelEn}
@@ -1019,7 +1019,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                         soundFX.playBackspace();
                         setFormStep(1);
                       }}
-                      className="btn-press px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-bold flex items-center gap-1.5"
+                      className="btn-press px-4 py-2.5 rounded-xl bg-slate-200/70 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-800 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
                     >
                       <ChevronLeft className="w-4 h-4" />
                       <span>{isTl ? 'Bumalik sa Hakbang 1' : 'Back to Step 1'}</span>
@@ -1163,7 +1163,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                         soundFX.playBackspace();
                         setFormStep(2);
                       }}
-                      className="btn-press w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-bold flex items-center justify-center gap-1.5"
+                      className="btn-press w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-200/70 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-800 dark:text-slate-300 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <ChevronLeft className="w-4 h-4" />
                       <span>{isTl ? 'Bumalik sa Hakbang 2' : 'Back to Step 2'}</span>
@@ -1455,8 +1455,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="relative z-20 py-3 text-center text-xs card-subtitle-text">
+      {/* Footer (Automatically hidden or pushed down on mobile keypad pop-up) */}
+      <footer className="relative z-20 py-3 text-center text-xs card-subtitle-text mt-auto student-footer">
         AICS Montalban Student Guidance Office · All submissions are strictly confidential (RA 10173 Protected)
       </footer>
 

@@ -1176,4 +1176,16 @@ body.capacitor-mobile * {
   .student-portal-canvas {
     background: #05112B !important;
   }
+
+  :root:not(.dark) .student-portal-canvas {
+    background: #F4F8FD !important;
+  }
+
+  /* Prevent virtual keypad from pushing or squishing footer into the viewport */
+  @media (max-height: 520px) {
+    .student-footer {
+      display: none !important;
+      visibility: hidden !important;
+    }
+  }
 }
