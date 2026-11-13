@@ -254,14 +254,14 @@ export const QuickExitButton: React.FC<QuickExitButtonProps> = ({ onTrigger, cla
           position: 'fixed',
           top: 0,
           left: 0,
-          zIndex: 99999,
+          zIndex: 2147483647, // Maximum 32-bit integer z-index: GUARANTEED always in front of all cards and modals
           touchAction: 'none',
           userSelect: 'none',
           WebkitUserSelect: 'none',
           cursor: 'grab',
           willChange: 'transform',
         }}
-        className="select-none active:scale-95 transition-opacity duration-200"
+        className="sos-draggable-ball select-none active:scale-95"
         aria-label="SOS Quick Exit Mascot Button"
       >
         {/* Floating Circle Container Shaped Like the 3D Robot Mascot Head */}

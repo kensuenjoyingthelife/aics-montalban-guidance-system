@@ -1136,10 +1136,21 @@ body.capacitor-mobile * {
    - Maintains pristine 60FPS fluid touch responsiveness
    =================================================== */
 @media (max-width: 767px) {
-  /* Disable heavy continuous background loops on mobile */
-  .student-portal-canvas * {
+  /* Completely hide waves and floating SVG layers on mobile phones */
+  .waves,
+  .wave,
+  .wave-a,
+  .wave-b,
+  .wave-c {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Disable heavy continuous background loops, transitions, and tab switch animations on mobile */
+  .student-portal-canvas *:not([data-mascot-element="true"]):not(.sos-draggable-ball):not(.sos-draggable-ball *) {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
 
   /* RE-ENABLE & PRESERVE ONLY THE SAFEZONE MASCOT ON MOBILE */

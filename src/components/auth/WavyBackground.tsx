@@ -2,7 +2,7 @@ import React from 'react';
 
 const WavyBackgroundComponent: React.FC = () => {
   return (
-    <div className="waves" aria-hidden="true">
+    <div className="waves hidden md:block" aria-hidden="true">
       {/* Wave Layer A - Deep Sky Azure */}
       <svg
         className="wave wave-a"

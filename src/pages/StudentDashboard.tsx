@@ -460,11 +460,18 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
               <span>{isTl ? 'Sign Out' : 'Sign Out'}</span>
             </button>
 
-            {/* Emergency SOS Quick-Exit (Floating on mobile, pill on desktop) */}
-            <QuickExitButton onTrigger={onSignOut} />
+            {/* Desktop Emergency SOS Quick-Exit Pill */}
+            <div className="hidden md:block">
+              <QuickExitButton onTrigger={onSignOut} />
+            </div>
           </div>
         </div>
       </header>
+
+      {/* Mobile Floating AssistiveTouch SOS Mascot Ball (Always Top-Level at Root Body Z-Index) */}
+      <div className="md:hidden">
+        <QuickExitButton onTrigger={onSignOut} />
+      </div>
 
       {/* Inactivity Warning Banner (Discreetly alerts student when only 60s left) */}
       <AnimatePresence>
