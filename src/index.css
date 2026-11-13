@@ -1127,3 +1127,33 @@ body.capacitor-mobile * {
   contain: layout style;
   transform: translateZ(0);
 }
+
+/* ===================================================
+   MOBILE PURE-CLEAN AESTHETIC (ZERO-LAG HARDENING)
+   On screens < 768px (Mobile Phones):
+   - Removes all background floating loops, glowing auras, light beams, wave drifts
+   - Leaves ONLY the Safezone Mascot 3D animation active
+   - Maintains pristine 60FPS fluid touch responsiveness
+   =================================================== */
+@media (max-width: 767px) {
+  /* Disable heavy continuous background loops on mobile */
+  .student-portal-canvas * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  /* RE-ENABLE & PRESERVE ONLY THE SAFEZONE MASCOT ON MOBILE */
+  .mascot-story-wrapper,
+  .mascot-story-wrapper *,
+  [data-mascot-element="true"],
+  [data-mascot-element="true"] * {
+    animation-duration: inherit !important;
+    animation-iteration-count: inherit !important;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  /* Make mobile layout clean, crisp, and high-performance solid */
+  .student-portal-canvas {
+    background: #05112B !important;
+  }
+}

@@ -7,6 +7,7 @@ import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
 import { StudentPortalUser } from '../services/studentAuthService';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../services/supabaseClient';
 import { QuickExitButton } from '../components/security/QuickExitButton';
+import { MobileAppTourModal } from '../components/student/MobileAppTourModal';
 import { moderateReportContent, recordSecurityAudit } from '../services/securityEngine';
 import {
   ConcernMessage,
@@ -78,6 +79,14 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   // Quick Panic / Discretion Shield Mode
   // If someone approaches or student presses ESC / Panic button, immediately covers the screen with study notes
   const [panicMode, setPanicMode] = useState<boolean>(false);
+
+  // Guided Onboarding Tour for Mobile Phone Users
+  const [showMobileTour, setShowMobileTour] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const hasSeen = localStorage.getItem('aics_mobile_tour_completed');
+    const isMobileDevice = window.innerWidth < 768 || 'ontouchstart' in window;
+    return !hasSeen && isMobileDevice;
+  });
 
   // Reset timer on any active user interaction
   const resetInactivityTimer = () => {
@@ -359,74 +368,101 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
     <div className="min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none student-portal-canvas bg-[#05112B] text-white">
       <WavyBackground />
 
-      {/* Top Navigation Bar */}
-      <header className="relative z-20 w-full px-4 sm:px-8 py-3.5 sm:py-5 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 student-portal-header bg-[#0B1E48]/80 backdrop-blur-md safe-area-top">
-        <div className="flex items-center gap-2.5 sm:gap-3.5">
-          <img
-            src="/aics-logo.jpg"
-            alt="AICS Logo"
-            className="w-9 h-9 sm:w-12 sm:h-12 rounded-full object-cover ring-2 ring-white/40 bg-white p-0.5 shadow-xl shrink-0"
-          />
-          <div>
-            <h1 className="text-xs sm:text-base font-extrabold tracking-tight text-white dark:text-white flex items-center gap-1.5 sm:gap-2">
-              <span>AICS MONTALBAN</span>
-              <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                ACTIVE
-              </span>
-            </h1>
-            <p className="text-[10px] sm:text-xs text-[#9BCBFF] font-semibold truncate max-w-[200px] sm:max-w-none">
-              Safe & Confidential Concern Reporting
-            </p>
-          </div>
-        </div>
+      {/* Top Navigation Bar - Clean, Organized & Non-Congested Layout */}
+      <header className="relative z-20 w-full px-3 sm:px-8 py-3 sm:py-5 border-b border-white/10 student-portal-header bg-[#0B1E48]/90 backdrop-blur-md safe-area-top">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Left Brand & Identification */}
+          <div className="flex items-center justify-between sm:justify-start gap-3">
+            <div className="flex items-center gap-2.5 sm:gap-3.5">
+              <img
+                src="/aics-logo.jpg"
+                alt="AICS Logo"
+                className="w-9 h-9 sm:w-12 sm:h-12 rounded-full object-cover ring-2 ring-white/40 bg-white p-0.5 shadow-xl shrink-0"
+              />
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <h1 className="text-xs sm:text-base font-extrabold tracking-tight text-white uppercase truncate">
+                    AICS MONTALBAN
+                  </h1>
+                  <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                    ACTIVE
+                  </span>
+                </div>
+                <p className="text-[10px] sm:text-xs text-[#9BCBFF] font-medium truncate">
+                  {isTl ? 'Ligtas at Kumpidensyal na Portal' : 'Safe & Confidential Concern Reporting'}
+                </p>
+              </div>
+            </div>
 
-        <div className="flex items-center gap-2 sm:gap-3 ml-auto">
-          {/* Emergency SOS Quick-Exit Button (Immediate Safety Escape) */}
-          <QuickExitButton onTrigger={onSignOut} />
-
-          {/* Quick Panic / Discretion Shield Button */}
-          <button
-            type="button"
-            onClick={() => {
-              soundFX.playBackspace();
-              setPanicMode(true);
-            }}
-            className="btn-press px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-xs font-bold flex items-center gap-1.5 transition-all"
-            title={isTl ? 'Quick Privacy Shield (o pindutin ang ESC key)' : 'Quick Privacy Shield (or press ESC key)'}
-          >
-            <span>🛡️</span>
-            <span className="hidden sm:inline">{isTl ? 'Quick Shield' : 'Quick Shield'}</span>
-          </button>
-
-          {/* Discretion & Auto-Logout Security Indicator */}
-          <div
-            title={
-              isTl
-                ? `Awtomatikong magla-logout sa loob ng ${Math.ceil(secondsRemaining / 60)} minuto upang walang makakita ng iyong mga ulat kapag naiwan ang device.`
-                : `Auto-logout in ${Math.ceil(secondsRemaining / 60)} minutes of inactivity to keep your reports strictly confidential.`
-            }
-            className="hidden md:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/30 border border-white/10 text-[10px] font-mono text-[#9BCBFF]"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>⏱ {Math.floor(secondsRemaining / 60)}:{(secondsRemaining % 60).toString().padStart(2, '0')}</span>
+            {/* Mobile Tour Help Guide Icon */}
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playToggleSwitch(true);
+                setShowMobileTour(true);
+              }}
+              className="sm:hidden px-2.5 py-1 rounded-full bg-sky-500/20 border border-sky-400/40 text-sky-200 text-[10px] font-bold flex items-center gap-1"
+              title="Buksan ang App Guide"
+            >
+              <span>❓</span>
+              <span>Guide</span>
+            </button>
           </div>
 
-          {/* High-Visibility Dedicated Sign Out Button */}
-          <button
-            type="button"
-            onClick={() => {
-              soundFX.playBackspace();
-              onSignOut();
-            }}
-            className="btn-press px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-rose-950/40 border border-rose-400/40 flex items-center gap-1.5 transition-all"
-            title={isTl ? 'Mag-sign out sa portal' : 'Sign out from portal'}
-          >
-            <span>🚪</span>
-            <span>{isTl ? 'Sign Out' : 'Sign Out'}</span>
-          </button>
-          <SoundTogglePill />
-          <LocaleSwitchPill />
-          <SkyThemePill />
+          {/* Right Action & Control Cluster */}
+          <div className="flex items-center justify-between sm:justify-end gap-2 flex-wrap">
+            {/* Quick Panic / Discretion Shield Button */}
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playBackspace();
+                setPanicMode(true);
+              }}
+              className="btn-press px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-[11px] sm:text-xs font-bold flex items-center gap-1.5 transition-all"
+              title={isTl ? 'Quick Privacy Shield' : 'Quick Privacy Shield'}
+            >
+              <span>🛡️</span>
+              <span>{isTl ? 'Quick Shield' : 'Quick Shield'}</span>
+            </button>
+
+            {/* Desktop Guide Tour Button */}
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playToggleSwitch(true);
+                setShowMobileTour(true);
+              }}
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-200 text-xs font-bold transition-colors"
+            >
+              <span>❓</span>
+              <span>{isTl ? 'Gabay sa Paggamit' : 'User Guide'}</span>
+            </button>
+
+            {/* Toggles Cluster (Organized inside sleek capsule) */}
+            <div className="flex items-center p-1 rounded-full bg-black/40 border border-white/15 shadow-inner">
+              <SoundTogglePill />
+              <div className="h-3.5 w-[1px] bg-white/20 mx-1" />
+              <LocaleSwitchPill />
+              <div className="h-3.5 w-[1px] bg-white/20 mx-1" />
+              <SkyThemePill />
+            </div>
+
+            {/* Sign Out Button */}
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playBackspace();
+                onSignOut();
+              }}
+              className="btn-press px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-extrabold text-xs shadow-md shadow-rose-950/40 border border-rose-400/40 flex items-center gap-1 transition-all"
+            >
+              <span>🚪</span>
+              <span>{isTl ? 'Sign Out' : 'Sign Out'}</span>
+            </button>
+
+            {/* Emergency SOS Quick-Exit (Floating on mobile, pill on desktop) */}
+            <QuickExitButton onTrigger={onSignOut} />
+          </div>
         </div>
       </header>
 
