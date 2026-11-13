@@ -368,13 +368,18 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       {/* Top Floating Glass Island Navbar (Apple/Linear-Style Capsule with Campus Ambient Background) */}
       <header className="relative z-30 w-full px-3 sm:px-6 pt-3 sm:pt-4 safe-area-top">
         <div className="relative max-w-6xl mx-auto rounded-2xl sm:rounded-full overflow-hidden border border-white/25 dark:border-white/15 shadow-2xl shadow-blue-950/50 transition-all">
-          {/* Subtle Campus Photo Ambient Layer with Blue Tint & Overlay (similar to CdM portal style) */}
+          {/* Campus Photo Ambient Layer stretched to fill with blue tint */}
           <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none transform scale-105 filter blur-[0.5px]"
-            style={{ backgroundImage: `url('/aics-campus-header.jpg')` }}
+            className="absolute inset-0 bg-no-repeat pointer-events-none"
+            style={{
+              backgroundImage: `url('/aics-campus-header.jpg')`,
+              backgroundSize: '100% 100%',
+              backgroundPosition: 'center',
+            }}
           />
-          {/* Deep Blue Translucent Gradient Tint Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#041232]/92 via-[#092257]/88 to-[#06183d]/92 backdrop-blur-md pointer-events-none" />
+          {/* Blue Translucent Overlay (katulad ng CdM portal: kitang-kita ang image pero may subtle blue wash) */}
+          <div className="absolute inset-0 bg-[#072464]/65 mix-blend-multiply pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#020b24]/50 via-[#0a2769]/40 to-[#020b24]/50 pointer-events-none" />
 
           {/* Inner Content Bar */}
           <div className="relative z-10 px-3.5 sm:px-6 py-2.5 sm:py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 sm:gap-4">
