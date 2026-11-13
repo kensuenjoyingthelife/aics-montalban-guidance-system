@@ -452,218 +452,209 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
         </div>
       </header>
 
-      {/* Slide-over Right Navigation Drawer */}
-      <AnimatePresence>
-        {isMenuOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMenuOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99990]"
-            />
+      {/* Right Drawer Navigation (Native CSS for 100% reliable clicks on mobile) */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-[99990] flex justify-end">
+          {/* Backdrop */}
+          <div
+            onClick={() => setIsMenuOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+          />
 
-            {/* Right Drawer Panel */}
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="fixed top-0 right-0 h-full w-[290px] sm:w-[340px] bg-[#071330] border-l border-white/15 z-[99995] flex flex-col justify-between shadow-2xl p-5"
-            >
-              <div className="space-y-6">
-                {/* Drawer Header */}
-                <div className="flex items-center justify-between pb-4 border-b border-white/10">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">🧭</span>
-                    <div>
-                      <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">
-                        {isTl ? 'Portal Navigation' : 'Portal Menu'}
-                      </h3>
-                      <p className="text-[10px] text-sky-300/70 font-semibold truncate max-w-[170px]">
-                        {user.fullName}
-                      </p>
-                    </div>
+          {/* Right Drawer Panel */}
+          <div
+            className="relative h-full w-[290px] sm:w-[340px] bg-[#071330] border-l border-white/15 z-[99995] flex flex-col justify-between shadow-2xl p-5 overflow-y-auto"
+          >
+            <div className="space-y-6">
+              {/* Drawer Header */}
+              <div className="flex items-center justify-between pb-4 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🧭</span>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">
+                      {isTl ? 'Portal Navigation' : 'Portal Menu'}
+                    </h3>
+                    <p className="text-[10px] text-sky-300/70 font-semibold truncate max-w-[170px]">
+                      {user.fullName}
+                    </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playBackspace();
-                      setIsMenuOpen(false);
-                    }}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
                 </div>
-
-                {/* Primary Features Navigation */}
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block px-1">
-                    {isTl ? 'Pangunahing Aksyon' : 'Main Features'}
-                  </label>
-
-                  {/* 1. Report Concern */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playToggleSwitch(true);
-                      setActiveTab('submit');
-                      setIsMenuOpen(false);
-                    }}
-                    className={`w-full p-3 rounded-2xl flex items-center justify-between transition-all ${
-                      activeTab === 'submit'
-                        ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-lg ring-1 ring-sky-300'
-                        : 'bg-white/5 hover:bg-white/10 text-slate-200'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <FileEdit className="w-4 h-4 text-sky-400" />
-                      <div className="text-left">
-                        <p className="text-xs font-black">
-                          {isTl ? 'Report Concern' : 'Report Concern'}
-                        </p>
-                        <p className="text-[10px] text-sky-200/70">
-                          {isTl ? 'Magsumite ng insidente' : 'Submit confidential incident'}
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 opacity-50" />
-                  </button>
-
-                  {/* 2. My Reports */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playToggleSwitch(true);
-                      setActiveTab('history');
-                      void fetchMyHistory();
-                      setIsMenuOpen(false);
-                    }}
-                    className={`w-full p-3 rounded-2xl flex items-center justify-between transition-all ${
-                      activeTab === 'history'
-                        ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-lg ring-1 ring-sky-300'
-                        : 'bg-white/5 hover:bg-white/10 text-slate-200'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <FolderArchive className="w-4 h-4 text-amber-400" />
-                      <div className="text-left">
-                        <p className="text-xs font-black">
-                          {isTl ? 'My Reports' : 'My Reports'}
-                        </p>
-                        <p className="text-[10px] text-sky-200/70">
-                          {isTl ? 'Subaybayan ang aksyon' : 'Track case resolutions'}
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 opacity-50" />
-                  </button>
-
-                  {/* 3. Guidance Chat */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playToggleSwitch(true);
-                      setActiveTab('chat');
-                      setIsMenuOpen(false);
-                    }}
-                    className={`w-full p-3 rounded-2xl flex items-center justify-between transition-all ${
-                      activeTab === 'chat'
-                        ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-lg ring-1 ring-sky-300'
-                        : 'bg-white/5 hover:bg-white/10 text-slate-200'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <MessageSquare className="w-4 h-4 text-emerald-400" />
-                      <div className="text-left">
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-xs font-black">
-                            {isTl ? 'Guidance Chat' : 'Guidance Chat'}
-                          </p>
-                          {history.some((c) => c.chatStatus === 'Open') && (
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                          )}
-                        </div>
-                        <p className="text-[10px] text-sky-200/70">
-                          {isTl ? '1-on-1 counselor live chat' : '1-on-1 private counselor chat'}
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 opacity-50" />
-                  </button>
-                </div>
-
-                {/* System Settings & Toggles Cluster */}
-                <div className="space-y-3 pt-4 border-t border-white/10">
-                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block px-1">
-                    {isTl ? 'Hitsura at Wika' : 'Display & Preferences'}
-                  </label>
-
-                  {/* Theme Switcher Row */}
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
-                    <span className="text-xs font-bold text-slate-300">
-                      {isTl ? 'Dark / Light Mode' : 'Sky Theme (Dark/Light)'}
-                    </span>
-                    <SkyThemePill />
-                  </div>
-
-                  {/* Language Switcher Row */}
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
-                    <span className="text-xs font-bold text-slate-300">
-                      {isTl ? 'Wika (EN / TL)' : 'Language (EN / TL)'}
-                    </span>
-                    <LocaleSwitchPill />
-                  </div>
-
-                  {/* Sound FX Toggle Row */}
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
-                    <span className="text-xs font-bold text-slate-300">
-                      {isTl ? 'Audio & Sound FX' : 'Audio FX'}
-                    </span>
-                    <SoundTogglePill />
-                  </div>
-
-                  {/* User Guide Button */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playToggleSwitch(true);
-                      setShowMobileTour(true);
-                      setIsMenuOpen(false);
-                    }}
-                    className="w-full p-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-200 text-xs font-bold flex items-center justify-center gap-2"
-                  >
-                    <HelpCircle className="w-4 h-4" />
-                    <span>{isTl ? 'Buksan ang Gabay sa Paggamit' : 'Open User Guide Tour'}</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Drawer Footer: Safe Sign Out */}
-              <div className="pt-4 border-t border-white/10 space-y-2">
                 <button
                   type="button"
                   onClick={() => {
                     soundFX.playBackspace();
                     setIsMenuOpen(false);
-                    onSignOut();
                   }}
-                  className="btn-press w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-extrabold text-xs shadow-lg shadow-rose-950/40 border border-rose-400/40 flex items-center justify-center gap-2 transition-all"
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white"
                 >
-                  <LogOut className="w-4 h-4" />
-                  <span>{isTl ? 'Sign Out sa Portal' : 'Sign Out of Portal'}</span>
+                  <X className="w-5 h-5" />
                 </button>
-                <p className="text-[10px] text-center text-slate-400 font-medium">
-                  AICS Montalban · RA 10173 Protected
-                </p>
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+
+              {/* Primary Features Navigation */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block px-1">
+                  {isTl ? 'Pangunahing Aksyon' : 'Main Features'}
+                </label>
+
+                {/* 1. Report Concern */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playToggleSwitch(true);
+                    setActiveTab('submit');
+                    setIsMenuOpen(false);
+                  }}
+                  className={`w-full p-3 rounded-2xl flex items-center justify-between transition-all cursor-pointer ${
+                    activeTab === 'submit'
+                      ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-lg ring-1 ring-sky-300'
+                      : 'bg-white/5 hover:bg-white/10 text-slate-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <FileEdit className="w-4 h-4 text-sky-400" />
+                    <div className="text-left">
+                      <p className="text-xs font-black">
+                        {isTl ? 'Report Concern' : 'Report Concern'}
+                      </p>
+                      <p className="text-[10px] text-sky-200/70">
+                        {isTl ? 'Magsumite ng insidente' : 'Submit confidential incident'}
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 opacity-50" />
+                </button>
+
+                {/* 2. My Reports */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playToggleSwitch(true);
+                    setActiveTab('history');
+                    void fetchMyHistory();
+                    setIsMenuOpen(false);
+                  }}
+                  className={`w-full p-3 rounded-2xl flex items-center justify-between transition-all cursor-pointer ${
+                    activeTab === 'history'
+                      ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-lg ring-1 ring-sky-300'
+                      : 'bg-white/5 hover:bg-white/10 text-slate-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <FolderArchive className="w-4 h-4 text-amber-400" />
+                    <div className="text-left">
+                      <p className="text-xs font-black">
+                        {isTl ? 'My Reports' : 'My Reports'}
+                      </p>
+                      <p className="text-[10px] text-sky-200/70">
+                        {isTl ? 'Subaybayan ang aksyon' : 'Track case resolutions'}
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 opacity-50" />
+                </button>
+
+                {/* 3. Guidance Chat */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playToggleSwitch(true);
+                    setActiveTab('chat');
+                    setIsMenuOpen(false);
+                  }}
+                  className={`w-full p-3 rounded-2xl flex items-center justify-between transition-all cursor-pointer ${
+                    activeTab === 'chat'
+                      ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-lg ring-1 ring-sky-300'
+                      : 'bg-white/5 hover:bg-white/10 text-slate-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <MessageSquare className="w-4 h-4 text-emerald-400" />
+                    <div className="text-left">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs font-black">
+                          {isTl ? 'Guidance Chat' : 'Guidance Chat'}
+                        </p>
+                        {history.some((c) => c.chatStatus === 'Open') && (
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        )}
+                      </div>
+                      <p className="text-[10px] text-sky-200/70">
+                        {isTl ? '1-on-1 counselor live chat' : '1-on-1 private counselor chat'}
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 opacity-50" />
+                </button>
+              </div>
+
+              {/* System Settings & Toggles Cluster */}
+              <div className="space-y-3 pt-4 border-t border-white/10">
+                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block px-1">
+                  {isTl ? 'Hitsura at Wika' : 'Display & Preferences'}
+                </label>
+
+                {/* Theme Switcher Row */}
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                  <span className="text-xs font-bold text-slate-300">
+                    {isTl ? 'Dark / Light Mode' : 'Sky Theme (Dark/Light)'}
+                  </span>
+                  <SkyThemePill />
+                </div>
+
+                {/* Language Switcher Row */}
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                  <span className="text-xs font-bold text-slate-300">
+                    {isTl ? 'Wika (EN / TL)' : 'Language (EN / TL)'}
+                  </span>
+                  <LocaleSwitchPill />
+                </div>
+
+                {/* Sound FX Toggle Row */}
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                  <span className="text-xs font-bold text-slate-300">
+                    {isTl ? 'Audio & Sound FX' : 'Audio FX'}
+                  </span>
+                  <SoundTogglePill />
+                </div>
+
+                {/* User Guide Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playToggleSwitch(true);
+                    setShowMobileTour(true);
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full p-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-200 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <HelpCircle className="w-4 h-4" />
+                  <span>{isTl ? 'Buksan ang Gabay sa Paggamit' : 'Open User Guide Tour'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Drawer Footer: Safe Sign Out */}
+            <div className="pt-4 border-t border-white/10 space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  soundFX.playBackspace();
+                  setIsMenuOpen(false);
+                  onSignOut();
+                }}
+                className="btn-press w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-extrabold text-xs shadow-lg shadow-rose-950/40 border border-rose-400/40 flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>{isTl ? 'Sign Out sa Portal' : 'Sign Out of Portal'}</span>
+              </button>
+              <p className="text-[10px] text-center text-slate-400 font-medium">
+                AICS Montalban · RA 10173 Protected
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Floating AssistiveTouch SOS Mascot Ball (Always Top-Level at Root Body Z-Index) */}
       <div className="md:hidden">

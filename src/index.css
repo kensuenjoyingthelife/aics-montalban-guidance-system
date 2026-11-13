@@ -1146,15 +1146,21 @@ body.capacitor-mobile * {
     visibility: hidden !important;
   }
 
-  /* DISABLE ALL CSS ANIMATIONS, TRANSITIONS, SLIDES, AND KEYFRAMES ON MOBILE FOR ALL ELEMENTS */
-  *,
-  *::before,
-  *::after {
+  /* DISABLE HEAVY ANIMATIONS ON MOBILE WHILE PRESERVING BUTTON/TOUCH INTERACTIVITY */
+  .anim-float,
+  .anim-glow,
+  .anim-drift,
+  .anim-pulse-slow,
+  .clouds,
+  .stars,
+  .bird-flock {
     animation: none !important;
     animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition: none !important;
-    transition-duration: 0.001ms !important;
+  }
+
+  /* Instant zero-delay transitions on mobile */
+  button, a, input, select, textarea {
+    transition-duration: 0.05s !important;
   }
 
   /* RE-ENABLE & PRESERVE ONLY THE SAFEZONE 3D MASCOT HEAD & GREETING ON MOBILE */

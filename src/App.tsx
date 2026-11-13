@@ -55,8 +55,17 @@ export const App: React.FC = () => {
       : null,
   );
 
-  // Student Session (Student Web/Mobile Portal only)
-  const [activeStudentSession, setActiveStudentSession] = useState<StudentPortalUser | null>(null);
+  // Student Session (Student Web/Mobile Portal only) with session persistence
+  const [activeStudentSession, setActiveStudentSession] = useState<StudentPortalUser | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const saved = localStorage.getItem('student_portal_user');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch {}
+    return null;
+  });
 
   return (
     <SoundProvider>
@@ -94,18 +103,29 @@ export const App: React.FC = () => {
                   timeoutMinutes={15}
                   onTimeout={() => {
                     recordSecurityAudit('AUTO_LOGOUT', activeStudentSession.studentNumber);
+                    try {
+                      localStorage.removeItem('student_portal_user');
+                    } catch {}
                     setActiveStudentSession(null);
                   }}
                 >
                   <StudentDashboard
                     user={activeStudentSession}
-                    onSignOut={() => setActiveStudentSession(null)}
+                    onSignOut={() => {
+                      try {
+                        localStorage.removeItem('student_portal_user');
+                      } catch {}
+                      setActiveStudentSession(null);
+                    }}
                   />
                 </InactivityShield>
               ) : (
                 <StudentAuthGate
                   onLoginSuccess={(user) => {
                     recordSecurityAudit('STUDENT_LOGIN', user.studentNumber);
+                    try {
+                      localStorage.setItem('student_portal_user', JSON.stringify(user));
+                    } catch {}
                     setActiveStudentSession(user);
                   }}
                 />
