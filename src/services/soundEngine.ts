@@ -453,15 +453,41 @@ export const SoundTogglePill: React.FC = () => {
     {
       type: 'button',
       onClick: toggleSound,
-      title: soundEnabled ? 'Tech UI Sounds: ON (Click to Mute)' : 'Tech UI Sounds: MUTED',
+      title: soundEnabled ? 'UI Sounds: ON (Click to Mute)' : 'UI Sounds: MUTED',
       className:
-        'btn-press inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E4ECFC]/95 hover:bg-[#D5E2FA] dark:bg-[#142852]/90 dark:hover:bg-[#1C366E] border border-[#CFD9F2] dark:border-[#233F78] text-[#0B1F4D] dark:text-white text-[11px] font-extrabold shadow-sm',
+        'btn-press inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 border border-white/20 dark:border-white/10 text-white text-[11px] font-bold shadow-sm transition-all cursor-pointer',
     },
-    React.createElement('span', null, soundEnabled ? '🔊' : '🔇'),
+    soundEnabled
+      ? React.createElement(
+          'svg',
+          {
+            className: 'w-3.5 h-3.5 text-sky-200',
+            fill: 'none',
+            stroke: 'currentColor',
+            strokeWidth: '2',
+            viewBox: '0 0 24 24',
+          },
+          React.createElement('polygon', { points: '11 5 6 9 2 9 2 15 6 15 11 19 11 5' }),
+          React.createElement('path', { d: 'M15.54 8.46a5 5 0 0 1 0 7.07' }),
+          React.createElement('path', { d: 'M19.07 4.93a10 10 0 0 1 0 14.14' })
+        )
+      : React.createElement(
+          'svg',
+          {
+            className: 'w-3.5 h-3.5 text-white/50',
+            fill: 'none',
+            stroke: 'currentColor',
+            strokeWidth: '2',
+            viewBox: '0 0 24 24',
+          },
+          React.createElement('polygon', { points: '11 5 6 9 2 9 2 15 6 15 11 19 11 5' }),
+          React.createElement('line', { x1: '23', y1: '9', x2: '17', y2: '15' }),
+          React.createElement('line', { x1: '17', y1: '9', x2: '23', y2: '15' })
+        ),
     React.createElement(
       'span',
-      { className: 'hidden sm:inline' },
-      soundEnabled ? 'SFX ON' : 'SFX OFF'
+      { className: 'hidden sm:inline text-white/90 font-bold' },
+      soundEnabled ? 'SFX' : 'Muted'
     )
   );
 };

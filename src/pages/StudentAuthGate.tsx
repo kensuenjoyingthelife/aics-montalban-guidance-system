@@ -1,5 +1,15 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  User,
+  Lock,
+  Eye,
+  EyeOff,
+  AlertTriangle,
+  FileText,
+  Shield,
+  Check,
+} from 'lucide-react';
 import { CelestialBackground } from '../components/auth/CelestialBackground';
 import { WavyBackground } from '../components/auth/WavyBackground';
 import { useStudentEncouragementWings } from '../components/auth/StudentEncouragementWing';
@@ -448,7 +458,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
               {loginError && (
                 <div className="p-4 rounded-2xl bg-rose-500/25 border border-rose-500/50 text-rose-200 text-sm font-semibold flex items-center gap-3">
-                  <span className="text-base">⚠️</span>
+                  <AlertTriangle className="w-5 h-5 text-rose-300 shrink-0" />
                   <span>{loginError}</span>
                 </div>
               )}
@@ -459,8 +469,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     <span>Student ID Number</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/50 text-base pointer-events-none">
-                      👤
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/50 pointer-events-none">
+                      <User className="w-5 h-5" />
                     </span>
                     <input
                       type="text"
@@ -489,8 +499,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     </button>
                   </div>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/50 text-base pointer-events-none">
-                      🔒
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/50 pointer-events-none">
+                      <Lock className="w-5 h-5" />
                     </span>
                     <input
                       type={showLoginPassword ? 'text' : 'password'}
@@ -509,7 +519,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-white/60 dark:hover:text-white p-1 text-sm font-semibold transition-colors"
                       title={showLoginPassword ? 'Hide password' : 'Show password'}
                     >
-                      {showLoginPassword ? '🙈' : '👁️'}
+                      {showLoginPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
                 </div>
@@ -583,7 +593,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
               {regError && (
                 <div className="p-4 rounded-2xl bg-rose-500/25 border border-rose-500/50 text-rose-200 text-sm font-semibold flex items-center gap-3">
-                  <span className="text-base">⚠️</span>
+                  <AlertTriangle className="w-5 h-5 text-rose-300 shrink-0" />
                   <span>{regError}</span>
                 </div>
               )}
@@ -786,7 +796,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-white/60 dark:hover:text-white text-sm"
                           title={showRegPassword ? 'Hide password' : 'Show password'}
                         >
-                          {showRegPassword ? '🙈' : '👁️'}
+                          {showRegPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
                     </div>
@@ -814,7 +824,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-white/60 dark:hover:text-white text-sm"
                           title={showRegConfirmPassword ? 'Hide password' : 'Show password'}
                         >
-                          {showRegConfirmPassword ? '🙈' : '👁️'}
+                          {showRegConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
                     </div>
@@ -964,7 +974,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white text-sm"
                           title={showForgotNewPassword ? 'Hide password' : 'Show password'}
                         >
-                          {showForgotNewPassword ? '🙈' : '👁️'}
+                          {showForgotNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
                     </div>
@@ -988,7 +998,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white text-sm"
                           title={showForgotConfirmPassword ? 'Hide password' : 'Show password'}
                         >
-                          {showForgotConfirmPassword ? '🙈' : '👁️'}
+                          {showForgotConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
                     </div>
@@ -1033,7 +1043,9 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         <div className="fixed inset-0 z-50 bg-[#06122B]/90 flex items-center justify-center p-3 sm:p-6" data-reg-success>
           <div role="dialog" aria-modal="true" aria-label={isTl ? 'Nagawa ang account' : 'Account created'} className="w-full max-w-md max-h-[92vh] overflow-y-auto rounded-3xl bg-[#0B1E48] border-2 border-emerald-400 p-5 sm:p-6 space-y-4 shadow-2xl text-left">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 shrink-0 rounded-full bg-emerald-500 flex items-center justify-center text-white text-2xl font-extrabold">✓</div>
+              <div className="w-12 h-12 shrink-0 rounded-full bg-emerald-500 flex items-center justify-center text-white font-extrabold">
+                <Check className="w-7 h-7 text-white stroke-[3]" />
+              </div>
               <div className="min-w-0">
                 <h3 className="text-lg font-extrabold text-white leading-tight">{isTl ? 'Nagawa na ang account mo!' : 'Your account is ready!'}</h3>
                 <p className="text-xs text-[#9BCBFF]">
@@ -1043,7 +1055,10 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
             </div>
 
             <section className="rounded-2xl bg-white/5 border border-white/15 p-3.5 space-y-1">
-              <p className="text-xs font-extrabold text-white">🔒 {isTl ? 'Ang iyong privacy (RA 10173)' : 'Your privacy (RA 10173)'}</p>
+              <p className="text-xs font-extrabold text-white flex items-center gap-1.5">
+                <Lock className="w-4 h-4 text-emerald-400" />
+                <span>{isTl ? 'Ang iyong privacy (RA 10173)' : 'Your privacy (RA 10173)'}</span>
+              </p>
               <ul className="text-xs text-white/85 leading-relaxed list-disc pl-4 space-y-0.5">
                 <li>{isTl ? 'Ang Guidance Office lang ang makakakita ng impormasyon at mga report mo.' : 'Only the Guidance Office can see your information and reports.'}</li>
                 <li>{isTl ? 'Hindi ito ibibigay sa isinumbong mo, sa ibang estudyante, o sa magulang.' : 'They are never shared with the student you report, other students, or parents.'}</li>
@@ -1052,7 +1067,10 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
             </section>
 
             <section className="rounded-2xl bg-white/5 border border-white/15 p-3.5 space-y-1">
-              <p className="text-xs font-extrabold text-white">🛡️ {isTl ? 'Para maging ligtas ka' : 'Staying safe'}</p>
+              <p className="text-xs font-extrabold text-white flex items-center gap-1.5">
+                <Shield className="w-4 h-4 text-sky-400" />
+                <span>{isTl ? 'Para maging ligtas ka' : 'Staying safe'}</span>
+              </p>
               <ul className="text-xs text-white/85 leading-relaxed list-disc pl-4 space-y-0.5">
                 <li>{isTl ? 'Huwag ibigay kahit kanino ang password mo.' : 'Never share your password with anyone.'}</li>
                 <li>{isTl ? 'Mag-Sign Out pagkatapos, lalo na sa computer ng school o computer shop. Kusa rin itong nagsa-sign out pagkalipas ng 15 minuto.' : 'Sign out when done, especially on school or shop computers. It also signs out by itself after 15 minutes.'}</li>
@@ -1094,8 +1112,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               {/* Header */}
               <div className="flex items-center justify-between border-b border-white/10 dark:border-white/10 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-400 text-xl">
-                    📜
+                  <div className="w-10 h-10 rounded-2xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-400">
+                    <FileText className="w-5 h-5 text-sky-400" />
                   </div>
                   <div>
                     <h2 className="text-lg sm:text-xl font-extrabold card-title-text">
