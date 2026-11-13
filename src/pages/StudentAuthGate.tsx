@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { CelestialBackground } from '../components/auth/CelestialBackground';
 import { WavyBackground } from '../components/auth/WavyBackground';
+import { useStudentEncouragementWings } from '../components/auth/StudentEncouragementWing';
 import { SoundTogglePill, soundFX } from '../services/soundEngine';
 import { SkyThemePill } from '../context/ThemeContext';
 import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
@@ -23,6 +25,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 }) => {
   const { locale } = useLanguage();
   const isTl = locale === 'tl';
+  const { boyWing, girlWing } = useStudentEncouragementWings();
 
   const [mode, setMode] = useState<PortalAuthMode>('login');
 
@@ -346,6 +349,10 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
   return (
     <div className="min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none student-portal-canvas bg-[#05112B] text-white">
+      {/* Celestial Background: Active on Desktop, hidden/static on mobile */}
+      <div className="hidden lg:block">
+        <CelestialBackground />
+      </div>
       <WavyBackground />
 
       {/* Top Header Bar */}
@@ -376,6 +383,18 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       {/* Main Glassmorphic Container with Left and Right Student Encouragement Wings */}
       <main className="relative z-20 flex-1 flex items-center justify-center p-3 sm:p-6 lg:p-8 my-2 sm:my-4">
         <div className="w-full max-w-7xl flex flex-col lg:flex-row items-center justify-center gap-6 xl:gap-12">
+          {/* Left Wing: Boy Student (Desktop Website Only - Hidden on Mobile/PWA/Capacitor) */}
+          {mode === 'login' && (
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="hidden lg:flex shrink-0 order-1 lg:order-none"
+            >
+              {boyWing}
+            </motion.div>
+          )}
+
           {/* Central Login / Register Glass Card */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -967,8 +986,17 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
           )}
         </motion.div>
 
-        {/* Right Wing: Girl Student (Emotional healing, mental wellness, validation) */}
-        
+        {/* Right Wing: Girl Student (Desktop Website Only - Hidden on Mobile/PWA/Capacitor) */}
+        {mode === 'login' && (
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="hidden lg:flex shrink-0 order-3 lg:order-none"
+          >
+            {girlWing}
+          </motion.div>
+        )}
       </div>
     </main>
 
