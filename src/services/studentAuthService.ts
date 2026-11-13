@@ -21,6 +21,7 @@ export interface RegisterStudentParams {
   studentNumber: string;
   password: string;
   studentIdFile?: File | null;
+  personalPhotoFile?: File | null;
   nationalIdFile?: File | null;
 }
 
@@ -141,7 +142,9 @@ export async function registerStudentPortalAccount(params: RegisterStudentParams
     if (params.studentIdFile) {
       studentIdUrl = await uploadIdToStorage(params.studentIdFile, cleanNumber, 'student_id');
     }
-    if (params.nationalIdFile) {
+    if (params.personalPhotoFile) {
+      nationalIdUrl = await uploadIdToStorage(params.personalPhotoFile, cleanNumber, 'national_id');
+    } else if (params.nationalIdFile) {
       nationalIdUrl = await uploadIdToStorage(params.nationalIdFile, cleanNumber, 'national_id');
     }
 

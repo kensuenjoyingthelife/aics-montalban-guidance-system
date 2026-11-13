@@ -177,6 +177,30 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   const [studentIdFile, setStudentIdFile] = useState<File | null>(null);
   const [studentIdPreview, setStudentIdPreview] = useState<string | null>(null);
 
+  // Live Personal Face Photo State
+  const [personalPhotoFile, setPersonalPhotoFile] = useState<File | null>(null);
+  const [personalPhotoPreview, setPersonalPhotoPreview] = useState<string | null>(null);
+
+  // Camera Modal State
+  const [activeCameraModal, setActiveCameraModal] = useState<'id' | 'personal' | null>(null);
+
+  // Device Detection: Is user on mobile/tablet or desktop/laptop
+  const [isMobileDevice, setIsMobileDevice] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const ua = navigator.userAgent || navigator.vendor || (window as any).opera;
+    return /android|iphone|ipad|ipod|windows phone|mobile/i.test(ua) || window.innerWidth < 768;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      const ua = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      setIsMobileDevice(/android|iphone|ipad|ipod|windows phone|mobile/i.test(ua) || (window.innerWidth < 768 && isTouch));
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [regLoading, setRegLoading] = useState(false);
   const [regError, setRegError] = useState<string | null>(null);
   const [show20sScanner, setShow20sScanner] = useState(false);
@@ -257,9 +281,15 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
   // 6. Uploaded / Captured Student Verification ID
   const studentIdStatus = useMemo(() => {
-    if (!studentIdFile) return { type: 'not_input', label: 'Not Uploaded' };
-    return { type: 'correct', label: 'Verified Photo ✓' };
-  }, [studentIdFile]);
+    if (!studentIdFile) return { type: 'not_input', label: isMobileDevice ? 'Live Cam Required' : 'Not Uploaded' };
+    return { type: 'correct', label: 'ID Verified ✓' };
+  }, [studentIdFile, isMobileDevice]);
+
+  // 6b. Live Personal Face Photo
+  const personalPhotoStatus = useMemo(() => {
+    if (!personalPhotoFile) return { type: 'not_input', label: isMobileDevice ? 'Live Selfie Required' : 'Not Uploaded' };
+    return { type: 'correct', label: 'Face Verified ✓' };
+  }, [personalPhotoFile, isMobileDevice]);
 
   // 7. Password: 6+ characters, >=1 number, >=1 uppercase, >=1 special char
   const passwordCriteria = useMemo(() => {
@@ -298,6 +328,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     emailStatus.type === 'correct' &&
     studentNumberStatus.type === 'correct' &&
     studentIdStatus.type === 'correct' &&
+    personalPhotoStatus.type === 'correct' &&
     passwordStatus.type === 'correct' &&
     confirmPasswordStatus.type === 'correct';
 
@@ -336,6 +367,21 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       setStudentIdFile(file);
       const url = URL.createObjectURL(file);
       setStudentIdPreview(url);
+      soundFX.playToggleSwitch(true);
+    }
+  };
+
+  const handlePersonalPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/') || file.type.includes('pdf')) {
+        soundFX.playError();
+        setRegError('BAWAL ANG PDF O VIDEO: Tanging totoong litrato (JPG/PNG) lamang ng mukha ang tinatanggap.');
+        return;
+      }
+      setPersonalPhotoFile(file);
+      const url = URL.createObjectURL(file);
+      setPersonalPhotoPreview(url);
       soundFX.playToggleSwitch(true);
     }
   };
@@ -1045,33 +1091,45 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   </div>
                 </div>
 
-                {/* 3. STUDENT ID PHOTO UPLOAD */}
-                <div className="space-y-4 p-5 rounded-2xl register-section-card">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                {/* 3. VERIFICATION PHOTOS: STUDENT ID & LIVE PERSONAL PHOTO */}
+                <div className="space-y-6 p-5 rounded-2xl register-section-card">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
                     <div>
-                      <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase">
-                        {isTl ? '3. Litrato ng Student ID' : '3. Student ID Photo Verification'}
+                      <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase flex items-center gap-2">
+                        <span>📸</span>
+                        <span>{isTl ? '3. Beripikasyon ng Identidad (Student ID at Live Photo)' : '3. Identity Verification (Student ID & Live Photo)'}</span>
                       </h3>
-                      <p className="text-xs opacity-75 mt-0.5">
-                        {isTl
-                          ? 'I-upload ang malinaw na litrato ng iyong opisyal na AICS Student ID (JPG o PNG).'
-                          : 'Upload a clear photo of your official AICS Student ID (JPG or PNG).'}
+                      <p className="text-xs opacity-80 mt-1">
+                        {isMobileDevice
+                          ? (isTl
+                              ? '📱 MOBILE DETECTED: Required ang LIVE CAMERA capture para sa iyong mukha at Student ID. Bawal ang file upload sa cellphone.'
+                              : '📱 MOBILE DETECTED: LIVE CAMERA capture is strictly required for your face and Student ID. Upload is disabled on mobile.')
+                          : (isTl
+                              ? '💻 DESKTOP/LAPTOP DETECTED: Maaaring gamitin ang Webcam o mag-upload kung walang available na camera.'
+                              : '💻 DESKTOP/LAPTOP DETECTED: You may use your Webcam or upload an image file if a camera is unavailable.')}
                       </p>
                     </div>
-                    <div>{renderBadge(studentIdStatus)}</div>
                   </div>
 
-                  <div className="p-5 rounded-2xl register-inner-card space-y-4">
+                  {/* Sub-item A: Official Student ID Photo */}
+                  <div className="p-4 rounded-2xl register-inner-card space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-extrabold uppercase tracking-wide register-label flex items-center gap-1.5">
+                        <span>🪪</span> {isTl ? 'Litrato ng Opisyal na AICS Student ID' : 'Official AICS Student ID Photo'}
+                      </label>
+                      {renderBadge(studentIdStatus)}
+                    </div>
+
                     {studentIdPreview ? (
                       <div className="relative rounded-2xl overflow-hidden border-2 border-emerald-500/50 bg-black/60 flex flex-col items-center justify-center p-3">
                         <img
                           src={studentIdPreview}
                           alt="Student ID Preview"
-                          className="max-h-72 w-full object-contain rounded-xl"
+                          className="max-h-60 w-full object-contain rounded-xl"
                         />
                         <div className="mt-3 flex items-center justify-between w-full px-2">
                           <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                            <span>✓</span> {isTl ? 'Student ID Handa Na' : 'Student ID Uploaded & Ready'}
+                            <span>✓</span> {isTl ? 'Student ID Nakuha Na' : 'Student ID Captured & Ready'}
                           </span>
                           <button
                             type="button"
@@ -1082,26 +1140,146 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                             }}
                             className="px-3 py-1.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-bold transition-colors"
                           >
-                            {isTl ? 'Palitan ang File' : 'Change File'}
+                            {isTl ? 'Kumuha Muli' : 'Retake'}
                           </button>
                         </div>
                       </div>
+                    ) : isMobileDevice ? (
+                      /* Mobile Phone: Strictly Live Camera Only */
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundFX.playToggleSwitch(true);
+                          setActiveCameraModal('id');
+                        }}
+                        className="w-full h-36 rounded-2xl border-2 border-dashed border-emerald-500/50 hover:border-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 flex flex-col items-center justify-center text-center p-4 transition-all"
+                      >
+                        <span className="text-3xl animate-bounce">📸</span>
+                        <span className="text-sm font-black text-emerald-300 mt-2">
+                          {isTl ? 'Pindutin para Buksan ang Camera (Bawal Upload)' : 'Tap to Open Camera (Live Capture Only)'}
+                        </span>
+                        <span className="text-[11px] text-slate-300 mt-1">
+                          {isTl ? 'Itutok ang rear camera sa iyong Student ID' : 'Point camera to your physical Student ID'}
+                        </span>
+                      </button>
                     ) : (
-                      <label className="btn-press flex flex-col items-center justify-center h-40 rounded-2xl border-2 border-dashed upload-dropzone cursor-pointer text-center p-4 transition-colors">
-                        <span className="text-3xl">📤</span>
-                        <span className="text-sm font-extrabold register-label mt-2">
-                          {isTl ? 'Pindutin para i-upload ang Student ID' : 'Click to Upload Student ID'}
-                        </span>
-                        <span className="text-xs opacity-70 mt-1">
-                          {isTl ? 'TOTOONG LITRATO LAMANG (JPG, PNG)' : 'REAL PHOTO ONLY (JPG, PNG)'}
-                        </span>
-                        <input
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp,image/jpg"
-                          onChange={handleStudentIdUpload}
-                          className="hidden"
-                        />
+                      /* PC / Laptop Mode: Camera Button + Fallback File Upload */
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            soundFX.playToggleSwitch(true);
+                            setActiveCameraModal('id');
+                          }}
+                          className="h-32 rounded-2xl border-2 border-dashed border-emerald-500/50 hover:border-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 flex flex-col items-center justify-center text-center p-3 transition-all"
+                        >
+                          <span className="text-2xl">📷</span>
+                          <span className="text-xs font-extrabold text-emerald-300 mt-1.5">
+                            {isTl ? 'Kumuha Gamit ang Webcam' : 'Capture via Webcam'}
+                          </span>
+                          <span className="text-[10px] opacity-75 mt-0.5">{isTl ? 'Live photo capture' : 'Instant live snap'}</span>
+                        </button>
+
+                        <label className="btn-press h-32 rounded-2xl border-2 border-dashed upload-dropzone cursor-pointer flex flex-col items-center justify-center text-center p-3 transition-colors">
+                          <span className="text-2xl">📁</span>
+                          <span className="text-xs font-extrabold register-label mt-1.5">
+                            {isTl ? 'Mag-upload ng File (PC/Laptop)' : 'Upload ID File (PC Mode)'}
+                          </span>
+                          <span className="text-[10px] opacity-75 mt-0.5">JPG, PNG</span>
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,image/jpg"
+                            onChange={handleStudentIdUpload}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Sub-item B: Live Personal Face Photo (Selfie) */}
+                  <div className="p-4 rounded-2xl register-inner-card space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-extrabold uppercase tracking-wide register-label flex items-center gap-1.5">
+                        <span>👤</span> {isTl ? 'Live Personal Photo (Actual Face Selfie)' : 'Live Personal Photo (Actual Face Selfie)'}
                       </label>
+                      {renderBadge(personalPhotoStatus)}
+                    </div>
+
+                    {personalPhotoPreview ? (
+                      <div className="relative rounded-2xl overflow-hidden border-2 border-emerald-500/50 bg-black/60 flex flex-col items-center justify-center p-3">
+                        <img
+                          src={personalPhotoPreview}
+                          alt="Live Face Preview"
+                          className="max-h-60 w-full object-contain rounded-xl"
+                        />
+                        <div className="mt-3 flex items-center justify-between w-full px-2">
+                          <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                            <span>✓</span> {isTl ? 'Mukha Nakuha Na' : 'Face Verified & Ready'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              soundFX.playBackspace();
+                              setPersonalPhotoFile(null);
+                              setPersonalPhotoPreview(null);
+                            }}
+                            className="px-3 py-1.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-bold transition-colors"
+                          >
+                            {isTl ? 'Kumuha Muli' : 'Retake'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : isMobileDevice ? (
+                      /* Mobile Phone: Strictly Live Selfie Camera Only */
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundFX.playToggleSwitch(true);
+                          setActiveCameraModal('personal');
+                        }}
+                        className="w-full h-36 rounded-2xl border-2 border-dashed border-cyan-500/50 hover:border-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 flex flex-col items-center justify-center text-center p-4 transition-all"
+                      >
+                        <span className="text-3xl animate-bounce">🤳</span>
+                        <span className="text-sm font-black text-cyan-300 mt-2">
+                          {isTl ? 'Pindutin para sa Live Selfie (Bawal Upload)' : 'Tap for Live Face Selfie (Upload Disabled)'}
+                        </span>
+                        <span className="text-[11px] text-slate-300 mt-1">
+                          {isTl ? 'Kumuha ng malinaw na litrato ng iyong mukha' : 'Take a clear frontal photo of your face'}
+                        </span>
+                      </button>
+                    ) : (
+                      /* PC / Laptop Mode: Webcam Selfie + Fallback File Upload */
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            soundFX.playToggleSwitch(true);
+                            setActiveCameraModal('personal');
+                          }}
+                          className="h-32 rounded-2xl border-2 border-dashed border-cyan-500/50 hover:border-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 flex flex-col items-center justify-center text-center p-3 transition-all"
+                        >
+                          <span className="text-2xl">🤳</span>
+                          <span className="text-xs font-extrabold text-cyan-300 mt-1.5">
+                            {isTl ? 'Kumuha ng Selfie sa Webcam' : 'Take Webcam Selfie'}
+                          </span>
+                          <span className="text-[10px] opacity-75 mt-0.5">{isTl ? 'Live facial verification' : 'Live front snap'}</span>
+                        </button>
+
+                        <label className="btn-press h-32 rounded-2xl border-2 border-dashed upload-dropzone cursor-pointer flex flex-col items-center justify-center text-center p-3 transition-colors">
+                          <span className="text-2xl">📁</span>
+                          <span className="text-xs font-extrabold register-label mt-1.5">
+                            {isTl ? 'Mag-upload ng Litrato (PC/Laptop)' : 'Upload Face Photo (PC Mode)'}
+                          </span>
+                          <span className="text-[10px] opacity-75 mt-0.5">JPG, PNG</span>
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,image/jpg"
+                            onChange={handlePersonalPhotoUpload}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
                     )}
                   </div>
                 </div>
