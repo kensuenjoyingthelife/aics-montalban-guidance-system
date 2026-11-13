@@ -1146,21 +1146,24 @@ body.capacitor-mobile * {
     visibility: hidden !important;
   }
 
-  /* Disable heavy continuous background loops, transitions, and tab switch animations on mobile */
-  .student-portal-canvas *:not([data-mascot-element="true"]):not(.sos-draggable-ball):not(.sos-draggable-ball *) {
+  /* DISABLE ALL CSS ANIMATIONS, TRANSITIONS, SLIDES, AND KEYFRAMES ON MOBILE FOR ALL ELEMENTS */
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
+    transition: none !important;
     transition-duration: 0.001ms !important;
   }
 
-  /* RE-ENABLE & PRESERVE ONLY THE SAFEZONE MASCOT ON MOBILE */
+  /* RE-ENABLE & PRESERVE ONLY THE SAFEZONE 3D MASCOT HEAD & GREETING ON MOBILE */
   .mascot-story-wrapper,
   .mascot-story-wrapper *,
   [data-mascot-element="true"],
   [data-mascot-element="true"] * {
     animation-duration: inherit !important;
     animation-iteration-count: inherit !important;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
 
   /* Make mobile layout clean, crisp, and high-performance solid */

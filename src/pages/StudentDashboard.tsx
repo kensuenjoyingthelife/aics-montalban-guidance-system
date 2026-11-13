@@ -691,8 +691,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
       {/* Main Workspace Area */}
       <main className="relative z-20 flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 space-y-6">
-        {/* Navigation Tabs */}
-        <div className="flex items-center justify-between border-b border-white/10 dark:border-white/10 pb-3 flex-wrap gap-2">
+        {/* Navigation Tabs (Hidden on Mobile < 768px because everything is neatly in the Right Menu Drawer) */}
+        <div className="hidden md:flex items-center justify-between border-b border-white/10 dark:border-white/10 pb-3 flex-wrap gap-2">
           <div className="inline-flex p-1 rounded-2xl register-section-card gap-1.5 flex-wrap">
             <button
               type="button"
@@ -744,7 +744,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
             </button>
           </div>
 
-          <span className="text-[11px] font-semibold card-subtitle-text hidden sm:inline">
+          <span className="text-[11px] font-semibold card-subtitle-text">
             🔒 RA 10173 Data Privacy Protected
           </span>
         </div>
