@@ -24,6 +24,7 @@ import {
   sendForgotPasswordOtp,
   resetPasswordWithOtp,
 } from '../services/studentAuthService';
+import { studentLoginRateLimiter, studentForgotRateLimiter, studentRegisterRateLimiter } from '../services/rateLimiter';
 
 export type PortalAuthMode = 'login' | 'register' | 'forgot';
 
@@ -117,13 +118,37 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   }, [isCarouselPaused]);
 
   // ==========================================
-  // LOGIN FORM STATE
+  // LOGIN FORM STATE & SECURITY
   // ==========================================
   const [loginStudentNumber, setLoginStudentNumber] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+
+  // Invisible Honeypot Anti-Bot Traps (Real students never see or fill these)
+  const [loginHoneypot, setLoginHoneypot] = useState('');
+  const [regHoneypot, setRegHoneypot] = useState('');
+  const [forgotHoneypot, setForgotHoneypot] = useState('');
+
+  // Rate Limiting Cooldown Seconds
+  const [loginCooldownSeconds, setLoginCooldownSeconds] = useState(0);
+  const [forgotCooldownSeconds, setForgotCooldownSeconds] = useState(0);
+
+  // Check rate limit timer tick
+  useEffect(() => {
+    const checkLimits = () => {
+      const loginStatus = studentLoginRateLimiter.isLocked();
+      setLoginCooldownSeconds(loginStatus.remainingSeconds);
+
+      const forgotStatus = studentForgotRateLimiter.isLocked();
+      setForgotCooldownSeconds(forgotStatus.remainingSeconds);
+    };
+
+    checkLimits();
+    const interval = setInterval(checkLimits, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // ==========================================
   // REGISTER FORM STATE
@@ -315,6 +340,14 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   // ==========================================
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 1. Invisible Honeypot Bot Trap: Reject bot if filled
+    if (regHoneypot.trim()) {
+      soundFX.playError();
+      setRegError('Security verification failed. Please try again.');
+      return;
+    }
+
     if (!isRegisterFormValid) {
       soundFX.playError();
       setRegError(isTl ? 'Pakisuyong ayusin ang mga may maling input bago mag-submit.' : 'Please fix the highlighted inputs before proceeding.');
@@ -342,6 +375,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         soundFX.playError();
         setRegError(res.error || (isTl ? 'Hindi nagawa ang account. Subukan ulit.' : 'The account was not created. Please try again.'));
       } else {
+        studentRegisterRateLimiter.reset();
         soundFX.playSuccessCheck();
         setSuccessData({ username: res.account.studentNumber, account: res.account });
       }
@@ -357,6 +391,29 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   // ==========================================
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 1. Invisible Honeypot Bot Trap: Reject bot silently if filled
+    if (loginHoneypot.trim()) {
+      soundFX.playError();
+      setLoginError('Security verification failed. (Automated bot pattern detected)');
+      return;
+    }
+
+    // 2. Anti-Brute-Force Rate Limiting Lockout Check
+    const rateStatus = studentLoginRateLimiter.isLocked();
+    if (rateStatus.locked) {
+      soundFX.playError();
+      const mins = Math.floor(rateStatus.remainingSeconds / 60);
+      const secs = rateStatus.remainingSeconds % 60;
+      const timeStr = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+      setLoginError(
+        isTl
+          ? `Masyadong maraming maling pagsubok. Naka-lockout ang pag-login ng ${timeStr}.`
+          : `Too many failed attempts. Login locked out for ${timeStr}.`
+      );
+      return;
+    }
+
     if (!loginStudentNumber.trim() || !loginPassword) {
       soundFX.playError();
       setLoginError(isTl ? 'Ilagay ang iyong Student ID Number at Password.' : 'Please enter your Student ID Number and Password.');
@@ -370,11 +427,27 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     setLoginLoading(false);
 
     if (!res.success || !res.account) {
+      // Record failed attempt in Rate Limiter
+      const attemptRes = studentLoginRateLimiter.recordFailedAttempt();
       soundFX.playError();
-      setLoginError(res.error || 'Invalid Student ID or Password.');
+
+      if (attemptRes.locked) {
+        setLoginError(
+          isTl
+            ? 'Naabot ang maximum na 5 maling pagsubok! Naka-lockout ang account ng 5 minuto para sa proteksyon.'
+            : 'Maximum 5 failed attempts reached! Account temporarily locked out for 5 minutes for security.'
+        );
+      } else {
+        const remaining = 5 - attemptRes.attempts;
+        setLoginError(
+          `${res.error || 'Invalid Student ID or Password.'} (${remaining} attempt${remaining === 1 ? '' : 's'} remaining)`
+        );
+      }
       return;
     }
 
+    // Success -> Reset Rate Limiter
+    studentLoginRateLimiter.reset();
     soundFX.playSuccessCheck();
     onLoginSuccess(res.account);
   };
@@ -384,6 +457,28 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   // ==========================================
   const handleForgotRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 1. Invisible Honeypot Trap
+    if (forgotHoneypot.trim()) {
+      soundFX.playError();
+      setForgotError('Security verification failed.');
+      return;
+    }
+
+    // 2. Rate Limiting Check
+    const rateStatus = studentForgotRateLimiter.isLocked();
+    if (rateStatus.locked) {
+      soundFX.playError();
+      const mins = Math.floor(rateStatus.remainingSeconds / 60);
+      const secs = rateStatus.remainingSeconds % 60;
+      setForgotError(
+        isTl
+          ? `Masyadong maraming paghingi ng OTP. Maghintay ng ${mins}:${secs < 10 ? '0' : ''}${secs}.`
+          : `Too many OTP requests. Please wait ${mins}:${secs < 10 ? '0' : ''}${secs}.`
+      );
+      return;
+    }
+
     setForgotLoading(true);
     setForgotError(null);
 
@@ -391,11 +486,13 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     setForgotLoading(false);
 
     if (!res.success) {
+      studentForgotRateLimiter.recordFailedAttempt();
       soundFX.playError();
       setForgotError(res.error || 'Failed to request reset OTP.');
       return;
     }
 
+    studentForgotRateLimiter.reset();
     soundFX.playStepUnlock();
     setForgotMaskedEmail(res.emailMasked || 'your registered email');
     setForgotStep('verify');
@@ -645,6 +742,33 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               )}
 
               <form onSubmit={handleLoginSubmit} className="space-y-6">
+                {/* Invisible Honeypot Anti-Bot Field (Hidden from real users via CSS & offscreen) */}
+                <div className="opacity-0 absolute -left-[9999px] -top-[9999px] pointer-events-none select-none h-0 w-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+                  <label htmlFor="student_hp_verify">Leave this field empty</label>
+                  <input
+                    id="student_hp_verify"
+                    type="text"
+                    name="student_hp_verify"
+                    value={loginHoneypot}
+                    onChange={(e) => setLoginHoneypot(e.target.value)}
+                    autoComplete="off"
+                    tabIndex={-1}
+                  />
+                </div>
+
+                {/* Anti-Brute-Force Lockout Warning Countdown */}
+                {loginCooldownSeconds > 0 && (
+                  <div className="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-900 dark:text-amber-200 text-xs font-bold flex items-center justify-between gap-3 animate-pulse">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-amber-500 shrink-0" />
+                      <span>{isTl ? 'Naka-lockout ang login dahil sa sunod-sunod na maling attempts.' : 'Login locked out due to consecutive failed attempts.'}</span>
+                    </div>
+                    <span className="font-mono px-2 py-1 rounded-lg bg-amber-500/20 text-xs">
+                      {Math.floor(loginCooldownSeconds / 60)}:{(loginCooldownSeconds % 60).toString().padStart(2, '0')}
+                    </span>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <label className="text-sm font-extrabold register-label flex items-center justify-between">
                     <span>Student ID Number</span>
@@ -707,11 +831,13 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
                 <button
                   type="submit"
-                  disabled={loginLoading}
+                  disabled={loginLoading || loginCooldownSeconds > 0}
                   className="btn-press w-full py-4 rounded-2xl bg-gradient-to-r from-[#1E469B] via-[#2557BE] to-[#1E469B] hover:opacity-95 text-white text-base font-extrabold shadow-xl shadow-blue-950/60 border border-white/20 disabled:opacity-50 transition-all flex items-center justify-center gap-2.5"
                 >
                   {loginLoading ? (
                     <span>Verifying Credentials...</span>
+                  ) : loginCooldownSeconds > 0 ? (
+                    <span>Locked Out ({loginCooldownSeconds}s)</span>
                   ) : (
                     <>
                       <span>Sign In to Student Portal</span>
@@ -775,6 +901,20 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               )}
 
               <form onSubmit={handleRegisterSubmit} className="space-y-8">
+                {/* Invisible Honeypot Anti-Bot Field for Register */}
+                <div className="opacity-0 absolute -left-[9999px] -top-[9999px] pointer-events-none select-none h-0 w-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+                  <label htmlFor="reg_hp_code">Do not fill this</label>
+                  <input
+                    id="reg_hp_code"
+                    type="text"
+                    name="reg_hp_code"
+                    value={regHoneypot}
+                    onChange={(e) => setRegHoneypot(e.target.value)}
+                    autoComplete="off"
+                    tabIndex={-1}
+                  />
+                </div>
+
                 {/* 1. STUDENT IDENTITY */}
                 <div className="space-y-3 p-5 rounded-2xl register-section-card">
                   <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase">
@@ -1090,6 +1230,30 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
               {forgotStep === 'request' ? (
                 <form onSubmit={handleForgotRequestOtp} className="space-y-6">
+                  {/* Invisible Honeypot Field */}
+                  <div className="opacity-0 absolute -left-[9999px] -top-[9999px] pointer-events-none select-none h-0 w-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+                    <input
+                      type="text"
+                      name="forgot_hp_field"
+                      value={forgotHoneypot}
+                      onChange={(e) => setForgotHoneypot(e.target.value)}
+                      autoComplete="off"
+                      tabIndex={-1}
+                    />
+                  </div>
+
+                  {forgotCooldownSeconds > 0 && (
+                    <div className="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-200 text-xs font-bold flex items-center justify-between gap-3 animate-pulse">
+                      <div className="flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-amber-400 shrink-0" />
+                        <span>Masyadong maraming paghingi ng OTP. Maghintay muna.</span>
+                      </div>
+                      <span className="font-mono px-2 py-1 rounded-lg bg-amber-500/20 text-xs">
+                        {Math.floor(forgotCooldownSeconds / 60)}:{(forgotCooldownSeconds % 60).toString().padStart(2, '0')}
+                      </span>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <label className="text-sm font-extrabold text-white">
                       Enter Student ID Number or Registered Email
