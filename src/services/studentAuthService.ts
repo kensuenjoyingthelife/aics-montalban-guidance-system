@@ -1,5 +1,6 @@
 import { postMail } from './mailApi';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabaseClient';
+import { uploadImageToCloudinary } from './cloudinaryService';
 
 export interface StudentPortalUser {
   id: number;
@@ -139,13 +140,25 @@ export async function registerStudentPortalAccount(params: RegisterStudentParams
     let studentIdUrl: string | null = null;
     let nationalIdUrl: string | null = null;
 
+    // Upload Student ID: Primary to Cloudinary CDN, fallback to Supabase Storage
     if (params.studentIdFile) {
-      studentIdUrl = await uploadIdToStorage(params.studentIdFile, cleanNumber, 'student_id');
+      studentIdUrl = await uploadImageToCloudinary(params.studentIdFile, cleanNumber, 'student_id');
+      if (!studentIdUrl) {
+        studentIdUrl = await uploadIdToStorage(params.studentIdFile, cleanNumber, 'student_id');
+      }
     }
+
+    // Upload Personal Photo (Actual Face Selfie): Primary to Cloudinary CDN, fallback to Supabase Storage
     if (params.personalPhotoFile) {
-      nationalIdUrl = await uploadIdToStorage(params.personalPhotoFile, cleanNumber, 'national_id');
+      nationalIdUrl = await uploadImageToCloudinary(params.personalPhotoFile, cleanNumber, 'personal_photo');
+      if (!nationalIdUrl) {
+        nationalIdUrl = await uploadIdToStorage(params.personalPhotoFile, cleanNumber, 'national_id');
+      }
     } else if (params.nationalIdFile) {
-      nationalIdUrl = await uploadIdToStorage(params.nationalIdFile, cleanNumber, 'national_id');
+      nationalIdUrl = await uploadImageToCloudinary(params.nationalIdFile, cleanNumber, 'personal_photo');
+      if (!nationalIdUrl) {
+        nationalIdUrl = await uploadIdToStorage(params.nationalIdFile, cleanNumber, 'national_id');
+      }
     }
 
     // C. Hash password
