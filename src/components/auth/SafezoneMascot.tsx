@@ -1,65 +1,81 @@
 import React, { useState, useEffect } from 'react';
 
 /**
- * 3D EVE-Style AICS SafeZone Mascot (Based directly on user reference photo)
+ * 3D EVE-Style AICS SafeZone Mascot Storyline:
  * 
- * Choreography:
- * 1. 'wave'       : Masiglang babati ("Hi, welcome! 👋")
- * 2. 'run-right'  : Tatakbo pakanan ("Whooosh! 🏃‍♂️💨")
- * 3. 'run-left'   : Tatakbo pakaliwa ("Zoom zoom! 💨")
- * 4. 'trip'       : Nadapa nang cute ("Aray ko po! 💫🙈")
- * 5. 'getup'      : Tatayo, medyo nahihiya ("Oks lang ako! Hehe ✨")
- * 6. 'safe-final' : PERMANENTE NANG HUMINTO DITO ("Safe ka dito palagi! 💙")
- *                   - Hindi na uulitin ang takbo at dapa (NO LOOPING ng movements)
- *                   - Ang tanging natitirang movement:
- *                     1. Natural na nagbi-blink ang cute smiling cyan eyes
- *                     2. Dahan-dahang kumakaway/nagwa-wave ang kamay na nangangamusta
- *                     3. Banayad na 3D hover floating physics
+ * Flow:
+ * 1. 'mag-hi'        : "hi kumusta 👋" (masiglang bati)
+ * 2. 'raise-hands'   : "welcome sa AICS SAFE ROOM 🎉✨" (itaas ang dalawang kamay na masaya)
+ * 3. 'tara-laro'     : "tara laro tayo! 🎮🎈" (mag-hi ulit, i-wave ang kamay na totoong gumagalaw)
+ * 4. 'run-right'     : "Whooosh! 🏃‍♂️💨" (tatakbo pakanan)
+ * 5. 'run-left'      : "Zoom zoom! 💨" (tatakbo pakaliwa)
+ * 6. 'trip'          : "Aray ko po! 💫🙈" (cute na nadapa na may umiikot na stars sa ulo)
+ * 7. 'getup'         : "Oks lang ako! Hehe ✨" (tatayo, medyo nahihiya)
+ * 8. 'safe-final'    : "Safe ka dito palagi! 💙" (Babalik sa center, permanente nang mag-i-stay dito na may nagbi-blink na mata at nagwa-wave na kamay)
  */
 
-type MascotStage = 'wave' | 'run-right' | 'run-left' | 'trip' | 'getup' | 'safe-final';
+type MascotStage = 
+  | 'mag-hi'
+  | 'raise-hands'
+  | 'tara-laro'
+  | 'run-right'
+  | 'run-left'
+  | 'trip'
+  | 'getup'
+  | 'safe-final';
 
 export const SafezoneMascot: React.FC = () => {
-  const [stage, setStage] = useState<MascotStage>('wave');
-  const [speechBubble, setSpeechBubble] = useState<string>('Hi, welcome! 👋');
+  const [stage, setStage] = useState<MascotStage>('mag-hi');
+  const [speechBubble, setSpeechBubble] = useState<string>('hi kumusta 👋');
 
   useEffect(() => {
     let timer: any;
 
-    // 1. Masiglang wave greeting
-    setStage('wave');
-    setSpeechBubble('Hi, welcome! 👋');
+    // 1. MAG HI: "hi kumusta 👋"
+    setStage('mag-hi');
+    setSpeechBubble('hi kumusta 👋');
 
     timer = setTimeout(() => {
-      // 2. Tatakbo pakanan
-      setStage('run-right');
-      setSpeechBubble('Whooosh! 🏃‍♂️💨');
+      // 2. Itaas ang dalawang kamay na masaya: "welcome sa AICS SAFE ROOM"
+      setStage('raise-hands');
+      setSpeechBubble('welcome sa AICS SAFE ROOM 🎉✨');
 
       timer = setTimeout(() => {
-        // 3. Tatakbo pakaliwa
-        setStage('run-left');
-        setSpeechBubble('Zoom zoom! 💨');
+        // 3. Mag hi ulet iwave ang kamay na totoong gumagalaw: "tara laro tayo"
+        setStage('tara-laro');
+        setSpeechBubble('tara laro tayo! 🎮🎈');
 
         timer = setTimeout(() => {
-          // 4. Nadapa
-          setStage('trip');
-          setSpeechBubble('Aray ko po! 💫🙈');
+          // 4. Tatakbo Pakanan: "Whooosh! 🏃‍♂️💨"
+          setStage('run-right');
+          setSpeechBubble('Whooosh! 🏃‍♂️💨');
 
           timer = setTimeout(() => {
-            // 5. Tatayo
-            setStage('getup');
-            setSpeechBubble('Oks lang ako! Hehe ✨');
+            // 5. Tatakbo Pakaliwa: "Zoom zoom! 💨"
+            setStage('run-left');
+            setSpeechBubble('Zoom zoom! 💨');
 
             timer = setTimeout(() => {
-              // 6. FINAL SAFE STATE: Mahihinto na rito nang permanente!
-              // Hindi na uulitin ang buong routine (No loop).
-              setStage('safe-final');
-              setSpeechBubble('Safe ka dito palagi! 💙');
-            }, 1800);
-          }, 1800);
-        }, 2000);
-      }, 2000);
-    }, 2800);
+              // 6. Madadapa: "Aray ko po! 💫🙈"
+              setStage('trip');
+              setSpeechBubble('Aray ko po! 💫🙈');
+
+              timer = setTimeout(() => {
+                // 7. Tatayo: "Oks lang ako! Hehe ✨"
+                setStage('getup');
+                setSpeechBubble('Oks lang ako! Hehe ✨');
+
+                timer = setTimeout(() => {
+                  // 8. Babalik sa Center: "Safe ka dito palagi! 💙" (PERMANENTE DITO, NO MORE LOOPING)
+                  setStage('safe-final');
+                  setSpeechBubble('Safe ka dito palagi! 💙');
+                }, 2000);
+              }, 2000);
+            }, 2200);
+          }, 2200);
+        }, 2800);
+      }, 3000);
+    }, 2500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -69,25 +85,36 @@ export const SafezoneMascot: React.FC = () => {
   return (
     <div className="relative flex flex-col items-center justify-center select-none py-2 my-1 overflow-visible w-full max-w-sm mx-auto h-[178px]">
       <style>{`
-        /* Stage-based Root Movements during intro routine */
-        .stage-wave {
+        /* Root Position Translations per stage */
+        .stage-mag-hi {
           transform: translateX(0px) translateY(0px);
           transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
+        .stage-raise-hands {
+          transform: translateX(0px) translateY(-6px) scale(1.05);
+          transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+          animation: happyJoyBounce 0.8s ease-in-out infinite alternate;
+        }
+
+        .stage-tara-laro {
+          transform: translateX(0px) translateY(0px) scale(1);
+          transition: transform 0.5s ease;
+        }
+
         .stage-run-right {
-          transform: translateX(60px) translateY(-4px) rotate(14deg);
-          transition: transform 1.8s cubic-bezier(0.25, 1, 0.5, 1);
+          transform: translateX(65px) translateY(-4px) rotate(16deg);
+          transition: transform 2s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         .stage-run-left {
-          transform: translateX(-60px) translateY(-4px) rotate(-14deg);
-          transition: transform 1.8s cubic-bezier(0.25, 1, 0.5, 1);
+          transform: translateX(-65px) translateY(-4px) rotate(-16deg);
+          transition: transform 2s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         .stage-trip {
-          transform: translateX(0px) translateY(18px) rotate(-35deg);
-          transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          transform: translateX(0px) translateY(20px) rotate(-38deg);
+          transition: transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .stage-getup {
@@ -100,14 +127,15 @@ export const SafezoneMascot: React.FC = () => {
           transition: transform 0.8s cubic-bezier(0.34, 1.2, 0.64, 1);
         }
 
+        @keyframes happyJoyBounce {
+          0% { transform: translateX(0px) translateY(-4px) scale(1.05); }
+          100% { transform: translateX(0px) translateY(-10px) scale(1.08); }
+        }
+
         /* 3D Smooth Hover Floating */
         @keyframes gentleFloat3D {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-4px);
-          }
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-4px); }
         }
 
         .mascot-3d-float {
@@ -155,7 +183,28 @@ export const SafezoneMascot: React.FC = () => {
             0 2px 4px rgba(255, 255, 255, 0.6);
         }
 
-        /* Wave Arm Motion: Friendly greeting / Nangangamusta */
+        /* Vigorous Live Waving Hand Animation */
+        @keyframes vigorousWaveLive {
+          0%, 100% {
+            transform: rotate(20deg) translateY(0px);
+          }
+          25% {
+            transform: rotate(-45deg) translateY(-8px);
+          }
+          50% {
+            transform: rotate(35deg) translateY(-2px);
+          }
+          75% {
+            transform: rotate(-35deg) translateY(-6px);
+          }
+        }
+
+        .anim-live-waving {
+          transform-origin: 6px 14px;
+          animation: vigorousWaveLive 0.6s ease-in-out infinite;
+        }
+
+        /* Steady friendly waving hand for safe-final */
         @keyframes friendlyWaveHand {
           0%, 100% {
             transform: rotate(15deg) translateY(0px);
@@ -168,6 +217,27 @@ export const SafezoneMascot: React.FC = () => {
         .anim-friendly-wave {
           transform-origin: 4px 8px;
           animation: friendlyWaveHand 1.4s ease-in-out infinite;
+        }
+
+        /* Both Hands Raised In Joy (welcome sa aics safe room) */
+        @keyframes celebrateHandsLeft {
+          0%, 100% { transform: rotate(-75deg) translateY(-14px) translateX(-4px); }
+          50% { transform: rotate(-85deg) translateY(-18px) translateX(-6px); }
+        }
+
+        @keyframes celebrateHandsRight {
+          0%, 100% { transform: rotate(75deg) translateY(-14px) translateX(4px); }
+          50% { transform: rotate(85deg) translateY(-18px) translateX(6px); }
+        }
+
+        .anim-raised-arm-left {
+          transform-origin: 10px 30px;
+          animation: celebrateHandsLeft 0.5s ease-in-out infinite alternate;
+        }
+
+        .anim-raised-arm-right {
+          transform-origin: 2px 30px;
+          animation: celebrateHandsRight 0.5s ease-in-out infinite alternate;
         }
 
         /* Eye Blinking Animation: Normal blinking sa cyan curved eyes */
@@ -214,7 +284,7 @@ export const SafezoneMascot: React.FC = () => {
         
         {/* Floating Comic Cloud Speech Bubble (Sticks right above 3D mascot's head) */}
         <div className="cloud-bubble-anim -mb-1 z-30 flex flex-col items-center pointer-events-none">
-          <div className="relative px-4 py-1.5 rounded-[20px] bg-white/95 dark:bg-slate-900/95 border-2 border-sky-400/60 shadow-xl shadow-sky-950/20 backdrop-blur-md flex items-center justify-center transition-all duration-500">
+          <div className="relative px-4 py-1.5 rounded-[20px] bg-white/95 dark:bg-slate-900/95 border-2 border-sky-400/60 shadow-xl shadow-sky-950/20 backdrop-blur-md flex items-center justify-center transition-all duration-500 max-w-[290px]">
             <span className="text-[11px] font-black tracking-wide text-sky-950 dark:text-sky-100 whitespace-nowrap drop-shadow-xs">
               {speechBubble}
             </span>
@@ -246,10 +316,10 @@ export const SafezoneMascot: React.FC = () => {
               <div className="absolute -top-3 -left-2 w-14 h-7 bg-white/20 blur-[2px] rounded-full transform -rotate-12 pointer-events-none" />
 
               {/* DYNAMIC VISOR EYES:
-                  - During intro: Nagpapakita ng iba't ibang expressions (kaway, takbo, dapa, tayo)
-                  - Sa safe-final: CYAN SMILING EYES NA NAGBI-BLINK NALANG!
+                  - During mag-hi, raise-hands, tara-laro, safe-final: CYAN SMILING EYES
+                  - Sa safe-final: CYAN SMILING EYES NA NAGBI-BLINK!
               */}
-              {(stage === 'wave' || isFinal) && (
+              {(stage === 'mag-hi' || stage === 'raise-hands' || stage === 'tara-laro' || isFinal) && (
                 <div className={`flex items-center gap-3 ${isFinal ? 'anim-eye-blink' : ''}`}>
                   <svg className="w-4 h-3.5 overflow-visible" viewBox="0 0 20 14" fill="none">
                     <path
@@ -306,10 +376,19 @@ export const SafezoneMascot: React.FC = () => {
             </div>
           </div>
 
-          {/* 3D SLEEK FLOATING TORSO POD */}
+          {/* 3D SLEEK FLOATING TORSO POD & DYNAMIC ARMS */}
           <div className="relative z-10 flex items-center justify-center">
-            {/* Left Sleek Wing / Fin */}
-            <div className="w-3 h-9 rounded-full mascot-shell-body transform -rotate-18 translate-x-1.5 -translate-y-2 opacity-95" />
+            {/* Left Arm:
+                - Kapag 'raise-hands' (welcome sa aics safe room): Itataas ang kaliwang kamay paitaas!
+                - Normal: Relaxed sleek wing
+            */}
+            <div
+              className={`w-3.5 h-10 rounded-full mascot-shell-body opacity-95 transition-all duration-300 ${
+                stage === 'raise-hands'
+                  ? 'anim-raised-arm-left'
+                  : 'transform -rotate-18 translate-x-1.5 -translate-y-2'
+              }`}
+            />
 
             {/* Main Floating Capsule Body */}
             <div className="w-[52px] h-[64px] rounded-b-[32px] rounded-t-[14px] mascot-shell-body flex flex-col items-center justify-start pt-2.5 relative">
@@ -320,10 +399,21 @@ export const SafezoneMascot: React.FC = () => {
               <div className="w-7 h-5 mt-2 rounded-full border-b-2 border-slate-300/60" />
             </div>
 
-            {/* Right Sleek Wing / Fin: Kumakaway/Nangangamusta hand */}
+            {/* Right Arm:
+                - Kapag 'raise-hands': Itataas ang kanang kamay paitaas (both hands raised!)
+                - Kapag 'mag-hi' o 'tara-laro': Totoong kumakaway nang masigla (anim-live-waving)
+                - Kapag 'safe-final': Friendly steady wave nangangamusta
+                - Habang tumatakbo/nadapa: Sleek aligned wing
+            */}
             <div
-              className={`w-3.5 h-10 rounded-full mascot-shell-body opacity-95 -translate-x-1.5 -translate-y-2.5 transition-all duration-300 ${
-                stage === 'wave' || isFinal ? 'anim-friendly-wave' : 'transform rotate-18'
+              className={`w-3.5 h-10 rounded-full mascot-shell-body opacity-95 transition-all duration-300 ${
+                stage === 'raise-hands'
+                  ? 'anim-raised-arm-right'
+                  : stage === 'mag-hi' || stage === 'tara-laro'
+                  ? 'anim-live-waving -translate-x-1 -translate-y-3'
+                  : isFinal
+                  ? 'anim-friendly-wave -translate-x-1.5 -translate-y-2.5'
+                  : 'transform rotate-18 -translate-x-1.5 -translate-y-2'
               }`}
             />
           </div>
