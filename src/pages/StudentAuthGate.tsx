@@ -1770,6 +1770,35 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
             </div>
           </div>
         )}
+
+      {/* Live Camera Capture Modal for Student ID and Personal Photo */}
+      <LiveCameraCaptureModal
+        isOpen={activeCameraModal !== null}
+        onClose={() => setActiveCameraModal(null)}
+        onCapture={async (file, previewUrl) => {
+          const optimizedFile = await compressImageClientSide(file, { maxWidth: 1024, maxHeight: 1024, quality: 0.72 });
+          if (activeCameraModal === 'id') {
+            setStudentIdFile(optimizedFile);
+            setStudentIdPreview(previewUrl);
+          } else if (activeCameraModal === 'personal') {
+            setPersonalPhotoFile(optimizedFile);
+            setPersonalPhotoPreview(previewUrl);
+          }
+          soundFX.playToggleSwitch(true);
+        }}
+        title={
+          activeCameraModal === 'id'
+            ? (isTl ? 'Kumuha ng Litrato ng Student ID' : 'Capture Student ID Photo')
+            : (isTl ? 'Kumuha ng Live Personal Face Selfie' : 'Capture Live Personal Selfie')
+        }
+        description={
+          activeCameraModal === 'id'
+            ? (isTl ? 'Itutok nang maayos ang ID card sa loob ng kahon.' : 'Align your official Student ID card inside the frame.')
+            : (isTl ? 'Tumingin sa camera at tiyaking maliwanag ang iyong mukha.' : 'Look at the camera and ensure your face is well-lit.')
+        }
+        facingMode={activeCameraModal === 'id' ? 'environment' : 'user'}
+        isTl={isTl}
+      />
     </div>
   );
 };
