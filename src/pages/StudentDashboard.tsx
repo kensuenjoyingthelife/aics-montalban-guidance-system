@@ -13,6 +13,7 @@ import {
   HelpCircle,
   CheckCircle2,
   AlertTriangle,
+  RefreshCw,
 } from 'lucide-react';
 import { WavyBackground } from '../components/auth/WavyBackground';
 import { SoundTogglePill, soundFX } from '../services/soundEngine';
@@ -416,6 +417,20 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
           {/* Right Action Bar & Drawer Toggle */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Quick Refresh Page Button */}
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playToggleSwitch(true);
+                window.location.reload();
+              }}
+              title={isTl ? 'I-refresh ang pahina' : 'Refresh page'}
+              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-white/10 hover:bg-white/20 text-sky-200 border border-white/20 shadow-md flex items-center gap-1.5 font-bold text-xs cursor-pointer transition-all"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isTl ? 'Refresh' : 'Refresh'}</span>
+            </button>
+
             {/* Desktop Emergency SOS Quick-Exit Pill */}
             <div className="hidden md:block">
               <QuickExitButton onTrigger={onSignOut} />

@@ -9,6 +9,7 @@ import {
   FileText,
   Shield,
   Check,
+  RefreshCw,
 } from 'lucide-react';
 import { CelestialBackground } from '../components/auth/CelestialBackground';
 import { WavyBackground } from '../components/auth/WavyBackground';
@@ -636,8 +637,19 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
             </div>
           </div>
 
-          {/* Right: Unified Sleek Controls Cluster */}
+          {/* Right: Unified Sleek Controls Cluster + Quick Refresh */}
           <div className="flex items-center gap-2 ml-auto shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playToggleSwitch(true);
+                window.location.reload();
+              }}
+              title={isTl ? 'I-refresh ang pahina' : 'Refresh page'}
+              className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-sky-200 border border-white/15 shadow-sm transition-all flex items-center justify-center cursor-pointer"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
             <div className="flex items-center p-1 rounded-full bg-white/10 dark:bg-white/5 border border-white/15 dark:border-white/10 shadow-inner">
               <SoundTogglePill />
               <div className="h-4 w-[1px] bg-white/20 mx-1" />
@@ -699,8 +711,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 </p>
               </div>
 
-              {/* Toggles cluster */}
-              <div className="flex items-center">
+              {/* Toggles cluster & Quick Refresh Button */}
+              <div className="flex items-center gap-2">
                 <div className="flex items-center p-1 rounded-full bg-slate-950/70 border border-white/25 shadow-xl backdrop-blur-md">
                   <SoundTogglePill />
                   <div className="h-3.5 w-[1px] bg-white/20 mx-1" />
@@ -708,6 +720,17 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   <div className="h-3.5 w-[1px] bg-white/20 mx-1" />
                   <SkyThemePill />
                 </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playToggleSwitch(true);
+                    window.location.reload();
+                  }}
+                  title={isTl ? 'I-refresh ang pahina' : 'Refresh page'}
+                  className="p-1.5 rounded-full bg-slate-950/70 hover:bg-slate-900 text-sky-200 border border-white/25 shadow-xl backdrop-blur-md transition-all flex items-center justify-center cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           </div>
@@ -889,19 +912,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   </div>
                 </div>
 
-                {/* Cloudflare Turnstile Human & Bot Shield */}
-                <div className="py-1">
-                  <CloudflareTurnstile
-                    siteKey={CLOUDFLARE_SITE_KEY}
-                    onVerify={(token) => {
-                      setTurnstileToken(token);
-                      soundFX.playToggleSwitch(true);
-                    }}
-                    onExpire={() => setTurnstileToken(null)}
-                    onError={(err) => console.warn('Turnstile security notice:', err)}
-                  />
-                </div>
-
                 <button
                   type="submit"
                   disabled={loginLoading || loginCooldownSeconds > 0}
@@ -918,6 +928,19 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     </>
                   )}
                 </button>
+
+                {/* Cloudflare Turnstile Human & Bot Shield (Positioned below Sign In button) */}
+                <div className="pt-2 flex justify-center">
+                  <CloudflareTurnstile
+                    siteKey={CLOUDFLARE_SITE_KEY}
+                    onVerify={(token) => {
+                      setTurnstileToken(token);
+                      soundFX.playToggleSwitch(true);
+                    }}
+                    onExpire={() => setTurnstileToken(null)}
+                    onError={(err) => console.warn('Turnstile security notice:', err)}
+                  />
+                </div>
               </form>
 
               <div className="pt-4 border-t border-white/10 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
