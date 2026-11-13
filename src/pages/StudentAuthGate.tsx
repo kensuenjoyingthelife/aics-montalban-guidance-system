@@ -539,8 +539,22 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
           {mode === 'login' && (
             <div className="space-y-7">
               <div className="text-center space-y-3 pb-2 sm:pb-4">
-                {/* Friendly Animated EVE-style Mascot waving & smiling to motivate students */}
-                <SafezoneMascot />
+                {/* Desktop: Official Clean AICS Seal (hidden on mobile) */}
+                <div className="hidden lg:block">
+                  <div className="w-16 h-16 rounded-full overflow-hidden mx-auto shadow-xl ring-2 ring-blue-400/40 bg-white p-0.5">
+                    <img
+                      src="/aics-logo.jpg"
+                      alt="AICS Logo"
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  </div>
+                </div>
+
+                {/* Mobile App: Friendly Animated Safezone Robot Companion (Visible only on Mobile) */}
+                <div className="block lg:hidden">
+                  <SafezoneMascot />
+                </div>
+
                 <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight card-title-text uppercase">
                   AICS SAFEZONE
                 </h2>
