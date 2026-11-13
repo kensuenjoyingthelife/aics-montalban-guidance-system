@@ -1,405 +1,280 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { motion } from 'framer-motion';
 
 /**
- * 3D EVE-Style AICS SafeZone Mascot (Continuous Storyline Loop, Pure Animation - No Speech Text)
- * 
- * Choreography Loop:
- * 1. 'mag-hi'        : Masiglang kumakaway (waving greeting)
- * 2. 'raise-hands'   : Masayang itinataas ang dalawang kamay at nagba-bounce sa tuwa (joyful celebration)
- * 3. 'tara-laro'     : Mag-hi ulit, totoong kumakaway ang kamay na nag-aaya (playful invitation wave)
- * 4. 'run-right'     : Tatakbo pakanan (dashing right)
- * 5. 'run-left'      : Tatakbo pakaliwa (dashing left)
- * 6. 'trip'          : Cute na madidiskaril at madadapa sa sahig na may umiikot na stars sa ulo
- * 7. 'getup'         : Dahan-dahang tatayo at magtatagtag ng alikabok na may shy smile
- * 8. 'safe-final'    : Babalik sa center, lilutang nang maayos habang nagbi-blink ang mga mata at kumakaway
- *                      -> Tapos maglo-loop muli nang tuloy-tuloy!
+ * Animated EVE-style SafeZone Companion Mascot
+ * Replaces the static AICS logo above "AICS SAFEZONE".
+ * Features:
+ * - Happy glowing curved cyan eyes (smiling eyes ^_^) that blink and pulse
+ * - Smooth hovering body motion with soft shadow breathing below
+ * - Waving greeting arm that says "Hi!" with friendly hand tilt
+ * - Holding a sweet blossom flower of care
+ * - Sparkling motivation bursts around the head that kids love
  */
-
-type MascotStage = 
-  | 'mag-hi'
-  | 'raise-hands'
-  | 'tara-laro'
-  | 'run-right'
-  | 'run-left'
-  | 'trip'
-  | 'getup'
-  | 'safe-final';
-
 export const SafezoneMascot: React.FC = () => {
-  const [stage, setStage] = useState<MascotStage>('mag-hi');
-
-  useEffect(() => {
-    let timer: any;
-
-    const runStoryCycle = () => {
-      // 1. MAG HI: Masiglang bati
-      setStage('mag-hi');
-
-      timer = setTimeout(() => {
-        // 2. Itaas ang dalawang kamay na masaya
-        setStage('raise-hands');
-
-        timer = setTimeout(() => {
-          // 3. Mag-hi ulit na kumakaway ang kamay (tara laro)
-          setStage('tara-laro');
-
-          timer = setTimeout(() => {
-            // 4. Tatakbo Pakanan
-            setStage('run-right');
-
-            timer = setTimeout(() => {
-              // 5. Tatakbo Pakaliwa
-              setStage('run-left');
-
-              timer = setTimeout(() => {
-                // 6. Madadapa
-                setStage('trip');
-
-                timer = setTimeout(() => {
-                  // 7. Tatayo
-                  setStage('getup');
-
-                  timer = setTimeout(() => {
-                    // 8. Babalik sa Center (Safe & happy, gentle wave + eye blink)
-                    setStage('safe-final');
-
-                    timer = setTimeout(() => {
-                      // Continuous Story Loop: Uulitin muli mula sa simula
-                      runStoryCycle();
-                    }, 4000);
-                  }, 1800);
-                }, 1800);
-              }, 2200);
-            }, 2200);
-          }, 2600);
-        }, 2800);
-      }, 2400);
-    };
-
-    runStoryCycle();
-    return () => clearTimeout(timer);
-  }, []);
-
-  const isFinal = stage === 'safe-final';
-
   return (
-    <div className="relative flex flex-col items-center justify-center select-none py-2 my-1 overflow-visible w-full max-w-sm mx-auto h-[165px]">
-      <style>{`
-        /* Root Position Translations per stage */
-        .stage-mag-hi {
-          transform: translateX(0px) translateY(0px);
-          transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
+    <div className="relative flex flex-col items-center justify-center select-none py-1">
+      {/* Floating Sparkles & Heart particles (Motivation cues) */}
+      <motion.div
+        animate={{
+          scale: [0.8, 1.2, 0.8],
+          opacity: [0.4, 1, 0.4],
+          y: [-2, -8, -2],
+        }}
+        transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute -top-2 right-4 text-xs font-bold text-pink-400 pointer-events-none drop-shadow-[0_0_8px_rgba(244,114,182,0.8)]"
+      >
+        ✨
+      </motion.div>
+      <motion.div
+        animate={{
+          scale: [1, 1.25, 1],
+          opacity: [0.3, 0.9, 0.3],
+          y: [-4, -10, -4],
+        }}
+        transition={{ duration: 2.6, repeat: Infinity, delay: 0.6, ease: 'easeInOut' }}
+        className="absolute -top-3 left-6 text-[10px] font-bold text-sky-400 pointer-events-none drop-shadow-[0_0_8px_rgba(56,189,248,0.8)]"
+      >
+        💙
+      </motion.div>
 
-        .stage-raise-hands {
-          transform: translateX(0px) translateY(-6px) scale(1.05);
-          transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-          animation: happyJoyBounce 0.8s ease-in-out infinite alternate;
-        }
+      {/* Main Hovering EVE Robot Container */}
+      <motion.div
+        animate={{
+          y: [0, -6, 0],
+          rotate: [0, 1.5, -1.5, 0],
+        }}
+        transition={{
+          duration: 3.2,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+        className="relative w-24 h-28 flex items-center justify-center"
+      >
+        <svg
+          viewBox="0 0 160 190"
+          className="w-full h-full overflow-visible drop-shadow-[0_12px_20px_rgba(14,165,233,0.3)]"
+        >
+          <defs>
+            {/* Glossy White Gradients for Body & Head */}
+            <linearGradient id="eveWhite" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#FFFFFF" />
+              <stop offset="60%" stopColor="#F1F5F9" />
+              <stop offset="100%" stopColor="#D8E2EE" />
+            </linearGradient>
 
-        .stage-tara-laro {
-          transform: translateX(0px) translateY(0px) scale(1);
-          transition: transform 0.5s ease;
-        }
+            <linearGradient id="eveHighlight" x1="30%" y1="0%" x2="70%" y2="100%">
+              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.05" />
+            </linearGradient>
 
-        .stage-run-right {
-          transform: translateX(65px) translateY(-4px) rotate(16deg);
-          transition: transform 2s cubic-bezier(0.25, 1, 0.5, 1);
-        }
+            {/* Glowing Visor Gradient */}
+            <radialGradient id="eveVisor" cx="50%" cy="40%" r="55%">
+              <stop offset="0%" stopColor="#0B132B" />
+              <stop offset="70%" stopColor="#050C1F" />
+              <stop offset="100%" stopColor="#020612" />
+            </radialGradient>
 
-        .stage-run-left {
-          transform: translateX(-65px) translateY(-4px) rotate(-16deg);
-          transition: transform 2s cubic-bezier(0.25, 1, 0.5, 1);
-        }
+            {/* Cyan Eye Glow Filter */}
+            <filter id="eyeGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
 
-        .stage-trip {
-          transform: translateX(0px) translateY(20px) rotate(-38deg);
-          transition: transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+            {/* Shadow beneath body */}
+            <radialGradient id="eveShadow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#000000" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+            </radialGradient>
+          </defs>
 
-        .stage-getup {
-          transform: translateX(0px) translateY(2px) rotate(4deg);
-          transition: transform 0.8s ease;
-        }
-
-        .stage-safe-final {
-          transform: translateX(0px) translateY(0px) rotate(0deg);
-          transition: transform 0.8s cubic-bezier(0.34, 1.2, 0.64, 1);
-        }
-
-        @keyframes happyJoyBounce {
-          0% { transform: translateX(0px) translateY(-4px) scale(1.05); }
-          100% { transform: translateX(0px) translateY(-10px) scale(1.08); }
-        }
-
-        /* 3D Smooth Hover Floating */
-        @keyframes gentleFloat3D {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-4px); }
-        }
-
-        .mascot-3d-float {
-          animation: gentleFloat3D 3s ease-in-out infinite;
-        }
-
-        /* Ambient ground shadow */
-        @keyframes shadowPulse3D {
-          0%, 100% {
-            transform: scale(1);
-            opacity: 0.35;
-          }
-          50% {
-            transform: scale(0.9);
-            opacity: 0.22;
-          }
-        }
-
-        .mascot-3d-shadow {
-          animation: shadowPulse3D 3s ease-in-out infinite;
-        }
-
-        /* 3D Pearl Gloss Shader (Reference Image Match) */
-        .mascot-shell-head {
-          background: radial-gradient(circle at 35% 25%, #FFFFFF 0%, #F8FAFC 35%, #E2E8F0 75%, #CBD5E1 100%);
-          box-shadow: 
-            inset -4px -4px 10px rgba(148, 163, 184, 0.45),
-            inset 4px 4px 12px rgba(255, 255, 255, 1),
-            0 14px 28px -6px rgba(15, 23, 42, 0.25);
-        }
-
-        .mascot-shell-body {
-          background: radial-gradient(ellipse at 40% 20%, #FFFFFF 0%, #F1F5F9 40%, #E2E8F0 80%, #CBD5E1 100%);
-          box-shadow: 
-            inset -4px -4px 8px rgba(148, 163, 184, 0.4),
-            inset 3px 3px 10px rgba(255, 255, 255, 0.95),
-            0 12px 24px -4px rgba(15, 23, 42, 0.2);
-        }
-
-        /* 3D Visor Screen */
-        .mascot-visor-glass {
-          background: radial-gradient(ellipse at 50% 25%, #0F172A 0%, #030712 100%);
-          box-shadow: 
-            inset 0 3px 8px rgba(0, 0, 0, 0.9),
-            0 2px 4px rgba(255, 255, 255, 0.6);
-        }
-
-        /* Vigorous Live Waving Hand Animation */
-        @keyframes vigorousWaveLive {
-          0%, 100% {
-            transform: rotate(20deg) translateY(0px);
-          }
-          25% {
-            transform: rotate(-45deg) translateY(-8px);
-          }
-          50% {
-            transform: rotate(35deg) translateY(-2px);
-          }
-          75% {
-            transform: rotate(-35deg) translateY(-6px);
-          }
-        }
-
-        .anim-live-waving {
-          transform-origin: 6px 14px;
-          animation: vigorousWaveLive 0.6s ease-in-out infinite;
-        }
-
-        /* Steady friendly waving hand for safe-final */
-        @keyframes friendlyWaveHand {
-          0%, 100% {
-            transform: rotate(15deg) translateY(0px);
-          }
-          50% {
-            transform: rotate(-25deg) translateY(-3px);
-          }
-        }
-
-        .anim-friendly-wave {
-          transform-origin: 4px 8px;
-          animation: friendlyWaveHand 1.4s ease-in-out infinite;
-        }
-
-        /* Both Hands Raised In Joy */
-        @keyframes celebrateHandsLeft {
-          0%, 100% { transform: rotate(-75deg) translateY(-14px) translateX(-4px); }
-          50% { transform: rotate(-85deg) translateY(-18px) translateX(-6px); }
-        }
-
-        @keyframes celebrateHandsRight {
-          0%, 100% { transform: rotate(75deg) translateY(-14px) translateX(4px); }
-          50% { transform: rotate(85deg) translateY(-18px) translateX(6px); }
-        }
-
-        .anim-raised-arm-left {
-          transform-origin: 10px 30px;
-          animation: celebrateHandsLeft 0.5s ease-in-out infinite alternate;
-        }
-
-        .anim-raised-arm-right {
-          transform-origin: 2px 30px;
-          animation: celebrateHandsRight 0.5s ease-in-out infinite alternate;
-        }
-
-        /* Eye Blinking Animation: Normal blinking sa cyan curved eyes */
-        @keyframes gentleEyeBlink {
-          0%, 90%, 100% {
-            transform: scaleY(1);
-            opacity: 1;
-          }
-          95% {
-            transform: scaleY(0.1);
-            opacity: 0.3;
-          }
-        }
-
-        .anim-eye-blink {
-          transform-origin: center;
-          animation: gentleEyeBlink 3.8s ease-in-out infinite;
-        }
-
-        /* Dizzy stars spin */
-        @keyframes starSpin {
-          0% { transform: rotate(0deg) scale(0.8); }
-          50% { transform: rotate(180deg) scale(1.2); }
-          100% { transform: rotate(360deg) scale(0.8); }
-        }
-
-        .anim-trip-stars {
-          animation: starSpin 1.4s linear infinite;
-        }
-      `}</style>
-
-      {/* 3D Character Composition & Dynamic Movement Stage (NO TEXT / SPEECH BUBBLE) */}
-      <div className={`relative flex flex-col items-center justify-center stage-${stage} z-20`}>
-        
-        {/* Dizzy stars when tripped (Nadapa) */}
-        {stage === 'trip' && (
-          <div className="absolute -top-3 z-40 flex items-center gap-2 anim-trip-stars pointer-events-none">
-            <span className="text-yellow-400 text-sm">💫</span>
-            <span className="text-pink-400 text-xs">✨</span>
-            <span className="text-yellow-300 text-sm">⭐</span>
-          </div>
-        )}
-
-        {/* Floating 3D Body Container */}
-        <div className={isFinal ? 'mascot-3d-float flex flex-col items-center' : 'flex flex-col items-center'}>
-          {/* 3D EGG-SHAPED PEARL HEAD */}
-          <div className="relative z-20 w-[94px] h-[78px] rounded-[48px] mascot-shell-head flex items-center justify-center p-2.5 -mb-2 transition-transform duration-500">
-            {/* Specular Highlight glare on top-left of head */}
-            <div className="absolute top-2 left-4 w-7 h-3.5 bg-white/80 rounded-full blur-[1px] transform -rotate-25 pointer-events-none" />
-
-            {/* 3D VISOR (Deep Obsidian with Gloss Edge) */}
-            <div className="relative w-[64px] h-[44px] rounded-[24px] mascot-visor-glass flex items-center justify-center gap-2.5 overflow-hidden">
-              {/* Visor Glare Crescent */}
-              <div className="absolute -top-3 -left-2 w-14 h-7 bg-white/20 blur-[2px] rounded-full transform -rotate-12 pointer-events-none" />
-
-              {/* DYNAMIC VISOR EYES:
-                  - During mag-hi, raise-hands, tara-laro, safe-final: CYAN SMILING EYES
-                  - Sa safe-final: CYAN SMILING EYES NA NAGBI-BLINK!
-              */}
-              {(stage === 'mag-hi' || stage === 'raise-hands' || stage === 'tara-laro' || isFinal) && (
-                <div className={`flex items-center gap-3 ${isFinal ? 'anim-eye-blink' : ''}`}>
-                  <svg className="w-4 h-3.5 overflow-visible" viewBox="0 0 20 14" fill="none">
-                    <path
-                      d="M 2 12 Q 10 1 18 12"
-                      stroke="#38BDF8"
-                      strokeWidth="4"
-                      strokeLinecap="round"
-                      className="drop-shadow-[0_0_6px_rgba(56,189,248,0.9)]"
-                    />
-                  </svg>
-                  <svg className="w-4 h-3.5 overflow-visible" viewBox="0 0 20 14" fill="none">
-                    <path
-                      d="M 2 12 Q 10 1 18 12"
-                      stroke="#38BDF8"
-                      strokeWidth="4"
-                      strokeLinecap="round"
-                      className="drop-shadow-[0_0_6px_rgba(56,189,248,0.9)]"
-                    />
-                  </svg>
-                </div>
-              )}
-
-              {stage === 'run-right' && (
-                <div className="flex items-center gap-1.5 translate-x-1">
-                  <span className="text-sky-400 font-black text-xs">▶</span>
-                  <span className="text-sky-400 font-black text-xs">▶</span>
-                </div>
-              )}
-
-              {stage === 'run-left' && (
-                <div className="flex items-center gap-1.5 -translate-x-1">
-                  <span className="text-sky-400 font-black text-xs">◀</span>
-                  <span className="text-sky-400 font-black text-xs">◀</span>
-                </div>
-              )}
-
-              {stage === 'trip' && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sky-300 font-black text-xs">&gt;</span>
-                  <span className="text-sky-300 font-black text-xs">&lt;</span>
-                </div>
-              )}
-
-              {stage === 'getup' && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sky-400 font-bold text-xs">^</span>
-                  <span className="text-sky-400 font-bold text-xs">~</span>
-                </div>
-              )}
-
-              {/* Cute Pink Cheeks Glow */}
-              <div className="absolute bottom-1 left-2.5 w-2 h-1 rounded-full bg-pink-500/50 blur-[1px]" />
-              <div className="absolute bottom-1 right-2.5 w-2 h-1 rounded-full bg-pink-500/50 blur-[1px]" />
-            </div>
-          </div>
-
-          {/* 3D SLEEK FLOATING TORSO POD & DYNAMIC ARMS */}
-          <div className="relative z-10 flex items-center justify-center">
-            {/* Left Arm:
-                - Kapag 'raise-hands': Itataas ang kaliwang kamay paitaas!
-                - Normal: Relaxed sleek wing
-            */}
-            <div
-              className={`w-3.5 h-10 rounded-full mascot-shell-body opacity-95 transition-all duration-300 ${
-                stage === 'raise-hands'
-                  ? 'anim-raised-arm-left'
-                  : 'transform -rotate-18 translate-x-1.5 -translate-y-2'
-              }`}
+          {/* ====================================================
+              LOWER TORSO / EGG POD (Floats softly)
+              ==================================================== */}
+          <g transform="translate(0, 10)">
+            {/* Main sleek body pod */}
+            <path
+              d="M 52 74 C 52 68, 108 68, 108 74 C 114 100, 108 140, 80 162 C 52 140, 46 100, 52 74 Z"
+              fill="url(#eveWhite)"
+              stroke="#CFD9E8"
+              strokeWidth="1.2"
+            />
+            {/* Soft inner core shadow indentation */}
+            <path
+              d="M 57 80 C 57 76, 68 78, 68 86 C 68 114, 62 136, 80 152 C 58 136, 54 104, 57 80 Z"
+              fill="#BAC7DA"
+              opacity="0.35"
+            />
+            {/* Glossy light rim curve */}
+            <path
+              d="M 56 78 C 65 72, 95 72, 104 78 C 100 110, 92 145, 80 158"
+              fill="none"
+              stroke="url(#eveHighlight)"
+              strokeWidth="3"
+              strokeLinecap="round"
             />
 
-            {/* Main Floating Capsule Body */}
-            <div className="w-[52px] h-[64px] rounded-b-[32px] rounded-t-[14px] mascot-shell-body flex flex-col items-center justify-start pt-2.5 relative">
-              {/* Center Gentle Glow Dot */}
-              <div className="w-2.5 h-2.5 rounded-full bg-sky-400/60 shadow-[0_0_10px_rgba(56,189,248,0.8)]" />
-              
-              {/* Body inner accent arc */}
-              <div className="w-7 h-5 mt-2 rounded-full border-b-2 border-slate-300/60" />
-            </div>
-
-            {/* Right Arm:
-                - Kapag 'raise-hands': Itataas ang kanang kamay paitaas (both hands raised!)
-                - Kapag 'mag-hi' o 'tara-laro': Totoong kumakaway nang masigla (anim-live-waving)
-                - Kapag 'safe-final': Friendly steady wave nangangamusta
-                - Habang tumatakbo/nadapa: Sleek aligned wing
-            */}
-            <div
-              className={`w-3.5 h-10 rounded-full mascot-shell-body opacity-95 transition-all duration-300 ${
-                stage === 'raise-hands'
-                  ? 'anim-raised-arm-right'
-                  : stage === 'mag-hi' || stage === 'tara-laro'
-                  ? 'anim-live-waving -translate-x-1 -translate-y-3'
-                  : isFinal
-                  ? 'anim-friendly-wave -translate-x-1.5 -translate-y-2.5'
-                  : 'transform rotate-18 -translate-x-1.5 -translate-y-2'
-              }`}
+            {/* Left resting hand pointing softly */}
+            <motion.path
+              animate={{ rotate: [-2, 3, -2] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              style={{ transformOrigin: '56px 85px' }}
+              d="M 56 82 C 42 92, 38 114, 52 118 C 62 118, 66 100, 56 82 Z"
+              fill="url(#eveWhite)"
+              stroke="#CFD9E8"
+              strokeWidth="0.8"
             />
-          </div>
+          </g>
 
-          {/* 3D Soft Ambient Ground Shadow */}
-          <div className="w-16 h-2.5 rounded-full bg-slate-900/40 dark:bg-black/60 blur-[3px] mt-1 mascot-3d-shadow" />
-        </div>
-      </div>
+          {/* ====================================================
+              WAVING GREETING RIGHT ARM & FLOWER ("NAG HI-HI")
+              ==================================================== */}
+          <motion.g
+            animate={{
+              rotate: [0, -18, 8, -16, 6, 0],
+            }}
+            transition={{
+              duration: 2.8,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+            style={{ transformOrigin: '104px 92px' }}
+          >
+            {/* Right Arm waving */}
+            <path
+              d="M 104 88 C 122 84, 138 98, 134 114 C 124 122, 106 104, 104 88 Z"
+              fill="url(#eveWhite)"
+              stroke="#CFD9E8"
+              strokeWidth="0.8"
+            />
+
+            {/* Pink Blossom Flower of Care held in hand */}
+            <g transform="translate(132, 104)">
+              {/* Green stem & leaf */}
+              <path d="M 0 4 Q -1 16 0 22" stroke="#16A34A" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+              <path d="M 0 12 Q 5 10 6 13 Q 3 16 0 14" fill="#22C55E" />
+
+              {/* Pink floral petals with gentle pulse */}
+              <motion.g
+                animate={{ scale: [1, 1.12, 1] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <circle cx="0" cy="0" r="4.5" fill="#FB7185" />
+                <circle cx="-5" cy="-2" r="3.8" fill="#F472B6" />
+                <circle cx="5" cy="-2" r="3.8" fill="#F472B6" />
+                <circle cx="-3" cy="5" r="3.8" fill="#FDA4AF" />
+                <circle cx="3" cy="5" r="3.8" fill="#FDA4AF" />
+                <circle cx="0" cy="-6" r="3.8" fill="#FB7185" />
+                <circle cx="0" cy="0" r="2.2" fill="#FEF08A" />
+              </motion.g>
+            </g>
+          </motion.g>
+
+          {/* ====================================================
+              HEAD & GLOWING HAPPY SMILING EYES (^_^)
+              ==================================================== */}
+          <motion.g
+            animate={{
+              rotate: [0, -2, 2, 0],
+              y: [0, -1.5, 0],
+            }}
+            transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+            style={{ transformOrigin: '80px 48px' }}
+          >
+            {/* White Oval Egg-shaped Head */}
+            <ellipse
+              cx="80"
+              cy="48"
+              rx="44"
+              ry="38"
+              fill="url(#eveWhite)"
+              stroke="#CFD9E8"
+              strokeWidth="1.2"
+            />
+            {/* Soft gloss highlight on top of head */}
+            <path
+              d="M 52 32 C 60 20, 100 20, 108 32 C 98 25, 62 25, 52 32 Z"
+              fill="#FFFFFF"
+              opacity="0.8"
+            />
+
+            {/* Dark Visor Display Screen */}
+            <ellipse
+              cx="80"
+              cy="48"
+              rx="30"
+              ry="20"
+              fill="url(#eveVisor)"
+              stroke="#1E293B"
+              strokeWidth="0.8"
+            />
+            {/* Visor glass reflection */}
+            <path
+              d="M 56 42 Q 78 35 104 42 Q 78 38 56 42 Z"
+              fill="#38BDF8"
+              opacity="0.25"
+            />
+
+            {/* Glowing Happy Smiling Eyes (^_^) */}
+            <g filter="url(#eyeGlow)">
+              {/* Left Eye: Happy Arc ^ */}
+              <motion.path
+                d="M 64 51 Q 71 42 77 50"
+                fill="none"
+                stroke="#38BDF8"
+                strokeWidth="4"
+                strokeLinecap="round"
+                animate={{
+                  scaleY: [1, 0.15, 1, 1, 1],
+                  opacity: [0.95, 0.4, 0.95, 1, 0.95],
+                }}
+                transition={{
+                  duration: 3.5,
+                  repeat: Infinity,
+                  times: [0, 0.05, 0.1, 0.8, 1],
+                }}
+                style={{ transformOrigin: '71px 48px' }}
+              />
+
+              {/* Right Eye: Happy Arc ^ */}
+              <motion.path
+                d="M 83 50 Q 89 42 96 51"
+                fill="none"
+                stroke="#38BDF8"
+                strokeWidth="4"
+                strokeLinecap="round"
+                animate={{
+                  scaleY: [1, 0.15, 1, 1, 1],
+                  opacity: [0.95, 0.4, 0.95, 1, 0.95],
+                }}
+                transition={{
+                  duration: 3.5,
+                  repeat: Infinity,
+                  times: [0, 0.05, 0.1, 0.8, 1],
+                }}
+                style={{ transformOrigin: '89px 48px' }}
+              />
+            </g>
+
+            {/* Cute pink cheek blushes for warmth & friendliness */}
+            <ellipse cx="61" cy="55" rx="3.5" ry="1.8" fill="#F472B6" opacity="0.6" />
+            <ellipse cx="99" cy="55" rx="3.5" ry="1.8" fill="#F472B6" opacity="0.6" />
+          </motion.g>
+        </svg>
+
+        {/* Dynamic Soft Shadow beneath robot that breathes with hovering */}
+        <motion.div
+          animate={{
+            scaleX: [1, 0.75, 1],
+            opacity: [0.35, 0.18, 0.35],
+          }}
+          transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute -bottom-2 w-14 h-2.5 rounded-full bg-slate-900/40 blur-[2px] pointer-events-none"
+        />
+      </motion.div>
     </div>
   );
 };
