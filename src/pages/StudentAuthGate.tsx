@@ -19,7 +19,6 @@ import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
 import { SafezoneMascot } from '../components/auth/SafezoneMascot';
 import { CloudflareTurnstile } from '../components/auth/CloudflareTurnstile';
 import { LiveCameraCaptureModal } from '../components/student/LiveCameraCaptureModal';
-import { QuickExitButton } from '../components/security/QuickExitButton';
 import { compressImageClientSide } from '../services/imageOptimizer';
 import {
   StudentPortalUser,
@@ -1776,9 +1775,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         )}
 
       {/* Live Camera Capture Modal for Student ID and Personal Photo */}
-      {/* iPhone AssistiveTouch-Style Draggable Floating Red Quick-Exit Ball */}
-      <QuickExitButton />
-
       <LiveCameraCaptureModal
         isOpen={activeCameraModal !== null}
         onClose={() => setActiveCameraModal(null)}
