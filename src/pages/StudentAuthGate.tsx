@@ -355,28 +355,49 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       </div>
       <WavyBackground />
 
-      {/* Top Header Bar */}
-      <header className="relative z-20 w-full px-4 sm:px-8 py-3.5 sm:py-5 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 student-portal-header bg-[#0B1E48]/80 backdrop-blur-md safe-area-top">
-        <div className="flex items-center gap-2.5 sm:gap-3.5">
-          <img
-            src="/aics-logo.jpg"
-            alt="AICS Logo"
-            className="w-9 h-9 sm:w-12 sm:h-12 rounded-full object-cover ring-2 ring-white/40 bg-white p-0.5 shadow-xl shrink-0"
-          />
-          <div>
-            <h1 className="text-xs sm:text-base font-extrabold tracking-tight text-white dark:text-white">
-              <span>AICS MONTALBAN</span>
-            </h1>
-            <p className="text-[10px] sm:text-xs text-[#9BCBFF] font-semibold truncate max-w-[200px] sm:max-w-none">
-              Safe & Confidential Concern Reporting
-            </p>
+      {/* Top Floating Glass Island Navbar (Apple/Linear-Style Capsule) */}
+      <header className="relative z-30 w-full px-3 sm:px-6 pt-3 sm:pt-4 safe-area-top">
+        <div className="max-w-6xl mx-auto rounded-2xl sm:rounded-full bg-[#0B1E48]/85 dark:bg-[#07132B]/85 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-2xl shadow-blue-950/40 px-3.5 sm:px-6 py-2.5 sm:py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 sm:gap-4 transition-all">
+          {/* Left: Official Brand Seal & Campus Title */}
+          <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+            <div className="relative shrink-0">
+              <img
+                src="/aics-logo.jpg"
+                alt="AICS Logo"
+                className="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover ring-2 ring-white/50 bg-white p-0.5 shadow-md"
+              />
+              {/* Live Security Shield Dot */}
+              <span
+                className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-[#0B1E48] dark:ring-[#07132B]"
+                title="100% Confidential & RA 10173 Protected"
+              />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h1 className="text-xs sm:text-sm font-black tracking-tight text-white uppercase truncate">
+                  AICS MONTALBAN
+                </h1>
+                <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-[10px] font-bold text-emerald-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  RA 10173
+                </span>
+              </div>
+              <p className="text-[10px] sm:text-xs text-[#9BCBFF] font-medium truncate">
+                {isTl ? 'Ligtas at Kumpidensyal na Guidance Portal' : 'Safe & Confidential Concern Reporting'}
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2.5 ml-auto">
-          <SoundTogglePill />
-          <LocaleSwitchPill />
-          <SkyThemePill />
+          {/* Right: Unified Sleek Controls Cluster (No Wrapping on Mobile) */}
+          <div className="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0">
+            <div className="flex items-center p-1 rounded-full bg-white/10 dark:bg-white/5 border border-white/15 dark:border-white/10 shadow-inner">
+              <SoundTogglePill />
+              <div className="h-4 w-[1px] bg-white/20 mx-1 hidden sm:block" />
+              <LocaleSwitchPill />
+              <div className="h-4 w-[1px] bg-white/20 mx-1 hidden sm:block" />
+              <SkyThemePill />
+            </div>
+          </div>
         </div>
       </header>
 
