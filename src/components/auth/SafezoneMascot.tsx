@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { AicsAkbayanDuo } from './AicsAkbayanDuo';
 
 /**
  * Fun & Playful AICS Mascot Storyline Choreography
  * 
  * Stages:
- * 1. 'wave'       : Masiglang kumakaway ("Hi, welcome! 👋")
+ * 1. 'wave'       : Masiglang kumakaway ("Hi, kumusta! 👋")
  * 2. 'run-right'  : Tatakbo pakanan ("Whooosh! 🏃‍♂️💨")
  * 3. 'run-left'   : Tatakbo pakaliwa ("Zoom zoom! 💨")
  * 4. 'trip'       : Nadapa nang cute ("Aray ko po! 💫🙈")
@@ -16,18 +17,18 @@ type MascotStage = 'wave' | 'run-right' | 'run-left' | 'trip' | 'getup' | 'happy
 
 export const SafezoneMascot: React.FC = () => {
   const [stage, setStage] = useState<MascotStage>('wave');
-  const [speechBubble, setSpeechBubble] = useState<string>('Hi, welcome! 👋');
+  const [speechBubble, setSpeechBubble] = useState<string>('Hi, kumusta! 👋');
 
   useEffect(() => {
     let timer: any;
 
     const timeline = () => {
-      // 1. Wave
+      // 1. Wave - Kasama ang Akbayan duo
       setStage('wave');
-      setSpeechBubble('Hi, welcome! 👋');
+      setSpeechBubble('Hi, kumusta! 👋');
 
       timer = setTimeout(() => {
-        // 2. Run Right
+        // 2. Run Right - Whoosh aalis ang duo
         setStage('run-right');
         setSpeechBubble('Whooosh! 🏃‍♂️💨');
 
@@ -47,26 +48,28 @@ export const SafezoneMascot: React.FC = () => {
               setSpeechBubble('Oks lang ako! Hehe ✨');
 
               timer = setTimeout(() => {
-                // 6. Happy Idle Bounce at Center
+                // 6. Happy Idle Bounce at Center - Babalik ang Akbayan duo sa "Safe ka dito palagi"
                 setStage('happy-idle');
                 setSpeechBubble('Safe ka dito palagi! 💙');
 
                 timer = setTimeout(() => {
                   timeline(); // Loop choreography
-                }, 4000);
+                }, 4500);
               }, 1800);
             }, 1800);
           }, 2000);
         }, 2000);
-      }, 3000);
+      }, 3500);
     };
 
     timeline();
     return () => clearTimeout(timer);
   }, []);
 
+  const showAkbayan = stage === 'wave' || stage === 'happy-idle';
+
   return (
-    <div className="relative flex flex-col items-center justify-center select-none py-2 my-1 overflow-visible w-full max-w-sm mx-auto h-[175px]">
+    <div className="relative flex flex-col items-center justify-center select-none py-2 my-1 overflow-visible w-full max-w-sm mx-auto min-h-[220px]">
       <style>{`
         /* Stage-based Root Movements */
         .stage-wave {
@@ -237,6 +240,11 @@ export const SafezoneMascot: React.FC = () => {
 
         {/* Shadow Blob underneath */}
         <div className="w-14 h-2 rounded-full bg-slate-900/35 dark:bg-black/50 blur-[2px] mt-1" />
+      </div>
+
+      {/* AICS Student Boy & Girl Akbayan Duo: Lalabas pag sinabing "Hi, kumusta" / "Safe ka dito palagi" then mag-wowowosh pag umalis */}
+      <div className="w-full flex justify-center -mt-2">
+        <AicsAkbayanDuo isVisible={showAkbayan} />
       </div>
     </div>
   );
