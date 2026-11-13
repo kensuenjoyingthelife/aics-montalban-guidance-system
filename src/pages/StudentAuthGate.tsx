@@ -382,10 +382,10 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
           <div className="absolute inset-0 bg-gradient-to-b from-[#020b24]/40 via-[#0a2769]/35 to-[#020b24]/70 pointer-events-none" />
 
           {/* Inner Content: 2-column layout - Logo vertically centered on the left, Titles on top-right, Toggles on bottom-right */}
-          <div className="relative z-10 px-4 sm:px-8 py-3.5 sm:py-5 flex items-center gap-4 sm:gap-6 min-h-[96px] sm:min-h-[110px]">
-            {/* Left Column: Prominent Circular Logo vertically centered in the navbar (Yellow Circle Position) */}
+          <div className="relative z-10 px-4 sm:px-8 py-3 sm:py-4 flex items-center gap-4 sm:gap-6 min-h-[110px] sm:min-h-[125px]">
+            {/* Left Column: Prominent Circular Logo filling the yellow circle boundary */}
             <div className="relative shrink-0 flex items-center justify-center my-auto">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full p-1 bg-white/20 backdrop-blur-md ring-2 ring-white/70 shadow-2xl flex items-center justify-center">
+              <div className="w-[84px] h-[84px] sm:w-[98px] sm:h-[98px] rounded-full p-1 bg-white/20 backdrop-blur-md ring-2 ring-white/75 shadow-2xl flex items-center justify-center">
                 <img
                   src="/aics-logo.jpg"
                   alt="AICS Logo"
@@ -394,7 +394,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               </div>
               {/* Live Security Shield Dot */}
               <span
-                className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-400 ring-2 ring-[#020b24] shadow-md"
+                className="absolute bottom-1 right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-400 ring-2 ring-[#020b24] shadow-md"
                 title="100% Confidential & RA 10173 Protected"
               />
             </div>
