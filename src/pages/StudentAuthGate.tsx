@@ -26,6 +26,70 @@ import {
 
 export type PortalAuthMode = 'login' | 'register' | 'forgot';
 
+// 15 Psychiatrist-backed anti-bullying & freedom of speech affirmations
+const MENTAL_HEALTH_AFFIRMATIONS = [
+  {
+    en: 'Every concern deserves care and genuine attention.',
+    tl: 'Bawat hinaing at alalahanin mo ay karapat-dapat sa kalinga.',
+  },
+  {
+    en: 'Speaking up against harm is an act of courage, not tattling.',
+    tl: 'Hindi pagiging sumbungero ang pagtindig sa sarili at sa kapwa.',
+  },
+  {
+    en: 'You have every right to learn in peace—free from fear and intimidation.',
+    tl: 'May karapatan kang mag-aral nang walang takot, kaba, o panghihiya.',
+  },
+  {
+    en: 'Your identity is strictly guarded; you are completely safe to speak here.',
+    tl: '100% Protektado ang pagkakakilanlan mo; ligtas kang magsalita rito.',
+  },
+  {
+    en: "You are never to blame for someone else's cruelty or abusive words.",
+    tl: 'Hindi mo kasalanan kung bakit ka nila tinatrato nang mali.',
+  },
+  {
+    en: 'Admitting you are hurt is never a weakness; it is honoring your truth.',
+    tl: 'Hindi kabawasan sa pagkatao ang pag-amin na ikaw ay nasasaktan.',
+  },
+  {
+    en: "Never let anyone's cruel words define your worth or dim your light.",
+    tl: 'Huwag mong hayaang burahin ng panunukso ng iba ang iyong tunay na halaga.',
+  },
+  {
+    en: 'Your voice holds the real power to put an end to unfair treatment.',
+    tl: 'Ang iyong boses ay may kapangyarihang patigilin ang pang-aapi.',
+  },
+  {
+    en: 'Online cyberbullying or on-campus harassment: we take immediate action.',
+    tl: 'Online man o sa campus, bawal ang pambu-bully. Handa kaming umaksyon.',
+  },
+  {
+    en: 'You are never facing this alone; the Guidance team stands firmly beside you.',
+    tl: 'Hindi ka nag-iisa sa labang ito; kaagapay mo ang AICS Guidance.',
+  },
+  {
+    en: 'You possess the absolute freedom of speech to be heard with full respect.',
+    tl: 'May karapatan kang magsalita, magpahayag, at pakinggan nang buo.',
+  },
+  {
+    en: 'No concern is too petty or shallow; if it pains you, it deeply matters.',
+    tl: "Walang maliit o mababaw na reklamo; kung nasasaktan ka, mahalaga 'yon.",
+  },
+  {
+    en: 'Silence should never be the price you pay for keeping the peace.',
+    tl: 'Hindi solusyon ang pananahimik kung ang kapalit ay ang iyong kapayapaan.',
+  },
+  {
+    en: 'We are here to uphold justice, provide gentle guidance, and foster healing.',
+    tl: 'Nandito kami para magbigay ng katarungan, paggabay, at paghilom.',
+  },
+  {
+    en: 'Your story is safe. You have the freedom to be unapologetically you.',
+    tl: 'Ligtas ang iyong kwento. Malaya kang maging ikaw sa AICS.',
+  },
+];
+
 interface StudentAuthGateProps {
   onLoginSuccess: (user: StudentPortalUser) => void;
 }
@@ -38,6 +102,18 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   const { boyWing, girlWing } = useStudentEncouragementWings();
 
   const [mode, setMode] = useState<PortalAuthMode>('login');
+
+  // Carousel state for rotating psychiatrist mental health & anti-bullying affirmations
+  const [affirmationIndex, setAffirmationIndex] = useState(0);
+  const [isCarouselPaused, setIsCarouselPaused] = useState(false);
+
+  useEffect(() => {
+    if (isCarouselPaused) return;
+    const interval = setInterval(() => {
+      setAffirmationIndex((prev) => (prev + 1) % MENTAL_HEALTH_AFFIRMATIONS.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [isCarouselPaused]);
 
   // ==========================================
   // LOGIN FORM STATE
@@ -461,7 +537,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               ==================================================== */}
           {mode === 'login' && (
             <div className="space-y-7">
-              <div className="text-center space-y-3">
+              <div className="text-center space-y-3 pb-2 sm:pb-4">
                 <div className="w-16 h-16 rounded-full overflow-hidden mx-auto shadow-xl ring-2 ring-blue-400/40 bg-white p-0.5">
                   <img
                     src="/aics-logo.jpg"
@@ -472,9 +548,29 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight card-title-text uppercase">
                   AICS SAFEZONE
                 </h2>
-                <p className="text-sm font-semibold card-subtitle-text">
-                  Every Concern Deserves Care.
-                </p>
+
+                {/* 3.5s Rotating Mental Health & Anti-Bullying Affirmation Carousel with Spacious Padding */}
+                <div
+                  onMouseEnter={() => setIsCarouselPaused(true)}
+                  onMouseLeave={() => setIsCarouselPaused(false)}
+                  onTouchStart={() => setIsCarouselPaused(true)}
+                  onTouchEnd={() => setIsCarouselPaused(false)}
+                  className="min-h-[52px] sm:min-h-[48px] flex items-center justify-center px-3 sm:px-6 py-2 rounded-2xl bg-blue-500/10 dark:bg-white/5 border border-blue-400/20 shadow-inner relative overflow-hidden transition-all"
+                  title="Anti-Bullying & Confidential Guidance Shield"
+                >
+                  <AnimatePresence mode="wait">
+                    <motion.p
+                      key={affirmationIndex}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.35, ease: 'easeOut' }}
+                      className="text-xs sm:text-sm font-bold text-sky-900 dark:text-sky-200 text-center leading-relaxed"
+                    >
+                      “{isTl ? MENTAL_HEALTH_AFFIRMATIONS[affirmationIndex].tl : MENTAL_HEALTH_AFFIRMATIONS[affirmationIndex].en}”
+                    </motion.p>
+                  </AnimatePresence>
+                </div>
               </div>
 
               {loginError && (
