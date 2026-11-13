@@ -4,20 +4,19 @@ import React, { useState, useEffect } from 'react';
  * Fun & Playful AICS Mascot Storyline Choreography
  * 
  * Stages:
- * 1. 'wave'   (0s - 3s)   : Nagwe-wave masigla ("Hi! Welcome CdMian/AICS!"), smiling eyes (^_^)
- * 2. 'run-r'  (3s - 5s)   : Masiglang tatakbo pakanan, dashing determined eyes (>> >>)
- * 3. 'run-l'  (5s - 7s)   : Tatakbo pakaliwa, playful wide eyes (O_O)
- * 4. 'trip'   (7s - 8.5s) : Nadapa nang cute! Dizzy swirl / closed eyes (>_<) na may tiny stars (💫)
- * 5. 'getup'  (8.5s - 10s): Tatayo, magkakamot ng ulo / nahihiya na may cute blush (^-^;)
- * 6. 'center' (10s - 14s) : Babalik sa gitna, masayang nagba-bounce at nag-aantay habang nagba-bop (Dancing ^_^)
- * Cycle restarts continuously!
+ * 1. 'wave'       : Masiglang kumakaway ("Hi, welcome! 👋")
+ * 2. 'run-right'  : Tatakbo pakanan ("Whooosh! 🏃‍♂️💨")
+ * 3. 'run-left'   : Tatakbo pakaliwa ("Zoom zoom! 💨")
+ * 4. 'trip'       : Nadapa nang cute ("Aray ko po! 💫🙈")
+ * 5. 'getup'      : Tatayo, medyo nahihiya ("Oks lang ako! Hehe ✨")
+ * 6. 'happy-idle' : Masayang nagba-bounce sa gitna ("Safe ka dito palagi! 💙")
  */
 
 type MascotStage = 'wave' | 'run-right' | 'run-left' | 'trip' | 'getup' | 'happy-idle';
 
 export const SafezoneMascot: React.FC = () => {
   const [stage, setStage] = useState<MascotStage>('wave');
-  const [speechBubble, setSpeechBubble] = useState<string>('Hi! Welcome! 👋');
+  const [speechBubble, setSpeechBubble] = useState<string>('Hi, welcome! 👋');
 
   useEffect(() => {
     let timer: any;
@@ -25,7 +24,7 @@ export const SafezoneMascot: React.FC = () => {
     const timeline = () => {
       // 1. Wave
       setStage('wave');
-      setSpeechBubble('Hi! Kaya mo yan! 💙');
+      setSpeechBubble('Hi, welcome! 👋');
 
       timer = setTimeout(() => {
         // 2. Run Right
@@ -45,12 +44,12 @@ export const SafezoneMascot: React.FC = () => {
             timer = setTimeout(() => {
               // 5. Get up & shake off
               setStage('getup');
-              setSpeechBubble('Oks lang ako! Hehe 🌸');
+              setSpeechBubble('Oks lang ako! Hehe ✨');
 
               timer = setTimeout(() => {
                 // 6. Happy Idle Bounce at Center
                 setStage('happy-idle');
-                setSpeechBubble('Safe ka dito palagi! ✨');
+                setSpeechBubble('Safe ka dito palagi! 💙');
 
                 timer = setTimeout(() => {
                   timeline(); // Loop choreography
@@ -67,21 +66,21 @@ export const SafezoneMascot: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative flex flex-col items-center justify-center select-none py-2 my-1 overflow-hidden w-full max-w-sm mx-auto h-[165px]">
+    <div className="relative flex flex-col items-center justify-center select-none py-2 my-1 overflow-visible w-full max-w-sm mx-auto h-[175px]">
       <style>{`
         /* Stage-based Root Movements */
         .stage-wave {
           transform: translateX(0px) translateY(0px);
-          transition: transform 0.6s ease;
+          transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         .stage-run-right {
-          transform: translateX(65px) translateY(-4px) rotate(14deg);
+          transform: translateX(60px) translateY(-4px) rotate(14deg);
           transition: transform 1.8s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         .stage-run-left {
-          transform: translateX(-65px) translateY(-4px) rotate(-14deg);
+          transform: translateX(-60px) translateY(-4px) rotate(-14deg);
           transition: transform 1.8s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
@@ -103,13 +102,13 @@ export const SafezoneMascot: React.FC = () => {
 
         @keyframes playfulBounce {
           0% { transform: translateY(0px) scale(1, 1); }
-          100% { transform: translateY(-10px) scale(1.04, 0.96); }
+          100% { transform: translateY(-8px) scale(1.04, 0.96); }
         }
 
         @keyframes vigorousWave {
           0%, 100% { transform: rotate(0deg); }
-          25% { transform: rotate(-45deg); }
-          75% { transform: rotate(25deg); }
+          25% { transform: rotate(-50deg); }
+          75% { transform: rotate(30deg); }
         }
 
         @keyframes starSpin {
@@ -118,28 +117,44 @@ export const SafezoneMascot: React.FC = () => {
           100% { transform: rotate(360deg) scale(0.8); }
         }
 
+        @keyframes cloudFloat {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-3px); }
+        }
+
         .anim-wave-arm {
           transform-origin: 12px 14px;
-          animation: vigorousWave 0.6s ease-in-out infinite;
+          animation: vigorousWave 0.55s ease-in-out infinite;
         }
 
         .anim-trip-stars {
           animation: starSpin 1.4s linear infinite;
         }
+
+        .cloud-bubble-anim {
+          animation: cloudFloat 2s ease-in-out infinite;
+        }
       `}</style>
 
-      {/* Floating Animated Speech Bubble */}
-      <div className="z-30 mb-1 px-3 py-1 rounded-full bg-white dark:bg-slate-900 border border-blue-400/40 shadow-lg flex items-center justify-center gap-1.5 transform transition-all duration-300">
-        <span className="text-[11px] font-extrabold text-[#1E469B] dark:text-[#7CB8F7] whitespace-nowrap">
-          {speechBubble}
-        </span>
-      </div>
+      {/* Choreographed Character Body - THE SPEECH CLOUD MOVES DIRECTLY WITH HIS BODY! */}
+      <div className={`relative flex flex-col items-center justify-center stage-${stage} z-20`}>
+        
+        {/* Floating Comic Cloud Speech Bubble (Sticks directly to mascot's head & follows him anywhere) */}
+        <div className="cloud-bubble-anim -mb-1 z-30 flex flex-col items-center pointer-events-none">
+          <div className="relative px-3.5 py-1.5 rounded-[18px] bg-white/95 dark:bg-slate-900/95 border-2 border-sky-400/60 shadow-xl shadow-sky-950/20 backdrop-blur-md flex items-center justify-center">
+            {/* Cute cloud puffs styling */}
+            <span className="text-[11px] font-black tracking-wide text-sky-900 dark:text-sky-200 whitespace-nowrap drop-shadow-xs">
+              {speechBubble}
+            </span>
 
-      {/* Choreographed Character Body */}
-      <div className={`relative flex flex-col items-center justify-center stage-${stage}`}>
+            {/* Cloud tail pointing right to his head */}
+            <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-white dark:bg-slate-900 border-r-2 border-b-2 border-sky-400/60 transform rotate-45" />
+          </div>
+        </div>
+
         {/* Dizzy stars when tripped (Nadapa) */}
         {stage === 'trip' && (
-          <div className="absolute -top-3 z-40 flex items-center gap-2 anim-trip-stars pointer-events-none">
+          <div className="absolute -top-1 z-40 flex items-center gap-2 anim-trip-stars pointer-events-none">
             <span className="text-yellow-400 text-sm">💫</span>
             <span className="text-pink-400 text-xs">✨</span>
             <span className="text-yellow-300 text-sm">⭐</span>
@@ -147,7 +162,7 @@ export const SafezoneMascot: React.FC = () => {
         )}
 
         {/* Mascot Head with Dynamic Eyes depending on stage */}
-        <div className="relative z-20 flex items-center justify-center -mb-2 transition-transform duration-300">
+        <div className="relative z-20 flex items-center justify-center -mb-2 transition-transform duration-300 mt-1">
           <div className="w-[80px] h-[68px] rounded-[38px] bg-gradient-to-b from-white via-[#F8FAFC] to-[#DDE5EE] border border-[#CBD5E1] shadow-[0_8px_16px_rgba(0,0,0,0.12),inset_0_2px_4px_rgba(255,255,255,0.9)] flex items-center justify-center p-2 relative">
             {/* Visor Screen */}
             <div className="w-[56px] h-[36px] rounded-[20px] bg-gradient-to-b from-[#0A1124] via-[#050B1A] to-[#02050E] border border-[#1E293B] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)] flex items-center justify-center gap-2 relative overflow-hidden">
@@ -204,7 +219,7 @@ export const SafezoneMascot: React.FC = () => {
           </div>
         </div>
 
-        {/* Mascot Body & Limbs */}
+        {/* Mascot Body & Clean Limbs (NO FLOWER) */}
         <div className="relative z-10 w-full flex items-center justify-center">
           {/* Left Arm */}
           <div className="w-3.5 h-8 rounded-full bg-gradient-to-b from-white to-[#D0DAE6] border border-[#CBD5E1] shadow-sm transform -rotate-12 translate-x-1.5 -translate-y-2" />
@@ -214,14 +229,9 @@ export const SafezoneMascot: React.FC = () => {
             <div className="w-2 h-2 rounded-full bg-sky-400/50 shadow-[0_0_8px_rgba(56,189,248,0.7)] animate-pulse" />
           </div>
 
-          {/* Right Arm (Waves during 'wave' & 'happy-idle', points when running) */}
-          <div className={`relative w-8 h-11 -translate-x-1 -translate-y-2.5 ${stage === 'wave' || stage === 'happy-idle' ? 'anim-wave-arm' : ''}`}>
+          {/* Right Waving Arm (Clean without flower, purely waving greeting) */}
+          <div className={`relative w-6 h-11 -translate-x-1 -translate-y-2.5 ${stage === 'wave' || stage === 'happy-idle' ? 'anim-wave-arm' : ''}`}>
             <div className="w-3.5 h-9 rounded-full bg-gradient-to-b from-white to-[#D0DAE6] border border-[#CBD5E1] shadow-md transform rotate-12" />
-
-            {/* Blossom flower in hand */}
-            <div className="absolute -top-3 -right-2 flex flex-col items-center transform -rotate-12 pointer-events-none">
-              <span className="text-sm select-none animate-bounce">🌸</span>
-            </div>
           </div>
         </div>
 
