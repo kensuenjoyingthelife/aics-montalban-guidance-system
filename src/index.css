@@ -1067,3 +1067,14 @@ html.theme-fading *::after {
 :root { --app-zoom: 1; }
 .h-screen { height: calc(100vh / var(--app-zoom)) !important; }
 .min-h-screen { min-height: calc(100vh / var(--app-zoom)) !important; }
+
+/* calm portal card: no endless background animation (it repainted the whole card every frame) */
+.cosmic-glass-card,
+:root.dark .cosmic-glass-card {
+  animation: none !important;
+  will-change: auto !important;
+}
+.terms-still {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}

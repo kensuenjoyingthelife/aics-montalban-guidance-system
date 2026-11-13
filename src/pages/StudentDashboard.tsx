@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CelestialBackground } from '../components/auth/CelestialBackground';
 import { WavyBackground } from '../components/auth/WavyBackground';
 import { SoundTogglePill, soundFX } from '../services/soundEngine';
 import { SkyThemePill } from '../context/ThemeContext';
@@ -329,7 +328,6 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
   return (
     <div className="min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none student-portal-canvas bg-[#05112B] text-white">
-      <CelestialBackground />
       <WavyBackground />
 
       {/* Top Navigation Bar */}

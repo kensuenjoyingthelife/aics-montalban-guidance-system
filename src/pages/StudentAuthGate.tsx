@@ -1,9 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CelestialBackground } from '../components/auth/CelestialBackground';
 import { WavyBackground } from '../components/auth/WavyBackground';
-import { StudentRegistrationScanner } from '../components/auth/StudentRegistrationScanner';
-import { useStudentEncouragementWings } from '../components/auth/StudentEncouragementWing';
 import { SoundTogglePill, soundFX } from '../services/soundEngine';
 import { SkyThemePill } from '../context/ThemeContext';
 import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
@@ -26,7 +23,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 }) => {
   const { locale } = useLanguage();
   const isTl = locale === 'tl';
-  const { boyWing, girlWing } = useStudentEncouragementWings();
 
   const [mode, setMode] = useState<PortalAuthMode>('login');
 
@@ -70,7 +66,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   // Success Modal State
   const [successData, setSuccessData] = useState<{
     username: string;
-    passwordPlain: string;
     account: StudentPortalUser;
   } | null>(null);
 
@@ -237,8 +232,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
     setRegLoading(true);
     setRegError(null);
-    setScanForcedError(null);
-    setShow20sScanner(true);
 
     try {
       const res = await registerStudentPortalAccount({
@@ -255,17 +248,16 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       setRegLoading(false);
 
       if (!res.success || !res.account) {
-        setScanForcedError(res.error || 'Failed to create account.');
+        soundFX.playError();
+        setRegError(res.error || (isTl ? 'Hindi nagawa ang account. Subukan ulit.' : 'The account was not created. Please try again.'));
       } else {
-        setScanPendingAccount({
-          username: res.account.studentNumber,
-          passwordPlain: regPassword,
-          account: res.account,
-        });
+        soundFX.playSuccessCheck();
+        setSuccessData({ username: res.account.studentNumber, account: res.account });
       }
     } catch (err: any) {
       setRegLoading(false);
-      setScanForcedError(err?.message || 'Network error encountered during registration.');
+      soundFX.playError();
+      setRegError(isTl ? 'Walang koneksyon. I-check ang internet, tapos subukan ulit.' : 'No connection. Check the internet, then try again.');
     }
   };
 
@@ -354,7 +346,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
   return (
     <div className="min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none student-portal-canvas bg-[#05112B] text-white">
-      <CelestialBackground />
       <WavyBackground />
 
       {/* Top Header Bar */}
@@ -385,18 +376,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       {/* Main Glassmorphic Container with Left and Right Student Encouragement Wings */}
       <main className="relative z-20 flex-1 flex items-center justify-center p-3 sm:p-6 lg:p-8 my-2 sm:my-4">
         <div className="w-full max-w-7xl flex flex-col lg:flex-row items-center justify-center gap-6 xl:gap-12">
-          {/* Left Wing: Boy Student (Encouraging to speak up, report bullying, bravery) */}
-          {mode === 'login' && (
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="hidden lg:flex shrink-0 order-1 lg:order-none"
-            >
-              {boyWing}
-            </motion.div>
-          )}
-
           {/* Central Login / Register Glass Card */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -989,16 +968,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         </motion.div>
 
         {/* Right Wing: Girl Student (Emotional healing, mental wellness, validation) */}
-        {mode === 'login' && (
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="hidden lg:flex shrink-0 order-3 lg:order-none"
-          >
-            {girlWing}
-          </motion.div>
-        )}
+        
       </div>
     </main>
 
@@ -1008,124 +978,70 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       </footer>
 
       {/* ====================================================
-          20-SECOND HIGH-TECH BIOMETRIC SCANNING OVERLAY
+          ACCOUNT CREATED: success mini-card (privacy, safety, how to use) — no animation
           ==================================================== */}
-      <StudentRegistrationScanner
-        isOpen={show20sScanner}
-        studentName={`${regLastName}, ${regFirstName} ${regMiddleInitial}`.trim()}
-        studentNumber={regStudentNumber || '2025-XXXXX'}
-        isTl={isTl}
-        forcedError={scanForcedError}
-        onErrorDecline={(msg) => {
-          setRegError(msg);
-          setShow20sScanner(false);
-        }}
-        onComplete={() => {
-          setShow20sScanner(false);
-          if (scanPendingAccount) {
-            setSuccessData(scanPendingAccount);
-          }
-        }}
-      />
+      {successData && (
+        <div className="fixed inset-0 z-50 bg-[#06122B]/90 flex items-center justify-center p-3 sm:p-6" data-reg-success>
+          <div role="dialog" aria-modal="true" aria-label={isTl ? 'Nagawa ang account' : 'Account created'} className="w-full max-w-md max-h-[92vh] overflow-y-auto rounded-3xl bg-[#0B1E48] border-2 border-emerald-400 p-5 sm:p-6 space-y-4 shadow-2xl text-left">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 shrink-0 rounded-full bg-emerald-500 flex items-center justify-center text-white text-2xl font-extrabold">✓</div>
+              <div className="min-w-0">
+                <h3 className="text-lg font-extrabold text-white leading-tight">{isTl ? 'Nagawa na ang account mo!' : 'Your account is ready!'}</h3>
+                <p className="text-xs text-[#9BCBFF]">
+                  {isTl ? 'Username mo ang Student No.:' : 'Your username is your Student No.:'} <b className="font-mono text-emerald-300">{successData.username}</b>
+                </p>
+              </div>
+            </div>
 
-      {/* ====================================================
-          SUCCESSFUL REGISTRATION MODAL
-          ==================================================== */}
-      <AnimatePresence>
-        {successData && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-[#06122B]/85 backdrop-blur-md flex items-center justify-center p-6"
-          >
-            <motion.div
-              initial={{ scale: 0.88, opacity: 0, y: 16 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: 'spring', damping: 22, stiffness: 350 }}
-              className="w-full max-w-lg rounded-3xl bg-[#0B1E48] border-2 border-emerald-400 p-8 text-center shadow-2xl space-y-6"
+            <section className="rounded-2xl bg-white/5 border border-white/15 p-3.5 space-y-1">
+              <p className="text-xs font-extrabold text-white">🔒 {isTl ? 'Ang iyong privacy (RA 10173)' : 'Your privacy (RA 10173)'}</p>
+              <ul className="text-xs text-white/85 leading-relaxed list-disc pl-4 space-y-0.5">
+                <li>{isTl ? 'Ang Guidance Office lang ang makakakita ng impormasyon at mga report mo.' : 'Only the Guidance Office can see your information and reports.'}</li>
+                <li>{isTl ? 'Hindi ito ibibigay sa isinumbong mo, sa ibang estudyante, o sa magulang.' : 'They are never shared with the student you report, other students, or parents.'}</li>
+                <li>{isTl ? 'Ginagamit lang ang student ID mo para patunayan na ikaw talaga ito.' : 'Your student ID is used only to check that it is really you.'}</li>
+              </ul>
+            </section>
+
+            <section className="rounded-2xl bg-white/5 border border-white/15 p-3.5 space-y-1">
+              <p className="text-xs font-extrabold text-white">🛡️ {isTl ? 'Para maging ligtas ka' : 'Staying safe'}</p>
+              <ul className="text-xs text-white/85 leading-relaxed list-disc pl-4 space-y-0.5">
+                <li>{isTl ? 'Huwag ibigay kahit kanino ang password mo.' : 'Never share your password with anyone.'}</li>
+                <li>{isTl ? 'Mag-Sign Out pagkatapos, lalo na sa computer ng school o computer shop. Kusa rin itong nagsa-sign out pagkalipas ng 15 minuto.' : 'Sign out when done, especially on school or shop computers. It also signs out by itself after 15 minutes.'}</li>
+                <li>{isTl ? 'Kung may panganib ngayon mismo, pumunta agad sa guro, guard o Guidance Office. Hindi pang-emergency ang portal.' : 'If you are in danger right now, go to a teacher, the guard or the Guidance Office. The portal is not for emergencies.'}</li>
+              </ul>
+            </section>
+
+            <section className="rounded-2xl bg-white/5 border border-white/15 p-3.5 space-y-1">
+              <p className="text-xs font-extrabold text-white">📝 {isTl ? 'Paano gamitin' : 'How to use it'}</p>
+              <ol className="text-xs text-white/85 leading-relaxed list-decimal pl-4 space-y-0.5">
+                <li>{isTl ? '"Report Concern": piliin ang uri, isulat ang nangyari, tapos i-submit.' : '"Report Concern": pick the type, write what happened, then submit.'}</li>
+                <li>{isTl ? '"My Reports": dito mo makikita kung na-review na ng Guidance Office.' : '"My Reports": see whether the Guidance Office has reviewed it.'}</li>
+                <li>{isTl ? '"Guidance Chat": magbubukas kapag na-approve ang report mo.' : '"Guidance Chat": opens once your report is approved.'}</li>
+              </ol>
+            </section>
+
+            <button
+              type="button"
+              data-reg-success-go
+              onClick={() => {
+                soundFX.playSuccessCheck();
+                onLoginSuccess(successData.account);
+              }}
+              className="btn-press w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm"
             >
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 mx-auto flex items-center justify-center shadow-xl shadow-emerald-500/40">
-                <svg
-                  className="w-10 h-10 text-white"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
-
-              <div className="space-y-1.5">
-                <span className="px-4 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 text-xs font-extrabold uppercase tracking-wide">
-                  ✓ Automatic Approved
-                </span>
-                <h3 className="text-2xl font-extrabold text-white pt-2">
-                  Account Created Successfully!
-                </h3>
-                <p className="text-sm text-[#9BCBFF]">
-                  Welcome to AICS Student Concern & Safe Reporting Portal
-                </p>
-              </div>
-
-              {/* Exact Credentials Highlight Box */}
-              <div className="p-5 rounded-2xl bg-black/50 border border-white/20 text-left space-y-3.5">
-                <div className="flex items-center justify-between pb-3 border-b border-white/10 text-sm">
-                  <span className="text-white/70 font-bold">Your Username:</span>
-                  <span className="font-mono font-extrabold text-emerald-300 text-base">
-                    {successData.username}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-white/70 font-bold">Your Password:</span>
-                  <span className="font-mono font-extrabold text-amber-300 text-base">
-                    {successData.passwordPlain}
-                  </span>
-                </div>
-                <p className="text-xs text-white/60 pt-1">
-                  💡 <strong>Important:</strong> Your username is the Student Number you provided, and your password is the password you created.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  soundFX.playSuccessCheck();
-                  onLoginSuccess(successData.account);
-                }}
-                className="btn-press w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-95 text-white font-extrabold text-base shadow-xl shadow-emerald-950/60 flex items-center justify-center gap-2.5"
-              >
-                <span>Proceed to Student Dashboard</span>
-                <span>→</span>
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              {isTl ? 'Naintindihan ko — Pumasok sa Portal →' : 'Got it — Open the Portal →'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ====================================================
           DATA PRIVACY TERMS & CONDITIONS MODAL
           (Appears strictly before opening Create Account form)
           ==================================================== */}
-      <AnimatePresence>
-        {showPrivacyModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-[#06122B]/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 16 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: 'spring', damping: 24, stiffness: 340 }}
-              className="w-full max-w-2xl rounded-3xl cosmic-glass-card p-6 sm:p-8 space-y-6 shadow-2xl max-h-[90vh] flex flex-col"
-            >
+      {showPrivacyModal && (
+          <div className="fixed inset-0 z-50 bg-[#06122B]/90 flex items-center justify-center p-4 sm:p-6" data-terms-modal>
+            <div className="w-full max-w-2xl rounded-3xl cosmic-glass-card terms-still p-6 sm:p-8 space-y-6 shadow-2xl max-h-[90vh] flex flex-col">
               {/* Header */}
               <div className="flex items-center justify-between border-b border-white/10 dark:border-white/10 pb-4">
                 <div className="flex items-center gap-3">
@@ -1237,10 +1153,9 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   <span>{isTl ? 'Nauunawaan Ko at Sumasang-ayon Ako' : 'I Understand & Agree to Terms'}</span>
                 </button>
               </div>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
     </div>
   );
 };

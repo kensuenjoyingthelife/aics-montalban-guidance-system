@@ -1,3 +1,4 @@
+import { postMail } from './mailApi';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabaseClient';
 
 export interface StudentPortalUser {
@@ -305,16 +306,7 @@ export async function sendForgotPasswordOtp(
     });
 
     try {
-      await fetch('/api/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: targetEmail,
-          code: otp,
-          staffName: account.full_name,
-          purpose: 'AICS Student Portal Password Reset',
-        }),
-      });
+      await postMail('otp', { email: targetEmail, code: otp, locale: 'tl' });
     } catch {
       // ignore
     }
