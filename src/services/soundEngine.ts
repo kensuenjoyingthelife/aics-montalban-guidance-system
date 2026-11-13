@@ -111,12 +111,12 @@ class TechSoundEngine {
 
     const now = ctx.currentTime;
 
-    // Layer A: Warm Mechanical Switch "Thock" Body
+    // Layer A: Warm Mechanical Switch "Thock" Body (Creamy & tactile)
     const bodyOsc = ctx.createOscillator();
     const bodyGain = ctx.createGain();
     bodyOsc.type = 'triangle';
-    bodyOsc.frequency.setValueAtTime(195, now);
-    bodyOsc.frequency.exponentialRampToValueAtTime(68, now + 0.038);
+    bodyOsc.frequency.setValueAtTime(210, now);
+    bodyOsc.frequency.exponentialRampToValueAtTime(75, now + 0.038);
 
     bodyGain.gain.setValueAtTime(0.14, now);
     bodyGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
@@ -126,7 +126,7 @@ class TechSoundEngine {
     bodyOsc.start(now);
     bodyOsc.stop(now + 0.042);
 
-    // Layer B: Lively Harmonic Tech Pluck (Pentatonic scale step so typing sounds musical!)
+    // Layer B: Pleasant Soft Click / Harmonic Tech Pluck
     const scaleFreqs = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66, 1318.5];
     const freq = scaleFreqs[Math.abs(pitchStep) % scaleFreqs.length];
 
@@ -134,15 +134,15 @@ class TechSoundEngine {
     const chimeGain = ctx.createGain();
     chimeOsc.type = 'sine';
     chimeOsc.frequency.setValueAtTime(freq, now);
-    chimeOsc.frequency.exponentialRampToValueAtTime(freq * 1.04, now + 0.065);
+    chimeOsc.frequency.exponentialRampToValueAtTime(freq * 1.02, now + 0.05);
 
-    chimeGain.gain.setValueAtTime(0.075, now);
-    chimeGain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+    chimeGain.gain.setValueAtTime(0.08, now);
+    chimeGain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
 
     chimeOsc.connect(chimeGain);
     chimeGain.connect(ctx.destination);
     chimeOsc.start(now);
-    chimeOsc.stop(now + 0.072);
+    chimeOsc.stop(now + 0.058);
   }
 
   /**
@@ -415,24 +415,61 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     soundFX.setEnabled(next);
   };
 
-  // Global lightweight typing sound listener (mouse hover sound removed per user request)
+  // Global lightweight typing sound listener for Desktop Keyboard AND Mobile Virtual Keyboards
   useEffect(() => {
+    let lastKeyStep = 0;
+
+    // A. Physical / Standard Keydown Event (Desktop & external keyboards)
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!soundFX.isEnabled()) return;
       const target = e.target as HTMLElement | null;
-      // If typing inside an input (like Email or OTP), play mechanical key sound!
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
-        if (e.key === 'Backspace') {
-          soundFX.playBackspace();
-        } else if (e.key.length === 1) {
-          soundFX.playKeyClick(e.key.charCodeAt(0));
-        }
+      if (!target || (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA')) return;
+
+      // Handle Backspace / Delete
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        soundFX.playBackspace();
+        return;
+      }
+
+      // Handle Enter
+      if (e.key === 'Enter') {
+        soundFX.playToggleSwitch(true);
+        return;
+      }
+
+      // Standard character typing (letters, numbers, space, symbols)
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        lastKeyStep = (lastKeyStep + 1) % 8;
+        soundFX.playKeyClick(lastKeyStep);
+      }
+    };
+
+    // B. Mobile Virtual Keyboard / On-screen Keypad Input Event (`beforeinput`)
+    // Android (Gboard, Samsung Keyboard) & iOS Safari fire `beforeinput` with inputType
+    const handleBeforeInput = (e: InputEvent) => {
+      if (!soundFX.isEnabled()) return;
+      const target = e.target as HTMLElement | null;
+      if (!target || (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA')) return;
+
+      // If user taps backspace on mobile keyboard
+      if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward' || e.inputType.startsWith('delete')) {
+        soundFX.playBackspace();
+        return;
+      }
+
+      // If user types any text, character, or space
+      if (e.inputType === 'insertText' || e.inputType === 'insertCompositionText' || (e.data && e.data.length > 0)) {
+        lastKeyStep = (lastKeyStep + 1) % 8;
+        soundFX.playKeyClick(lastKeyStep);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown, { passive: true });
+    window.addEventListener('beforeinput', handleBeforeInput as EventListener, { passive: true });
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('beforeinput', handleBeforeInput as EventListener);
     };
   }, []);
 
