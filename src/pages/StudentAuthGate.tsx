@@ -603,7 +603,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   <SafezoneMascot />
                 </div>
 
-                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight card-title-text uppercase">
+                {/* Desktop Title: AICS SAFEZONE (Hidden on mobile per user request) */}
+                <h2 className="hidden lg:block text-2xl sm:text-3xl font-extrabold tracking-tight card-title-text uppercase">
                   AICS SAFEZONE
                 </h2>
 
