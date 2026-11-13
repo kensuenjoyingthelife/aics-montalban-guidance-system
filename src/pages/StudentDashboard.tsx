@@ -38,9 +38,13 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
   // Submit Concern Form State
   const [reportType, setReportType] = useState<string>('Bullying / Peer Harassment');
-  const [isPeerReferral, setIsPeerReferral] = useState<boolean>(false);
-  const [targetStudentName, setTargetStudentName] = useState<string>('');
-  const [targetGradeSection, setTargetGradeSection] = useState<string>('');
+  // Reporting Role: 'self' (Mag-report sa sarili) vs 'peer' (I-report ang nangyari sa kaibigan/kaklase)
+  const [reportingRole, setReportingRole] = useState<'self' | 'peer'>('self');
+  const [friendName, setFriendName] = useState<string>('');
+  const [friendGradeSection, setFriendGradeSection] = useState<string>('');
+  const [knowsSuspect, setKnowsSuspect] = useState<'yes' | 'no' | 'unsure'>('no');
+  const [suspectName, setSuspectName] = useState<string>('');
+  const [suspectDetails, setSuspectDetails] = useState<string>('');
   const [whatHappened, setWhatHappened] = useState<string>('');
   const [happenedWhen, setHappenedWhen] = useState<string>('');
   const [happenedWhere, setHappenedWhere] = useState<string>('');
@@ -265,6 +269,13 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
     const refCode = `CON-${Date.now().toString(36).toUpperCase()}`;
 
+    const isPeer = reportingRole === 'peer';
+    const finalNarrative = [
+      isPeer ? `[REPORT FOR FRIEND/CLASSMATE: ${friendName} (${friendGradeSection || 'N/A'})]` : '[SELF-REPORT BY STUDENT]',
+      knowsSuspect === 'yes' ? `[SUSPECT / NAMBULLY: ${suspectName}${suspectDetails ? ` - ${suspectDetails}` : ''}]` : (knowsSuspect === 'unsure' ? '[SUSPECT / NAMBULLY: Unsure / May kutob pero hindi sigurado]' : '[SUSPECT / NAMBULLY: Hindi kilala ang nambully]'),
+      `[SALAYSAY / WHAT HAPPENED]:\n${whatHappened}`
+    ].join('\n\n');
+
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/student_concerns`, {
         method: 'POST',
@@ -276,17 +287,17 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
         },
         body: JSON.stringify({
           referral_code: refCode,
-          student_name: isPeerReferral && targetStudentName.trim() ? targetStudentName.trim() : user.fullName,
-          grade_section: isPeerReferral && targetGradeSection.trim() ? targetGradeSection.trim() : user.gradeSection || 'SHS Student',
+          student_name: isPeer && friendName.trim() ? friendName.trim() : user.fullName,
+          grade_section: isPeer && friendGradeSection.trim() ? friendGradeSection.trim() : user.gradeSection || 'SHS Student',
           student_number: user.studentNumber,
           account_id: user.id,
-          submitted_by: isPeerReferral ? `Peer Referral by ${user.fullName} (${user.studentNumber})` : `Self-Report: ${user.fullName}`,
+          submitted_by: isPeer ? `Report for Friend by ${user.fullName} (${user.studentNumber})` : `Self-Report: ${user.fullName}`,
           category: reportType,
           concern_type: reportType,
           urgency: isUrgent ? 'Urgent' : 'Normal',
           summary_en: whatHappened.slice(0, 160),
           summary_tl: whatHappened.slice(0, 160),
-          what_happened: whatHappened,
+          what_happened: finalNarrative,
           happened_when: happenedWhen || 'Not specified',
           happened_where: happenedWhere || 'AICS Campus / Online',
           witnesses: witnesses || 'None',
@@ -316,9 +327,12 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       setHappenedWhere('');
       setWitnesses('');
       setTruthfulAck(false);
-      setIsPeerReferral(false);
-      setTargetStudentName('');
-      setTargetGradeSection('');
+      setReportingRole('self');
+      setFriendName('');
+      setFriendGradeSection('');
+      setKnowsSuspect('no');
+      setSuspectName('');
+      setSuspectDetails('');
     } catch (err: unknown) {
       setSubmitting(false);
       soundFX.playError();
@@ -531,42 +545,73 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 </select>
               </div>
 
-              {/* Self-Report vs Peer Referral Toggle */}
-              <div className="p-4 rounded-2xl register-section-card space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-extrabold register-label">
-                      {isTl ? 'Sino ang apektado sa insidente?' : 'Who is involved in this report?'}
-                    </p>
-                    <p className="text-[11px] card-subtitle-text">
-                      {isPeerReferral
-                        ? (isTl ? 'Peer Referral (Inirerefer mo ang kaklase mo para matulungan ng Guidance)' : 'Peer Referral (Referring a classmate who needs guidance help)')
-                        : (isTl ? 'Self-Report (Ikaw mismo ang nakaranas o may concern)' : 'Self-Report (You personally experienced or witnessed the concern)')}
-                    </p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isPeerReferral}
-                      onChange={(e) => setIsPeerReferral(e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-slate-300 dark:bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
+              {/* 1. SINO ANG MAGREREPORT: SARILI O PARA SA KAIBIGAN */}
+              <div className="p-4 sm:p-5 rounded-2xl register-section-card space-y-4">
+                <label className="text-xs font-extrabold register-section-title uppercase tracking-wider block">
+                  {isTl ? '1. Para kanino ang report na ito?' : '1. Who is this report for?'}
+                </label>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playToggleSwitch(true);
+                      setReportingRole('self');
+                    }}
+                    className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 ${
+                      reportingRole === 'self'
+                        ? 'bg-blue-600/20 border-blue-400 shadow-md ring-1 ring-blue-400'
+                        : 'bg-white/5 border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    <span className="text-lg">🙋</span>
+                    <div>
+                      <p className="text-xs font-extrabold text-white">
+                        {isTl ? 'Para sa Sarili Ko' : 'For Myself (Self-Report)'}
+                      </p>
+                      <p className="text-[11px] text-sky-200/80 mt-0.5">
+                        {isTl ? 'Ako mismo ang nakaranas o may concern' : 'I personally experienced or have this concern'}
+                      </p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playToggleSwitch(true);
+                      setReportingRole('peer');
+                    }}
+                    className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 ${
+                      reportingRole === 'peer'
+                        ? 'bg-blue-600/20 border-blue-400 shadow-md ring-1 ring-blue-400'
+                        : 'bg-white/5 border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    <span className="text-lg">🤝</span>
+                    <div>
+                      <p className="text-xs font-extrabold text-white">
+                        {isTl ? 'Para sa Aking Kaibigan / Kaklase' : 'For a Friend / Classmate'}
+                      </p>
+                      <p className="text-[11px] text-sky-200/80 mt-0.5">
+                        {isTl ? 'Irereport ko ang nangyari sa aking kaibigan' : 'Reporting an incident that happened to my friend'}
+                      </p>
+                    </div>
+                  </button>
                 </div>
 
-                {isPeerReferral && (
+                {/* Details if Reporting for a Friend */}
+                {reportingRole === 'peer' && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-200 dark:border-white/10">
                     <div className="space-y-1">
                       <label className="text-xs font-bold register-label">
-                        {isTl ? 'Pangalan ng Kaklase / Involved' : 'Classmate / Involved Student Name'}
+                        {isTl ? 'Pangalan ng Kaibigan / Biktima' : 'Friend / Affected Student Name'} *
                       </label>
                       <input
                         type="text"
-                        required={isPeerReferral}
-                        placeholder={isTl ? 'Pangalan ng estudyanteng kailangan ng tulong' : 'Name of student who needs assistance'}
-                        value={targetStudentName}
-                        onChange={(e) => setTargetStudentName(e.target.value)}
+                        required={reportingRole === 'peer'}
+                        placeholder={isTl ? 'Buong pangalan ng kaibigan' : 'Full name of your friend'}
+                        value={friendName}
+                        onChange={(e) => setFriendName(e.target.value)}
                         className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
                       />
                     </div>
@@ -574,9 +619,70 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                       <label className="text-xs font-bold register-label">Grade & Section</label>
                       <input
                         type="text"
-                        placeholder="e.g. Grade 11 · ICT-1"
-                        value={targetGradeSection}
-                        onChange={(e) => setTargetGradeSection(e.target.value)}
+                        placeholder="e.g. Grade 11 · STEM-1"
+                        value={friendGradeSection}
+                        onChange={(e) => setFriendGradeSection(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 2. KILALA BA ANG NAMBULLY O SUSPECT? */}
+              <div className="p-4 sm:p-5 rounded-2xl register-section-card space-y-4">
+                <label className="text-xs font-extrabold register-section-title uppercase tracking-wider block">
+                  {isTl ? '2. Kilala mo ba ang Nambully o Suspect?' : '2. Do you know the Bully / Person Involved?'}
+                </label>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  {[
+                    { id: 'yes', labelTl: 'Oo, Kilala ko ang Nambully', labelEn: 'Yes, I know the suspect' },
+                    { id: 'no', labelTl: 'Hindi ko kilala', labelEn: 'No, I do not know them' },
+                    { id: 'unsure', labelTl: 'May kutob / Hindi sigurado', labelEn: 'Unsure / May suspect' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        soundFX.playToggleSwitch(true);
+                        setKnowsSuspect(opt.id as any);
+                      }}
+                      className={`px-3 py-2.5 rounded-xl border text-xs font-bold transition-all text-center ${
+                        knowsSuspect === opt.id
+                          ? 'bg-blue-600/25 border-blue-400 text-white shadow-sm ring-1 ring-blue-400'
+                          : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                      }`}
+                    >
+                      {isTl ? opt.labelTl : opt.labelEn}
+                    </button>
+                  ))}
+                </div>
+
+                {knowsSuspect === 'yes' && (
+                  <div className="space-y-3 pt-3 border-t border-slate-200 dark:border-white/10">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold register-label">
+                        {isTl ? 'Pangalan ng Nambully / Suspect' : 'Name of Bully / Suspect'} *
+                      </label>
+                      <input
+                        type="text"
+                        required={knowsSuspect === 'yes'}
+                        placeholder={isTl ? 'Pangalan o alyas ng nambully' : 'Full name or alias of the person who bullied'}
+                        value={suspectName}
+                        onChange={(e) => setSuspectName(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold register-label">
+                        {isTl ? 'Section o Pagkakakilanlan (Opsyonal)' : 'Grade, Section, or Physical Description (Optional)'}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder={isTl ? 'hal. Kaklase sa ICT, o nakatambay sa hallway' : 'e.g. Classmate, section, or clothes worn'}
+                        value={suspectDetails}
+                        onChange={(e) => setSuspectDetails(e.target.value)}
                         className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
                       />
                     </div>

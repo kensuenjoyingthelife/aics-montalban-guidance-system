@@ -606,13 +606,18 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   AICS SAFEZONE
                 </h2>
 
-                {/* 3.5s Rotating Mental Health & Anti-Bullying Affirmation Carousel with Spacious Padding */}
+                {/* Desktop: 1 sentence only description below AICS SAFEZONE */}
+                <p className="hidden lg:block text-sm font-semibold card-subtitle-text">
+                  {isTl ? 'Bawat hinaing at alalahanin mo ay karapat-dapat sa kalinga.' : 'Every Concern Deserves Care.'}
+                </p>
+
+                {/* Mobile Phone Only: 3.5s Rotating Affirmation Carousel (Clean without quotation marks "") */}
                 <div
                   onMouseEnter={() => setIsCarouselPaused(true)}
                   onMouseLeave={() => setIsCarouselPaused(false)}
                   onTouchStart={() => setIsCarouselPaused(true)}
                   onTouchEnd={() => setIsCarouselPaused(false)}
-                  className="min-h-[52px] sm:min-h-[48px] flex items-center justify-center px-3 sm:px-6 py-2 rounded-2xl bg-blue-500/10 dark:bg-white/5 border border-blue-400/20 shadow-inner relative overflow-hidden transition-all"
+                  className="lg:hidden min-h-[50px] flex items-center justify-center px-4 py-2 rounded-2xl bg-blue-500/10 dark:bg-white/5 border border-blue-400/20 shadow-inner relative overflow-hidden transition-all"
                   title="Anti-Bullying & Confidential Guidance Shield"
                 >
                   <AnimatePresence mode="wait">
@@ -622,9 +627,9 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.35, ease: 'easeOut' }}
-                      className="text-xs sm:text-sm font-bold text-sky-900 dark:text-sky-200 text-center leading-relaxed"
+                      className="text-xs font-bold text-sky-900 dark:text-sky-200 text-center leading-relaxed"
                     >
-                      “{isTl ? MENTAL_HEALTH_AFFIRMATIONS[affirmationIndex].tl : MENTAL_HEALTH_AFFIRMATIONS[affirmationIndex].en}”
+                      {isTl ? MENTAL_HEALTH_AFFIRMATIONS[affirmationIndex].tl : MENTAL_HEALTH_AFFIRMATIONS[affirmationIndex].en}
                     </motion.p>
                   </AnimatePresence>
                 </div>
