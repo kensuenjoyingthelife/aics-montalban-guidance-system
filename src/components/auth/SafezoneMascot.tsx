@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 
 /**
- * 3D EVE-Style AICS SafeZone Mascot Storyline:
+ * 3D EVE-Style AICS SafeZone Mascot (Continuous Storyline Loop, Pure Animation - No Speech Text)
  * 
- * Flow:
- * 1. 'mag-hi'        : "hi kumusta 👋" (masiglang bati)
- * 2. 'raise-hands'   : "welcome sa AICS SAFE ROOM 🎉✨" (itaas ang dalawang kamay na masaya)
- * 3. 'tara-laro'     : "tara laro tayo! 🎮🎈" (mag-hi ulit, i-wave ang kamay na totoong gumagalaw)
- * 4. 'run-right'     : "Whooosh! 🏃‍♂️💨" (tatakbo pakanan)
- * 5. 'run-left'      : "Zoom zoom! 💨" (tatakbo pakaliwa)
- * 6. 'trip'          : "Aray ko po! 💫🙈" (cute na nadapa na may umiikot na stars sa ulo)
- * 7. 'getup'         : "Oks lang ako! Hehe ✨" (tatayo, medyo nahihiya)
- * 8. 'safe-final'    : "Safe ka dito palagi! 💙" (Babalik sa center, permanente nang mag-i-stay dito na may nagbi-blink na mata at nagwa-wave na kamay)
+ * Choreography Loop:
+ * 1. 'mag-hi'        : Masiglang kumakaway (waving greeting)
+ * 2. 'raise-hands'   : Masayang itinataas ang dalawang kamay at nagba-bounce sa tuwa (joyful celebration)
+ * 3. 'tara-laro'     : Mag-hi ulit, totoong kumakaway ang kamay na nag-aaya (playful invitation wave)
+ * 4. 'run-right'     : Tatakbo pakanan (dashing right)
+ * 5. 'run-left'      : Tatakbo pakaliwa (dashing left)
+ * 6. 'trip'          : Cute na madidiskaril at madadapa sa sahig na may umiikot na stars sa ulo
+ * 7. 'getup'         : Dahan-dahang tatayo at magtatagtag ng alikabok na may shy smile
+ * 8. 'safe-final'    : Babalik sa center, lilutang nang maayos habang nagbi-blink ang mga mata at kumakaway
+ *                      -> Tapos maglo-loop muli nang tuloy-tuloy!
  */
 
 type MascotStage = 
@@ -26,64 +27,63 @@ type MascotStage =
 
 export const SafezoneMascot: React.FC = () => {
   const [stage, setStage] = useState<MascotStage>('mag-hi');
-  const [speechBubble, setSpeechBubble] = useState<string>('hi kumusta 👋');
 
   useEffect(() => {
     let timer: any;
 
-    // 1. MAG HI: "hi kumusta 👋"
-    setStage('mag-hi');
-    setSpeechBubble('hi kumusta 👋');
-
-    timer = setTimeout(() => {
-      // 2. Itaas ang dalawang kamay na masaya: "welcome sa AICS SAFE ROOM"
-      setStage('raise-hands');
-      setSpeechBubble('welcome sa AICS SAFE ROOM 🎉✨');
+    const runStoryCycle = () => {
+      // 1. MAG HI: Masiglang bati
+      setStage('mag-hi');
 
       timer = setTimeout(() => {
-        // 3. Mag hi ulet iwave ang kamay na totoong gumagalaw: "tara laro tayo"
-        setStage('tara-laro');
-        setSpeechBubble('tara laro tayo! 🎮🎈');
+        // 2. Itaas ang dalawang kamay na masaya
+        setStage('raise-hands');
 
         timer = setTimeout(() => {
-          // 4. Tatakbo Pakanan: "Whooosh! 🏃‍♂️💨"
-          setStage('run-right');
-          setSpeechBubble('Whooosh! 🏃‍♂️💨');
+          // 3. Mag-hi ulit na kumakaway ang kamay (tara laro)
+          setStage('tara-laro');
 
           timer = setTimeout(() => {
-            // 5. Tatakbo Pakaliwa: "Zoom zoom! 💨"
-            setStage('run-left');
-            setSpeechBubble('Zoom zoom! 💨');
+            // 4. Tatakbo Pakanan
+            setStage('run-right');
 
             timer = setTimeout(() => {
-              // 6. Madadapa: "Aray ko po! 💫🙈"
-              setStage('trip');
-              setSpeechBubble('Aray ko po! 💫🙈');
+              // 5. Tatakbo Pakaliwa
+              setStage('run-left');
 
               timer = setTimeout(() => {
-                // 7. Tatayo: "Oks lang ako! Hehe ✨"
-                setStage('getup');
-                setSpeechBubble('Oks lang ako! Hehe ✨');
+                // 6. Madadapa
+                setStage('trip');
 
                 timer = setTimeout(() => {
-                  // 8. Babalik sa Center: "Safe ka dito palagi! 💙" (PERMANENTE DITO, NO MORE LOOPING)
-                  setStage('safe-final');
-                  setSpeechBubble('Safe ka dito palagi! 💙');
-                }, 2000);
-              }, 2000);
-            }, 2200);
-          }, 2200);
-        }, 2800);
-      }, 3000);
-    }, 2500);
+                  // 7. Tatayo
+                  setStage('getup');
 
+                  timer = setTimeout(() => {
+                    // 8. Babalik sa Center (Safe & happy, gentle wave + eye blink)
+                    setStage('safe-final');
+
+                    timer = setTimeout(() => {
+                      // Continuous Story Loop: Uulitin muli mula sa simula
+                      runStoryCycle();
+                    }, 4000);
+                  }, 1800);
+                }, 1800);
+              }, 2200);
+            }, 2200);
+          }, 2600);
+        }, 2800);
+      }, 2400);
+    };
+
+    runStoryCycle();
     return () => clearTimeout(timer);
   }, []);
 
   const isFinal = stage === 'safe-final';
 
   return (
-    <div className="relative flex flex-col items-center justify-center select-none py-2 my-1 overflow-visible w-full max-w-sm mx-auto h-[178px]">
+    <div className="relative flex flex-col items-center justify-center select-none py-2 my-1 overflow-visible w-full max-w-sm mx-auto h-[165px]">
       <style>{`
         /* Root Position Translations per stage */
         .stage-mag-hi {
@@ -219,7 +219,7 @@ export const SafezoneMascot: React.FC = () => {
           animation: friendlyWaveHand 1.4s ease-in-out infinite;
         }
 
-        /* Both Hands Raised In Joy (welcome sa aics safe room) */
+        /* Both Hands Raised In Joy */
         @keyframes celebrateHandsLeft {
           0%, 100% { transform: rotate(-75deg) translateY(-14px) translateX(-4px); }
           50% { transform: rotate(-85deg) translateY(-18px) translateX(-6px); }
@@ -267,36 +267,14 @@ export const SafezoneMascot: React.FC = () => {
         .anim-trip-stars {
           animation: starSpin 1.4s linear infinite;
         }
-
-        /* Floating comic cloud */
-        @keyframes cloudFloat {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-3px); }
-        }
-
-        .cloud-bubble-anim {
-          animation: cloudFloat 2.4s ease-in-out infinite;
-        }
       `}</style>
 
-      {/* 3D Character Composition & Dynamic Movement Stage */}
+      {/* 3D Character Composition & Dynamic Movement Stage (NO TEXT / SPEECH BUBBLE) */}
       <div className={`relative flex flex-col items-center justify-center stage-${stage} z-20`}>
         
-        {/* Floating Comic Cloud Speech Bubble (Sticks right above 3D mascot's head) */}
-        <div className="cloud-bubble-anim -mb-1 z-30 flex flex-col items-center pointer-events-none">
-          <div className="relative px-4 py-1.5 rounded-[20px] bg-white/95 dark:bg-slate-900/95 border-2 border-sky-400/60 shadow-xl shadow-sky-950/20 backdrop-blur-md flex items-center justify-center transition-all duration-500 max-w-[290px]">
-            <span className="text-[11px] font-black tracking-wide text-sky-950 dark:text-sky-100 whitespace-nowrap drop-shadow-xs">
-              {speechBubble}
-            </span>
-
-            {/* Cloud tail pointing directly to the 3D head */}
-            <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-white dark:bg-slate-900 border-r-2 border-b-2 border-sky-400/60 transform rotate-45" />
-          </div>
-        </div>
-
         {/* Dizzy stars when tripped (Nadapa) */}
         {stage === 'trip' && (
-          <div className="absolute -top-1 z-40 flex items-center gap-2 anim-trip-stars pointer-events-none">
+          <div className="absolute -top-3 z-40 flex items-center gap-2 anim-trip-stars pointer-events-none">
             <span className="text-yellow-400 text-sm">💫</span>
             <span className="text-pink-400 text-xs">✨</span>
             <span className="text-yellow-300 text-sm">⭐</span>
@@ -379,7 +357,7 @@ export const SafezoneMascot: React.FC = () => {
           {/* 3D SLEEK FLOATING TORSO POD & DYNAMIC ARMS */}
           <div className="relative z-10 flex items-center justify-center">
             {/* Left Arm:
-                - Kapag 'raise-hands' (welcome sa aics safe room): Itataas ang kaliwang kamay paitaas!
+                - Kapag 'raise-hands': Itataas ang kaliwang kamay paitaas!
                 - Normal: Relaxed sleek wing
             */}
             <div
