@@ -999,8 +999,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 </button>
               </div>
 
-              {/* Install AICS Kalang Ba Mobile App Banner */}
-              <div className="pt-2">
+              {/* Install AICS Kalang Ba Mobile App Banner (PWA Home Screen + Direct Android APK Download) */}
+              <div className="pt-2 space-y-2">
                 <button
                   type="button"
                   onClick={handleInstallApp}
@@ -1021,7 +1021,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       </div>
                       <p className="text-[11px] text-sky-800/80 dark:text-sky-300/80 font-medium">
                         {isTl
-                          ? 'I-download ang AICS Kalang Ba sa iyong cellphone para sa mabilis na pag-access'
+                          ? 'I-add ang AICS Kalang Ba sa iyong home screen para sa agarang pag-access'
                           : 'Add AICS Kalang Ba to home screen with offline & push notifications'}
                       </p>
                     </div>
@@ -1030,6 +1030,17 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     {isTl ? 'I-install →' : 'Install →'}
                   </span>
                 </button>
+
+                {/* Direct Android APK Download Link */}
+                <a
+                  href="/aics-kalang-ba.apk"
+                  download="AICS_Kalang_Ba.apk"
+                  onClick={() => soundFX.playToggleSwitch(true)}
+                  className="w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center gap-2 text-xs font-extrabold text-sky-300 hover:text-white transition-all cursor-pointer"
+                >
+                  <span>🤖</span>
+                  <span>{isTl ? 'Mag-download ng Android APK File (.apk)' : 'Download Android APK (.apk)'}</span>
+                </a>
               </div>
             </div>
           )}

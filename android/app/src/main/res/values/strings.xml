@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AICS Kalang Ba</string>
+    <string name="title_activity_main">AICS Kalang Ba</string>
+    <string name="package_name">com.aics.kalangba</string>
+    <string name="custom_url_scheme">com.aics.kalangba</string>
+</resources>
