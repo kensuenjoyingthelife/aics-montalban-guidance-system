@@ -367,7 +367,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
       {/* Top Floating Glass Island Navbar (Apple/Linear-Style Capsule with Campus Ambient Background) */}
       <header className="relative z-30 w-full px-3 sm:px-6 pt-3 sm:pt-4 safe-area-top">
-        <div className="relative max-w-6xl mx-auto rounded-2xl sm:rounded-full overflow-hidden border border-white/25 dark:border-white/15 shadow-2xl shadow-blue-950/50 transition-all">
+        <div className="relative max-w-6xl mx-auto rounded-3xl overflow-hidden border border-white/25 dark:border-white/15 shadow-2xl shadow-blue-950/50 transition-all">
           {/* Campus Photo Ambient Layer stretched to fill with blue tint */}
           <div
             className="absolute inset-0 bg-no-repeat pointer-events-none"
@@ -377,49 +377,52 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               backgroundPosition: 'center',
             }}
           />
-          {/* Blue Translucent Overlay (katulad ng CdM portal: kitang-kita ang image pero may subtle blue wash) */}
+          {/* Blue Translucent Overlay */}
           <div className="absolute inset-0 bg-[#072464]/65 mix-blend-multiply pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#020b24]/50 via-[#0a2769]/40 to-[#020b24]/50 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#020b24]/40 via-[#0a2769]/35 to-[#020b24]/70 pointer-events-none" />
 
-          {/* Inner Content Bar */}
-          <div className="relative z-10 px-3.5 sm:px-6 py-2.5 sm:py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 sm:gap-4">
-            {/* Left: Official Brand Seal & Campus Title */}
-            <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+          {/* Inner Content: Generous vertical height with prominent logo, title, and spaced toggles */}
+          <div className="relative z-10 px-4 sm:px-8 py-4 sm:py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+            {/* Left/Top Group: Prominent Large Circular Logo + Titles */}
+            <div className="flex items-center gap-3.5 sm:gap-5 min-w-0">
               <div className="relative shrink-0">
-                <img
-                  src="/aics-logo.jpg"
-                  alt="AICS Logo"
-                  className="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover ring-2 ring-white/60 bg-white p-0.5 shadow-lg"
-                />
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full p-1 bg-white/20 backdrop-blur-md ring-2 ring-white/70 shadow-xl flex items-center justify-center">
+                  <img
+                    src="/aics-logo.jpg"
+                    alt="AICS Logo"
+                    className="w-full h-full rounded-full object-cover shadow-inner"
+                  />
+                </div>
                 {/* Live Security Shield Dot */}
                 <span
-                  className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-[#0B1E48] dark:ring-[#07132B]"
+                  className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-400 ring-2 ring-[#020b24] shadow-md"
                   title="100% Confidential & RA 10173 Protected"
                 />
               </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <h1 className="text-xs sm:text-sm font-black tracking-tight text-white uppercase truncate drop-shadow-sm">
+
+              <div className="min-w-0 space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-base sm:text-lg font-black tracking-wide text-white uppercase truncate drop-shadow-md">
                     AICS MONTALBAN
                   </h1>
-                  <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-[10px] font-bold text-emerald-300 backdrop-blur-sm">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/25 border border-emerald-400/40 text-[10px] sm:text-xs font-bold text-emerald-300 backdrop-blur-sm shadow-sm">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     RA 10173
                   </span>
                 </div>
-                <p className="text-[10px] sm:text-xs text-sky-200/90 font-medium truncate drop-shadow-sm">
+                <p className="text-xs sm:text-sm text-sky-100 font-semibold truncate drop-shadow-md">
                   {isTl ? 'Ligtas at Kumpidensyal na Guidance Portal' : 'Safe & Confidential Concern Reporting'}
                 </p>
               </div>
             </div>
 
-            {/* Right: Unified Sleek Controls Cluster */}
-            <div className="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0">
-              <div className="flex items-center p-1 rounded-full bg-slate-900/60 dark:bg-black/40 border border-white/20 dark:border-white/10 shadow-inner backdrop-blur-md">
+            {/* Right/Bottom Group: Pill Toggles with spacing and clean alignment */}
+            <div className="flex items-center self-end md:self-center shrink-0">
+              <div className="flex items-center p-1.5 rounded-full bg-slate-950/70 border border-white/25 shadow-xl backdrop-blur-md">
                 <SoundTogglePill />
-                <div className="h-4 w-[1px] bg-white/20 mx-1 hidden sm:block" />
+                <div className="h-4 w-[1px] bg-white/20 mx-1.5 hidden sm:block" />
                 <LocaleSwitchPill />
-                <div className="h-4 w-[1px] bg-white/20 mx-1 hidden sm:block" />
+                <div className="h-4 w-[1px] bg-white/20 mx-1.5 hidden sm:block" />
                 <SkyThemePill />
               </div>
             </div>
