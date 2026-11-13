@@ -12,6 +12,8 @@ import { StudentAuthGate } from './pages/StudentAuthGate';
 import { StudentDashboard } from './pages/StudentDashboard';
 import { StudentPortalUser } from './services/studentAuthService';
 import { applyAdaptivePerformanceClass } from './services/devicePerformance';
+import { InactivityShield } from './components/security/InactivityShield';
+import { recordSecurityAudit } from './services/securityEngine';
 
 export const App: React.FC = () => {
   // Opening sequence plays every time the app starts
@@ -88,13 +90,24 @@ export const App: React.FC = () => {
                  STUDENT PORTAL (WEB & MOBILE) — 100% EXCLUSIVE
                  ==================================================== */
               activeStudentSession ? (
-                <StudentDashboard
-                  user={activeStudentSession}
-                  onSignOut={() => setActiveStudentSession(null)}
-                />
+                <InactivityShield
+                  timeoutMinutes={15}
+                  onTimeout={() => {
+                    recordSecurityAudit('AUTO_LOGOUT', activeStudentSession.studentNumber);
+                    setActiveStudentSession(null);
+                  }}
+                >
+                  <StudentDashboard
+                    user={activeStudentSession}
+                    onSignOut={() => setActiveStudentSession(null)}
+                  />
+                </InactivityShield>
               ) : (
                 <StudentAuthGate
-                  onLoginSuccess={(user) => setActiveStudentSession(user)}
+                  onLoginSuccess={(user) => {
+                    recordSecurityAudit('STUDENT_LOGIN', user.studentNumber);
+                    setActiveStudentSession(user);
+                  }}
                 />
               )
             )}

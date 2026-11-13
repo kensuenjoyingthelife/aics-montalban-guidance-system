@@ -6,6 +6,8 @@ import { SkyThemePill } from '../context/ThemeContext';
 import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
 import { StudentPortalUser } from '../services/studentAuthService';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../services/supabaseClient';
+import { QuickExitButton } from '../components/security/QuickExitButton';
+import { moderateReportContent, recordSecurityAudit } from '../services/securityEngine';
 import {
   ConcernMessage,
   fetchMessages,
@@ -264,6 +266,18 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       return;
     }
 
+    // Security Filter: Moderation & XSS Sanitization Check
+    const moderation = moderateReportContent(whatHappened);
+    if (!moderation.isClean) {
+      soundFX.playError();
+      setSubmitError(
+        isTl
+          ? `Bawal ang hindi kanais-nais na pananalita o trolling sa opisyal na ulat. Natagpuan ang: "${moderation.flaggedWord}".`
+          : `Inappropriate language or trolling is strictly prohibited in official reports. Detected: "${moderation.flaggedWord}".`
+      );
+      return;
+    }
+
     setSubmitting(true);
     setSubmitError(null);
 
@@ -273,7 +287,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
     const finalNarrative = [
       isPeer ? `[REPORT FOR FRIEND/CLASSMATE: ${friendName} (${friendGradeSection || 'N/A'})]` : '[SELF-REPORT BY STUDENT]',
       knowsSuspect === 'yes' ? `[SUSPECT / NAMBULLY: ${suspectName}${suspectDetails ? ` - ${suspectDetails}` : ''}]` : (knowsSuspect === 'unsure' ? '[SUSPECT / NAMBULLY: Unsure / May kutob pero hindi sigurado]' : '[SUSPECT / NAMBULLY: Hindi kilala ang nambully]'),
-      `[SALAYSAY / WHAT HAPPENED]:\n${whatHappened}`
+      `[SALAYSAY / WHAT HAPPENED]:\n${moderation.sanitizedText}`
     ].join('\n\n');
 
     try {
@@ -320,6 +334,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
       soundFX.playSuccessCheck();
       setSubmittedConcernCode(refCode);
+      recordSecurityAudit('REPORT_SUBMITTED', user.studentNumber);
 
       // Reset Form
       setWhatHappened('');
@@ -366,6 +381,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+          {/* Emergency SOS Quick-Exit Button (Immediate Safety Escape) */}
+          <QuickExitButton onTrigger={onSignOut} />
+
           {/* Quick Panic / Discretion Shield Button */}
           <button
             type="button"
