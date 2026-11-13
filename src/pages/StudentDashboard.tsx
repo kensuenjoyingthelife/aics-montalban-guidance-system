@@ -1,5 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Menu,
+  X,
+  FileEdit,
+  FolderArchive,
+  MessageSquare,
+  LogOut,
+  ChevronRight,
+  ChevronLeft,
+  Shield,
+  HelpCircle,
+  CheckCircle2,
+  AlertTriangle,
+} from 'lucide-react';
 import { WavyBackground } from '../components/auth/WavyBackground';
 import { SoundTogglePill, soundFX } from '../services/soundEngine';
 import { SkyThemePill } from '../context/ThemeContext';
@@ -38,6 +52,12 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   const isTl = locale === 'tl';
 
   const [activeTab, setActiveTab] = useState<'submit' | 'history' | 'chat'>('submit');
+
+  // Multi-step Google Form-style pagination for report submission (1 -> 2 -> 3)
+  const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
+
+  // Right-side Drawer / Menu Bar state
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
 
   // Submit Concern Form State
   const [reportType, setReportType] = useState<string>('Bullying / Peer Harassment');
@@ -346,6 +366,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       recordSecurityAudit('REPORT_SUBMITTED', user.studentNumber);
 
       // Reset Form
+      setFormStep(1);
       setWhatHappened('');
       setHappenedWhen('');
       setHappenedWhere('');
@@ -368,49 +389,33 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
     <div className="min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none student-portal-canvas bg-[#05112B] text-white">
       <WavyBackground />
 
-      {/* Top Navigation Bar - Clean, Organized & Non-Congested Layout */}
-      <header className="relative z-20 w-full px-3 sm:px-8 py-3 sm:py-5 border-b border-white/10 student-portal-header bg-[#0B1E48]/90 backdrop-blur-md safe-area-top">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* Top Navigation Bar - Clean, Organized & Non-Congested Header */}
+      <header className="relative z-20 w-full px-3 sm:px-8 py-3 sm:py-4 border-b border-white/10 student-portal-header bg-[#0B1E48]/90 backdrop-blur-md safe-area-top">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
           {/* Left Brand & Identification */}
-          <div className="flex items-center justify-between sm:justify-start gap-3">
-            <div className="flex items-center gap-2.5 sm:gap-3.5">
-              <img
-                src="/aics-logo.jpg"
-                alt="AICS Logo"
-                className="w-9 h-9 sm:w-12 sm:h-12 rounded-full object-cover ring-2 ring-white/40 bg-white p-0.5 shadow-xl shrink-0"
-              />
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <h1 className="text-xs sm:text-base font-extrabold tracking-tight text-white uppercase truncate">
-                    AICS MONTALBAN
-                  </h1>
-                  <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                    ACTIVE
-                  </span>
-                </div>
-                <p className="text-[10px] sm:text-xs text-[#9BCBFF] font-medium truncate">
-                  {isTl ? 'Ligtas at Kumpidensyal na Portal' : 'Safe & Confidential Concern Reporting'}
-                </p>
+          <div className="flex items-center gap-2.5 sm:gap-3.5">
+            <img
+              src="/aics-logo.jpg"
+              alt="AICS Logo"
+              className="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover ring-2 ring-white/40 bg-white p-0.5 shadow-xl shrink-0"
+            />
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h1 className="text-xs sm:text-base font-extrabold tracking-tight text-white uppercase truncate">
+                  AICS MONTALBAN
+                </h1>
+                <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                  ACTIVE
+                </span>
               </div>
+              <p className="text-[10px] sm:text-xs text-[#9BCBFF] font-medium truncate">
+                {isTl ? 'Ligtas at Kumpidensyal na Portal' : 'Safe & Confidential Concern Reporting'}
+              </p>
             </div>
-
-            {/* Mobile Tour Help Guide Icon */}
-            <button
-              type="button"
-              onClick={() => {
-                soundFX.playToggleSwitch(true);
-                setShowMobileTour(true);
-              }}
-              className="sm:hidden px-2.5 py-1 rounded-full bg-sky-500/20 border border-sky-400/40 text-sky-200 text-[10px] font-bold flex items-center gap-1"
-              title="Buksan ang App Guide"
-            >
-              <span>❓</span>
-              <span>Guide</span>
-            </button>
           </div>
 
-          {/* Right Action & Control Cluster */}
-          <div className="flex items-center justify-between sm:justify-end gap-2 flex-wrap">
+          {/* Right Action Bar & Drawer Toggle */}
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Quick Panic / Discretion Shield Button */}
             <button
               type="button"
@@ -422,51 +427,243 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
               title={isTl ? 'Quick Privacy Shield' : 'Quick Privacy Shield'}
             >
               <span>🛡️</span>
-              <span>{isTl ? 'Quick Shield' : 'Quick Shield'}</span>
-            </button>
-
-            {/* Desktop Guide Tour Button */}
-            <button
-              type="button"
-              onClick={() => {
-                soundFX.playToggleSwitch(true);
-                setShowMobileTour(true);
-              }}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-200 text-xs font-bold transition-colors"
-            >
-              <span>❓</span>
-              <span>{isTl ? 'Gabay sa Paggamit' : 'User Guide'}</span>
-            </button>
-
-            {/* Toggles Cluster (Organized inside sleek capsule) */}
-            <div className="flex items-center p-1 rounded-full bg-black/40 border border-white/15 shadow-inner">
-              <SoundTogglePill />
-              <div className="h-3.5 w-[1px] bg-white/20 mx-1" />
-              <LocaleSwitchPill />
-              <div className="h-3.5 w-[1px] bg-white/20 mx-1" />
-              <SkyThemePill />
-            </div>
-
-            {/* Sign Out Button */}
-            <button
-              type="button"
-              onClick={() => {
-                soundFX.playBackspace();
-                onSignOut();
-              }}
-              className="btn-press px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-extrabold text-xs shadow-md shadow-rose-950/40 border border-rose-400/40 flex items-center gap-1 transition-all"
-            >
-              <span>🚪</span>
-              <span>{isTl ? 'Sign Out' : 'Sign Out'}</span>
+              <span className="hidden sm:inline">{isTl ? 'Quick Shield' : 'Quick Shield'}</span>
             </button>
 
             {/* Desktop Emergency SOS Quick-Exit Pill */}
             <div className="hidden md:block">
               <QuickExitButton onTrigger={onSignOut} />
             </div>
+
+            {/* Right Menu Drawer Trigger Button */}
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playToggleSwitch(true);
+                setIsMenuOpen(true);
+              }}
+              className="btn-press px-3 py-2 rounded-xl bg-[#1E469B]/80 hover:bg-[#2557BE] text-white border border-sky-400/40 shadow-lg flex items-center gap-2 font-bold text-xs"
+              aria-label="Open Navigation Menu"
+            >
+              <Menu className="w-4 h-4 text-sky-200" />
+              <span className="hidden sm:inline">{isTl ? 'Menu' : 'Menu'}</span>
+            </button>
           </div>
         </div>
       </header>
+
+      {/* Slide-over Right Navigation Drawer */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMenuOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99990]"
+            />
+
+            {/* Right Drawer Panel */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              className="fixed top-0 right-0 h-full w-[290px] sm:w-[340px] bg-[#071330] border-l border-white/15 z-[99995] flex flex-col justify-between shadow-2xl p-5"
+            >
+              <div className="space-y-6">
+                {/* Drawer Header */}
+                <div className="flex items-center justify-between pb-4 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🧭</span>
+                    <div>
+                      <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">
+                        {isTl ? 'Portal Navigation' : 'Portal Menu'}
+                      </h3>
+                      <p className="text-[10px] text-sky-300/70 font-semibold truncate max-w-[170px]">
+                        {user.fullName}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playBackspace();
+                      setIsMenuOpen(false);
+                    }}
+                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Primary Features Navigation */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block px-1">
+                    {isTl ? 'Pangunahing Aksyon' : 'Main Features'}
+                  </label>
+
+                  {/* 1. Report Concern */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playToggleSwitch(true);
+                      setActiveTab('submit');
+                      setIsMenuOpen(false);
+                    }}
+                    className={`w-full p-3 rounded-2xl flex items-center justify-between transition-all ${
+                      activeTab === 'submit'
+                        ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-lg ring-1 ring-sky-300'
+                        : 'bg-white/5 hover:bg-white/10 text-slate-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <FileEdit className="w-4 h-4 text-sky-400" />
+                      <div className="text-left">
+                        <p className="text-xs font-black">
+                          {isTl ? 'Report Concern' : 'Report Concern'}
+                        </p>
+                        <p className="text-[10px] text-sky-200/70">
+                          {isTl ? 'Magsumite ng insidente' : 'Submit confidential incident'}
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 opacity-50" />
+                  </button>
+
+                  {/* 2. My Reports */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playToggleSwitch(true);
+                      setActiveTab('history');
+                      void fetchMyHistory();
+                      setIsMenuOpen(false);
+                    }}
+                    className={`w-full p-3 rounded-2xl flex items-center justify-between transition-all ${
+                      activeTab === 'history'
+                        ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-lg ring-1 ring-sky-300'
+                        : 'bg-white/5 hover:bg-white/10 text-slate-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <FolderArchive className="w-4 h-4 text-amber-400" />
+                      <div className="text-left">
+                        <p className="text-xs font-black">
+                          {isTl ? 'My Reports' : 'My Reports'}
+                        </p>
+                        <p className="text-[10px] text-sky-200/70">
+                          {isTl ? 'Subaybayan ang aksyon' : 'Track case resolutions'}
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 opacity-50" />
+                  </button>
+
+                  {/* 3. Guidance Chat */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playToggleSwitch(true);
+                      setActiveTab('chat');
+                      setIsMenuOpen(false);
+                    }}
+                    className={`w-full p-3 rounded-2xl flex items-center justify-between transition-all ${
+                      activeTab === 'chat'
+                        ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-lg ring-1 ring-sky-300'
+                        : 'bg-white/5 hover:bg-white/10 text-slate-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <MessageSquare className="w-4 h-4 text-emerald-400" />
+                      <div className="text-left">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-black">
+                            {isTl ? 'Guidance Chat' : 'Guidance Chat'}
+                          </p>
+                          {history.some((c) => c.chatStatus === 'Open') && (
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                          )}
+                        </div>
+                        <p className="text-[10px] text-sky-200/70">
+                          {isTl ? '1-on-1 counselor live chat' : '1-on-1 private counselor chat'}
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 opacity-50" />
+                  </button>
+                </div>
+
+                {/* System Settings & Toggles Cluster */}
+                <div className="space-y-3 pt-4 border-t border-white/10">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block px-1">
+                    {isTl ? 'Hitsura at Wika' : 'Display & Preferences'}
+                  </label>
+
+                  {/* Theme Switcher Row */}
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                    <span className="text-xs font-bold text-slate-300">
+                      {isTl ? 'Dark / Light Mode' : 'Sky Theme (Dark/Light)'}
+                    </span>
+                    <SkyThemePill />
+                  </div>
+
+                  {/* Language Switcher Row */}
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                    <span className="text-xs font-bold text-slate-300">
+                      {isTl ? 'Wika (EN / TL)' : 'Language (EN / TL)'}
+                    </span>
+                    <LocaleSwitchPill />
+                  </div>
+
+                  {/* Sound FX Toggle Row */}
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                    <span className="text-xs font-bold text-slate-300">
+                      {isTl ? 'Audio & Sound FX' : 'Audio FX'}
+                    </span>
+                    <SoundTogglePill />
+                  </div>
+
+                  {/* User Guide Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playToggleSwitch(true);
+                      setShowMobileTour(true);
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full p-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-200 text-xs font-bold flex items-center justify-center gap-2"
+                  >
+                    <HelpCircle className="w-4 h-4" />
+                    <span>{isTl ? 'Buksan ang Gabay sa Paggamit' : 'Open User Guide Tour'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Drawer Footer: Safe Sign Out */}
+              <div className="pt-4 border-t border-white/10 space-y-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playBackspace();
+                    setIsMenuOpen(false);
+                    onSignOut();
+                  }}
+                  className="btn-press w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-extrabold text-xs shadow-lg shadow-rose-950/40 border border-rose-400/40 flex items-center justify-center gap-2 transition-all"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>{isTl ? 'Sign Out sa Portal' : 'Sign Out of Portal'}</span>
+                </button>
+                <p className="text-[10px] text-center text-slate-400 font-medium">
+                  AICS Montalban · RA 10173 Protected
+                </p>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Mobile Floating AssistiveTouch SOS Mascot Ball (Always Top-Level at Root Body Z-Index) */}
       <div className="md:hidden">
@@ -552,320 +749,451 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
           </span>
         </div>
 
-        {/* TAB 1: SUBMIT REPORT */}
+        {/* TAB 1: SUBMIT REPORT (Google Form-Style Step-by-Step Pagination) */}
         {activeTab === 'submit' && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-3xl cosmic-glass-card p-6 sm:p-8 space-y-6 shadow-2xl"
+            className="rounded-3xl cosmic-glass-card p-5 sm:p-8 space-y-6 shadow-2xl"
           >
-            <div>
-              <h2 className="text-lg sm:text-xl font-extrabold card-title-text">
-                {isTl ? 'Magsumite ng Confidential Report sa Guidance' : 'Submit Confidential Concern Report'}
-              </h2>
-              <p className="text-xs card-subtitle-text mt-0.5">
-                {isTl
-                  ? 'Tanging ang AICS Guidance Associate lamang ang makakabasa nito. Ligtas ka rito.'
-                  : 'Direct, private channel to the AICS Montalban Guidance Office.'}
-              </p>
+            {/* Form Header & Progress Tracker */}
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/30 text-[10px] font-black uppercase tracking-wider">
+                      Page {formStep} of 3
+                    </span>
+                    <span className="text-[11px] text-emerald-400 font-bold flex items-center gap-1">
+                      <Shield className="w-3.5 h-3.5" /> RA 10173 Protected
+                    </span>
+                  </div>
+                  <h2 className="text-base sm:text-xl font-extrabold card-title-text mt-1">
+                    {formStep === 1 && (isTl ? '1. Category ng Insidente & Para Kanino' : '1. Incident Category & Scope')}
+                    {formStep === 2 && (isTl ? '2. Nambully / Suspect & Detalye' : '2. Bully / Person Involved Details')}
+                    {formStep === 3 && (isTl ? '3. Salaysay, Konteksto & Pagsumite' : '3. Narrative Context & Submission')}
+                  </h2>
+                  <p className="text-xs card-subtitle-text mt-0.5">
+                    {isTl
+                      ? 'Tanging ang AICS Guidance Associate lamang ang makakabasa nito. Ligtas ka rito.'
+                      : 'Direct, private channel to the AICS Montalban Guidance Office.'}
+                  </p>
+                </div>
+
+                {/* Visual Step Bar */}
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  {[1, 2, 3].map((step) => (
+                    <div
+                      key={step}
+                      className={`h-2 rounded-full transition-all ${
+                        formStep === step
+                          ? 'w-8 bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.7)]'
+                          : formStep > step
+                          ? 'w-4 bg-emerald-400'
+                          : 'w-4 bg-white/20'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
 
             {submitError && (
               <div className="p-3.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-600 dark:text-rose-200 text-xs font-semibold flex items-center gap-2">
-                <span>⚠️</span>
+                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
                 <span>{submitError}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmitConcern} className="space-y-5">
-              {/* Report Category Selector */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold register-section-title uppercase tracking-wider">
-                  {isTl ? 'Category ng Insidente / Concern' : 'Incident / Concern Category'}
-                </label>
-                <select
-                  value={reportType}
-                  onChange={(e) => setReportType(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl cosmic-input text-xs sm:text-sm font-semibold focus:outline-none"
+            <form onSubmit={handleSubmitConcern} className="space-y-6">
+              {/* ========================================================= */}
+              {/* STEP 1: CATEGORY & SINO ANG MAGREREPORT                   */}
+              {/* ========================================================= */}
+              {formStep === 1 && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="space-y-5"
                 >
-                  <option value="Bullying / Peer Harassment">
-                    {isTl ? 'Bullying / Peer Harassment (Physical, Verbal, o Cyber)' : 'Bullying / Peer Harassment (Physical, Verbal, or Cyber)'}
-                  </option>
-                  <option value="Peer Conflict / Fighting">
-                    {isTl ? 'Peer Conflict / Away ng Magkaklase' : 'Peer Conflict / Student Disputes'}
-                  </option>
-                  <option value="Academic & Attendance Stress">
-                    {isTl ? 'Academic Stress / Madalas na Absent' : 'Academic & Attendance Stress'}
-                  </option>
-                  <option value="Personal Welfare & Emotional Support">
-                    {isTl ? 'Personal / Family Welfare Support' : 'Personal Welfare & Emotional Support'}
-                  </option>
-                  <option value="Other Student Discipline Concern">
-                    {isTl ? 'Iba Pang Concern sa Disiplina' : 'Other Student Discipline Concern'}
-                  </option>
-                </select>
-              </div>
-
-              {/* 1. SINO ANG MAGREREPORT: SARILI O PARA SA KAIBIGAN */}
-              <div className="p-4 sm:p-5 rounded-2xl register-section-card space-y-4">
-                <label className="text-xs font-extrabold register-section-title uppercase tracking-wider block">
-                  {isTl ? '1. Para kanino ang report na ito?' : '1. Who is this report for?'}
-                </label>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playToggleSwitch(true);
-                      setReportingRole('self');
-                    }}
-                    className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 ${
-                      reportingRole === 'self'
-                        ? 'bg-blue-600/20 border-blue-400 shadow-md ring-1 ring-blue-400'
-                        : 'bg-white/5 border-white/10 hover:bg-white/10'
-                    }`}
-                  >
-                    <span className="text-lg">🙋</span>
-                    <div>
-                      <p className="text-xs font-extrabold text-white">
-                        {isTl ? 'Para sa Sarili Ko' : 'For Myself (Self-Report)'}
-                      </p>
-                      <p className="text-[11px] text-sky-200/80 mt-0.5">
-                        {isTl ? 'Ako mismo ang nakaranas o may concern' : 'I personally experienced or have this concern'}
-                      </p>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playToggleSwitch(true);
-                      setReportingRole('peer');
-                    }}
-                    className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 ${
-                      reportingRole === 'peer'
-                        ? 'bg-blue-600/20 border-blue-400 shadow-md ring-1 ring-blue-400'
-                        : 'bg-white/5 border-white/10 hover:bg-white/10'
-                    }`}
-                  >
-                    <span className="text-lg">🤝</span>
-                    <div>
-                      <p className="text-xs font-extrabold text-white">
-                        {isTl ? 'Para sa Aking Kaibigan / Kaklase' : 'For a Friend / Classmate'}
-                      </p>
-                      <p className="text-[11px] text-sky-200/80 mt-0.5">
-                        {isTl ? 'Irereport ko ang nangyari sa aking kaibigan' : 'Reporting an incident that happened to my friend'}
-                      </p>
-                    </div>
-                  </button>
-                </div>
-
-                {/* Details if Reporting for a Friend */}
-                {reportingRole === 'peer' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-200 dark:border-white/10">
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold register-label">
-                        {isTl ? 'Pangalan ng Kaibigan / Biktima' : 'Friend / Affected Student Name'} *
-                      </label>
-                      <input
-                        type="text"
-                        required={reportingRole === 'peer'}
-                        placeholder={isTl ? 'Buong pangalan ng kaibigan' : 'Full name of your friend'}
-                        value={friendName}
-                        onChange={(e) => setFriendName(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold register-label">Grade & Section</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Grade 11 · STEM-1"
-                        value={friendGradeSection}
-                        onChange={(e) => setFriendGradeSection(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
-                      />
-                    </div>
+                  {/* Category Selector */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-extrabold register-section-title uppercase tracking-wider block">
+                      {isTl ? 'A. Piliin ang Uri ng Concern' : 'A. Select Incident / Concern Category'} *
+                    </label>
+                    <select
+                      value={reportType}
+                      onChange={(e) => setReportType(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl cosmic-input text-xs sm:text-sm font-semibold focus:outline-none"
+                    >
+                      <option value="Bullying / Peer Harassment">
+                        {isTl ? 'Bullying / Peer Harassment (Physical, Verbal, o Cyber)' : 'Bullying / Peer Harassment (Physical, Verbal, or Cyber)'}
+                      </option>
+                      <option value="Peer Conflict / Fighting">
+                        {isTl ? 'Peer Conflict / Away ng Magkaklase' : 'Peer Conflict / Student Disputes'}
+                      </option>
+                      <option value="Academic & Attendance Stress">
+                        {isTl ? 'Academic Stress / Madalas na Absent' : 'Academic & Attendance Stress'}
+                      </option>
+                      <option value="Personal Welfare & Emotional Support">
+                        {isTl ? 'Personal / Family Welfare Support' : 'Personal Welfare & Emotional Support'}
+                      </option>
+                      <option value="Other Student Discipline Concern">
+                        {isTl ? 'Iba Pang Concern sa Disiplina' : 'Other Student Discipline Concern'}
+                      </option>
+                    </select>
                   </div>
-                )}
-              </div>
 
-              {/* 2. KILALA BA ANG NAMBULLY O SUSPECT? */}
-              <div className="p-4 sm:p-5 rounded-2xl register-section-card space-y-4">
-                <label className="text-xs font-extrabold register-section-title uppercase tracking-wider block">
-                  {isTl ? '2. Kilala mo ba ang Nambully o Suspect?' : '2. Do you know the Bully / Person Involved?'}
-                </label>
+                  {/* SINO ANG MAGREREPORT: SARILI O PARA SA KAIBIGAN */}
+                  <div className="p-4 sm:p-5 rounded-2xl register-section-card space-y-4">
+                    <label className="text-xs font-extrabold register-section-title uppercase tracking-wider block">
+                      {isTl ? 'B. Para kanino ang report na ito?' : 'B. Who is this report for?'} *
+                    </label>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  {[
-                    { id: 'yes', labelTl: 'Oo, Kilala ko ang Nambully', labelEn: 'Yes, I know the suspect' },
-                    { id: 'no', labelTl: 'Hindi ko kilala', labelEn: 'No, I do not know them' },
-                    { id: 'unsure', labelTl: 'May kutob / Hindi sigurado', labelEn: 'Unsure / May suspect' },
-                  ].map((opt) => (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundFX.playToggleSwitch(true);
+                          setReportingRole('self');
+                        }}
+                        className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 ${
+                          reportingRole === 'self'
+                            ? 'bg-blue-600/25 border-blue-400 shadow-md ring-1 ring-blue-400'
+                            : 'bg-white/5 border-white/10 hover:bg-white/10'
+                        }`}
+                      >
+                        <span className="text-xl">🙋</span>
+                        <div>
+                          <p className="text-xs font-extrabold text-white">
+                            {isTl ? 'Para sa Sarili Ko' : 'For Myself (Self-Report)'}
+                          </p>
+                          <p className="text-[11px] text-sky-200/80 mt-0.5">
+                            {isTl ? 'Ako mismo ang nakaranas o may concern' : 'I personally experienced or have this concern'}
+                          </p>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundFX.playToggleSwitch(true);
+                          setReportingRole('peer');
+                        }}
+                        className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 ${
+                          reportingRole === 'peer'
+                            ? 'bg-blue-600/25 border-blue-400 shadow-md ring-1 ring-blue-400'
+                            : 'bg-white/5 border-white/10 hover:bg-white/10'
+                        }`}
+                      >
+                        <span className="text-xl">🤝</span>
+                        <div>
+                          <p className="text-xs font-extrabold text-white">
+                            {isTl ? 'Para sa Aking Kaibigan / Kaklase' : 'For a Friend / Classmate'}
+                          </p>
+                          <p className="text-[11px] text-sky-200/80 mt-0.5">
+                            {isTl ? 'Irereport ko ang nangyari sa aking kaibigan' : 'Reporting an incident that happened to my friend'}
+                          </p>
+                        </div>
+                      </button>
+                    </div>
+
+                    {/* Details if Reporting for a Friend */}
+                    {reportingRole === 'peer' && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-200 dark:border-white/10">
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold register-label">
+                            {isTl ? 'Pangalan ng Kaibigan / Biktima' : 'Friend / Affected Student Name'} *
+                          </label>
+                          <input
+                            type="text"
+                            required={reportingRole === 'peer'}
+                            placeholder={isTl ? 'Buong pangalan ng kaibigan' : 'Full name of your friend'}
+                            value={friendName}
+                            onChange={(e) => setFriendName(e.target.value)}
+                            className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold register-label">Grade & Section</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Grade 11 · STEM-1"
+                            value={friendGradeSection}
+                            onChange={(e) => setFriendGradeSection(e.target.value)}
+                            className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Step 1 Next Button */}
+                  <div className="pt-2 flex justify-end">
                     <button
-                      key={opt.id}
                       type="button"
                       onClick={() => {
+                        if (reportingRole === 'peer' && !friendName.trim()) {
+                          soundFX.playError();
+                          setSubmitError(isTl ? 'Pakilagay ang pangalan ng kaibigan.' : 'Please enter your friend\'s name.');
+                          return;
+                        }
+                        setSubmitError(null);
                         soundFX.playToggleSwitch(true);
-                        setKnowsSuspect(opt.id as any);
+                        setFormStep(2);
                       }}
-                      className={`px-3 py-2.5 rounded-xl border text-xs font-bold transition-all text-center ${
-                        knowsSuspect === opt.id
-                          ? 'bg-blue-600/25 border-blue-400 text-white shadow-sm ring-1 ring-blue-400'
-                          : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-                      }`}
+                      className="btn-press px-6 py-3 rounded-xl bg-gradient-to-r from-[#1E469B] to-[#2557BE] hover:from-[#18387D] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-blue-950/40 flex items-center gap-2"
                     >
-                      {isTl ? opt.labelTl : opt.labelEn}
+                      <span>{isTl ? 'Pumunta sa Hakbang 2' : 'Next: Bully & Suspect Info'}</span>
+                      <ChevronRight className="w-4 h-4" />
                     </button>
-                  ))}
-                </div>
+                  </div>
+                </motion.div>
+              )}
 
-                {knowsSuspect === 'yes' && (
-                  <div className="space-y-3 pt-3 border-t border-slate-200 dark:border-white/10">
+              {/* ========================================================= */}
+              {/* STEP 2: KILALA BA ANG NAMBULLY O SUSPECT?                 */}
+              {/* ========================================================= */}
+              {formStep === 2 && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="space-y-5"
+                >
+                  <div className="p-4 sm:p-5 rounded-2xl register-section-card space-y-4">
+                    <label className="text-xs font-extrabold register-section-title uppercase tracking-wider block">
+                      {isTl ? 'Kilala mo ba ang Nambully o Taong Sangkot?' : 'Do you know the Bully / Person Involved?'} *
+                    </label>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      {[
+                        { id: 'yes', labelTl: 'Oo, Kilala ko ang Nambully', labelEn: 'Yes, I know them' },
+                        { id: 'no', labelTl: 'Hindi ko kilala', labelEn: 'No, I do not know them' },
+                        { id: 'unsure', labelTl: 'May kutob / Hindi sigurado', labelEn: 'Unsure / May suspect' },
+                      ].map((opt) => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => {
+                            soundFX.playToggleSwitch(true);
+                            setKnowsSuspect(opt.id as any);
+                          }}
+                          className={`px-3 py-3 rounded-xl border text-xs font-bold transition-all text-center ${
+                            knowsSuspect === opt.id
+                              ? 'bg-blue-600/25 border-blue-400 text-white shadow-sm ring-1 ring-blue-400'
+                              : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                          }`}
+                        >
+                          {isTl ? opt.labelTl : opt.labelEn}
+                        </button>
+                      ))}
+                    </div>
+
+                    {knowsSuspect === 'yes' && (
+                      <div className="space-y-3 pt-3 border-t border-slate-200 dark:border-white/10">
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold register-label">
+                            {isTl ? 'Pangalan ng Nambully / Suspect' : 'Name of Bully / Suspect'} *
+                          </label>
+                          <input
+                            type="text"
+                            required={knowsSuspect === 'yes'}
+                            placeholder={isTl ? 'Pangalan o alyas ng nambully' : 'Full name or alias of the suspect'}
+                            value={suspectName}
+                            onChange={(e) => setSuspectName(e.target.value)}
+                            className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold register-label">
+                            {isTl ? 'Section o Pagkakakilanlan (Opsyonal)' : 'Grade, Section, or Physical Description (Optional)'}
+                          </label>
+                          <input
+                            type="text"
+                            placeholder={isTl ? 'hal. Kaklase sa ICT, o nakatambay sa hallway' : 'e.g. Classmate, section, or clothes worn'}
+                            value={suspectDetails}
+                            onChange={(e) => setSuspectDetails(e.target.value)}
+                            className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Step 2 Back & Next Buttons */}
+                  <div className="pt-2 flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundFX.playBackspace();
+                        setFormStep(1);
+                      }}
+                      className="btn-press px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-bold flex items-center gap-1.5"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      <span>{isTl ? 'Bumalik sa Hakbang 1' : 'Back to Step 1'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (knowsSuspect === 'yes' && !suspectName.trim()) {
+                          soundFX.playError();
+                          setSubmitError(isTl ? 'Pakilagay ang pangalan ng suspect o nambully.' : 'Please enter the bully or suspect name.');
+                          return;
+                        }
+                        setSubmitError(null);
+                        soundFX.playToggleSwitch(true);
+                        setFormStep(3);
+                      }}
+                      className="btn-press px-6 py-3 rounded-xl bg-gradient-to-r from-[#1E469B] to-[#2557BE] hover:from-[#18387D] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-blue-950/40 flex items-center gap-2"
+                    >
+                      <span>{isTl ? 'Pumunta sa Hakbang 3' : 'Next: Salaysay & Review'}</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ========================================================= */}
+              {/* STEP 3: SALAYSAY, KONTEKSTO & TERMS & CONDITION          */}
+              {/* ========================================================= */}
+              {formStep === 3 && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="space-y-5"
+                >
+                  {/* Narrative of what happened */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-extrabold register-section-title uppercase tracking-wider block">
+                      {isTl ? 'Salaysay ng Pangyayari (What Happened)' : 'Incident Narrative (What Happened)'} *
+                    </label>
+                    <textarea
+                      rows={4}
+                      required
+                      placeholder={
+                        isTl
+                          ? 'Ikuwento nang tapat ang buong pangyayari. Ano ang ginawa o sinabi? Sino-sino ang kasama?'
+                          : 'Provide an honest description of the incident. What happened? Who was involved?'
+                      }
+                      value={whatHappened}
+                      onChange={(e) => setWhatHappened(e.target.value)}
+                      className="w-full p-4 rounded-xl cosmic-input text-xs sm:text-sm font-semibold focus:outline-none leading-relaxed"
+                    />
+                  </div>
+
+                  {/* Incident Context Details (When & Where) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="space-y-1">
                       <label className="text-xs font-bold register-label">
-                        {isTl ? 'Pangalan ng Nambully / Suspect' : 'Name of Bully / Suspect'} *
+                        {isTl ? 'Kailan Nangyari (When)' : 'When It Happened'}
                       </label>
                       <input
                         type="text"
-                        required={knowsSuspect === 'yes'}
-                        placeholder={isTl ? 'Pangalan o alyas ng nambully' : 'Full name or alias of the person who bullied'}
-                        value={suspectName}
-                        onChange={(e) => setSuspectName(e.target.value)}
+                        placeholder={isTl ? 'hal. Kaninang 10:00 AM recess' : 'e.g. Today during 10:00 AM recess'}
+                        value={happenedWhen}
+                        onChange={(e) => setHappenedWhen(e.target.value)}
                         className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
                       />
                     </div>
+
                     <div className="space-y-1">
                       <label className="text-xs font-bold register-label">
-                        {isTl ? 'Section o Pagkakakilanlan (Opsyonal)' : 'Grade, Section, or Physical Description (Optional)'}
+                        {isTl ? 'Saan Nangyari (Where)' : 'Where It Happened'}
                       </label>
                       <input
                         type="text"
-                        placeholder={isTl ? 'hal. Kaklase sa ICT, o nakatambay sa hallway' : 'e.g. Classmate, section, or clothes worn'}
-                        value={suspectDetails}
-                        onChange={(e) => setSuspectDetails(e.target.value)}
+                        placeholder={isTl ? 'hal. Sa tapat ng Computer Lab 2' : 'e.g. Near Computer Lab 2'}
+                        value={happenedWhere}
+                        onChange={(e) => setHappenedWhere(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold register-label">
+                        {isTl ? 'Mga Saksi (Witnesses)' : 'Witnesses Present'}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder={isTl ? 'hal. Mga kaklaseng nakakita' : 'e.g. Classmates who saw the event'}
+                        value={witnesses}
+                        onChange={(e) => setWitnesses(e.target.value)}
                         className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
                       />
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* Narrative of what happened */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold register-section-title uppercase tracking-wider">
-                  {isTl ? 'Salaysay ng Pangyayari (What Happened)' : 'Incident Narrative (What Happened)'}
-                </label>
-                <textarea
-                  rows={4}
-                  required
-                  placeholder={
-                    isTl
-                      ? 'Ikuwento nang tapat ang buong pangyayari. Ano ang ginawa o sinabi? Sino-sino ang kasama?'
-                      : 'Provide an honest description of the incident. What happened? Who was involved?'
-                  }
-                  value={whatHappened}
-                  onChange={(e) => setWhatHappened(e.target.value)}
-                  className="w-full p-4 rounded-xl cosmic-input text-xs sm:text-sm font-semibold focus:outline-none leading-relaxed"
-                />
-              </div>
+                  {/* Urgency & Truthfulness Checkboxes */}
+                  <div className="space-y-3 pt-2">
+                    <label className="flex items-center gap-2.5 cursor-pointer text-xs">
+                      <input
+                        type="checkbox"
+                        checked={isUrgent}
+                        onChange={(e) => setIsUrgent(e.target.checked)}
+                        className="w-4 h-4 rounded accent-rose-500"
+                      />
+                      <span className="font-bold text-rose-500 dark:text-rose-300">
+                        {isTl
+                          ? '⚠️ Mark as URGENT (Kailangan ng mabilisang aksyon o may banta sa kaligtasan)'
+                          : '⚠️ Mark as URGENT (Immediate intervention needed / Safety threat)'}
+                      </span>
+                    </label>
 
-              {/* Incident Context Details (When & Where) */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold register-label">
-                    {isTl ? 'Kailan Nangyari (When)' : 'When It Happened'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={isTl ? 'hal. Kaninang 10:00 AM recess' : 'e.g. Today during 10:00 AM recess'}
-                    value={happenedWhen}
-                    onChange={(e) => setHappenedWhen(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
-                  />
-                </div>
+                    <label className="flex items-start gap-2.5 cursor-pointer text-xs register-label opacity-90 leading-snug">
+                      <input
+                        type="checkbox"
+                        checked={truthfulAck}
+                        onChange={(e) => setTruthfulAck(e.target.checked)}
+                        className="w-4 h-4 rounded accent-emerald-500 mt-0.5"
+                      />
+                      <span>
+                        {isTl ? (
+                          <>
+                            Pinatutunayan ko na totoo ang aking isinusumite at nauunawaan ko na protektado ng{' '}
+                            <strong>Data Privacy Act (RA 10173)</strong> ang aking pagkakakilanlan.
+                          </>
+                        ) : (
+                          <>
+                            I certify that this report is truthful and understand that my identity is protected under the{' '}
+                            <strong>Data Privacy Act (RA 10173)</strong>.
+                          </>
+                        )}
+                      </span>
+                    </label>
+                  </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold register-label">
-                    {isTl ? 'Saan Nangyari (Where)' : 'Where It Happened'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={isTl ? 'hal. Sa tapat ng Computer Lab 2' : 'e.g. Near Computer Lab 2'}
-                    value={happenedWhere}
-                    onChange={(e) => setHappenedWhere(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
-                  />
-                </div>
+                  {/* Step 3 Action Buttons */}
+                  <div className="pt-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundFX.playBackspace();
+                        setFormStep(2);
+                      }}
+                      className="btn-press w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-bold flex items-center justify-center gap-1.5"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      <span>{isTl ? 'Bumalik sa Hakbang 2' : 'Back to Step 2'}</span>
+                    </button>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold register-label">
-                    {isTl ? 'Mga Saksi (Witnesses)' : 'Witnesses Present'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={isTl ? 'hal. Mga kaklaseng nakakita' : 'e.g. Classmates who saw the event'}
-                    value={witnesses}
-                    onChange={(e) => setWitnesses(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* Urgency & Truthfulness Checkboxes */}
-              <div className="space-y-3 pt-2">
-                <label className="flex items-center gap-2.5 cursor-pointer text-xs">
-                  <input
-                    type="checkbox"
-                    checked={isUrgent}
-                    onChange={(e) => setIsUrgent(e.target.checked)}
-                    className="w-4 h-4 rounded accent-rose-500"
-                  />
-                  <span className="font-bold text-rose-600 dark:text-rose-300">
-                    {isTl
-                      ? '⚠️ Mark as URGENT (Kailangan ng mabilisang aksyon o may banta sa kaligtasan)'
-                      : '⚠️ Mark as URGENT (Immediate intervention needed / Safety threat)'}
-                  </span>
-                </label>
-
-                <label className="flex items-start gap-2.5 cursor-pointer text-xs register-label opacity-90 leading-snug">
-                  <input
-                    type="checkbox"
-                    checked={truthfulAck}
-                    onChange={(e) => setTruthfulAck(e.target.checked)}
-                    className="w-4 h-4 rounded accent-emerald-500 mt-0.5"
-                  />
-                  <span>
-                    {isTl ? (
-                      <>
-                        Pinatutunayan ko na totoo ang aking isinusumite at nauunawaan ko na protektado ng{' '}
-                        <strong>Data Privacy Act (RA 10173)</strong> ang aking pagkakakilanlan.
-                      </>
-                    ) : (
-                      <>
-                        I certify that this report is truthful and understand that my identity is protected under the{' '}
-                        <strong>Data Privacy Act (RA 10173)</strong>.
-                      </>
-                    )}
-                  </span>
-                </label>
-              </div>
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={submitting || !truthfulAck || !whatHappened.trim()}
-                className="btn-press w-full py-4 rounded-xl bg-gradient-to-r from-[#1E469B] to-[#2557BE] hover:from-[#18387D] hover:to-[#1E469B] text-white text-sm font-extrabold shadow-lg shadow-blue-950/30 border border-white/10 disabled:opacity-45 transition-all flex items-center justify-center gap-2"
-              >
-                {submitting ? (
-                  <span>{isTl ? 'Isinusumite ang Confidential Report...' : 'Submitting Confidential Report...'}</span>
-                ) : (
-                  <>
-                    <span>{isTl ? '📨 Isumite ang Report sa Guidance Office' : '📨 Submit Report to Guidance Office'}</span>
-                    <span>→</span>
-                  </>
-                )}
-              </button>
+                    <button
+                      type="submit"
+                      disabled={submitting || !truthfulAck || !whatHappened.trim()}
+                      className="btn-press w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-emerald-950/40 border border-emerald-400/40 disabled:opacity-45 transition-all flex items-center justify-center gap-2"
+                    >
+                      {submitting ? (
+                        <span>{isTl ? 'Isinusumite ang Report...' : 'Submitting Report...'}</span>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>{isTl ? 'Isumite Na sa Guidance Office' : 'Submit Confidential Report Now'}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
+              )}
             </form>
           </motion.div>
         )}
