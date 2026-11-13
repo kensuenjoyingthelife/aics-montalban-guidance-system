@@ -16,6 +16,7 @@ import { useStudentEncouragementWings } from '../components/auth/StudentEncourag
 import { SoundTogglePill, soundFX } from '../services/soundEngine';
 import { SkyThemePill } from '../context/ThemeContext';
 import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
+import { SafezoneMascot } from '../components/auth/SafezoneMascot';
 import {
   StudentPortalUser,
   registerStudentPortalAccount,
@@ -538,13 +539,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
           {mode === 'login' && (
             <div className="space-y-7">
               <div className="text-center space-y-3 pb-2 sm:pb-4">
-                <div className="w-16 h-16 rounded-full overflow-hidden mx-auto shadow-xl ring-2 ring-blue-400/40 bg-white p-0.5">
-                  <img
-                    src="/aics-logo.jpg"
-                    alt="AICS Logo"
-                    className="w-full h-full object-cover rounded-full"
-                  />
-                </div>
+                {/* Friendly Animated EVE-style Mascot waving & smiling to motivate students */}
+                <SafezoneMascot />
                 <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight card-title-text uppercase">
                   AICS SAFEZONE
                 </h2>
