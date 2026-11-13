@@ -165,7 +165,10 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
     chatScrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const fetchMyHistory = async () => {
+  // Track previous statuses to trigger native phone notifications on change
+  const prevStatusesRef = useRef<Record<number, string>>({});
+
+  const fetchMyHistory = async (notifyOnChange: boolean = false) => {
     setLoadingHistory(true);
     try {
       const res = await fetch(
@@ -192,6 +195,40 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
           chatClosedAt: String(r.chat_closed_at || ''),
           createdAt: String(r.created_at || new Date().toISOString()),
         }));
+
+        // Check if any report status changed and notify student's phone
+        if (notifyOnChange) {
+          mapped.forEach((item) => {
+            const prev = prevStatusesRef.current[item.id];
+            if (prev && prev !== item.status) {
+              const s = item.status.toLowerCase();
+              if (s === 'approved' || s === 'resolved') {
+                void notificationService.sendDiscreetNotification(
+                  'AICS',
+                  `Approved: Your report (${item.referralCode}) has been approved by Guidance.`
+                );
+              } else if (s === 'rejected' || s === 'dismissed' || s === 'declined') {
+                void notificationService.sendDiscreetNotification(
+                  'AICS',
+                  `Reject: Your report (${item.referralCode}) was reviewed and closed.`
+                );
+              } else if (s === 'in counseling' || s === 'investigating' || s === 'under review') {
+                void notificationService.sendDiscreetNotification(
+                  'AICS',
+                  `Action Taken: Guidance is now actively addressing your concern (${item.referralCode}).`
+                );
+              }
+            }
+          });
+        }
+
+        // Store latest statuses in ref
+        const newStatuses: Record<number, string> = {};
+        mapped.forEach((m) => {
+          newStatuses[m.id] = m.status;
+        });
+        prevStatusesRef.current = newStatuses;
+
         setHistory(mapped);
 
         // If no chat is selected yet, automatically select the most recent concern with an Open or Closed chat
@@ -208,7 +245,16 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   };
 
   useEffect(() => {
-    void fetchMyHistory();
+    void fetchMyHistory(false);
+
+    // Periodically poll for status changes (e.g. Approved, Reject) every 10 seconds
+    const statusInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void fetchMyHistory(true);
+      }
+    }, 10000);
+
+    return () => clearInterval(statusInterval);
   }, []);
 
   // Poll for new messages when in Chat tab with a selected concern
@@ -244,8 +290,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
           const officeMsgs = newer.filter((m) => m.sender !== 'student');
           if (officeMsgs.length > 0) {
             void notificationService.sendDiscreetNotification(
-              'AICS kalang ba',
-              'AICS kalang ba message you.'
+              'AICS',
+              'Message you: The Guidance Office sent a response to your concern.'
             );
           }
 
@@ -378,6 +424,12 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       soundFX.playSuccessCheck();
       setSubmittedConcernCode(refCode);
       recordSecurityAudit('REPORT_SUBMITTED', user.studentNumber);
+
+      // Trigger instant submission confirmation notification on phone
+      void notificationService.sendDiscreetNotification(
+        'AICS',
+        `Submitted: Your concern report (${refCode}) was received safely by Guidance.`
+      );
 
       // Reset Form
       setFormStep(1);
