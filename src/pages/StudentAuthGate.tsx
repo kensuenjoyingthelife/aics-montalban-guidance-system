@@ -19,6 +19,7 @@ import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
 import { SafezoneMascot } from '../components/auth/SafezoneMascot';
 import { CloudflareTurnstile } from '../components/auth/CloudflareTurnstile';
 import { LiveCameraCaptureModal } from '../components/student/LiveCameraCaptureModal';
+import { QuickExitButton } from '../components/security/QuickExitButton';
 import { compressImageClientSide } from '../services/imageOptimizer';
 import {
   StudentPortalUser,
@@ -596,7 +597,9 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       <div className="hidden lg:block">
         <CelestialBackground />
       </div>
-      <WavyBackground />
+      <div className="hidden lg:block">
+        <WavyBackground />
+      </div>
 
       {/* Top Floating Glass Island Navbar */}
       <header className="relative z-30 w-full px-3 sm:px-6 pt-3 sm:pt-4 safe-area-top">
@@ -1773,6 +1776,9 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         )}
 
       {/* Live Camera Capture Modal for Student ID and Personal Photo */}
+      {/* iPhone AssistiveTouch-Style Draggable Floating Red Quick-Exit Ball */}
+      <QuickExitButton />
+
       <LiveCameraCaptureModal
         isOpen={activeCameraModal !== null}
         onClose={() => setActiveCameraModal(null)}
