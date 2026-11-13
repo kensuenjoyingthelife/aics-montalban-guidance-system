@@ -17,6 +17,7 @@ import { SoundTogglePill, soundFX } from '../services/soundEngine';
 import { SkyThemePill } from '../context/ThemeContext';
 import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
 import { SafezoneMascot } from '../components/auth/SafezoneMascot';
+import { CloudflareTurnstile } from '../components/auth/CloudflareTurnstile';
 import {
   StudentPortalUser,
   registerStudentPortalAccount,
@@ -134,6 +135,10 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   // Rate Limiting Cooldown Seconds
   const [loginCooldownSeconds, setLoginCooldownSeconds] = useState(0);
   const [forgotCooldownSeconds, setForgotCooldownSeconds] = useState(0);
+
+  // Cloudflare Turnstile Token State
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const CLOUDFLARE_SITE_KEY = '0x4AAAAAAF_QjZNhxaPTV-5U';
 
   // Check rate limit timer tick
   useEffect(() => {
@@ -827,6 +832,19 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       {showLoginPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
+                </div>
+
+                {/* Cloudflare Turnstile Human & Bot Shield */}
+                <div className="py-1">
+                  <CloudflareTurnstile
+                    siteKey={CLOUDFLARE_SITE_KEY}
+                    onVerify={(token) => {
+                      setTurnstileToken(token);
+                      soundFX.playToggleSwitch(true);
+                    }}
+                    onExpire={() => setTurnstileToken(null)}
+                    onError={(err) => console.warn('Turnstile security notice:', err)}
+                  />
                 </div>
 
                 <button
