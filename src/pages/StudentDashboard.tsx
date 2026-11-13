@@ -57,6 +57,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
   const [activeTab, setActiveTab] = useState<'submit' | 'history' | 'chat'>('submit');
 
+  // Multi-step Google Form-style pagination for report submission (1 -> 2 -> 3)
+  const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
+
   // Notifications toggle state
   const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(() => notificationService.isEnabled());
 
