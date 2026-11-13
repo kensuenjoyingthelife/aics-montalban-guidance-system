@@ -1,280 +1,168 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 
 /**
  * Animated EVE-style SafeZone Companion Mascot
- * Replaces the static AICS logo above "AICS SAFEZONE".
+ * High-performance pure CSS keyframed character with layered rigging.
+ * 
  * Features:
- * - Happy glowing curved cyan eyes (smiling eyes ^_^) that blink and pulse
- * - Smooth hovering body motion with soft shadow breathing below
- * - Waving greeting arm that says "Hi!" with friendly hand tilt
- * - Holding a sweet blossom flower of care
- * - Sparkling motivation bursts around the head that kids love
+ * - Happy glowing curved eyes (^_^) that visibly blink & smile
+ * - Real arm waving vigorously saying "Hi!" while holding a flower
+ * - Gentle head tilt & torso floating hover
+ * - Motivational floating sparkle bursts around the mascot
  */
 export const SafezoneMascot: React.FC = () => {
   return (
-    <div className="relative flex flex-col items-center justify-center select-none py-1">
+    <div className="relative flex flex-col items-center justify-center select-none py-2 my-1">
+      <style>{`
+        @keyframes mascotHover {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-8px) rotate(1.5deg); }
+        }
+
+        @keyframes mascotShadow {
+          0%, 100% { transform: scale(1); opacity: 0.35; }
+          50% { transform: scale(0.75); opacity: 0.18; }
+        }
+
+        @keyframes mascotWaveArm {
+          0%, 100% { transform: rotate(0deg); }
+          15% { transform: rotate(-32deg); }
+          30% { transform: rotate(18deg); }
+          45% { transform: rotate(-30deg); }
+          60% { transform: rotate(14deg); }
+          75% { transform: rotate(-22deg); }
+          90% { transform: rotate(6deg); }
+        }
+
+        @keyframes mascotEyeBlink {
+          0%, 90%, 100% { transform: scaleY(1); opacity: 1; filter: drop-shadow(0 0 6px #38bdf8); }
+          93% { transform: scaleY(0.1); opacity: 0.4; filter: none; }
+          96% { transform: scaleY(1); opacity: 1; filter: drop-shadow(0 0 6px #38bdf8); }
+        }
+
+        @keyframes mascotHeadTilt {
+          0%, 100% { transform: rotate(0deg) translateY(0px); }
+          25% { transform: rotate(-4deg) translateY(-1px); }
+          75% { transform: rotate(4deg) translateY(1px); }
+        }
+
+        @keyframes mascotSparkle {
+          0%, 100% { transform: scale(0.8) translateY(0px); opacity: 0.3; }
+          50% { transform: scale(1.3) translateY(-6px); opacity: 1; }
+        }
+
+        .mascot-hover-container {
+          animation: mascotHover 3s ease-in-out infinite;
+        }
+
+        .mascot-shadow-blob {
+          animation: mascotShadow 3s ease-in-out infinite;
+        }
+
+        .mascot-waving-arm {
+          transform-origin: 12px 14px;
+          animation: mascotWaveArm 2.2s ease-in-out infinite;
+        }
+
+        .mascot-eye-anim {
+          transform-origin: center center;
+          animation: mascotEyeBlink 3.2s infinite;
+        }
+
+        .mascot-head-tilt {
+          transform-origin: center bottom;
+          animation: mascotHeadTilt 4s ease-in-out infinite;
+        }
+
+        .mascot-sparkle-1 {
+          animation: mascotSparkle 2s ease-in-out infinite;
+        }
+
+        .mascot-sparkle-2 {
+          animation: mascotSparkle 2.6s ease-in-out infinite 0.7s;
+        }
+      `}</style>
+
       {/* Floating Sparkles & Heart particles (Motivation cues) */}
-      <motion.div
-        animate={{
-          scale: [0.8, 1.2, 0.8],
-          opacity: [0.4, 1, 0.4],
-          y: [-2, -8, -2],
-        }}
-        transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute -top-2 right-4 text-xs font-bold text-pink-400 pointer-events-none drop-shadow-[0_0_8px_rgba(244,114,182,0.8)]"
-      >
+      <div className="absolute -top-1 right-6 text-sm mascot-sparkle-1 pointer-events-none drop-shadow-[0_0_8px_rgba(244,114,182,0.8)]">
         ✨
-      </motion.div>
-      <motion.div
-        animate={{
-          scale: [1, 1.25, 1],
-          opacity: [0.3, 0.9, 0.3],
-          y: [-4, -10, -4],
-        }}
-        transition={{ duration: 2.6, repeat: Infinity, delay: 0.6, ease: 'easeInOut' }}
-        className="absolute -top-3 left-6 text-[10px] font-bold text-sky-400 pointer-events-none drop-shadow-[0_0_8px_rgba(56,189,248,0.8)]"
-      >
+      </div>
+      <div className="absolute -top-2 left-6 text-xs mascot-sparkle-2 pointer-events-none drop-shadow-[0_0_8px_rgba(56,189,248,0.8)]">
         💙
-      </motion.div>
+      </div>
 
-      {/* Main Hovering EVE Robot Container */}
-      <motion.div
-        animate={{
-          y: [0, -6, 0],
-          rotate: [0, 1.5, -1.5, 0],
-        }}
-        transition={{
-          duration: 3.2,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-        className="relative w-24 h-28 flex items-center justify-center"
-      >
-        <svg
-          viewBox="0 0 160 190"
-          className="w-full h-full overflow-visible drop-shadow-[0_12px_20px_rgba(14,165,233,0.3)]"
-        >
-          <defs>
-            {/* Glossy White Gradients for Body & Head */}
-            <linearGradient id="eveWhite" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#FFFFFF" />
-              <stop offset="60%" stopColor="#F1F5F9" />
-              <stop offset="100%" stopColor="#D8E2EE" />
-            </linearGradient>
+      {/* Hovering Character Root */}
+      <div className="mascot-hover-container relative w-28 h-32 flex flex-col items-center justify-center">
+        {/* Layer 1: Head with Tilt */}
+        <div className="mascot-head-tilt relative z-20 flex items-center justify-center -mb-2">
+          {/* Egg-shaped Smooth White Head */}
+          <div className="w-[84px] h-[72px] rounded-[42px] bg-gradient-to-b from-white via-[#F8FAFC] to-[#DDE5EE] border border-[#CBD5E1] shadow-[0_8px_16px_rgba(0,0,0,0.12),inset_0_2px_4px_rgba(255,255,255,0.9)] flex items-center justify-center p-2 relative">
+            {/* Dark Visor Face Screen */}
+            <div className="w-[58px] h-[38px] rounded-[22px] bg-gradient-to-b from-[#0A1124] via-[#050B1A] to-[#02050E] border border-[#1E293B] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)] flex items-center justify-center gap-2.5 relative overflow-hidden">
+              {/* Glass Glare Reflection */}
+              <div className="absolute -top-3 -left-2 w-12 h-6 bg-sky-400/25 blur-[3px] rounded-full transform -rotate-12 pointer-events-none" />
 
-            <linearGradient id="eveHighlight" x1="30%" y1="0%" x2="70%" y2="100%">
-              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9" />
-              <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.05" />
-            </linearGradient>
+              {/* Glowing Curved Smiling Eyes (^_^) */}
+              <div className="mascot-eye-anim flex items-center gap-2.5">
+                {/* Left Smiling Eye Arc */}
+                <svg className="w-5 h-3.5 overflow-visible" viewBox="0 0 20 14" fill="none">
+                  <path
+                    d="M 2 12 Q 10 1 18 12"
+                    stroke="#38BDF8"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
 
-            {/* Glowing Visor Gradient */}
-            <radialGradient id="eveVisor" cx="50%" cy="40%" r="55%">
-              <stop offset="0%" stopColor="#0B132B" />
-              <stop offset="70%" stopColor="#050C1F" />
-              <stop offset="100%" stopColor="#020612" />
-            </radialGradient>
+                {/* Right Smiling Eye Arc */}
+                <svg className="w-5 h-3.5 overflow-visible" viewBox="0 0 20 14" fill="none">
+                  <path
+                    d="M 2 12 Q 10 1 18 12"
+                    stroke="#38BDF8"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
 
-            {/* Cyan Eye Glow Filter */}
-            <filter id="eyeGlow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
-              <feMerge>
-                <feMergeNode in="coloredBlur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
+              {/* Cute Pink Blush Spots on cheeks */}
+              <div className="absolute bottom-1 left-2 w-2 h-1 rounded-full bg-pink-500/50 blur-[0.5px]" />
+              <div className="absolute bottom-1 right-2 w-2 h-1 rounded-full bg-pink-500/50 blur-[0.5px]" />
+            </div>
+          </div>
+        </div>
 
-            {/* Shadow beneath body */}
-            <radialGradient id="eveShadow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#000000" stopOpacity="0.35" />
-              <stop offset="100%" stopColor="#000000" stopOpacity="0" />
-            </radialGradient>
-          </defs>
+        {/* Layer 2: Torso & Limbs */}
+        <div className="relative z-10 w-full flex items-center justify-center">
+          {/* Left Resting Arm */}
+          <div className="w-4 h-9 rounded-full bg-gradient-to-b from-white to-[#D0DAE6] border border-[#CBD5E1] shadow-sm transform -rotate-12 translate-x-1.5 -translate-y-2" />
 
-          {/* ====================================================
-              LOWER TORSO / EGG POD (Floats softly)
-              ==================================================== */}
-          <g transform="translate(0, 10)">
-            {/* Main sleek body pod */}
-            <path
-              d="M 52 74 C 52 68, 108 68, 108 74 C 114 100, 108 140, 80 162 C 52 140, 46 100, 52 74 Z"
-              fill="url(#eveWhite)"
-              stroke="#CFD9E8"
-              strokeWidth="1.2"
-            />
-            {/* Soft inner core shadow indentation */}
-            <path
-              d="M 57 80 C 57 76, 68 78, 68 86 C 68 114, 62 136, 80 152 C 58 136, 54 104, 57 80 Z"
-              fill="#BAC7DA"
-              opacity="0.35"
-            />
-            {/* Glossy light rim curve */}
-            <path
-              d="M 56 78 C 65 72, 95 72, 104 78 C 100 110, 92 145, 80 158"
-              fill="none"
-              stroke="url(#eveHighlight)"
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
+          {/* Torso Capsule Pod */}
+          <div className="w-[52px] h-[64px] rounded-[26px] bg-gradient-to-b from-white via-[#F1F5F9] to-[#CAD6E2] border border-[#CBD5E1] shadow-[0_10px_20px_rgba(15,23,42,0.15)] flex flex-col items-center justify-start pt-2 relative">
+            {/* Center Gentle Accent Light */}
+            <div className="w-2 h-2 rounded-full bg-sky-400/40 shadow-[0_0_8px_rgba(56,189,248,0.6)] animate-pulse" />
+          </div>
 
-            {/* Left resting hand pointing softly */}
-            <motion.path
-              animate={{ rotate: [-2, 3, -2] }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-              style={{ transformOrigin: '56px 85px' }}
-              d="M 56 82 C 42 92, 38 114, 52 118 C 62 118, 66 100, 56 82 Z"
-              fill="url(#eveWhite)"
-              stroke="#CFD9E8"
-              strokeWidth="0.8"
-            />
-          </g>
+          {/* Right Waving Arm & Flower */}
+          <div className="mascot-waving-arm relative w-8 h-12 -translate-x-1 -translate-y-3">
+            {/* Sleek Arm */}
+            <div className="w-4 h-10 rounded-full bg-gradient-to-b from-white to-[#D0DAE6] border border-[#CBD5E1] shadow-md transform rotate-12" />
 
-          {/* ====================================================
-              WAVING GREETING RIGHT ARM & FLOWER ("NAG HI-HI")
-              ==================================================== */}
-          <motion.g
-            animate={{
-              rotate: [0, -18, 8, -16, 6, 0],
-            }}
-            transition={{
-              duration: 2.8,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-            style={{ transformOrigin: '104px 92px' }}
-          >
-            {/* Right Arm waving */}
-            <path
-              d="M 104 88 C 122 84, 138 98, 134 114 C 124 122, 106 104, 104 88 Z"
-              fill="url(#eveWhite)"
-              stroke="#CFD9E8"
-              strokeWidth="0.8"
-            />
+            {/* Blossom Flower of Care in Hand */}
+            <div className="absolute -top-3 -right-2 flex flex-col items-center transform -rotate-12 pointer-events-none">
+              {/* Petals */}
+              <div className="relative w-6 h-6 flex items-center justify-center animate-spin" style={{ animationDuration: '10s' }}>
+                <span className="text-base select-none">🌸</span>
+              </div>
+              {/* Stem */}
+              <div className="w-0.5 h-3 bg-emerald-500 rounded-full -mt-1" />
+            </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Pink Blossom Flower of Care held in hand */}
-            <g transform="translate(132, 104)">
-              {/* Green stem & leaf */}
-              <path d="M 0 4 Q -1 16 0 22" stroke="#16A34A" strokeWidth="1.8" fill="none" strokeLinecap="round" />
-              <path d="M 0 12 Q 5 10 6 13 Q 3 16 0 14" fill="#22C55E" />
-
-              {/* Pink floral petals with gentle pulse */}
-              <motion.g
-                animate={{ scale: [1, 1.12, 1] }}
-                transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-              >
-                <circle cx="0" cy="0" r="4.5" fill="#FB7185" />
-                <circle cx="-5" cy="-2" r="3.8" fill="#F472B6" />
-                <circle cx="5" cy="-2" r="3.8" fill="#F472B6" />
-                <circle cx="-3" cy="5" r="3.8" fill="#FDA4AF" />
-                <circle cx="3" cy="5" r="3.8" fill="#FDA4AF" />
-                <circle cx="0" cy="-6" r="3.8" fill="#FB7185" />
-                <circle cx="0" cy="0" r="2.2" fill="#FEF08A" />
-              </motion.g>
-            </g>
-          </motion.g>
-
-          {/* ====================================================
-              HEAD & GLOWING HAPPY SMILING EYES (^_^)
-              ==================================================== */}
-          <motion.g
-            animate={{
-              rotate: [0, -2, 2, 0],
-              y: [0, -1.5, 0],
-            }}
-            transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
-            style={{ transformOrigin: '80px 48px' }}
-          >
-            {/* White Oval Egg-shaped Head */}
-            <ellipse
-              cx="80"
-              cy="48"
-              rx="44"
-              ry="38"
-              fill="url(#eveWhite)"
-              stroke="#CFD9E8"
-              strokeWidth="1.2"
-            />
-            {/* Soft gloss highlight on top of head */}
-            <path
-              d="M 52 32 C 60 20, 100 20, 108 32 C 98 25, 62 25, 52 32 Z"
-              fill="#FFFFFF"
-              opacity="0.8"
-            />
-
-            {/* Dark Visor Display Screen */}
-            <ellipse
-              cx="80"
-              cy="48"
-              rx="30"
-              ry="20"
-              fill="url(#eveVisor)"
-              stroke="#1E293B"
-              strokeWidth="0.8"
-            />
-            {/* Visor glass reflection */}
-            <path
-              d="M 56 42 Q 78 35 104 42 Q 78 38 56 42 Z"
-              fill="#38BDF8"
-              opacity="0.25"
-            />
-
-            {/* Glowing Happy Smiling Eyes (^_^) */}
-            <g filter="url(#eyeGlow)">
-              {/* Left Eye: Happy Arc ^ */}
-              <motion.path
-                d="M 64 51 Q 71 42 77 50"
-                fill="none"
-                stroke="#38BDF8"
-                strokeWidth="4"
-                strokeLinecap="round"
-                animate={{
-                  scaleY: [1, 0.15, 1, 1, 1],
-                  opacity: [0.95, 0.4, 0.95, 1, 0.95],
-                }}
-                transition={{
-                  duration: 3.5,
-                  repeat: Infinity,
-                  times: [0, 0.05, 0.1, 0.8, 1],
-                }}
-                style={{ transformOrigin: '71px 48px' }}
-              />
-
-              {/* Right Eye: Happy Arc ^ */}
-              <motion.path
-                d="M 83 50 Q 89 42 96 51"
-                fill="none"
-                stroke="#38BDF8"
-                strokeWidth="4"
-                strokeLinecap="round"
-                animate={{
-                  scaleY: [1, 0.15, 1, 1, 1],
-                  opacity: [0.95, 0.4, 0.95, 1, 0.95],
-                }}
-                transition={{
-                  duration: 3.5,
-                  repeat: Infinity,
-                  times: [0, 0.05, 0.1, 0.8, 1],
-                }}
-                style={{ transformOrigin: '89px 48px' }}
-              />
-            </g>
-
-            {/* Cute pink cheek blushes for warmth & friendliness */}
-            <ellipse cx="61" cy="55" rx="3.5" ry="1.8" fill="#F472B6" opacity="0.6" />
-            <ellipse cx="99" cy="55" rx="3.5" ry="1.8" fill="#F472B6" opacity="0.6" />
-          </motion.g>
-        </svg>
-
-        {/* Dynamic Soft Shadow beneath robot that breathes with hovering */}
-        <motion.div
-          animate={{
-            scaleX: [1, 0.75, 1],
-            opacity: [0.35, 0.18, 0.35],
-          }}
-          transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -bottom-2 w-14 h-2.5 rounded-full bg-slate-900/40 blur-[2px] pointer-events-none"
-        />
-      </motion.div>
+      {/* Floating Ground Shadow Blob */}
+      <div className="mascot-shadow-blob w-16 h-2.5 rounded-full bg-slate-900/35 dark:bg-black/50 blur-[2px] mt-1" />
     </div>
   );
 };
