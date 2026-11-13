@@ -215,7 +215,7 @@ export const LocaleSwitchPill: React.FC = () => {
     <div
       role="group"
       aria-label="Language Switcher"
-      className="relative inline-flex items-center p-1 rounded-full bg-[#E4ECFC]/90 dark:bg-[#142852]/90 border border-[#CFD9F2] dark:border-[#233F78] shadow-inner select-none"
+      className="relative inline-flex items-center p-0.5 sm:p-1 rounded-full bg-[#E4ECFC]/90 dark:bg-[#142852]/90 border border-[#CFD9F2] dark:border-[#233F78] shadow-inner select-none h-[28px] sm:h-[30px]"
     >
       {(['en', 'tl'] as const).map((item) => {
         const active = locale === item;
@@ -224,7 +224,7 @@ export const LocaleSwitchPill: React.FC = () => {
             key={item}
             type="button"
             onClick={() => setLocale(item)}
-            className={`relative z-10 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide transition-colors duration-150 ${
+            className={`relative z-10 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-bold tracking-wide transition-colors duration-150 flex items-center justify-center leading-none ${
               active
                 ? 'text-white'
                 : 'text-[#1E469B] dark:text-[#B4C6EC] hover:text-[#0B1F4D] dark:hover:text-white'
@@ -237,7 +237,9 @@ export const LocaleSwitchPill: React.FC = () => {
                 className="absolute inset-0 rounded-full bg-gradient-to-r from-[#1E469B] to-[#2557BE] shadow-[0_2px_8px_rgba(30,70,155,0.45)] -z-10"
               />
             )}
-            {item === 'en' ? 'EN · English' : 'TL · Taglish'}
+            {/* Sa mobile: short label (EN / TL) para kapantay at compact sa light/dark toggle; Sa desktop: buong label */}
+            <span className="sm:hidden">{item.toUpperCase()}</span>
+            <span className="hidden sm:inline">{item === 'en' ? 'EN · English' : 'TL · Taglish'}</span>
           </button>
         );
       })}
