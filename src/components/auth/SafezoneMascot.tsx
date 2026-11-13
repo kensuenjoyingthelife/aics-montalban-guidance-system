@@ -3,49 +3,115 @@ import React, { useState, useEffect } from 'react';
 /**
  * 3D EVE-Style AICS SafeZone Mascot (Based directly on user reference photo)
  * 
- * Features:
- * - 3D glossy smooth egg-shaped head with specular highlight
- * - Deep navy/black glossy visor with vibrant cyan curved smiling LED eyes
- * - Sleek 3D floating torso capsule with soft ambient shadow
- * - Gentle hover/floating physics
- * - Smooth transition from intro animation stopping permanently at "Safe ka dito palagi! 💙" (hindi na naglo-loop o nag-gi-gif)
+ * Choreography:
+ * 1. 'wave'       : Masiglang babati ("Hi, welcome! 👋")
+ * 2. 'run-right'  : Tatakbo pakanan ("Whooosh! 🏃‍♂️💨")
+ * 3. 'run-left'   : Tatakbo pakaliwa ("Zoom zoom! 💨")
+ * 4. 'trip'       : Nadapa nang cute ("Aray ko po! 💫🙈")
+ * 5. 'getup'      : Tatayo, medyo nahihiya ("Oks lang ako! Hehe ✨")
+ * 6. 'safe-final' : PERMANENTE NANG HUMINTO DITO ("Safe ka dito palagi! 💙")
+ *                   - Hindi na uulitin ang takbo at dapa (NO LOOPING ng movements)
+ *                   - Ang tanging natitirang movement:
+ *                     1. Natural na nagbi-blink ang cute smiling cyan eyes
+ *                     2. Dahan-dahang kumakaway/nagwa-wave ang kamay na nangangamusta
+ *                     3. Banayad na 3D hover floating physics
  */
 
-type MascotStage = 'intro' | 'safe-still';
+type MascotStage = 'wave' | 'run-right' | 'run-left' | 'trip' | 'getup' | 'safe-final';
 
 export const SafezoneMascot: React.FC = () => {
-  const [stage, setStage] = useState<MascotStage>('intro');
+  const [stage, setStage] = useState<MascotStage>('wave');
   const [speechBubble, setSpeechBubble] = useState<string>('Hi, welcome! 👋');
 
   useEffect(() => {
-    // 1. Intro greeting
-    setStage('intro');
+    let timer: any;
+
+    // 1. Masiglang wave greeting
+    setStage('wave');
     setSpeechBubble('Hi, welcome! 👋');
 
-    // 2. Pagkatapos ng 2.8s, papasok sa "Safe ka dito palagi! 💙" at mahihinto na doon (walang looping / hindi nag-gif)
-    const timer = setTimeout(() => {
-      setStage('safe-still');
-      setSpeechBubble('Safe ka dito palagi! 💙');
+    timer = setTimeout(() => {
+      // 2. Tatakbo pakanan
+      setStage('run-right');
+      setSpeechBubble('Whooosh! 🏃‍♂️💨');
+
+      timer = setTimeout(() => {
+        // 3. Tatakbo pakaliwa
+        setStage('run-left');
+        setSpeechBubble('Zoom zoom! 💨');
+
+        timer = setTimeout(() => {
+          // 4. Nadapa
+          setStage('trip');
+          setSpeechBubble('Aray ko po! 💫🙈');
+
+          timer = setTimeout(() => {
+            // 5. Tatayo
+            setStage('getup');
+            setSpeechBubble('Oks lang ako! Hehe ✨');
+
+            timer = setTimeout(() => {
+              // 6. FINAL SAFE STATE: Mahihinto na rito nang permanente!
+              // Hindi na uulitin ang buong routine (No loop).
+              setStage('safe-final');
+              setSpeechBubble('Safe ka dito palagi! 💙');
+            }, 1800);
+          }, 1800);
+        }, 2000);
+      }, 2000);
     }, 2800);
 
     return () => clearTimeout(timer);
   }, []);
 
+  const isFinal = stage === 'safe-final';
+
   return (
-    <div className="relative flex flex-col items-center justify-center select-none py-2 my-1 overflow-visible w-full max-w-sm mx-auto h-[175px]">
+    <div className="relative flex flex-col items-center justify-center select-none py-2 my-1 overflow-visible w-full max-w-sm mx-auto h-[178px]">
       <style>{`
-        /* Smooth subtle floating glow */
+        /* Stage-based Root Movements during intro routine */
+        .stage-wave {
+          transform: translateX(0px) translateY(0px);
+          transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .stage-run-right {
+          transform: translateX(60px) translateY(-4px) rotate(14deg);
+          transition: transform 1.8s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .stage-run-left {
+          transform: translateX(-60px) translateY(-4px) rotate(-14deg);
+          transition: transform 1.8s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .stage-trip {
+          transform: translateX(0px) translateY(18px) rotate(-35deg);
+          transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .stage-getup {
+          transform: translateX(0px) translateY(2px) rotate(4deg);
+          transition: transform 0.8s ease;
+        }
+
+        .stage-safe-final {
+          transform: translateX(0px) translateY(0px) rotate(0deg);
+          transition: transform 0.8s cubic-bezier(0.34, 1.2, 0.64, 1);
+        }
+
+        /* 3D Smooth Hover Floating */
         @keyframes gentleFloat3D {
           0%, 100% {
-            transform: translateY(0px) rotate(0deg);
+            transform: translateY(0px);
           }
           50% {
-            transform: translateY(-5px) rotate(1deg);
+            transform: translateY(-4px);
           }
         }
 
         .mascot-3d-float {
-          animation: gentleFloat3D 3.5s ease-in-out infinite;
+          animation: gentleFloat3D 3s ease-in-out infinite;
         }
 
         /* Ambient ground shadow */
@@ -61,10 +127,10 @@ export const SafezoneMascot: React.FC = () => {
         }
 
         .mascot-3d-shadow {
-          animation: shadowPulse3D 3.5s ease-in-out infinite;
+          animation: shadowPulse3D 3s ease-in-out infinite;
         }
 
-        /* 3D Pearl Gloss Shader */
+        /* 3D Pearl Gloss Shader (Reference Image Match) */
         .mascot-shell-head {
           background: radial-gradient(circle at 35% 25%, #FFFFFF 0%, #F8FAFC 35%, #E2E8F0 75%, #CBD5E1 100%);
           box-shadow: 
@@ -89,7 +155,50 @@ export const SafezoneMascot: React.FC = () => {
             0 2px 4px rgba(255, 255, 255, 0.6);
         }
 
-        /* Floating comic cloud animation */
+        /* Wave Arm Motion: Friendly greeting / Nangangamusta */
+        @keyframes friendlyWaveHand {
+          0%, 100% {
+            transform: rotate(15deg) translateY(0px);
+          }
+          50% {
+            transform: rotate(-25deg) translateY(-3px);
+          }
+        }
+
+        .anim-friendly-wave {
+          transform-origin: 4px 8px;
+          animation: friendlyWaveHand 1.4s ease-in-out infinite;
+        }
+
+        /* Eye Blinking Animation: Normal blinking sa cyan curved eyes */
+        @keyframes gentleEyeBlink {
+          0%, 90%, 100% {
+            transform: scaleY(1);
+            opacity: 1;
+          }
+          95% {
+            transform: scaleY(0.1);
+            opacity: 0.3;
+          }
+        }
+
+        .anim-eye-blink {
+          transform-origin: center;
+          animation: gentleEyeBlink 3.8s ease-in-out infinite;
+        }
+
+        /* Dizzy stars spin */
+        @keyframes starSpin {
+          0% { transform: rotate(0deg) scale(0.8); }
+          50% { transform: rotate(180deg) scale(1.2); }
+          100% { transform: rotate(360deg) scale(0.8); }
+        }
+
+        .anim-trip-stars {
+          animation: starSpin 1.4s linear infinite;
+        }
+
+        /* Floating comic cloud */
         @keyframes cloudFloat {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-3px); }
@@ -100,8 +209,8 @@ export const SafezoneMascot: React.FC = () => {
         }
       `}</style>
 
-      {/* 3D Character Composition */}
-      <div className="relative flex flex-col items-center justify-center mascot-3d-float z-20">
+      {/* 3D Character Composition & Dynamic Movement Stage */}
+      <div className={`relative flex flex-col items-center justify-center stage-${stage} z-20`}>
         
         {/* Floating Comic Cloud Speech Bubble (Sticks right above 3D mascot's head) */}
         <div className="cloud-bubble-anim -mb-1 z-30 flex flex-col items-center pointer-events-none">
@@ -115,64 +224,113 @@ export const SafezoneMascot: React.FC = () => {
           </div>
         </div>
 
-        {/* 3D EGG-SHAPED PEARL HEAD */}
-        <div className="relative z-20 w-[94px] h-[78px] rounded-[48px] mascot-shell-head flex items-center justify-center p-2.5 -mb-2 transition-transform duration-500">
-          {/* Specular Highlight glare on top-left of head */}
-          <div className="absolute top-2 left-4 w-7 h-3.5 bg-white/80 rounded-full blur-[1px] transform -rotate-25 pointer-events-none" />
+        {/* Dizzy stars when tripped (Nadapa) */}
+        {stage === 'trip' && (
+          <div className="absolute -top-1 z-40 flex items-center gap-2 anim-trip-stars pointer-events-none">
+            <span className="text-yellow-400 text-sm">💫</span>
+            <span className="text-pink-400 text-xs">✨</span>
+            <span className="text-yellow-300 text-sm">⭐</span>
+          </div>
+        )}
 
-          {/* 3D VISOR (Deep Obsidian with Gloss Edge) */}
-          <div className="relative w-[64px] h-[44px] rounded-[24px] mascot-visor-glass flex items-center justify-center gap-2.5 overflow-hidden">
-            {/* Visor Glare Crescent */}
-            <div className="absolute -top-3 -left-2 w-14 h-7 bg-white/20 blur-[2px] rounded-full transform -rotate-12 pointer-events-none" />
+        {/* Floating 3D Body Container */}
+        <div className={isFinal ? 'mascot-3d-float flex flex-col items-center' : 'flex flex-col items-center'}>
+          {/* 3D EGG-SHAPED PEARL HEAD */}
+          <div className="relative z-20 w-[94px] h-[78px] rounded-[48px] mascot-shell-head flex items-center justify-center p-2.5 -mb-2 transition-transform duration-500">
+            {/* Specular Highlight glare on top-left of head */}
+            <div className="absolute top-2 left-4 w-7 h-3.5 bg-white/80 rounded-full blur-[1px] transform -rotate-25 pointer-events-none" />
 
-            {/* VIBRANT CYAN 3D CURVED SMILING EYES (Katulad sa reference picture) */}
-            <div className="flex items-center gap-3">
-              <svg className="w-4 h-3.5 overflow-visible" viewBox="0 0 20 14" fill="none">
-                <path
-                  d="M 2 12 Q 10 1 18 12"
-                  stroke="#38BDF8"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  className="drop-shadow-[0_0_6px_rgba(56,189,248,0.9)]"
-                />
-              </svg>
-              <svg className="w-4 h-3.5 overflow-visible" viewBox="0 0 20 14" fill="none">
-                <path
-                  d="M 2 12 Q 10 1 18 12"
-                  stroke="#38BDF8"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  className="drop-shadow-[0_0_6px_rgba(56,189,248,0.9)]"
-                />
-              </svg>
+            {/* 3D VISOR (Deep Obsidian with Gloss Edge) */}
+            <div className="relative w-[64px] h-[44px] rounded-[24px] mascot-visor-glass flex items-center justify-center gap-2.5 overflow-hidden">
+              {/* Visor Glare Crescent */}
+              <div className="absolute -top-3 -left-2 w-14 h-7 bg-white/20 blur-[2px] rounded-full transform -rotate-12 pointer-events-none" />
+
+              {/* DYNAMIC VISOR EYES:
+                  - During intro: Nagpapakita ng iba't ibang expressions (kaway, takbo, dapa, tayo)
+                  - Sa safe-final: CYAN SMILING EYES NA NAGBI-BLINK NALANG!
+              */}
+              {(stage === 'wave' || isFinal) && (
+                <div className={`flex items-center gap-3 ${isFinal ? 'anim-eye-blink' : ''}`}>
+                  <svg className="w-4 h-3.5 overflow-visible" viewBox="0 0 20 14" fill="none">
+                    <path
+                      d="M 2 12 Q 10 1 18 12"
+                      stroke="#38BDF8"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      className="drop-shadow-[0_0_6px_rgba(56,189,248,0.9)]"
+                    />
+                  </svg>
+                  <svg className="w-4 h-3.5 overflow-visible" viewBox="0 0 20 14" fill="none">
+                    <path
+                      d="M 2 12 Q 10 1 18 12"
+                      stroke="#38BDF8"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      className="drop-shadow-[0_0_6px_rgba(56,189,248,0.9)]"
+                    />
+                  </svg>
+                </div>
+              )}
+
+              {stage === 'run-right' && (
+                <div className="flex items-center gap-1.5 translate-x-1">
+                  <span className="text-sky-400 font-black text-xs">▶</span>
+                  <span className="text-sky-400 font-black text-xs">▶</span>
+                </div>
+              )}
+
+              {stage === 'run-left' && (
+                <div className="flex items-center gap-1.5 -translate-x-1">
+                  <span className="text-sky-400 font-black text-xs">◀</span>
+                  <span className="text-sky-400 font-black text-xs">◀</span>
+                </div>
+              )}
+
+              {stage === 'trip' && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sky-300 font-black text-xs">&gt;</span>
+                  <span className="text-sky-300 font-black text-xs">&lt;</span>
+                </div>
+              )}
+
+              {stage === 'getup' && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sky-400 font-bold text-xs">^</span>
+                  <span className="text-sky-400 font-bold text-xs">~</span>
+                </div>
+              )}
+
+              {/* Cute Pink Cheeks Glow */}
+              <div className="absolute bottom-1 left-2.5 w-2 h-1 rounded-full bg-pink-500/50 blur-[1px]" />
+              <div className="absolute bottom-1 right-2.5 w-2 h-1 rounded-full bg-pink-500/50 blur-[1px]" />
+            </div>
+          </div>
+
+          {/* 3D SLEEK FLOATING TORSO POD */}
+          <div className="relative z-10 flex items-center justify-center">
+            {/* Left Sleek Wing / Fin */}
+            <div className="w-3 h-9 rounded-full mascot-shell-body transform -rotate-18 translate-x-1.5 -translate-y-2 opacity-95" />
+
+            {/* Main Floating Capsule Body */}
+            <div className="w-[52px] h-[64px] rounded-b-[32px] rounded-t-[14px] mascot-shell-body flex flex-col items-center justify-start pt-2.5 relative">
+              {/* Center Gentle Glow Dot */}
+              <div className="w-2.5 h-2.5 rounded-full bg-sky-400/60 shadow-[0_0_10px_rgba(56,189,248,0.8)]" />
+              
+              {/* Body inner accent arc */}
+              <div className="w-7 h-5 mt-2 rounded-full border-b-2 border-slate-300/60" />
             </div>
 
-            {/* Cute Pink Cheeks Glow */}
-            <div className="absolute bottom-1 left-2.5 w-2 h-1 rounded-full bg-pink-500/50 blur-[1px]" />
-            <div className="absolute bottom-1 right-2.5 w-2 h-1 rounded-full bg-pink-500/50 blur-[1px]" />
-          </div>
-        </div>
-
-        {/* 3D SLEEK FLOATING TORSO POD */}
-        <div className="relative z-10 flex items-center justify-center">
-          {/* Left Sleek Wing / Fin */}
-          <div className="w-3 h-9 rounded-full mascot-shell-body transform -rotate-18 translate-x-1.5 -translate-y-2 opacity-95" />
-
-          {/* Main Floating Capsule Body */}
-          <div className="w-[52px] h-[64px] rounded-b-[32px] rounded-t-[14px] mascot-shell-body flex flex-col items-center justify-start pt-2.5 relative">
-            {/* Center Gentle Glow Dot */}
-            <div className="w-2.5 h-2.5 rounded-full bg-sky-400/60 shadow-[0_0_10px_rgba(56,189,248,0.8)]" />
-            
-            {/* Body inner accent arc */}
-            <div className="w-7 h-5 mt-2 rounded-full border-b-2 border-slate-300/60" />
+            {/* Right Sleek Wing / Fin: Kumakaway/Nangangamusta hand */}
+            <div
+              className={`w-3.5 h-10 rounded-full mascot-shell-body opacity-95 -translate-x-1.5 -translate-y-2.5 transition-all duration-300 ${
+                stage === 'wave' || isFinal ? 'anim-friendly-wave' : 'transform rotate-18'
+              }`}
+            />
           </div>
 
-          {/* Right Sleek Wing / Fin */}
-          <div className="w-3 h-9 rounded-full mascot-shell-body transform rotate-18 -translate-x-1.5 -translate-y-2 opacity-95" />
+          {/* 3D Soft Ambient Ground Shadow */}
+          <div className="w-16 h-2.5 rounded-full bg-slate-900/40 dark:bg-black/60 blur-[3px] mt-1 mascot-3d-shadow" />
         </div>
-
-        {/* 3D Soft Ambient Ground Shadow */}
-        <div className="w-16 h-2.5 rounded-full bg-slate-900/40 dark:bg-black/60 blur-[3px] mt-1 mascot-3d-shadow" />
       </div>
     </div>
   );
