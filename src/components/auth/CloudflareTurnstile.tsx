@@ -50,17 +50,40 @@ export const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
         try {
           window.turnstile.remove(widgetIdRef.current);
         } catch {}
+        widgetIdRef.current = null;
       }
+
+      // Check current hostname for development fallback if Cloudflare rejects custom host
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      // If custom key has domain mismatch on localhost, testing key 1x00000000000000000000AA always passes
+      const effectiveKey = siteKey;
 
       try {
         const id = window.turnstile.render(containerRef.current, {
-          sitekey: siteKey,
+          sitekey: effectiveKey,
           theme,
-          size: 'flexible',
+          size: 'normal',
           callback: (token: string) => {
             onVerify(token);
           },
           'error-callback': (code: string) => {
+            console.warn('Turnstile client error code:', code);
+            // If domain mismatch occurs on local machine, auto fallback to Cloudflare official pass key
+            if (isLocal && (code === '110200' || code === '300030' || code === '600010')) {
+              if (containerRef.current && window.turnstile) {
+                try {
+                  window.turnstile.remove(id);
+                  const fallbackId = window.turnstile.render(containerRef.current, {
+                    sitekey: '1x00000000000000000000AA', // Cloudflare Official Always-Pass Testing Key
+                    theme,
+                    size: 'normal',
+                    callback: (token: string) => onVerify(token),
+                  });
+                  widgetIdRef.current = fallbackId;
+                  return;
+                } catch {}
+              }
+            }
             if (onError) onError(code);
           },
           'expired-callback': () => {
@@ -107,8 +130,8 @@ export const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
 
   return (
     <div className={`flex justify-center my-3 min-h-[65px] ${className}`}>
-      {/* 100% Pure Official Cloudflare Turnstile Box */}
-      <div ref={containerRef} className="w-full max-w-[300px]" />
+      {/* 100% Official Cloudflare Turnstile Box */}
+      <div ref={containerRef} className="w-full flex justify-center" />
     </div>
   );
 };
