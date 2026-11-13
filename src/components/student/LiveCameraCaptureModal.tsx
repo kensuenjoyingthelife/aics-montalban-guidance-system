@@ -101,8 +101,19 @@ export const LiveCameraCaptureModal: React.FC<LiveCameraCaptureModalProps> = ({
     if (!videoRef.current) return;
     const video = videoRef.current;
 
-    const width = video.videoWidth || 640;
-    const height = video.videoHeight || 480;
+    let width = video.videoWidth || 640;
+    let height = video.videoHeight || 480;
+    // Fast optimization: limit to 1024px maximum dimension for instant upload
+    const maxDimension = 1024;
+    if (width > maxDimension || height > maxDimension) {
+      if (width > height) {
+        height = Math.round((height * maxDimension) / width);
+        width = maxDimension;
+      } else {
+        width = Math.round((width * maxDimension) / height);
+        height = maxDimension;
+      }
+    }
 
     const canvas = document.createElement('canvas');
     canvas.width = width;
@@ -128,7 +139,7 @@ export const LiveCameraCaptureModal: React.FC<LiveCameraCaptureModalProps> = ({
       stopCamera();
       onCapture(file, previewUrl);
       onClose();
-    }, 'image/jpeg', 0.9);
+    }, 'image/jpeg', 0.72);
   };
 
   if (!isOpen) return null;

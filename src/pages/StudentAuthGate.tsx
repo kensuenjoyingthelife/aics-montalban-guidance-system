@@ -18,6 +18,8 @@ import { SkyThemePill } from '../context/ThemeContext';
 import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
 import { SafezoneMascot } from '../components/auth/SafezoneMascot';
 import { CloudflareTurnstile } from '../components/auth/CloudflareTurnstile';
+import { LiveCameraCaptureModal } from '../components/student/LiveCameraCaptureModal';
+import { compressImageClientSide } from '../services/imageOptimizer';
 import {
   StudentPortalUser,
   registerStudentPortalAccount,
@@ -356,7 +358,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   };
 
   // Image Upload Handlers
-  const handleStudentIdUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleStudentIdUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.startsWith('image/') || file.type.includes('pdf')) {
@@ -364,14 +366,16 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         setRegError('BAWAL ANG PDF O VIDEO: Tanging totoong litrato (JPG/PNG) lamang ng Student ID ang tinatanggap.');
         return;
       }
-      setStudentIdFile(file);
-      const url = URL.createObjectURL(file);
+      // Fast client-side optimization to avoid lag for 100+ concurrent students
+      const optimizedFile = await compressImageClientSide(file, { maxWidth: 1024, maxHeight: 1024, quality: 0.72 });
+      setStudentIdFile(optimizedFile);
+      const url = URL.createObjectURL(optimizedFile);
       setStudentIdPreview(url);
       soundFX.playToggleSwitch(true);
     }
   };
 
-  const handlePersonalPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePersonalPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.startsWith('image/') || file.type.includes('pdf')) {
@@ -379,8 +383,10 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         setRegError('BAWAL ANG PDF O VIDEO: Tanging totoong litrato (JPG/PNG) lamang ng mukha ang tinatanggap.');
         return;
       }
-      setPersonalPhotoFile(file);
-      const url = URL.createObjectURL(file);
+      // Fast client-side optimization to avoid lag for 100+ concurrent students
+      const optimizedFile = await compressImageClientSide(file, { maxWidth: 1024, maxHeight: 1024, quality: 0.72 });
+      setPersonalPhotoFile(optimizedFile);
+      const url = URL.createObjectURL(optimizedFile);
       setPersonalPhotoPreview(url);
       soundFX.playToggleSwitch(true);
     }
