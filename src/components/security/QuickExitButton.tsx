@@ -3,17 +3,18 @@ import { LogOut } from 'lucide-react';
 import { recordSecurityAudit } from '../../services/securityEngine';
 
 /**
- * iPhone AssistiveTouch-Style Draggable Floating SOS Quick-Exit Ball
+ * iPhone AssistiveTouch-Style Draggable Floating Mascot Head Quick-Exit Ball
  * 
  * Features:
  * - On Mobile (< 768px):
- *   Renders as a floating circular RED assistive-touch button that students can drag and move anywhere
- *   along the screen edges just like the iOS AssistiveTouch home ball!
- *   Tapping it immediately executes Emergency Exit:
+ *   Renders as a floating circular 3D EVE-style ROBOT MASCOT HEAD!
+ *   Complete with glossy pearl shell, deep obsidian glass visor, glowing cyan eyes, and specular shine!
+ *   Students can freely drag and place it anywhere along the phone screen edges.
+ *   Tapping the Mascot Head executes Instant Emergency Exit:
  *     1. Purges local/session storage auth tokens
  *     2. Triggers onTrigger / onSignOut
  *     3. Attempts window.close() (to exit tab/browser)
- *     4. Instantly navigates to Google Search home (or about:blank)
+ *     4. Instantly navigates to Google Search home
  * 
  * - On Desktop (>= 768px):
  *   Renders as a sleek, discrete top navbar pill button with Esc hotkey support.
@@ -141,7 +142,7 @@ export const QuickExitButton: React.FC<QuickExitButtonProps> = ({ onTrigger, cla
   };
 
   // ==========================================
-  // RENDER: MOBILE IPHONE ASSISTIVETOUCH BALL
+  // RENDER: MOBILE IPHONE ASSISTIVETOUCH MASCOT HEAD BALL
   // ==========================================
   if (isMobile) {
     return (
@@ -155,19 +156,48 @@ export const QuickExitButton: React.FC<QuickExitButtonProps> = ({ onTrigger, cla
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         className={`fixed z-[9999] select-none transition-transform duration-100 ease-out active:scale-95 ${
-          isDragging ? 'opacity-95 scale-105' : 'opacity-85'
+          isDragging ? 'opacity-95 scale-105' : 'opacity-90'
         }`}
       >
-        {/* Glowing Assistive Touch Orb */}
-        <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-rose-500 via-red-600 to-rose-700 p-1 shadow-2xl shadow-rose-950/80 border-2 border-white/80 flex flex-col items-center justify-center cursor-move">
-          {/* Outer Pulsing Ping Ring */}
-          <span className="absolute inset-0 rounded-full bg-rose-400 opacity-40 animate-ping pointer-events-none" />
+        {/* Floating Circle Container Shaped Like the 3D Robot Mascot Head */}
+        <div className="relative w-14 h-14 rounded-full bg-slate-900/90 p-1 shadow-2xl shadow-sky-950/90 border-2 border-sky-400/80 flex items-center justify-center cursor-move backdrop-blur-sm">
+          {/* Outer Pulsing Soft Cyan Aura */}
+          <span className="absolute inset-0 rounded-full bg-sky-400/30 animate-ping pointer-events-none" />
 
-          {/* Inner AssistiveTouch Concentric Ring */}
-          <div className="w-10 h-10 rounded-full border-2 border-white/60 bg-red-700/80 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-white text-base font-black leading-none">✕</span>
-            <span className="text-[7.5px] font-black tracking-tighter text-white uppercase mt-0.5 leading-none">
-              EXIT
+          {/* 3D EVE-Style Pearl Head Sphere */}
+          <div className="relative w-12 h-12 rounded-full mascot-shell-head flex items-center justify-center p-1 overflow-hidden pointer-events-none">
+            {/* Top Gloss Specular Highlight */}
+            <div className="absolute top-1 left-2 w-4 h-2 bg-white/80 rounded-full blur-[0.8px] transform -rotate-30 pointer-events-none" />
+
+            {/* Deep Obsidian Black Visor */}
+            <div className="relative w-9 h-7 rounded-full mascot-visor-glass flex items-center justify-center gap-1.5 overflow-hidden">
+              {/* Visor Glare Shine */}
+              <div className="absolute -top-1 -left-1 w-6 h-3 bg-white/25 blur-[1px] rounded-full transform -rotate-12 pointer-events-none" />
+
+              {/* Cute Glowing Cyan Smiling Eyes (Curved Arcs) */}
+              <svg className="w-3 h-2.5 overflow-visible" viewBox="0 0 20 14" fill="none">
+                <path
+                  d="M 2 12 Q 10 1 18 12"
+                  stroke="#38BDF8"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  className="drop-shadow-[0_0_4px_rgba(56,189,248,0.9)]"
+                />
+              </svg>
+              <svg className="w-3 h-2.5 overflow-visible" viewBox="0 0 20 14" fill="none">
+                <path
+                  d="M 2 12 Q 10 1 18 12"
+                  stroke="#38BDF8"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  className="drop-shadow-[0_0_4px_rgba(56,189,248,0.9)]"
+                />
+              </svg>
+            </div>
+
+            {/* Subtle "EXIT" Red Badge at bottom of head */}
+            <span className="absolute bottom-0.5 px-1 py-[0.5px] rounded-full bg-rose-600/90 text-[6.5px] font-black text-white tracking-tight uppercase leading-none shadow-xs">
+              ESC
             </span>
           </div>
         </div>
