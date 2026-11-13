@@ -381,28 +381,30 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
           <div className="absolute inset-0 bg-[#072464]/65 mix-blend-multiply pointer-events-none" />
           <div className="absolute inset-0 bg-gradient-to-b from-[#020b24]/40 via-[#0a2769]/35 to-[#020b24]/70 pointer-events-none" />
 
-          {/* Inner Content: Generous vertical height with prominent logo, title, and spaced toggles */}
-          <div className="relative z-10 px-4 sm:px-8 py-4 sm:py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
-            {/* Left/Top Group: Prominent Large Circular Logo + Titles */}
-            <div className="flex items-center gap-3.5 sm:gap-5 min-w-0">
-              <div className="relative shrink-0">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full p-1 bg-white/20 backdrop-blur-md ring-2 ring-white/70 shadow-xl flex items-center justify-center">
-                  <img
-                    src="/aics-logo.jpg"
-                    alt="AICS Logo"
-                    className="w-full h-full rounded-full object-cover shadow-inner"
-                  />
-                </div>
-                {/* Live Security Shield Dot */}
-                <span
-                  className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-400 ring-2 ring-[#020b24] shadow-md"
-                  title="100% Confidential & RA 10173 Protected"
+          {/* Inner Content: 2-column layout - Logo vertically centered on the left, Titles on top-right, Toggles on bottom-right */}
+          <div className="relative z-10 px-4 sm:px-8 py-3.5 sm:py-5 flex items-center gap-4 sm:gap-6 min-h-[96px] sm:min-h-[110px]">
+            {/* Left Column: Prominent Circular Logo vertically centered in the navbar (Yellow Circle Position) */}
+            <div className="relative shrink-0 flex items-center justify-center my-auto">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full p-1 bg-white/20 backdrop-blur-md ring-2 ring-white/70 shadow-2xl flex items-center justify-center">
+                <img
+                  src="/aics-logo.jpg"
+                  alt="AICS Logo"
+                  className="w-full h-full rounded-full object-cover shadow-inner"
                 />
               </div>
+              {/* Live Security Shield Dot */}
+              <span
+                className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-400 ring-2 ring-[#020b24] shadow-md"
+                title="100% Confidential & RA 10173 Protected"
+              />
+            </div>
 
-              <div className="min-w-0 space-y-1">
+            {/* Right Column: Top row = AICS MONTALBAN & Description (Pink Box); Bottom row = Toggles (Green Box) */}
+            <div className="flex-1 flex flex-col justify-between gap-2.5 sm:gap-3 min-w-0">
+              {/* Top Row: Title + Security Badge + Description */}
+              <div className="space-y-0.5 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-base sm:text-lg font-black tracking-wide text-white uppercase truncate drop-shadow-md">
+                  <h1 className="text-sm sm:text-base md:text-lg font-black tracking-wide text-white uppercase truncate drop-shadow-md">
                     AICS MONTALBAN
                   </h1>
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/25 border border-emerald-400/40 text-[10px] sm:text-xs font-bold text-emerald-300 backdrop-blur-sm shadow-sm">
@@ -410,20 +412,20 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     RA 10173
                   </span>
                 </div>
-                <p className="text-xs sm:text-sm text-sky-100 font-semibold truncate drop-shadow-md">
+                <p className="text-[11px] sm:text-xs md:text-sm text-sky-100 font-semibold truncate drop-shadow-md">
                   {isTl ? 'Ligtas at Kumpidensyal na Guidance Portal' : 'Safe & Confidential Concern Reporting'}
                 </p>
               </div>
-            </div>
 
-            {/* Right/Bottom Group: Pill Toggles with spacing and clean alignment */}
-            <div className="flex items-center self-end md:self-center shrink-0">
-              <div className="flex items-center p-1.5 rounded-full bg-slate-950/70 border border-white/25 shadow-xl backdrop-blur-md">
-                <SoundTogglePill />
-                <div className="h-4 w-[1px] bg-white/20 mx-1.5 hidden sm:block" />
-                <LocaleSwitchPill />
-                <div className="h-4 w-[1px] bg-white/20 mx-1.5 hidden sm:block" />
-                <SkyThemePill />
+              {/* Bottom Row: Controls / Toggles (Green Box position) with spacing */}
+              <div className="flex items-center">
+                <div className="flex items-center p-1 sm:p-1.5 rounded-full bg-slate-950/70 border border-white/25 shadow-xl backdrop-blur-md">
+                  <SoundTogglePill />
+                  <div className="h-3.5 sm:h-4 w-[1px] bg-white/20 mx-1 sm:mx-1.5" />
+                  <LocaleSwitchPill />
+                  <div className="h-3.5 sm:h-4 w-[1px] bg-white/20 mx-1 sm:mx-1.5" />
+                  <SkyThemePill />
+                </div>
               </div>
             </div>
           </div>
