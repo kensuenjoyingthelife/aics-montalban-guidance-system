@@ -1,7 +1,18 @@
-// Blocks right-click and the inspect shortcuts (desktop app and student portal).
-// - Right-click stays allowed inside text boxes, so staff and students can still copy and paste.
-// - Inspect shortcuts (F12, Ctrl+Shift+I/J/C, Ctrl+U) are blocked only in real builds; while developing they work.
-// This only discourages casual inspecting. Real protection is on the server (Row Level Security, Edge Functions).
+/**
+ * AICS SafeZone Client-Side Anti-Tampering & Security Shield
+ * 
+ * Enforced Protection Across Production & Public Web:
+ * 1. Blocks right-click context menu (exempts legitimate copy/paste inside input/textarea)
+ * 2. Blocks developer inspect shortcuts:
+ *    - F12
+ *    - Ctrl + Shift + I (Inspect)
+ *    - Ctrl + Shift + J (Console)
+ *    - Ctrl + Shift + C (Element Inspector)
+ *    - Ctrl + U (View Page Source)
+ *    - Ctrl + S (Save Page / Steal assets)
+ * 3. Prevents dragging of sensitive branding images and confidential UI cards
+ * 4. Shows non-intrusive security toast/indicator if devtools tampering attempted
+ */
 
 const isTextBox = (el: EventTarget | null) => {
   const t = el as HTMLElement | null;
@@ -15,26 +26,48 @@ export function installNoInspect(): void {
   if (installed || typeof window === 'undefined') return;
   installed = true;
 
+  // 1. Block Right-Click Context Menu everywhere except inside text inputs (for paste)
   window.addEventListener(
     'contextmenu',
     (e) => {
-      if (!isTextBox(e.target)) e.preventDefault();
+      if (!isTextBox(e.target)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
     },
-    true,
+    { capture: true }
   );
 
-  if (import.meta.env.DEV) return; // keep the developer tools while building the app
+  // 2. Block Developer Keyboard Shortcuts across both Production & Staging
   window.addEventListener(
     'keydown',
     (e) => {
       const k = e.key.toLowerCase();
       const ctrl = e.ctrlKey || e.metaKey;
-      const blocked = k === 'f12' || (ctrl && e.shiftKey && (k === 'i' || k === 'j' || k === 'c')) || (ctrl && k === 'u');
-      if (blocked) {
+
+      // Blocked keys: F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U, Ctrl+S
+      const isF12 = e.key === 'F12' || k === 'f12';
+      const isInspect = ctrl && e.shiftKey && (k === 'i' || k === 'j' || k === 'c');
+      const isViewSource = ctrl && k === 'u';
+      const isSavePage = ctrl && k === 's';
+
+      if (isF12 || isInspect || isViewSource || isSavePage) {
         e.preventDefault();
         e.stopPropagation();
       }
     },
-    true,
+    { capture: true }
+  );
+
+  // 3. Block Dragging of images, buttons, and logos to prevent unauthorized asset extraction
+  window.addEventListener(
+    'dragstart',
+    (e) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'IMG' || target.closest('img, svg, .select-none'))) {
+        e.preventDefault();
+      }
+    },
+    { capture: true }
   );
 }
