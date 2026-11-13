@@ -1,7 +1,7 @@
 {
-  "name": "AICS Montalban Student Concern Portal",
-  "short_name": "AICS Portal",
-  "description": "Official Safe & Confidential Student Concern, Bullying and Peer Reporting System of Asian Institute of Computer Studies Montalban",
+  "name": "AICS Kalang Ba",
+  "short_name": "AICS Kalang Ba",
+  "description": "AICS Kalang Ba · Official Safe & Confidential Student Concern, Bullying and Guidance Support Portal of Asian Institute of Computer Studies",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

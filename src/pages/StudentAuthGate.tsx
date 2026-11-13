@@ -10,6 +10,7 @@ import {
   Shield,
   Check,
   RefreshCw,
+  Download,
 } from 'lucide-react';
 import { CelestialBackground } from '../components/auth/CelestialBackground';
 import { WavyBackground } from '../components/auth/WavyBackground';
@@ -143,6 +144,41 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   // Cloudflare Turnstile Token State
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const CLOUDFLARE_SITE_KEY = '0x4AAAAAAF_QjZNhxaPTV-5U';
+
+  // PWA & Mobile App Install Prompt State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [canInstall, setCanInstall] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setCanInstall(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    soundFX.playToggleSwitch(true);
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const choiceResult = await deferredPrompt.userChoice;
+      if (choiceResult && choiceResult.outcome === 'accepted') {
+        setCanInstall(false);
+      }
+      setDeferredPrompt(null);
+    } else {
+      alert(
+        isTl
+          ? 'Para i-install ang AICS Kalang Ba sa iyong cellphone: Pindutin ang tatlong tuldok (⋮) sa browser at piliin ang "Install app" o "Add to Home screen"!'
+          : 'To install AICS Kalang Ba on your phone: Tap the browser menu (⋮) and select "Install app" or "Add to Home screen"!'
+      );
+    }
+  };
 
   // Check rate limit timer tick - Highly optimized to never trigger re-renders unless locked
   useEffect(() => {
@@ -624,7 +660,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h1 className="text-sm font-black tracking-tight text-white uppercase truncate">
-                  AICS MONTALBAN
+                  AICS KALANG BA
                 </h1>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-[10px] font-bold text-emerald-300">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -699,7 +735,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               <div className="space-y-0.5 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <h1 className="text-sm font-black tracking-wide text-white uppercase truncate drop-shadow-md">
-                    AICS MONTALBAN
+                    AICS KALANG BA
                   </h1>
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/25 border border-emerald-400/40 text-[10px] font-bold text-emerald-300 backdrop-blur-sm shadow-sm">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -960,6 +996,39 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   className="btn-press px-6 py-2.5 rounded-xl card-back-button font-extrabold transition-all"
                 >
                   {isTl ? '+ Mag-Create ng Account' : '+ Create Student Account'}
+                </button>
+              </div>
+
+              {/* Install AICS Kalang Ba Mobile App Banner */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={handleInstallApp}
+                  className="btn-press w-full p-3 rounded-2xl bg-gradient-to-r from-sky-500/20 to-blue-600/25 hover:from-sky-500/30 hover:to-blue-600/35 border-2 border-sky-400/50 flex items-center justify-between gap-3 text-left transition-all cursor-pointer shadow-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 to-[#1E469B] flex items-center justify-center text-white shadow-md shrink-0">
+                      <Download className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-black text-sky-900 dark:text-sky-200 uppercase tracking-wider">
+                          {isTl ? 'I-install ang Mobile App' : 'Install Mobile App'}
+                        </span>
+                        <span className="text-[9px] px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 font-extrabold border border-emerald-400/30">
+                          FREE
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-sky-800/80 dark:text-sky-300/80 font-medium">
+                        {isTl
+                          ? 'I-download ang AICS Kalang Ba sa iyong cellphone para sa mabilis na pag-access'
+                          : 'Add AICS Kalang Ba to home screen with offline & push notifications'}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-black text-sky-600 dark:text-sky-300 shrink-0">
+                    {isTl ? 'I-install →' : 'Install →'}
+                  </span>
                 </button>
               </div>
             </div>

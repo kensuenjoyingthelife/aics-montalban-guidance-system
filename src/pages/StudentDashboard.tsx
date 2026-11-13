@@ -14,9 +14,12 @@ import {
   CheckCircle2,
   AlertTriangle,
   RefreshCw,
+  Bell,
+  BellOff,
 } from 'lucide-react';
 import { WavyBackground } from '../components/auth/WavyBackground';
 import { SoundTogglePill, soundFX } from '../services/soundEngine';
+import { notificationService } from '../services/notificationService';
 import { SkyThemePill } from '../context/ThemeContext';
 import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
 import { StudentPortalUser } from '../services/studentAuthService';
@@ -54,8 +57,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
   const [activeTab, setActiveTab] = useState<'submit' | 'history' | 'chat'>('submit');
 
-  // Multi-step Google Form-style pagination for report submission (1 -> 2 -> 3)
-  const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
+  // Notifications toggle state
+  const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(() => notificationService.isEnabled());
 
   // Right-side Drawer / Menu Bar state
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
@@ -236,6 +239,18 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
         if (isMounted && newer && newer.length > 0) {
           lastMsgId = newer[newer.length - 1].id;
           soundFX.playStepUnlock();
+          
+          // Send discreet native mobile / browser push notification
+          const officeMsgs = newer.filter((m) => m.sender !== 'student');
+          if (officeMsgs.length > 0) {
+            void notificationService.sendDiscreetNotification(
+              'AICS Kalang Ba',
+              isTl
+                ? 'May bagong tugon mula sa Guidance Office ukol sa iyong concern.'
+                : 'You have a new confidential update from the Guidance Office.'
+            );
+          }
+
           setChatMessages((prev) => {
             const existingIds = new Set(prev.map((m) => m.id));
             const fresh = newer.filter((m) => !existingIds.has(m.id));
@@ -403,7 +418,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <h1 className="text-xs sm:text-base font-extrabold tracking-tight text-[#0B1F4D] dark:text-white uppercase truncate">
-                  AICS MONTALBAN
+                  AICS KALANG BA
                 </h1>
                 <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
                   ACTIVE
@@ -473,7 +488,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   <span className="text-xl">🧭</span>
                   <div>
                     <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">
-                      {isTl ? 'Portal Navigation' : 'Portal Menu'}
+                      AICS KALANG BA
                     </h3>
                     <p className="text-[10px] text-sky-300/70 font-semibold truncate max-w-[170px]">
                       {user.fullName}
@@ -609,6 +624,52 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                     {isTl ? 'Wika (EN / TL)' : 'Language (EN / TL)'}
                   </span>
                   <LocaleSwitchPill />
+                </div>
+
+                {/* Notifications Toggle Row */}
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                  <div className="flex items-center gap-2">
+                    {notificationsEnabled ? (
+                      <Bell className="w-4 h-4 text-emerald-400" />
+                    ) : (
+                      <BellOff className="w-4 h-4 text-slate-400" />
+                    )}
+                    <span className="text-xs font-bold text-slate-300">
+                      {isTl ? 'Phone Notification' : 'Push Notification'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const next = !notificationsEnabled;
+                      if (next) {
+                        const granted = await notificationService.requestPermission();
+                        setNotificationsEnabled(granted);
+                        if (granted) {
+                          soundFX.playToggleSwitch(true);
+                          void notificationService.sendDiscreetNotification(
+                            'AICS Kalang Ba',
+                            isTl
+                              ? 'Aktibo na ang phone notifications para sa iyong mga reports!'
+                              : 'Phone notifications are now enabled for your reports!'
+                          );
+                        } else {
+                          soundFX.playError();
+                        }
+                      } else {
+                        soundFX.playToggleSwitch(false);
+                        notificationService.setEnabled(false);
+                        setNotificationsEnabled(false);
+                      }
+                    }}
+                    className={`btn-press px-2.5 py-1 rounded-full text-[11px] font-black cursor-pointer transition-all ${
+                      notificationsEnabled
+                        ? 'bg-emerald-500 text-white shadow-sm'
+                        : 'bg-white/10 text-slate-400'
+                    }`}
+                  >
+                    {notificationsEnabled ? (isTl ? 'Bukas' : 'ON') : (isTl ? 'Naka-off' : 'OFF')}
+                  </button>
                 </div>
 
                 {/* Sound FX Toggle Row */}
