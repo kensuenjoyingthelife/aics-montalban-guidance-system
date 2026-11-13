@@ -244,10 +244,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
           const officeMsgs = newer.filter((m) => m.sender !== 'student');
           if (officeMsgs.length > 0) {
             void notificationService.sendDiscreetNotification(
-              'AICS Kalang Ba',
-              isTl
-                ? 'May bagong tugon mula sa Guidance Office ukol sa iyong concern.'
-                : 'You have a new confidential update from the Guidance Office.'
+              'AICS kalang ba',
+              'AICS kalang ba message you.'
             );
           }
 

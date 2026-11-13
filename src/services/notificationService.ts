@@ -86,8 +86,8 @@ export class NotificationEngine {
           notifications: [
             {
               id: Date.now() % 100000,
-              title: title || 'AICS Kalang Ba',
-              body: body || 'May bagong update sa iyong Guidance concern report.',
+              title: title || 'AICS kalang ba',
+              body: body || 'AICS kalang ba message you.',
               schedule: { at: new Date(Date.now() + 100) },
               sound: 'beep.wav',
               smallIcon: 'ic_stat_icon_config_sample',
@@ -106,8 +106,8 @@ export class NotificationEngine {
     if (typeof window !== 'undefined' && 'Notification' in window) {
       if (Notification.permission === 'granted') {
         try {
-          const notif = new Notification(title || 'AICS Kalang Ba', {
-            body: body || 'May bagong update sa iyong Guidance concern report.',
+          const notif = new Notification(title || 'AICS kalang ba', {
+            body: body || 'AICS kalang ba message you.',
             icon: '/aics-logo.jpg',
             badge: '/aics-logo.jpg',
             silent: false,
@@ -121,8 +121,8 @@ export class NotificationEngine {
           // Fallback if ServiceWorker required
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker.ready.then((reg) => {
-              reg.showNotification(title || 'AICS Kalang Ba', {
-                body: body || 'May bagong update sa iyong Guidance concern report.',
+              reg.showNotification(title || 'AICS kalang ba', {
+                body: body || 'AICS kalang ba message you.',
                 icon: '/aics-logo.jpg',
                 badge: '/aics-logo.jpg',
               });
