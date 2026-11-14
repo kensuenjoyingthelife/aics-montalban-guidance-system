@@ -205,7 +205,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   const [regEmail, setRegEmail] = useState('');
   const [regStudentNumber, setRegStudentNumber] = useState('');
   const [regGradeLevel, setRegGradeLevel] = useState('11');
-  const [regSection, setRegSection] = useState('ICT-1');
+  const [regStrand, setRegStrand] = useState('ICT');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [showRegPassword, setShowRegPassword] = useState(false);
@@ -463,7 +463,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         email: regEmail,
         studentNumber: regStudentNumber,
         password: regPassword,
-        gradeSection: `Grade ${regGradeLevel} · ${regSection}`,
+        gradeSection: `Grade ${regGradeLevel} · ${regStrand}`,
         studentIdFile,
       });
 
@@ -1226,22 +1226,19 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       </select>
                     </div>
 
-                    <div className="space-y-1.5 sm:col-span-2">
+                    <div className="space-y-1.5">
                       <label className="text-sm font-bold register-label">
-                        {isTl ? 'Seksyon / Strand (Section)' : 'Section / Strand'}
+                        {isTl ? 'Strand' : 'Strand'}
                       </label>
                       <select
-                        value={regSection}
-                        onChange={(e) => setRegSection(e.target.value)}
+                        value={regStrand}
+                        onChange={(e) => setRegStrand(e.target.value)}
                         className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-bold focus:outline-none bg-slate-900 text-white"
                       >
-                        <option value="ICT-1" className="bg-slate-900 text-white">ICT-1</option>
-                        <option value="ICT-2" className="bg-slate-900 text-white">ICT-2</option>
-                        <option value="STEM-1" className="bg-slate-900 text-white">STEM-1</option>
-                        <option value="STEM-2" className="bg-slate-900 text-white">STEM-2</option>
-                        <option value="ABM-1" className="bg-slate-900 text-white">ABM-1</option>
-                        <option value="HUMSS-1" className="bg-slate-900 text-white">HUMSS-1</option>
-                        <option value="GAS-1" className="bg-slate-900 text-white">GAS-1</option>
+                        <option value="HUMSS" className="bg-slate-900 text-white">HUMSS</option>
+                        <option value="ABM" className="bg-slate-900 text-white">ABM</option>
+                        <option value="ICT" className="bg-slate-900 text-white">ICT</option>
+                        <option value="GAS" className="bg-slate-900 text-white">GAS</option>
                       </select>
                     </div>
                   </div>
