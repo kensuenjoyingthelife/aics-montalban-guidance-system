@@ -7,10 +7,10 @@ import { CASE_STEPS, type CaseStep, type DisciplineCaseRecord } from '../../data
 export type FlowAction =
   | { kind: 'call' }
   | { kind: 'explanation'; text: string }
-  | { kind: 'notified'; how: string }
+  | { kind: 'notified'; how: string; conferenceStatus?: 'Attended' | 'No-Show' }
   | { kind: 'decision'; decision: string; sanction: string }
   | { kind: 'followup' }
-  | { kind: 'close' };
+  | { kind: 'close'; counselingNotes?: string };
 
 const STEP_TL: Record<CaseStep, string> = {
   Reported: 'Na-report',
@@ -75,6 +75,8 @@ export const CaseFlowPanel: React.FC<{
   }, [next, c.status, c.parentNotifiedAt]);
   const [text, setText] = useState(c.explanation ?? '');
   const [how, setHow] = useState('');
+  const [parentStatus, setParentStatus] = useState<'Attended' | 'No-Show'>(c.parentConferenceStatus === 'No-Show' ? 'No-Show' : 'Attended');
+  const [counselingNotes, setCounselingNotes] = useState(c.counselingNotes ?? '');
   const [decision, setDecision] = useState(c.decision ?? '');
   const [sanction, setSanction] = useState(c.sanction || suggestedSanction);
   const dates: Partial<Record<CaseStep, string>> = {
@@ -233,14 +235,56 @@ export const CaseFlowPanel: React.FC<{
                   </button>
                 ))}
               </div>
+              {/* Conference Attendance Tag: Attended vs No-Show */}
+              <div className="p-3 rounded-lg bg-slate-50 dark:bg-[#13203B] border border-slate-200 dark:border-white/10 space-y-2">
+                <span className="text-[11px] font-extrabold uppercase text-[#4A608A] dark:text-[#94A8D0] block">
+                  {isTl ? 'Katayuan sa Pagharap ng Magulang (Conference Outcome)' : 'Parent Conference Attendance'}
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setParentStatus('Attended')}
+                    className={`p-2 rounded-lg text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
+                      parentStatus === 'Attended'
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                        : 'bg-white dark:bg-[#0B1527] border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <span>✓</span>
+                    <span>{isTl ? 'Dumalo ang Magulang' : 'Parent Attended'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setParentStatus('No-Show')}
+                    className={`p-2 rounded-lg text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
+                      parentStatus === 'No-Show'
+                        ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                        : 'bg-white dark:bg-[#0B1527] border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <span>⚠️</span>
+                    <span>{isTl ? 'Hindi Sumipot (No-Show)' : 'Did Not Show Up'}</span>
+                  </button>
+                </div>
+                {parentStatus === 'No-Show' && (
+                  <p className="text-[10.5px] text-amber-700 dark:text-amber-300 font-semibold leading-tight">
+                    {isTl
+                      ? 'Mananatiling bukas ang kaso at maghihintay ng 2nd notice o rescheduling bago makapag-desisyon.'
+                      : 'Case remains open; requires 2nd summons or rescheduling notice before sanction decision.'}
+                  </p>
+                )}
+              </div>
+
               <div className="flex items-center justify-between pt-2 border-t border-[#F1F5F9] dark:border-[#1E2E4E] flex-wrap gap-2">
                 <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
                   {isTl
                     ? 'Tip: Hindi magiging sarado/closed ang kaso kapag nag-abiso sa magulang. Mananatiling aktibo ito.'
                     : 'Note: Notifying parent will not close the case. Case stays active until due process resolution.'}
                 </p>
-                <button type="button" data-flow="notified" disabled={busy || !how} onClick={() => onAction({ kind: 'notified', how })} className={`${primary} rounded-[6px]`}>
-                  {isTl ? '✓ I-save: Naabisuhan na ang Magulang (Waiting Conference)' : '✓ Save: Parent Notified (Waiting Conference)'}
+                <button type="button" data-flow="notified" disabled={busy || !how} onClick={() => onAction({ kind: 'notified', how, conferenceStatus: parentStatus })} className={`${primary} rounded-[6px]`}>
+                  {parentStatus === 'No-Show'
+                    ? (isTl ? '⚠️ I-save: No-Show (Pending Reschedule)' : '⚠️ Save: No-Show (Pending Reschedule)')
+                    : (isTl ? '✓ I-save: Dumalo / Naabisuhan na ang Magulang' : '✓ Save: Parent Notified & Conference')}
                 </button>
               </div>
             </div>
@@ -276,11 +320,40 @@ export const CaseFlowPanel: React.FC<{
             </div>
           )}
           {next === 'Closed' && (
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm text-[#0B1F4D] dark:text-white">{isTl ? 'Tapos na ba ang sanction at follow-up?' : 'Is the sanction and follow-up finished?'}</p>
-              <button type="button" data-flow="close" disabled={busy} onClick={() => onAction({ kind: 'close' })} className={`${btn} bg-emerald-600 text-white`}>
-                {isTl ? '✓ Isara ang kaso' : '✓ Close the case'}
-              </button>
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs font-bold text-[#0F172A] dark:text-white">
+                  {isTl ? 'Intervention & Counseling Anecdotal Notes (Bago Isara ang Kaso):' : 'Counseling Anecdotal & Behavioral Notes (Before Closure):'}
+                </p>
+                <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] mt-0.5">
+                  {isTl
+                    ? 'Itala ang naging pagbabago sa asal ng estudyante, kasunduan sa guidance, at patunay na natapos ang sanction.'
+                    : 'Record student behavioral progress, counseling agreements, and verified sanction completion.'}
+                </p>
+              </div>
+              <textarea
+                value={counselingNotes}
+                onChange={(e) => setCounselingNotes(e.target.value.slice(0, 1500))}
+                rows={2}
+                className={`${input} rounded-lg text-xs leading-relaxed`}
+                placeholder={isTl ? 'hal. Nakausap si Mark; nagpakita ng pagsisisi, nangakong hindi na magdadala ng vape, at maayos na nag-community service nang 3 araw sa library.' : 'e.g. Student showed remorse, signed behavioral pledge, and completed 3 days campus service.'}
+              />
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#F1F5F9] dark:border-[#1E2E4E]">
+                <span className="text-[10.5px] font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                  {counselingNotes.trim().length < 5
+                    ? (isTl ? 'Maglagay ng maikling tala ng counseling bago isara.' : 'Enter brief counseling notes before closing.')
+                    : (isTl ? '✓ Handa nang isara nang opisyal' : '✓ Ready for formal case resolution')}
+                </span>
+                <button
+                  type="button"
+                  data-flow="close"
+                  disabled={busy}
+                  onClick={() => onAction({ kind: 'close', counselingNotes: counselingNotes.trim() })}
+                  className={`${btn} bg-emerald-600 text-white shadow-sm`}
+                >
+                  {isTl ? '✓ Pormal na Isara ang Kaso (Resolved)' : '✓ Officially Close Case (Resolved)'}
+                </button>
+              </div>
             </div>
           )}
         </div>

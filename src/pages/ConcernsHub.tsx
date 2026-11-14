@@ -520,7 +520,14 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
                 onCreateCase={
                   onCreateCase && selected.status !== 'Rejected'
                     ? () => {
-                        const firstName = (selected.who || '').split(/,|;|\band\b|\bat\b|\n/i)[0].trim().slice(0, 40);
+                        let rawName = selected.who || '';
+                        const bracketMatch = rawName.match(/\[RESPONDENT[^:]*:\s*([^\-\]\n]+)/i);
+                        if (bracketMatch) {
+                          rawName = bracketMatch[1].trim();
+                        } else {
+                          rawName = rawName.replace(/^\[[^\]]+\]\s*/, '');
+                        }
+                        const firstName = rawName.split(/,|;|\band\b|\bat\b|\(|\n/i)[0].trim().slice(0, 50);
                         onCreateCase({
                           concernId: selected.id,
                           concernCode: selected.code,

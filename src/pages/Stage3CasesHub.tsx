@@ -129,7 +129,16 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   // SUB-TAB 1 STATE: ADD NEW CASE REPORT (PAGE 2)
   // - Starts clean for new users, with a 1-click "Fill Sample Data" helper
   // ==========================================================================
-  const [selectedStudentNumbers, setSelectedStudentNumbers] = useState<string[]>([]);
+  // Auto-prefill matching student from concern reporter's identified respondent
+  const initialPrefilledStudentNos = useMemo(() => {
+    if (!prefill?.search || !students || students.length === 0) return [];
+    const q = prefill.search.toLowerCase().trim();
+    if (!q || q.length < 2) return [];
+    const directMatch = students.find((s) => s.fullName.toLowerCase().includes(q) || q.includes(s.fullName.toLowerCase()));
+    return directMatch ? [directMatch.studentNumber] : [];
+  }, [prefill, students]);
+
+  const [selectedStudentNumbers, setSelectedStudentNumbers] = useState<string[]>(initialPrefilledStudentNos);
   const [studentPickerQuery, setStudentPickerQuery] = useState<string>(prefill?.search ?? '');
   const [selectedPolicyCode, setSelectedPolicyCode] = useState<string>('MIN-01');
   // Group incident: a different offense per student (empty = same as the main offense)
@@ -1318,12 +1327,27 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       local = { explanation: a.text, step: 'Explanation' };
       msg = isTl ? ' Na-save ang paliwanag. Susunod: ipaalam sa magulang.' : ' Explanation saved. Next: let the parent know.';
     } else if (a.kind === 'notified') {
-      const activate = c.sanctionStatus === 'Pending parent notice';
-      db = { parent_notified_at: now, parent_notified_how: a.how, step: c.decidedAt ? 'Decision' : 'Parent Notified', ...(activate ? { sanction_status: 'Active', status: 'Sanction In Progress' } : {}) };
-      local = { parentNotifiedAt: now, parentNotifiedHow: a.how, step: c.decidedAt ? 'Decision' : 'Parent Notified', ...(activate ? { sanctionStatus: 'Active' as const, status: 'Sanction In Progress' as const } : {}) };
-      msg = activate
-        ? isTl ? ' Alam na ng magulang — nagsimula na ang sanction.' : ' Parent notified — the sanction has started.'
-        : isTl ? ' Alam na ng magulang. Susunod: itala ang desisyon.' : ' Parent notified. Next: record the decision.';
+      const isNoShow = a.conferenceStatus === 'No-Show';
+      const activate = !isNoShow && c.sanctionStatus === 'Pending parent notice';
+      db = {
+        parent_notified_at: now,
+        parent_notified_how: a.how,
+        parent_conference_status: a.conferenceStatus || 'Attended',
+        step: c.decidedAt ? 'Decision' : 'Parent Notified',
+        ...(activate ? { sanction_status: 'Active', status: 'Sanction In Progress' } : {})
+      };
+      local = {
+        parentNotifiedAt: now,
+        parentNotifiedHow: a.how,
+        parentConferenceStatus: a.conferenceStatus || 'Attended',
+        step: c.decidedAt ? 'Decision' : 'Parent Notified',
+        ...(activate ? { sanctionStatus: 'Active' as const, status: 'Sanction In Progress' as const } : {})
+      };
+      msg = isNoShow
+        ? isTl ? ' Naitala: No-Show ang magulang. Mag-issue ng 2nd summons o i-reschedule.' : ' Recorded: Parent was a no-show. Issue a 2nd summons or reschedule.'
+        : activate
+        ? isTl ? ' Dumalo ang magulang — nagsimula na ang sanction.' : ' Parent attended — the sanction has started.'
+        : isTl ? ' Dumalo/Naabisuhan ang magulang. Susunod: itala ang desisyon.' : ' Parent attended/notified. Next: record the decision.';
     } else if (a.kind === 'decision') {
       const notified = !!c.parentNotifiedAt;
       db = { decision: a.decision, sanction: a.sanction, decided_at: now, step: notified ? 'Decision' : c.step || 'Explanation', sanction_status: notified ? 'Active' : 'Pending parent notice', ...(notified ? { status: 'Sanction In Progress' } : {}) };
@@ -1346,9 +1370,10 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
         tone: 'success',
       });
       if (!ok) return;
-      db = { step: 'Closed', status: 'Resolved', ...(c.sanction ? { sanction_status: 'Done' } : {}) };
-      local = { step: 'Closed', status: 'Resolved', closedAt: now, ...(c.sanction ? { sanctionStatus: 'Done' as const } : {}) };
-      msg = isTl ? ` Sarado na ang kaso ni ${c.studentName}.` : ` ${c.studentName}'s case is closed.`;
+      const notes = a.kind === 'close' ? a.counselingNotes : undefined;
+      db = { step: 'Closed', status: 'Resolved', counseling_notes: notes || null, ...(c.sanction ? { sanction_status: 'Done' } : {}) };
+      local = { step: 'Closed', status: 'Resolved', closedAt: now, counselingNotes: notes, ...(c.sanction ? { sanctionStatus: 'Done' as const } : {}) };
+      msg = isTl ? ` Sarado na ang kaso ni ${c.studentName} kasama ang counseling notes.` : ` ${c.studentName}'s case is officially closed with counseling notes.`;
     }
     setFlowBusy(true);
     const saved = await updateCaseFlowInDb(c.caseCode, db);

@@ -402,6 +402,10 @@ export interface DisciplineCaseRecord {
   sanctionStatus?: 'Pending parent notice' | 'Active' | 'Done' | '';
   decidedAt?: string | null;
   closedAt?: string | null;
+  /** Guidance intervention & behavioral counseling notes */
+  counselingNotes?: string;
+  /** Whether parent attended the conference or was a no-show */
+  parentConferenceStatus?: 'Attended' | 'No-Show' | 'Pending';
   /** when the case was logged (ISO) */
   createdAt?: string;
 }
