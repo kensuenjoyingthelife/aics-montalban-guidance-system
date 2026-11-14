@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { playCinematicIntro } from './introSound';
+import { isCapacitorNativeApp } from './devicePerformance';
 
 /**
  * ZERO-LAG WEB AUDIO API SYNTHESIZER FOR COMPUTER STUDIES / TECH UI
@@ -10,6 +11,7 @@ class TechSoundEngine {
   private ctx: AudioContext | null = null;
   private enabled: boolean = true;
   private lastHoverTime: number = 0;
+  private lastKeyTime: number = 0;
 
   constructor() {
     try {
@@ -103,46 +105,32 @@ class TechSoundEngine {
 
   /**
    * 2. MECHANICAL KEY / PIN PAD CLICK (Creamy Tactile Switch + Harmonic Note)
-   * Plays a warm mechanical "thock" + ascending crystal note per digit/key!
+   * Ultra-lightweight, zero-lag single-oscillator click throttled for buttery mobile response.
    */
   public playKeyClick(pitchStep: number = 0): void {
     const ctx = this.getContext();
     if (!ctx) return;
 
     const now = ctx.currentTime;
+    if (now - this.lastKeyTime < 0.055) return;
+    this.lastKeyTime = now;
 
-    // Layer A: Warm Mechanical Switch "Thock" Body (Creamy & tactile)
-    const bodyOsc = ctx.createOscillator();
-    const bodyGain = ctx.createGain();
-    bodyOsc.type = 'triangle';
-    bodyOsc.frequency.setValueAtTime(210, now);
-    bodyOsc.frequency.exponentialRampToValueAtTime(75, now + 0.038);
-
-    bodyGain.gain.setValueAtTime(0.14, now);
-    bodyGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-
-    bodyOsc.connect(bodyGain);
-    bodyGain.connect(ctx.destination);
-    bodyOsc.start(now);
-    bodyOsc.stop(now + 0.042);
-
-    // Layer B: Pleasant Soft Click / Harmonic Tech Pluck
     const scaleFreqs = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66, 1318.5];
     const freq = scaleFreqs[Math.abs(pitchStep) % scaleFreqs.length];
 
-    const chimeOsc = ctx.createOscillator();
-    const chimeGain = ctx.createGain();
-    chimeOsc.type = 'sine';
-    chimeOsc.frequency.setValueAtTime(freq, now);
-    chimeOsc.frequency.exponentialRampToValueAtTime(freq * 1.02, now + 0.05);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, now);
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.9, now + 0.035);
 
-    chimeGain.gain.setValueAtTime(0.08, now);
-    chimeGain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
+    gain.gain.setValueAtTime(0.065, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.038);
 
-    chimeOsc.connect(chimeGain);
-    chimeGain.connect(ctx.destination);
-    chimeOsc.start(now);
-    chimeOsc.stop(now + 0.058);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.04);
   }
 
   /**
@@ -415,8 +403,9 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     soundFX.setEnabled(next);
   };
 
-  // Global lightweight typing sound listener for Desktop Keyboard AND Mobile Virtual Keyboards
+  // Global lightweight typing sound listener for Desktop Keyboard (Disabled on Capacitor Native for 0ms typing response)
   useEffect(() => {
+    if (isCapacitorNativeApp()) return;
     let lastKeyStep = 0;
 
     // A. Physical / Standard Keydown Event (Desktop & external keyboards)

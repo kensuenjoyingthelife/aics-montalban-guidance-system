@@ -262,7 +262,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
     setAppointments((list) => list.map((a) => (a.id === apt.id ? { ...a, status: 'Attended' } : a)));
     if (!(await updateAppointmentStatusInDb(apt.id, 'Attended'))) {
       setAppointments((list) => list.map((a) => (a.id === apt.id ? { ...a, status: prev } : a)));
-      onTriggerToast(isTl ? '⚠️ Hindi na-save. I-check ang internet, tapos subukan ulit.' : '⚠️ Not saved. Check the internet, then try again.');
+      onTriggerToast(isTl ? ' Hindi na-save. I-check ang internet, tapos subukan ulit.' : ' Not saved. Check the internet, then try again.');
       return;
     }
     onConferenceAttended?.(apt.caseId);
@@ -275,7 +275,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
       });
     logActivity(`Conference attended: ${apt.parentName} (${apt.studentName})`, `Dumalo sa conference: ${apt.parentName} (${apt.studentName})`, apt.caseId, 'emerald');
     onTriggerToast(
-      isTl ? `✓ Dumalo si ${apt.parentName}.` : `✓ ${apt.parentName} attended.`,
+      isTl ? ` Dumalo si ${apt.parentName}.` : ` ${apt.parentName} attended.`,
       () => {
         setAppointments((list) => list.map((a) => (a.id === apt.id ? { ...a, status: prev } : a)));
         void updateAppointmentStatusInDb(apt.id, prev);
@@ -318,8 +318,8 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
     setNoShowNote('');
     onTriggerToast(
       isTl
-        ? `Naitala. May task na para tawagan si ${apt.parentName}.${count >= 2 ? ` ⚠ ${count}x nang hindi dumalo.` : ''}`
-        : `Saved. A task to call ${apt.parentName} was added.${count >= 2 ? ` ⚠ ${count} missed conferences.` : ''}`,
+        ? `Naitala. May task na para tawagan si ${apt.parentName}.${count >= 2 ? `  ${count}x nang hindi dumalo.` : ''}`
+        : `Saved. A task to call ${apt.parentName} was added.${count >= 2 ? `  ${count} missed conferences.` : ''}`,
       undefined,
       {
         label: isTl ? 'Mag-schedule ulit' : 'Schedule again',
@@ -333,7 +333,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
 
   // ---------------- UI helpers ----------------
   const pill = (txt: string, cls: string) => (
-    <span className={`px-2 py-0.5 rounded-full text-[10.5px] font-bold whitespace-nowrap ${cls}`}>{txt}</span>
+    <span className={`px-2 py-0.5 rounded-[6px] text-[10.5px] font-bold whitespace-nowrap ${cls}`}>{txt}</span>
   );
   const statusPill = (a: ParentAppointmentItem) =>
     a.status === 'Attended'
@@ -371,11 +371,11 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
               {statusPill(a)}
               {a.status === 'Scheduled' &&
                 (a.noticeReceived
-                  ? pill(isTl ? '✓ Alam na ng magulang' : '✓ Parent knows', 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300')
+                  ? pill(isTl ? ' Alam na ng magulang' : ' Parent knows', 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300')
                   : pill(isTl ? 'Hindi pa sigurado kung alam na' : 'Not confirmed yet', 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300'))}
               {a.status === 'Scheduled' && a.date >= tomorrow && a.reminderSentAt &&
                 pill(isTl ? 'May reminder na' : 'Reminder sent', 'saas-card-subtle text-[#4A608A]')}
-              {noShows >= 2 && pill(isTl ? `⚠ ${noShows}x hindi dumalo` : `⚠ ${noShows} missed`, 'bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300')}
+              {noShows >= 2 && pill(isTl ? ` ${noShows}x hindi dumalo` : ` ${noShows} missed`, 'bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300')}
               {a.noShowReason && a.status === 'Did Not Attend' && (
                 <span className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">{a.noShowReason}</span>
               )}
@@ -387,16 +387,16 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
             {a.date <= today && (
               <>
                 <button type="button" onClick={() => markAttended(a)} className={`${btn} bg-emerald-600 hover:bg-emerald-700 text-white`}>
-                  ✓ {isTl ? 'Dumalo' : 'Attended'}
+                   {isTl ? 'Dumalo' : 'Attended'}
                 </button>
                 <button type="button" onClick={() => { setNoShowReason(NO_SHOW_REASONS[0]); setNoShowFor(a); }} className={`${btn} bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300`}>
-                  ✕ {isTl ? 'Hindi dumalo' : 'Did not attend'}
+                   {isTl ? 'Hindi dumalo' : 'Did not attend'}
                 </button>
               </>
             )}
             {!a.noticeReceived && (
               <button type="button" onClick={() => setContactFor({ caseCode: a.caseId, apt: a })} className={subtleBtn}>
-                📞 {isTl ? 'Tawagan' : 'Call parent'}
+                 {isTl ? 'Tawagan' : 'Call parent'}
               </button>
             )}
             <button type="button" onClick={() => setSchedule({ mode: 'reschedule', caseCode: a.caseId, from: a })} className={subtleBtn}>
@@ -406,7 +406,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
         )}
         {isPastDay && a.status === 'Scheduled' && (
           <p className="w-full text-[11px] font-semibold text-amber-800 dark:text-amber-300">
-            {isTl ? '⚠ Lumipas na ang araw na ito. Markahan kung dumalo o hindi.' : '⚠ This day has passed. Mark whether the parent attended.'}
+            {isTl ? ' Lumipas na ang araw na ito. Markahan kung dumalo o hindi.' : ' This day has passed. Mark whether the parent attended.'}
           </p>
         )}
       </div>
@@ -432,16 +432,30 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
 
   // ======================================================================
   return (
-    <main className="p-5 lg:p-6 max-w-[1440px] w-full mx-auto space-y-4 flex-1">
-      {/* sub tabs + main action */}
-      <div className="shrink-0 h-[54px] flex items-center justify-between gap-4 border-b border-[#DCE5F2] dark:border-[#1E3158]">
+    <main className="p-5 lg:p-6 max-w-[1440px] w-full mx-auto space-y-5 flex-1">
+      {/* CDM-INSPIRED BREADCRUMB & CONTEXT HEADER */}
+      <div className="cdm-panel px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <div className="text-[11px] font-extrabold tracking-wider uppercase text-[#1E469B] dark:text-[#7CB8F7]">
+            GUIDANCE OFFICE / PARENT RELATIONS & CONFERENCES
+          </div>
+          <h1 className="text-xl font-extrabold text-[#0B1F4D] dark:text-white mt-0.5">
+            {isTl ? 'Pamamahala ng mga Conference at Paalala sa Magulang' : 'Parent Conferences & Summons Management'}
+          </h1>
+          <p className="text-xs text-[#4A608A] dark:text-[#94A8D0] mt-1">
+            {isTl
+              ? 'Organisadong pagsubaybay sa bawat abiso, pagdalo ng magulang, at tala ng mga tawag.'
+              : 'Structured tracking of parent conference schedules, attendance records, and call attempts.'}
+          </p>
+        </div>
+
         <div className="inline-flex p-1 rounded-xl saas-card-subtle gap-1">
           {(
             [
               ['schedule', isTl ? `Kailangang i-schedule · ${toSchedule.length}` : `To schedule · ${toSchedule.length}`, isTl ? 'Mga kasong wala pang schedule ng conference' : 'Cases that still need a conference date'],
               ['conferences', isTl ? `Mga conference · ${upcoming.length}` : `Conferences · ${upcoming.length}`, isTl ? 'Mga darating na conference' : 'Upcoming conferences'],
               ['followups', isTl ? `Follow-ups · ${openTasks.length}` : `Follow-ups · ${openTasks.length}`, isTl ? 'Mga magulang na kailangang tawagan' : 'Parents to call or text'],
-              ['messages', isTl ? `Mga mensahe${problemMsgs.length ? ` · ⚠ ${problemMsgs.length}` : ''}` : `Messages${problemMsgs.length ? ` · ⚠ ${problemMsgs.length}` : ''}`, isTl ? 'Lahat ng SMS at email sa magulang' : 'Every SMS and email to parents'],
+              ['messages', isTl ? `Mga mensahe${problemMsgs.length ? ` ·  ${problemMsgs.length}` : ''}` : `Messages${problemMsgs.length ? ` ·  ${problemMsgs.length}` : ''}`, isTl ? 'Lahat ng SMS at email sa magulang' : 'Every SMS and email to parents'],
             ] as const
           ).map(([id, label, tip]) => (
             <button
@@ -466,7 +480,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
       {smsReady === false && (
         <div role="note" className="px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 text-xs">
           <p className="font-extrabold text-amber-900 dark:text-amber-200">
-            📵 {isTl ? 'Hindi pa naka-setup ang SMS.' : 'SMS is not set up yet.'}
+             {isTl ? 'Hindi pa naka-setup ang SMS.' : 'SMS is not set up yet.'}
           </p>
           <p className="text-amber-900/90 dark:text-amber-200/90 mt-0.5">
             {isTl
@@ -478,7 +492,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
       {remindersDue.length > 0 && smsReady === false && (
         <div className="px-4 py-3 rounded-xl bg-[#EEF3FC] dark:bg-[#13203B] border border-[#C9D7F0] dark:border-[#253B66] text-xs flex flex-wrap items-center justify-between gap-3">
           <p className="font-bold text-[#0B1F4D] dark:text-white">
-            🔔{' '}
+            {' '}
             {isTl
               ? `${remindersDue.length} magulang ang may conference bukas pero hindi pa napapaalalahanan. Tawagan sila ngayon.`
               : `${remindersDue.length} parent(s) have a conference tomorrow and no reminder yet. Call them today.`}
@@ -503,7 +517,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
           <div className="p-4 sm:p-5 space-y-2.5 bg-[#F4F7FC] dark:bg-[#0B1527]">
             {toSchedule.length === 0 && (
               <p className="py-8 text-center text-sm font-bold text-emerald-700 dark:text-emerald-400">
-                ✓ {isTl ? 'Lahat ng kaso ay may schedule na. Ayos!' : 'Every case already has a conference date. All set!'}
+                 {isTl ? 'Lahat ng kaso ay may schedule na. Ayos!' : 'Every case already has a conference date. All set!'}
               </p>
             )}
             {toSchedule.slice(0, listLimit).map((c) => {
@@ -531,7 +545,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                     onClick={() => setSchedule({ mode: 'new', caseCode: c.caseCode })}
                     className="px-4 py-2 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-extrabold whitespace-nowrap"
                   >
-                    📅 {isTl ? 'Mag-schedule' : 'Schedule'}
+                     {isTl ? 'Mag-schedule' : 'Schedule'}
                   </button>
                 </div>
               );
@@ -743,7 +757,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
           <div className="p-4 sm:p-5 space-y-2.5 bg-[#F4F7FC] dark:bg-[#0B1527]">
             {openTasks.length === 0 && (
               <p className="py-8 text-center text-sm font-bold text-emerald-700 dark:text-emerald-400">
-                ✓ {isTl ? 'Walang kailangang tawagan. Ayos!' : 'Nobody to call right now. All caught up!'}
+                 {isTl ? 'Walang kailangang tawagan. Ayos!' : 'Nobody to call right now. All caught up!'}
               </p>
             )}
             {openTasks.slice(0, listLimit).map((t) => {
@@ -770,22 +784,22 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                           'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300'
                         )}
                         {pill(isTl ? `${t.attemptsCount}x natawagan` : `${t.attemptsCount} attempt(s)`, 'saas-card-subtle text-[#4A608A]')}
-                        {missed >= 2 && pill(isTl ? `⚠ ${missed}x hindi dumalo – para sa counselor` : `⚠ ${missed} missed – flag for counselor`, 'bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300')}
+                        {missed >= 2 && pill(isTl ? ` ${missed}x hindi dumalo – para sa counselor` : ` ${missed} missed – flag for counselor`, 'bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300')}
                         {next && pill(`${isTl ? 'Bagong schedule' : 'New date'}: ${dayTitle(next.date)} ${next.timeSlot.split('–')[0].trim()}`, 'bg-[#E4ECFC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7]')}
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       <button type="button" onClick={() => setContactFor({ caseCode: t.caseId, task: t, apt: next })} className={`${btn} bg-[#1E469B] text-white`}>
-                        📞 {isTl ? 'Itala ang tawag' : 'Log a call'}
+                         {isTl ? 'Itala ang tawag' : 'Log a call'}
                       </button>
                       {!next && (
                         <button type="button" onClick={() => setSchedule({ mode: 'new', caseCode: t.caseId })} className={subtleBtn}>
-                          📅 {isTl ? 'Mag-schedule' : 'Schedule'}
+                           {isTl ? 'Mag-schedule' : 'Schedule'}
                         </button>
                       )}
                       {stu && (
                         <button type="button" onClick={() => setPrefsFor(stu)} className={subtleBtn} title={isTl ? 'Mga araw na pwede ang magulang' : 'Days the parent can come'}>
-                          🗓 {isTl ? 'Pwedeng araw' : 'Best days'}
+                           {isTl ? 'Pwedeng araw' : 'Best days'}
                         </button>
                       )}
                     </div>
@@ -833,12 +847,12 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
           <div className="p-4 sm:p-5 space-y-2 bg-[#F4F7FC] dark:bg-[#0B1527]">
             {smsLogs === null && (
               <p className="py-6 text-center text-sm font-semibold text-rose-600 dark:text-rose-400">
-                ⚠ {isTl ? 'Hindi makuha ang mga mensahe. I-check ang internet, tapos buksan ulit ang tab na ito.' : "Couldn't load the messages. Check the internet, then open this tab again."}
+                 {isTl ? 'Hindi makuha ang mga mensahe. I-check ang internet, tapos buksan ulit ang tab na ito.' : "Couldn't load the messages. Check the internet, then open this tab again."}
               </p>
             )}
             {smsLogs !== null && (msgFilter === 'all' ? smsLogs : problemMsgs).length === 0 && (
               <p className="py-6 text-center text-sm font-bold text-[#4A608A] dark:text-[#94A8D0]">
-                {msgFilter === 'problems' ? (isTl ? '✓ Walang problema sa mga mensahe.' : '✓ No message problems.') : isTl ? 'Wala pang naipadalang mensahe.' : 'No messages sent yet.'}
+                {msgFilter === 'problems' ? (isTl ? ' Walang problema sa mga mensahe.' : ' No message problems.') : isTl ? 'Wala pang naipadalang mensahe.' : 'No messages sent yet.'}
               </p>
             )}
             {(msgFilter === 'all' ? smsLogs ?? [] : problemMsgs).slice(0, 100).map((m) => {
@@ -850,7 +864,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                       {m.parentName} <span className="font-semibold text-[#4A608A] dark:text-[#94A8D0]">· {m.studentName}</span>
                     </p>
                     <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
-                      {m.channel === 'gmail' ? `✉ Email · ${m.email}` : m.channel === 'sms' ? `💬 SMS · ${m.phone}` : `${m.channel} · ${m.phone} ${m.email}`}
+                      {m.channel === 'gmail' ? ` Email · ${m.email}` : m.channel === 'sms' ? ` SMS · ${m.phone}` : `${m.channel} · ${m.phone} ${m.email}`}
                       {m.kind ? ` · ${m.kind === 'reminder' ? (isTl ? 'paalala' : 'reminder') : m.kind === 'reschedule' ? (isTl ? 'paglipat' : 'reschedule') : isTl ? 'abiso' : 'notice'}` : ''} · {prettyWhen(m.when)}
                     </p>
                     {!okSent && m.error && <p className="text-[11px] text-rose-600 dark:text-rose-400 mt-0.5">{m.error}</p>}
@@ -863,7 +877,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                       : pill(isTl ? 'Pumalya' : 'Failed', 'bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300')}
                     {!okSent && m.caseCode && caseByCode.has(m.caseCode) && (
                       <button type="button" onClick={() => setContactFor({ caseCode: m.caseCode, apt: nextAptByCase.get(m.caseCode) })} className={subtleBtn}>
-                        📞 {isTl ? 'Tawagan' : 'Call parent'}
+                         {isTl ? 'Tawagan' : 'Call parent'}
                       </button>
                     )}
                   </div>
@@ -955,7 +969,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
               }
               setContactFor(null);
               onTriggerToast(
-                isTl ? `✓ Naitala ang ${entry.method.toLowerCase()} kay ${entry.parentName}.` : `✓ ${entry.method} with ${entry.parentName} saved.`,
+                isTl ? ` Naitala ang ${entry.method.toLowerCase()} kay ${entry.parentName}.` : ` ${entry.method} with ${entry.parentName} saved.`,
                 undefined,
                 wantsReschedule
                   ? { label: isTl ? 'Pumili ng bagong araw' : 'Pick a new date', run: () => setSchedule({ mode: apt ? 'reschedule' : 'new', caseCode: contactFor.caseCode, from: apt }) }
@@ -975,12 +989,12 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
             onSave={async (days, time) => {
               const okSave = await updateStudentPrefsInDb(prefsFor.studentNumber, days, time);
               if (!okSave) {
-                onTriggerToast(isTl ? '⚠️ Hindi na-save. I-check ang internet, tapos subukan ulit.' : '⚠️ Not saved. Check the internet, then try again.');
+                onTriggerToast(isTl ? ' Hindi na-save. I-check ang internet, tapos subukan ulit.' : ' Not saved. Check the internet, then try again.');
                 return;
               }
               setStudents((list) => list.map((s) => (s.studentNumber === prefsFor.studentNumber ? { ...s, parentPrefDays: days, parentPrefTime: time } : s)));
               setPrefsFor(null);
-              onTriggerToast(isTl ? `✓ Na-save ang pwedeng araw ni ${prefsFor.parentName}.` : `✓ Saved the best days for ${prefsFor.parentName}.`);
+              onTriggerToast(isTl ? ` Na-save ang pwedeng araw ni ${prefsFor.parentName}.` : ` Saved the best days for ${prefsFor.parentName}.`);
             }}
           />,
           document.body
@@ -1007,7 +1021,7 @@ const Overlay: React.FC<{ onClose: () => void; label: string; wide?: boolean; ch
         title="Close"
         className="float-right w-8 h-8 rounded-lg saas-card-subtle text-sm font-bold text-[#4A608A]"
       >
-        ✕
+        
       </button>
       {children}
     </div>
@@ -1124,7 +1138,7 @@ const ScheduleWindow: React.FC<{
     const saved = await insertAppointmentInDb(apt);
     if (!saved) {
       setSaving(false);
-      onTriggerToast(isTl ? '⚠️ Hindi na-save ang schedule. I-check ang internet, tapos pindutin ulit ang "I-schedule".' : '⚠️ The conference was not saved. Check the internet, then press "Schedule" again.');
+      onTriggerToast(isTl ? ' Hindi na-save ang schedule. I-check ang internet, tapos pindutin ulit ang "I-schedule".' : ' The conference was not saved. Check the internet, then press "Schedule" again.');
       return;
     }
     setAppointments((list) => [
@@ -1180,7 +1194,7 @@ const ScheduleWindow: React.FC<{
     onClose();
     const failed = sendNow && /not sent|failed/i.test(resultEn);
     onTriggerToast(
-      `${failed ? '⚠️' : '✓'} ${isTl ? `Naka-schedule: ${when}.` : `Scheduled: ${when}.`}${sendNow ? ` ${isTl ? resultTl : resultEn}.` : ''}${
+      `${failed ? '' : ''} ${isTl ? `Naka-schedule: ${when}.` : `Scheduled: ${when}.`}${sendNow ? ` ${isTl ? resultTl : resultEn}.` : ''}${
         failed ? (isTl ? ' May task na para tawagan ang magulang.' : ' A task to call the parent was added.') : ''
       }`
     );
@@ -1204,7 +1218,7 @@ const ScheduleWindow: React.FC<{
       {/* Smart suggestions */}
       <div>
         <p className="text-xs font-extrabold text-[#0B1F4D] dark:text-white mb-1.5">
-          ✨ {isTl ? 'Mungkahing oras (bakante)' : 'Suggested free times'}
+           {isTl ? 'Mungkahing oras (bakante)' : 'Suggested free times'}
           {stu.parentPrefDays ? (
             <span className="font-semibold text-[#4A608A] dark:text-[#94A8D0]">
               {' '}· {isTl ? 'pwede ang magulang' : 'parent can come'}: {stu.parentPrefDays}
@@ -1228,7 +1242,7 @@ const ScheduleWindow: React.FC<{
                 }}
                 className={`px-3 py-1.5 rounded-lg border text-xs font-bold ${on ? 'bg-[#1E469B] border-[#1E469B] text-white' : 'border-[#D3DDEE] dark:border-[#253B66] text-[#0B1F4D] dark:text-white hover:border-[#1E469B]'}`}
               >
-                {s.preferred ? '★ ' : ''}
+                {s.preferred ? ' ' : ''}
                 {dayTitle(s.date)} · {s.label.split('–')[0].trim()}
               </button>
             );
@@ -1298,7 +1312,7 @@ const ScheduleWindow: React.FC<{
             </div>
             {channel !== 'gmail' && smsReady === false && (
               <p className="text-[11px] font-semibold text-amber-800 dark:text-amber-300">
-                📵 {isTl ? 'Hindi pa naka-setup ang SMS kaya hindi ito makakarating. Gagawa ang app ng task na tawagan ang magulang.' : 'SMS is not set up, so it will not arrive. The app will add a task to call the parent.'}
+                 {isTl ? 'Hindi pa naka-setup ang SMS kaya hindi ito makakarating. Gagawa ang app ng task na tawagan ang magulang.' : 'SMS is not set up, so it will not arrive. The app will add a task to call the parent.'}
               </p>
             )}
             <textarea
@@ -1312,7 +1326,7 @@ const ScheduleWindow: React.FC<{
             />
             {sensitive.length > 0 ? (
               <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">
-                ⚠ {isTl ? `Bawal ang detalye ng offense sa mensahe: "${sensitive.join('", "')}". Tanggalin ito, o pindutin ang` : `No offense details allowed: "${sensitive.join('", "')}". Remove it, or press`}{' '}
+                 {isTl ? `Bawal ang detalye ng offense sa mensahe: "${sensitive.join('", "')}". Tanggalin ito, o pindutin ang` : `No offense details allowed: "${sensitive.join('", "')}". Remove it, or press`}{' '}
                 <button type="button" className="underline font-bold" onClick={() => { setMsgEdited(false); setMessage(autoMsg(date, start)); }}>
                   {isTl ? 'ibalik ang ligtas na mensahe' : 'restore the safe message'}
                 </button>
@@ -1323,7 +1337,7 @@ const ScheduleWindow: React.FC<{
                   const i = smsInfo(message);
                   const base = isTl ? `Filipino · ${i.length} letra · ${i.parts} SMS · walang detalye ng offense` : `Filipino · ${i.length} letters · ${i.parts} SMS · no offense details`;
                   return i.parts > 1 || i.unicode
-                    ? `${base} — ${isTl ? `⚠ ${i.parts} SMS ang singil${i.unicode ? `; may espesyal na simbolo (${i.badChars.join(' ')})` : ''}. Paikliin para 1 SMS lang.` : `⚠ costs ${i.parts} SMS${i.unicode ? `; special symbol (${i.badChars.join(' ')})` : ''}. Shorten it to 1 SMS.`}`
+                    ? `${base} — ${isTl ? ` ${i.parts} SMS ang singil${i.unicode ? `; may espesyal na simbolo (${i.badChars.join(' ')})` : ''}. Paikliin para 1 SMS lang.` : ` costs ${i.parts} SMS${i.unicode ? `; special symbol (${i.badChars.join(' ')})` : ''}. Shorten it to 1 SMS.`}`
                     : base;
                 })()}
               </p>
@@ -1348,8 +1362,8 @@ const ScheduleWindow: React.FC<{
             : start === null
             ? isTl ? 'Pumili muna ng oras' : 'Pick a time first'
             : reschedule
-            ? isTl ? '✓ Ilipat' : '✓ Move conference'
-            : isTl ? '✓ I-schedule' : '✓ Schedule'}
+            ? isTl ? ' Ilipat' : ' Move conference'
+            : isTl ? ' I-schedule' : ' Schedule'}
         </button>
       </div>
     </Overlay>
@@ -1417,7 +1431,7 @@ const ContactWindow: React.FC<{
       <div className="flex flex-wrap gap-1.5">
         {(['Call', 'Text', 'Student call-out'] as const).map((m) => (
           <button key={m} type="button" onClick={() => setMethod(m)} className={`px-3 py-1 rounded-lg text-xs font-bold border ${method === m ? 'bg-[#1E469B] border-[#1E469B] text-white' : 'border-[#D3DDEE] dark:border-[#253B66]'}`}>
-            {m === 'Call' ? (isTl ? '📞 Tawag' : '📞 Call') : m === 'Text' ? (isTl ? '💬 Text' : '💬 Text') : isTl ? '🧑‍🎓 Pinatawag ang estudyante' : '🧑‍🎓 Student call-out'}
+            {m === 'Call' ? (isTl ? ' Tawag' : ' Call') : m === 'Text' ? (isTl ? ' Text' : ' Text') : isTl ? '‍ Pinatawag ang estudyante' : '‍ Student call-out'}
           </button>
         ))}
       </div>
@@ -1433,7 +1447,7 @@ const ContactWindow: React.FC<{
       <div className="flex justify-end gap-2 pt-1">
         <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg saas-card-subtle text-xs font-bold">{isTl ? 'Kanselahin' : 'Cancel'}</button>
         <button type="button" disabled={busy} onClick={save} className="px-5 py-2 rounded-lg bg-[#1E469B] text-white text-xs font-extrabold disabled:opacity-50">
-          {busy ? (isTl ? 'Sine-save…' : 'Saving…') : isTl ? '✓ I-save' : '✓ Save'}
+          {busy ? (isTl ? 'Sine-save…' : 'Saving…') : isTl ? ' I-save' : ' Save'}
         </button>
       </div>
     </Overlay>
@@ -1475,7 +1489,7 @@ const PrefsWindow: React.FC<{
       <div className="flex justify-end gap-2 pt-1">
         <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg saas-card-subtle text-xs font-bold">{isTl ? 'Kanselahin' : 'Cancel'}</button>
         <button type="button" onClick={() => onSave(DAY_KEYS.filter((k) => days.includes(k)).join(','), time)} className="px-5 py-2 rounded-lg bg-[#1E469B] text-white text-xs font-extrabold">
-          {isTl ? '✓ I-save' : '✓ Save'}
+          {isTl ? ' I-save' : ' Save'}
         </button>
       </div>
     </Overlay>

@@ -35,8 +35,8 @@ const WEEK_EN: Record<string, string> = { Mon: 'Monday', Tue: 'Tuesday', Wed: 'W
 const btn = 'px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap';
 const card = 'rounded-2xl saas-card overflow-hidden';
 const sub = 'text-xs text-[#4A608A] dark:text-[#94A8D0]';
-const NOT_SAVED_EN = '⚠️ Not saved. Check the internet, then try again.';
-const NOT_SAVED_TL = '⚠️ Hindi na-save. I-check ang internet, tapos subukan ulit.';
+const NOT_SAVED_EN = ' Not saved. Check the internet, then try again.';
+const NOT_SAVED_TL = ' Hindi na-save. I-check ang internet, tapos subukan ulit.';
 
 const reasonTone: Record<string, string> = {
   grave: 'bg-rose-600 text-white',
@@ -139,7 +139,7 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
     log(`Scheduled ${q.studentName} with the counselor on ${date}`, `Na-schedule si ${q.studentName} sa counselor sa ${date}`);
     soundFX.playSuccessCheck();
     onTriggerToast(
-      isTl ? `✓ Naka-schedule si ${q.studentName} sa counselor: ${dayTitle(date)}.` : `✓ ${q.studentName} is scheduled with the counselor: ${dayTitle(date)}.`,
+      isTl ? ` Naka-schedule si ${q.studentName} sa counselor: ${dayTitle(date)}.` : ` ${q.studentName} is scheduled with the counselor: ${dayTitle(date)}.`,
       () => void restore(r.saved, r.previous),
       { label: isTl ? 'Tingnan ang naka-schedule' : 'See scheduled', run: () => setTab('scheduled') }
     );
@@ -161,7 +161,7 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
     if (!r) return onTriggerToast(isTl ? NOT_SAVED_TL : NOT_SAVED_EN);
     log(`${q.studentName} was seen by the counselor`, `Nakausap na ng counselor si ${q.studentName}`, 'emerald');
     soundFX.playSuccessCheck();
-    onTriggerToast(isTl ? `✓ Nakausap na si ${q.studentName}. Babalik siya sa listahan kapag may bagong kaso.` : `✓ ${q.studentName} was seen. They come back to the list if a new case is reported.`, () => void restore(r.saved, r.previous));
+    onTriggerToast(isTl ? ` Nakausap na si ${q.studentName}. Babalik siya sa listahan kapag may bagong kaso.` : ` ${q.studentName} was seen. They come back to the list if a new case is reported.`, () => void restore(r.saved, r.previous));
   };
 
   const doRemove = async (q: QueueItem, reason: string) => {
@@ -205,7 +205,7 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
     setAddOpen(false);
     setTab('waiting');
     log(`Added ${stu.fullName} to the counselor list · ${reason}`, `Idinagdag si ${stu.fullName} sa listahan ng counselor · ${reason}`);
-    onTriggerToast(isTl ? `✓ Naidagdag si ${stu.fullName}.` : `✓ ${stu.fullName} was added.`, () => void restore(saved));
+    onTriggerToast(isTl ? ` Naidagdag si ${stu.fullName}.` : ` ${stu.fullName} was added.`, () => void restore(saved));
   };
 
   const saveDays = async (next: string[]) => {
@@ -213,7 +213,7 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
     if (!(await saveConfig('counselor_days', next))) return onTriggerToast(isTl ? NOT_SAVED_TL : NOT_SAVED_EN);
     setDaysOpen(false);
     log(`Counselor days set to ${next.join(', ') || 'none'}`, `Ginawang ${next.join(', ') || 'wala'} ang araw ng counselor`);
-    onTriggerToast(isTl ? '✓ Na-save ang araw ng counselor.' : '✓ Counselor days saved.', async () => {
+    onTriggerToast(isTl ? ' Na-save ang araw ng counselor.' : ' Counselor days saved.', async () => {
       await saveConfig('counselor_days', prev);
     });
   };
@@ -234,7 +234,7 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
           </p>
           <div className="flex flex-wrap gap-1">
             {q.reasons.map((r) => (
-              <span key={r.key} className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold ${reasonTone[r.key]}`}>
+              <span key={r.key} className={`px-2 py-0.5 rounded-[6px] text-[11px] font-extrabold ${reasonTone[r.key]}`}>
                 {isTl ? r.tl : r.en}
               </span>
             ))}
@@ -262,14 +262,14 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
           </p>
           {q.status === 'Scheduled' && q.row?.scheduledDate && (
             <p className={`text-xs font-extrabold ${q.row.scheduledDate < today ? 'text-rose-700 dark:text-rose-300' : 'text-[#1E469B] dark:text-[#7CB8F7]'}`}>
-              📅 {dayTitle(q.row.scheduledDate)}
+               {dayTitle(q.row.scheduledDate)}
               {q.row.scheduledDate < today && (isTl ? ' — lumipas na, i-mark kung nakausap na o ilipat' : ' — date passed: mark as seen or move it')}
             </p>
           )}
           {(q.status === 'Seen' || q.status === 'Removed') && (
             <p className={sub}>
               {q.status === 'Seen'
-                ? `✓ ${isTl ? 'Nakausap na ng counselor' : 'Seen by the counselor'}${q.row?.seenAt ? ` · ${dateFmt.format(new Date(q.row.seenAt))}` : ''}`
+                ? ` ${isTl ? 'Nakausap na ng counselor' : 'Seen by the counselor'}${q.row?.seenAt ? ` · ${dateFmt.format(new Date(q.row.seenAt))}` : ''}`
                 : `${isTl ? 'Inalis' : 'Removed'}${q.row?.removedReason ? ` · ${q.row.removedReason}` : ''}`}
             </p>
           )}
@@ -279,7 +279,7 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
         {q.status === 'Waiting' && (
           <>
             <button type="button" data-action="schedule" onClick={() => setScheduleFor(q)} className={`${btn} px-4 py-2 bg-[#1E469B] text-white`}>
-              📅 {isTl ? 'I-schedule sa counselor' : 'Schedule with counselor'}
+               {isTl ? 'I-schedule sa counselor' : 'Schedule with counselor'}
             </button>
             <button type="button" data-action="remove" onClick={() => setRemoveFor(q)} className={`${btn} px-3 py-2 saas-card-subtle text-[#4A608A] dark:text-[#94A8D0]`}>
               {isTl ? 'Alisin' : 'Remove'}
@@ -289,7 +289,7 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
         {q.status === 'Scheduled' && (
           <>
             <button type="button" data-action="seen" onClick={() => void doSeen(q)} className={`${btn} px-4 py-2 bg-emerald-600 text-white`}>
-              ✓ {isTl ? 'Nakausap na' : 'Seen'}
+               {isTl ? 'Nakausap na' : 'Seen'}
             </button>
             <button type="button" data-action="move" onClick={() => setScheduleFor(q)} className={`${btn} px-3 py-2 saas-card-subtle`}>
               {isTl ? 'Ilipat ang petsa' : 'Change date'}
@@ -337,7 +337,7 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" data-action="days" onClick={() => setDaysOpen(true)} className={`${btn} px-3 py-2 saas-card-subtle`} title={isTl ? 'Palitan ang araw ng counselor' : 'Change the counselor days'}>
-            🗓 {isTl ? 'Araw ng counselor' : 'Counselor days'}: <span className="text-[#1E469B] dark:text-[#7CB8F7]">{daysLoaded ? daysText : '…'}</span>
+             {isTl ? 'Araw ng counselor' : 'Counselor days'}: <span className="text-[#1E469B] dark:text-[#7CB8F7]">{daysLoaded ? daysText : '…'}</span>
           </button>
           <button type="button" data-action="add" onClick={() => setAddOpen(true)} className={`${btn} px-3 py-2 saas-card-subtle`}>
             + {isTl ? 'Magdagdag ng estudyante' : 'Add a student'}
@@ -366,7 +366,7 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
       {tab !== 'scheduled' && dueNow.length > 0 && (
         <div className="px-4 py-3 rounded-xl bg-[#EEF3FC] dark:bg-[#13203B] border border-[#C9D7F0] dark:border-[#253B66] text-xs flex flex-wrap items-center justify-between gap-3">
           <p className="font-bold text-[#0B1F4D] dark:text-white">
-            📅 {isTl ? `${dueNow.length} estudyante ang naka-schedule sa counselor ngayon o lumipas na.` : `${dueNow.length} student(s) are scheduled with the counselor today or the date has passed.`}
+             {isTl ? `${dueNow.length} estudyante ang naka-schedule sa counselor ngayon o lumipas na.` : `${dueNow.length} student(s) are scheduled with the counselor today or the date has passed.`}
           </p>
           <button type="button" onClick={() => setTab('scheduled')} className={`${btn} bg-[#1E469B] text-white`}>
             {isTl ? 'Tingnan' : 'Show them'}
@@ -409,7 +409,7 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
           {rows !== null && list.length === 0 && (
             <div className="py-8 text-center space-y-1">
               <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
-                ✓{' '}
+                {' '}
                 {tab === 'waiting'
                   ? isTl ? 'Walang estudyanteng naghihintay sa counselor.' : 'No students waiting for the counselor.'
                   : tab === 'scheduled'
@@ -470,7 +470,7 @@ const Modal: React.FC<{ title: string; onClose: () => void; children: React.Reac
         <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-center justify-between">
           <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">{title}</h3>
           <button type="button" onClick={onClose} aria-label="Close" className="w-8 h-8 rounded-lg text-[#4A608A] hover:bg-slate-100 dark:hover:bg-slate-800">
-            ✕
+            
           </button>
         </div>
         <div className="p-6 space-y-3 overflow-y-auto">{children}</div>

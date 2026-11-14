@@ -12,11 +12,29 @@
   --aics-periwinkle: #CFD9F2;
   --aics-ice: #E4ECFC;
   --aics-silver: #F4F7FC;
+
+  /* CDM Portal Academic Design Tokens */
+  --cdm-font-serif: "Newsreader", "Playfair Display", Georgia, "Times New Roman", serif;
+  --cdm-font-sans: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --cdm-font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  --cdm-radius-xs: 4px;
+  --cdm-radius-sm: 8px;
+  --cdm-radius-md: 12px;
+  --cdm-radius-lg: 16px;
+  --cdm-radius-pill: 9999px;
+
+  --cdm-bg-canvas: #F8FAFC;
+  --cdm-bg-sidebar: #0B1F4D;
+  --cdm-border: #E2E8F0;
+  --cdm-text-main: #0F172A;
+  --cdm-text-muted: #64748B;
+  --cdm-text-kicker: #1E469B;
 }
 
 @layer base {
   html {
-    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: var(--cdm-font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -24,14 +42,30 @@
   body {
     margin: 0;
     overflow-x: hidden;
-    background-color: #122B60;
-    color: #FFFFFF;
+    background-color: var(--cdm-bg-canvas);
+    color: var(--cdm-text-main);
   }
 
   .dark body {
-    background-color: #020611;
-    color: #FFFFFF;
+    background-color: #050B18;
+    color: #F8FAFC;
   }
+}
+
+/* CDM Academic Serif Headlines */
+.cdm-serif-title {
+  font-family: var(--cdm-font-serif);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* CDM Uppercase Academic Eyebrow / Kicker */
+.cdm-kicker {
+  font-family: var(--cdm-font-sans);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 /* ============================================================================
@@ -645,28 +679,32 @@ body.low-tier-device [style*="animation: twinkleGlow"] {
 
 .saas-card {
   background-color: #FFFFFF;
-  border: 1px solid #DCE5F2;
-  box-shadow: 0 1px 3px rgba(11, 31, 77, 0.04), 0 4px 12px rgba(11, 31, 77, 0.03);
-  color: #0B1F4D;
+  border: 1px solid #E2E8F0;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  color: #0F172A;
 }
 
 .dark .saas-card {
-  background-color: #0F1A30;
-  border: 1px solid #1E3158;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-  color: #FFFFFF;
+  background-color: #0B1528;
+  border: 1px solid #1E2E4E;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25);
+  color: #F8FAFC;
 }
 
 .saas-card-subtle {
-  background-color: #F8FAFE;
-  border: 1px solid #E2E9F5;
-  color: #0B1F4D;
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 0.5rem;
+  color: #0F172A;
 }
 
 .dark .saas-card-subtle {
-  background-color: #14223E;
-  border: 1px solid #243B6B;
-  color: #FFFFFF;
+  background-color: #0F1D36;
+  border: 1px solid #1E2E4E;
+  border-radius: 0.5rem;
+  color: #F8FAFC;
 }
 
 /* Clean custom scrollbar for Sidebar & Modals */
@@ -1100,11 +1138,88 @@ html.theme-fading *::after {
   }
 }
 
-/* Low-tier / Battery-saver / Capacitor / PWA mobile lock */
-body.low-tier-device *,
-body.capacitor-mobile * {
-  animation: none !important;
-  transition: none !important;
+/* =========================================================================
+   NATIVE CAPACITOR & MOBILE ZERO-LAG OPTIMIZATION (60FPS BUTTERY SMOOTH)
+   Strictly zero background animations, zero blur, zero GPU thrashing on phones.
+   PRESERVES ONLY: 3D Safezone Mascot Loop & Affirmation Carousel
+   ========================================================================= */
+
+body.capacitor-mobile *,
+body.low-tier-device * {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.05s !important;
+}
+
+@media (max-width: 768px) {
+  /* Global reset for mobile: eliminate laggy CSS animation loops & heavy transitions */
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.05s !important;
+  }
+}
+
+/* Explicitly exempt only the Safezone Mascot and Affirmations Carousel */
+.mascot-story-wrapper,
+.mascot-story-wrapper *,
+[data-mascot-element="true"],
+[data-mascot-element="true"] *,
+.anim-smooth-waving,
+.mascot-3d-hover,
+.anim-eye-blink,
+.anim-dizzy-stars {
+  animation-duration: inherit !important;
+  animation-iteration-count: infinite !important;
+}
+
+/* Zero heavy backdrop filters on mobile & Capacitor (renders on CPU/GPU smoothly without frame drops) */
+body.capacitor-mobile [class*="backdrop-blur"],
+body.low-tier-device [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+@media (max-width: 768px) {
+  [class*="backdrop-blur"],
+  .backdrop-blur-xl,
+  .backdrop-blur-md,
+  .backdrop-blur-sm,
+  .backdrop-blur-lg {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+/* Clean solid card colors on mobile so text never stutters during scrolling or typing */
+body.capacitor-mobile .cosmic-glass-card,
+body.low-tier-device .cosmic-glass-card {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-color: #0b1e48 !important;
+  box-shadow: 0 10px 25px -5px rgba(2, 11, 36, 0.6) !important;
+}
+
+@media (max-width: 768px) {
+  .cosmic-glass-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background-color: #0b1e48 !important;
+    box-shadow: 0 10px 25px -5px rgba(2, 11, 36, 0.6) !important;
+  }
+}
+
+:root:not(.dark) body.capacitor-mobile .cosmic-glass-card,
+:root:not(.dark) body.low-tier-device .cosmic-glass-card {
+  background-color: #ffffff !important;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15) !important;
+}
+
+@media (max-width: 768px) {
+  :root:not(.dark) .cosmic-glass-card {
+    background-color: #ffffff !important;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15) !important;
+  }
 }
 
 /* ===================================================
@@ -1193,4 +1308,133 @@ body.capacitor-mobile * {
     display: none !important;
     visibility: hidden !important;
   }
+}
+
+
+/* ==========================================================================
+   CDM PORTAL-INSPIRED ORGANIZED WORKSPACE & DATA DENSITY DESIGN SYSTEM
+   - Clean micro-borders (1px #E2E8F0 / #1E293B)
+   - High legibility hierarchy (Breadcrumbs -> Category Headings -> Micro Meta)
+   - Step progress pills (1, 2, 3) & High-contrast Status Chips
+   - Zero emojis, 100% vector duotone and geometric indicators
+   ========================================================================== */
+
+.cdm-workspace-header {
+  background-color: #FFFFFF;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.dark .cdm-workspace-header {
+  background-color: #0B1528;
+  border-bottom: 1px solid #1E293B;
+}
+
+.cdm-panel {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+.dark .cdm-panel {
+  background-color: #0F1D36;
+  border: 1px solid #1E2E4E;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25);
+}
+
+.cdm-badge-ready {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 6px;
+  background-color: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+}
+
+.dark .cdm-badge-ready {
+  background-color: rgba(6, 95, 70, 0.25);
+  color: #6EE7B7;
+  border: 1px solid rgba(110, 231, 183, 0.3);
+}
+
+.cdm-badge-neutral {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 6px;
+  background-color: #F1F5F9;
+  color: #334155;
+  border: 1px solid #CBD5E1;
+}
+
+.dark .cdm-badge-neutral {
+  background-color: rgba(30, 41, 59, 0.5);
+  color: #94A3B8;
+  border: 1px solid #334155;
+}
+
+.cdm-step-pill {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background-color: #1E469B;
+  color: #FFFFFF;
+}
+
+.dark .cdm-step-pill {
+  background-color: #2557BE;
+  color: #FFFFFF;
+}
+
+.cdm-meta-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #E2E8F0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.dark .cdm-meta-table {
+  border-color: #1E2E4E;
+}
+
+.cdm-meta-table th {
+  background-color: #F8FAFC;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #475569;
+  border-bottom: 1px solid #E2E8F0;
+  text-align: left;
+}
+
+.dark .cdm-meta-table th {
+  background-color: #13223E;
+  color: #94A3B8;
+  border-bottom-color: #1E2E4E;
+}
+
+.cdm-meta-table td {
+  padding: 0.75rem 0.875rem;
+  font-size: 0.8125rem;
+  color: #0F172A;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.dark .cdm-meta-table td {
+  color: #F8FAFC;
+  border-bottom-color: #162441;
 }

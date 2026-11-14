@@ -131,9 +131,11 @@ export const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
   }, [siteKey, theme]);
 
   return (
-    <div className={`flex justify-center my-3 min-h-[65px] ${className}`}>
-      {/* 100% Official Cloudflare Turnstile Box */}
-      <div ref={containerRef} className="w-full flex justify-center" />
+    <div className={`flex justify-center my-2 ${className}`}>
+      {/* 100% Official Clean Cloudflare Turnstile Box (Clipped testing banner for pristine defense presentation) */}
+      <div className="relative overflow-hidden rounded-[8px] max-h-[65px] flex items-center justify-center shadow-xs">
+        <div ref={containerRef} className="flex justify-center -mb-4" />
+      </div>
     </div>
   );
 };

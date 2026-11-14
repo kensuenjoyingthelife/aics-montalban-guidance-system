@@ -1203,152 +1203,80 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           ==================================================================== */}
       <div className="flex-1 min-w-0 h-screen flex flex-col justify-start overflow-hidden">
         {/* ==================================================================
-            USER-FRIENDLY SaaS COMMAND NAVBAR (3-ZONE LAYOUT)
-            Zone 1 (Left): Page Title + Live DB Status Pill
-            Zone 2 (Center): Quick Student / Section Search Bar
-            Zone 3 (Right): Primary Counselor Actions + Compact Utility Dock
+            CDM-STYLE ENTERPRISE APP TOPBAR (1:1 ARCHITECTURE)
+            Left: Subtle Breadcrumbs + Clean View Title
+            Right: Staff User Badge with Initials + Staff Role + Sign out link
             ================================================================== */}
-        <header className="shrink-0 h-16 px-6 lg:px-8 bg-white dark:bg-[#0B1326] border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-center justify-between gap-4 z-30">
-          {/* Zone 1: Title & Live Sync Status */}
-          <div className="flex items-center gap-3 min-w-0 shrink-0">
-            <h1 className="text-lg sm:text-[19px] font-extrabold tracking-tight text-[#0B1F4D] dark:text-white truncate">
+        <header className="shrink-0 h-16 px-6 lg:px-8 bg-white dark:bg-[#070E1C] border-b border-[#E2E8F0] dark:border-[#1E2E4E] flex items-center justify-between gap-4 z-30 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+          {/* Left Zone: Clean Heading */}
+          <div className="flex flex-col justify-center min-w-0">
+            <h1 className="text-lg font-bold tracking-tight text-[#0F172A] dark:text-white truncate">
               {isTl ? activeCategory.labelTl : activeCategory.labelEn}
             </h1>
-            <span
-              role="status"
-              data-sync={syncState}
-              title={
-                syncState === 'ok'
-                  ? isTl ? 'Naka-save sa database ang lahat ng records' : 'All records are saved in the database'
-                  : syncState === 'loading'
-                  ? isTl ? 'Kinukuha ang records…' : 'Loading records…'
-                  : syncState === 'offline'
-                  ? isTl
-                    ? 'Hindi maabot ang database. Sample data lang ang nakikita at hindi masesave ang gagawin. I-check ang internet, tapos i-reload.'
-                    : 'The database cannot be reached. You are seeing sample data and changes will not be saved. Check the internet, then reload.'
-                  : isTl
-                  ? 'May hindi na-save. I-check ang internet, tapos ulitin ang huling ginawa.'
-                  : 'Something was not saved. Check the internet, then redo the last change.'
-              }
-              className={`hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-bold whitespace-nowrap ${
-                syncState === 'ok'
-                  ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
-                  : syncState === 'loading'
-                  ? 'bg-[#F4F7FC] dark:bg-[#14223E] border-[#DCE5F2] dark:border-[#243B6B] text-[#4A608A] dark:text-[#94A8D0]'
-                  : 'bg-rose-50 dark:bg-rose-950/50 border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300'
-              }`}
-            >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  syncState === 'ok' ? 'bg-emerald-500' : syncState === 'loading' ? 'bg-[#94A8D0]' : 'bg-rose-500'
-                }`}
-              />
-              <span>
-                {syncState === 'ok'
-                  ? isTl ? 'Naka-save ang Records' : 'Records Synced'
-                  : syncState === 'loading'
-                  ? isTl ? 'Kinukuha…' : 'Loading…'
-                  : syncState === 'offline'
-                  ? isTl ? 'Offline · hindi nase-save' : 'Offline · not saving'
-                  : isTl ? 'May hindi na-save' : 'Not saved'}
-              </span>
-            </span>
           </div>
 
-          {/* Zone 2: Center Quick Student & Section Search Bar */}
-          <div className="hidden md:flex flex-1 min-w-[150px] max-w-md mx-2">
+          {/* Right Zone: CDM User Profile Badge + Actions */}
+          <div className="flex items-center gap-3 shrink-0">
+            {/* Quick Search */}
             {searchHere && (
-            <div className="relative w-full">
-              <svg
-                className="w-4 h-4 text-[#687FA8] dark:text-[#7CB8F7] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input
-                type="text"
-                value={quickSearch}
-                onChange={(e) => setQuickSearch(e.target.value)}
-                placeholder={
-                  isTl
-                    ? 'Hanapin…'
-                    : 'Search…'
-                }
-                className="w-full pl-9 pr-8 py-2 rounded-full saas-card-subtle text-xs sm:text-[13px] font-semibold text-[#0B1F4D] dark:text-white placeholder-[#687FA8] dark:placeholder-[#89A7DF] focus:outline-none focus:border-[#1E469B] dark:focus:border-[#7CB8F7] transition-colors"
-              />
-              {quickSearch && (
-                <button
-                  aria-label={isTl ? 'Burahin ang hinahanap' : 'Clear search'}
-                  title={isTl ? 'Burahin ang hinahanap' : 'Clear search'}
-                  type="button"
-                  onClick={() => setQuickSearch('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#687FA8] hover:text-[#0B1F4D] dark:hover:text-white"
+              <div className="relative hidden md:block w-64">
+                <svg
+                  className="w-3.5 h-3.5 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
-                  ✕
-                </button>
-              )}
-            </div>
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  type="text"
+                  value={quickSearch}
+                  onChange={(e) => setQuickSearch(e.target.value)}
+                  placeholder={isTl ? 'Hanapin ang estudyante…' : 'Search student or ID…'}
+                  className="w-full pl-8 pr-7 py-1.5 rounded-[8px] bg-[#F8FAFC] dark:bg-[#0B1528] border border-[#CBD5E1] dark:border-[#223555] text-xs font-medium text-[#0F172A] dark:text-white placeholder-[#94A3B8] focus:outline-none focus:border-[#1E469B] dark:focus:border-[#7CB8F7]"
+                />
+                {quickSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setQuickSearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#94A3B8] hover:text-[#0F172A]"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             )}
-          </div>
 
-          {/* Zone 3: Calm, Uncluttered Counselor Actions + Quick Guide */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <div className="hidden 2xl:block">
-              <Clock24 />
+            {/* CDM User Profile Pill */}
+            <div className="flex items-center gap-2.5 pl-2 py-1 pr-3 rounded-full bg-[#F1F5F9] dark:bg-[#0F1A30] border border-[#E2E8F0] dark:border-[#1E2E4E]">
+              <div className="w-7 h-7 rounded-full bg-[#1E469B] text-white flex items-center justify-center font-bold text-[11px] tracking-wider shrink-0 shadow-xs">
+                GA
+              </div>
+              <div className="hidden sm:flex flex-col text-left leading-tight">
+                <span className="text-[12px] font-bold text-[#0F172A] dark:text-white truncate max-w-[140px]">
+                  AICS Guidance Staff
+                </span>
+                <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8] truncate">
+                  Guidance Associate
+                </span>
+              </div>
             </div>
 
-            <button
-              type="button"
-              data-open-help
-              onClick={() => {
-                soundFX.playToggleSwitch(true);
-                setHelpOpen(true);
-              }}
-              title={isTl ? 'Itanong kung paano gamitin ang system' : 'Ask how to use the system'}
-              className="btn-press inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full saas-card-subtle hover:border-[#1E469B] text-xs font-extrabold text-[#1E469B] dark:text-[#7CB8F7] whitespace-nowrap"
-            >
-              <span>💬</span>
-              <span>{isTl ? 'Magtanong' : 'Ask Help'}</span>
-            </button>
-
+            {/* Sign Out link */}
             <button
               type="button"
               onClick={() => {
-                soundFX.playToggleSwitch(true);
-                setShowQuickGuideModal(true);
+                soundFX.playBackspace();
+                onLockTerminal();
               }}
-              className="btn-press inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full saas-card-subtle hover:border-[#1E469B] text-xs font-extrabold text-[#1E469B] dark:text-[#7CB8F7]"
+              title={isTl ? 'Mag-sign out' : 'Sign out'}
+              className="text-xs font-semibold text-[#64748B] hover:text-rose-600 dark:text-[#94A3B8] dark:hover:text-rose-400 pl-1 transition-colors"
             >
-              <span>❓</span>
-              <span>{isTl ? 'Paano Gamitin' : 'Quick Guide'}</span>
-            </button>
-
-            <button
-              type="button"
-              title={isTl ? 'Itala ang magulang na pumunta nang walang appointment' : 'Record a parent who came without an appointment'}
-              onClick={() => {
-                soundFX.playStepUnlock();
-                setWalkInOpen(true);
-              }}
-              className="btn-press px-3.5 py-1.5 rounded-full saas-card-subtle hover:border-[#1E469B] text-xs font-bold text-[#0B1F4D] dark:text-white whitespace-nowrap"
-            >
-              {isTl ? '+ Walk-In Parent' : '+ Walk-In Parent'}
-            </button>
-
-            {/* The one main action of the Dashboard (Golden Rule 1) */}
-            <button
-              type="button"
-              onClick={() => openCasesTab('add-report')}
-              className="btn-press inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-extrabold shadow-sm whitespace-nowrap"
-            >
-              <span aria-hidden="true">＋</span>
-              <span>{isTl ? 'Bagong Kaso' : 'New Case'}</span>
+              Sign out
             </button>
           </div>
         </header>
@@ -1674,7 +1602,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 className="shrink-0 px-5 py-3.5 rounded-2xl border border-[#CFD9F2] dark:border-[#243B6B] bg-[#F1F5FD] dark:bg-[#12203F] flex flex-col lg:flex-row lg:items-center gap-3"
               >
                 <p className="text-[13px] font-extrabold text-[#0B1F4D] dark:text-white shrink-0">
-                  👋 {isTl ? 'Bago ka rito?' : 'New here?'}
+                  {isTl ? 'Bago ka rito?' : 'New here?'}
                 </p>
                 <ol className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
                   {[
@@ -1753,7 +1681,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   <span className="text-[26px] leading-none font-extrabold text-white font-mono">
                     {cases.filter((c) => c.status !== 'Resolved').length}
                   </span>
-                  <span className="px-2 py-0.5 rounded-full bg-white/15 text-[11px] font-bold text-white">
+                  <span className="px-2 py-0.5 rounded-[6px] bg-white/15 text-[11px] font-bold text-white">
                     {cases.length} total cases
                   </span>
                 </div>
@@ -1777,7 +1705,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   <span className="text-[26px] leading-none font-extrabold text-white font-mono">
                     {offensesThisMonth}
                   </span>
-                  <span className="px-2 py-0.5 rounded-full bg-white/20 text-[11px] font-bold text-white">
+                  <span className="px-2 py-0.5 rounded-[6px] bg-white/20 text-[11px] font-bold text-white">
                     {isTl ? 'Naitala ngayong buwan' : 'Logged this month'}
                   </span>
                 </div>
@@ -1801,7 +1729,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   <span className="text-[26px] leading-none font-extrabold text-white font-mono">
                     {attendanceStats.ratePercent === null ? '—' : `${attendanceStats.ratePercent}%`}
                   </span>
-                  <span className="px-2 py-0.5 rounded-full bg-white/20 text-[11px] font-extrabold text-white">
+                  <span className="px-2 py-0.5 rounded-[6px] bg-white/20 text-[11px] font-extrabold text-white">
                     {attendanceStats.attended} of {attendanceStats.total}{' '}
                     {isTl ? 'dumalo ngayon' : 'attended today'}
                   </span>
@@ -1826,7 +1754,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   <span className="text-[26px] leading-none font-extrabold text-white font-mono">
                     {activeFollowUpCount}
                   </span>
-                  <span className="px-2 py-0.5 rounded-full bg-white/20 text-[11px] font-bold text-white">
+                  <span className="px-2 py-0.5 rounded-[6px] bg-white/20 text-[11px] font-bold text-white">
                     {isTl ? 'Tawag at SMS reminder' : 'Calls & SMS reminders'}
                   </span>
                 </div>
@@ -2040,7 +1968,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                             <div className="flex flex-wrap items-center gap-2 shrink-0">
                               <span
                                 title={apt.noShowReason || undefined}
-                                className="px-2.5 py-1 rounded-full bg-rose-600 text-white text-[11px] font-extrabold whitespace-nowrap"
+                                className="px-2.5 py-1 rounded-[6px] bg-rose-600 text-white text-[11px] font-extrabold whitespace-nowrap"
                               >
                                 ✕ {isTl ? 'Hindi dumalo' : 'Did not attend'}
                               </span>
@@ -2260,11 +2188,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                 ({task.gradeSection})
                               </span>
                               {task.resolved ? (
-                                <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-extrabold">
+                                <span className="px-2 py-0.5 rounded-[6px] bg-emerald-600 text-white text-[10px] font-extrabold">
                                   {isTl ? '✓ Tapos na' : '✓ Done'}
                                 </span>
                               ) : escalate ? (
-                                <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-extrabold">
+                                <span className="px-2 py-0.5 rounded-[6px] bg-rose-600 text-white text-[10px] font-extrabold">
                                   {isTl ? 'I-escalate na' : 'Escalate'}
                                 </span>
                               ) : null}

@@ -68,19 +68,31 @@ const AuditTrail: React.FC = () => {
   const filtered = !!table || !!term || from !== addDays(todayISO(), -30) || to !== todayISO();
 
   return (
-    <main className="p-5 lg:p-6 max-w-[1440px] w-full mx-auto space-y-4 flex-1">
-      <div className="rounded-2xl saas-card p-4 sm:p-5 space-y-3">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Kasaysayan ng mga pagbabago' : 'Change history'}</h2>
-            <p className={sub}>
-              🔒{' '}
-              {isTl
-                ? 'Kusang nire-record ng system ang bawat pagbabago — ang dati at ang bago. Hindi ito mae-edit o mabubura.'
-                : 'The system records every change by itself — the old and the new value. This history cannot be edited or deleted.'}
-            </p>
+    <main className="p-5 lg:p-6 max-w-[1440px] w-full mx-auto space-y-5 flex-1">
+      {/* CDM-INSPIRED AUDIT TRAIL BREADCRUMB HEADER */}
+      <div className="cdm-panel px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <div className="text-[11px] font-extrabold tracking-wider uppercase text-[#1E469B] dark:text-[#7CB8F7]">
+            SYSTEM SECURITY / FORENSIC AUDIT TRAIL & LOGS
           </div>
+          <h1 className="text-xl font-extrabold text-[#0B1F4D] dark:text-white mt-0.5">
+            {isTl ? 'Kasaysayan ng mga Pagbabago at Tala ng Aksyon' : 'System Audit Trail & Forensic Activity Log'}
+          </h1>
+          <p className="text-xs text-[#4A608A] dark:text-[#94A8D0] mt-1">
+            {isTl
+              ? 'Kusang itinatala ng database ang bawat pagbabago (dati at bagong value). Hindi ito maaaring i-edit o burahin (R.A. 10173).'
+              : 'Permanent append-only record of all case modifications, status updates, and user access trails.'}
+          </p>
         </div>
+
+        <div className="flex items-center gap-2">
+          <span className="cdm-badge-ready">
+            ✓ IMMUTABLE LOGS
+          </span>
+        </div>
+      </div>
+
+      <div className="cdm-panel p-4 sm:p-5 space-y-3">
         <div className="flex flex-wrap items-end gap-2">
           <label className="space-y-1">
             <span className="block text-[11px] font-extrabold text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Ano' : 'What'}</span>
@@ -186,7 +198,7 @@ const AuditTrail: React.FC = () => {
             return (
               <article key={e.id} data-audit-row={e.id} className="rounded-xl bg-white dark:bg-[#0F1A30] border border-[#D3DDEE] dark:border-[#253B66] px-4 py-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold ${a.cls}`}>{isTl ? a.tl : a.en}</span>
+                  <span className={`px-2 py-0.5 rounded-[6px] text-[11px] font-extrabold ${a.cls}`}>{isTl ? a.tl : a.en}</span>
                   <span className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
                     {isTl ? tl : en}
                     {who ? ` · ${who}` : ''}

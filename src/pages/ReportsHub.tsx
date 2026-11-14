@@ -88,8 +88,8 @@ function arrowText(dir: Direction, diff: number, pct: number | null, suf: string
 function trendSentence(now: number, before: number | null, solved: number, unit: 'month' | 'week', tl: boolean): string {
   const p = unit === 'month' ? (tl ? 'buwan' : 'month') : tl ? 'linggo' : 'week';
   if (before === null) return '';
-  if (now > before) return tl ? `⚠ Tumaas ang bagong kaso ngayong ${p}: ${now} mula ${before}. ${solved} ang naayos.` : `⚠ New cases went UP this ${p}: ${now}, up from ${before}. ${solved} solved.`;
-  if (now < before) return tl ? `✓ Bumaba ang bagong kaso ngayong ${p}: ${now} mula ${before}. ${solved} ang naayos.` : `✓ New cases went DOWN this ${p}: ${now}, down from ${before}. ${solved} solved.`;
+  if (now > before) return tl ? ` Tumaas ang bagong kaso ngayong ${p}: ${now} mula ${before}. ${solved} ang naayos.` : ` New cases went UP this ${p}: ${now}, up from ${before}. ${solved} solved.`;
+  if (now < before) return tl ? ` Bumaba ang bagong kaso ngayong ${p}: ${now} mula ${before}. ${solved} ang naayos.` : ` New cases went DOWN this ${p}: ${now}, down from ${before}. ${solved} solved.`;
   return tl ? `Pareho ang bilang ng bagong kaso ngayong ${p} (${now}). ${solved} ang naayos.` : `Same number of new cases this ${p} (${now}). ${solved} solved.`;
 }
 
@@ -165,7 +165,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    onTriggerToast(isTl ? '✓ Na-download ang monthly report (CSV). Mabubuksan ito sa Excel.' : '✓ Monthly report downloaded (CSV). It opens in Excel.');
+    onTriggerToast(isTl ? ' Na-download ang monthly report (CSV). Mabubuksan ito sa Excel.' : ' Monthly report downloaded (CSV). It opens in Excel.');
   };
   const printReport = () => {
     // a hidden page made only of the report, so the sidebar and buttons are never printed (works in Tauri too)
@@ -185,7 +185,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
     const doc = frame.contentDocument;
     if (!doc || !frame.contentWindow) {
       frame.remove();
-      onTriggerToast(isTl ? '⚠️ Hindi mabuksan ang print. Gamitin muna ang "I-download (Excel)".' : '⚠️ Could not open print. Use "Download (Excel)" for now.');
+      onTriggerToast(isTl ? ' Hindi mabuksan ang print. Gamitin muna ang "I-download (Excel)".' : ' Could not open print. Use "Download (Excel)" for now.');
       return;
     }
     doc.open();
@@ -227,7 +227,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
     setNotes(null);
     const n = await fetchHandoverNotes(code);
     setNotes(n ?? []);
-    if (!n) onTriggerToast(isTl ? '⚠️ Hindi makuha ang mga tala. I-check ang internet.' : '⚠️ Could not load the notes. Check the internet.');
+    if (!n) onTriggerToast(isTl ? ' Hindi makuha ang mga tala. I-check ang internet.' : ' Could not load the notes. Check the internet.');
   }, [isTl, onTriggerToast]);
   useEffect(() => {
     if (selected) void loadNotes(selected);
@@ -245,14 +245,14 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
     const n = await addHandoverNote(sel.caseCode, text, staffEmail);
     setSaving(false);
     if (!n) {
-      onTriggerToast(isTl ? '⚠️ Hindi na-save ang tala. I-check ang internet, tapos subukan ulit.' : '⚠️ Note not saved. Check the internet, then try again.');
+      onTriggerToast(isTl ? ' Hindi na-save ang tala. I-check ang internet, tapos subukan ulit.' : ' Note not saved. Check the internet, then try again.');
       return;
     }
     setDraft('');
     setNotes((l) => [n, ...(l ?? [])]);
     setNoteCounts((m) => new Map(m).set(sel.caseCode, (m.get(sel.caseCode) ?? 0) + 1));
     soundFX.playSuccessCheck();
-    onTriggerToast(isTl ? '✓ Na-save ang handover note. Makikita ito ng susunod na staff.' : '✓ Handover note saved. The next staff member will see it.');
+    onTriggerToast(isTl ? ' Na-save ang handover note. Makikita ito ng susunod na staff.' : ' Handover note saved. The next staff member will see it.');
   };
   const dateFmt = useMemo(() => new Intl.DateTimeFormat(isTl ? 'fil-PH' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }), [isTl]);
   const dt = (s: string) => (s ? dateFmt.format(new Date(s.length === 10 ? s + 'T00:00:00' : s)) : '—');
@@ -267,8 +267,23 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
   ];
 
   return (
-    <main className="p-5 lg:p-6 max-w-[1440px] w-full mx-auto space-y-4 flex-1">
-      <div className="shrink-0 min-h-[54px] flex flex-wrap items-center gap-3 border-b border-[#DCE5F2] dark:border-[#1E3158] pb-2">
+    <main className="p-5 lg:p-6 max-w-[1440px] w-full mx-auto space-y-5 flex-1">
+      {/* CDM-INSPIRED REPORTS HUB BREADCRUMB HEADER */}
+      <div className="cdm-panel px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <div className="text-[11px] font-extrabold tracking-wider uppercase text-[#1E469B] dark:text-[#7CB8F7]">
+            STATISTICS & COMPLIANCE / INCIDENT REPORTS & SUMMARY
+          </div>
+          <h1 className="text-xl font-extrabold text-[#0B1F4D] dark:text-white mt-0.5">
+            {isTl ? 'Mga Ulat at Estadistika ng Guidance Office' : 'Guidance Incident Reports & Statistical Analytics'}
+          </h1>
+          <p className="text-xs text-[#4A608A] dark:text-[#94A8D0] mt-1">
+            {isTl
+              ? 'Buwanang tala ng mga kaso, rate ng pagdalo ng magulang, at mga ulat para sa pamunuan ng paaralan.'
+              : 'Official incident summaries, monthly offense breakdowns, and parent conference analytics.'}
+          </p>
+        </div>
+
         <div className="inline-flex flex-wrap p-1 rounded-xl saas-card-subtle gap-1" role="tablist">
           {tabs.map(([id, label, tip]) => (
             <button
@@ -510,7 +525,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
           <div className="p-4 space-y-2 bg-[#F4F7FC] dark:bg-[#0B1527]">
             {rec.rows.length === 0 && (
               <p className="py-8 text-center text-sm font-bold text-emerald-700 dark:text-emerald-400">
-                ✓ {isTl ? 'Walang umulit ng parehong offense pagkatapos ng sanction.' : 'No one repeated the same offense after a sanction.'}
+                 {isTl ? 'Walang umulit ng parehong offense pagkatapos ng sanction.' : 'No one repeated the same offense after a sanction.'}
               </p>
             )}
             {rec.rows.slice(0, 100).map((r) => (
@@ -556,7 +571,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
             </label>
             <div className="flex gap-2">
               <button type="button" data-action="print-report" onClick={printReport} className={`${btn} px-4 py-2 bg-[#1E469B] text-white`}>
-                🖨 {isTl ? 'I-print' : 'Print'}
+                 {isTl ? 'I-print' : 'Print'}
               </button>
               <button type="button" data-action="csv-report" onClick={downloadCsv} className={`${btn} px-4 py-2 saas-card-subtle`}>
                 ⬇ {isTl ? 'I-download (Excel)' : 'Download (Excel)'}
@@ -601,7 +616,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
             <section className={`${card} p-5 space-y-3`}>
               <h2 className={h2}>{isTl ? `Overdue (higit ${OVERDUE} araw)` : `Overdue (over ${OVERDUE} days)`}</h2>
               {report.overdue.length === 0 ? (
-                <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">✓ {isTl ? 'Walang overdue.' : 'Nothing overdue.'}</p>
+                <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400"> {isTl ? 'Walang overdue.' : 'Nothing overdue.'}</p>
               ) : (
                 <div className="space-y-1.5 max-h-[260px] overflow-y-auto">
                   {report.overdue.slice(0, 50).map((c) => (
@@ -647,7 +662,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                     <span className="text-sm font-extrabold text-[#0B1F4D] dark:text-white truncate">{c.studentName}</span>
                     {(noteCounts.get(c.caseCode) ?? 0) > 0 && (
                       <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200 whitespace-nowrap" title={isTl ? 'Bilang ng handover note' : 'Number of handover notes'}>
-                        📝 {noteCounts.get(c.caseCode)}
+                         {noteCounts.get(c.caseCode)}
                       </span>
                     )}
                   </span>

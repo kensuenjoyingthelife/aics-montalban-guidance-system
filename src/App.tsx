@@ -11,13 +11,13 @@ import { StaffDirectoryAccount } from './services/authSecurityService';
 import { StudentAuthGate } from './pages/StudentAuthGate';
 import { StudentDashboard } from './pages/StudentDashboard';
 import { StudentPortalUser } from './services/studentAuthService';
-import { applyAdaptivePerformanceClass } from './services/devicePerformance';
+import { applyAdaptivePerformanceClass, isCapacitorNativeApp } from './services/devicePerformance';
 import { InactivityShield } from './components/security/InactivityShield';
 import { recordSecurityAudit } from './services/securityEngine';
 
 export const App: React.FC = () => {
-  // Opening sequence plays every time the app starts
-  const [showSplash, setShowSplash] = useState<boolean>(true);
+  // Opening sequence plays on desktop/web; on Capacitor Native mobile, skip splash for instant 0ms app start
+  const [showSplash, setShowSplash] = useState<boolean>(() => !isCapacitorNativeApp());
   // no right-click (except in text boxes) and no inspect shortcuts in real builds
   useEffect(() => installNoInspect(), []);
 

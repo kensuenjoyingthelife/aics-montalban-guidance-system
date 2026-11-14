@@ -61,7 +61,7 @@ const toMin = (t: string) => {
   return m ? Number(m[1]) * 60 + Number(m[2]) : NaN;
 };
 const clock = (t: string) => (Number.isNaN(toMin(t)) ? t : fmtClock(toMin(t)).replace(/^0/, ''));
-const NOT_SAVED = (tl: boolean) => (tl ? '⚠️ Hindi na-save. I-check ang internet, tapos subukan ulit.' : '⚠️ Not saved. Check the internet, then try again.');
+const NOT_SAVED = (tl: boolean) => (tl ? ' Hindi na-save. I-check ang internet, tapos subukan ulit.' : ' Not saved. Check the internet, then try again.');
 
 const DayPicker: React.FC<{ value: string[]; onChange: (d: string[]) => void; isTl: boolean; id: string }> = ({ value, onChange, isTl, id }) => (
   <div className="flex flex-wrap gap-1.5" role="group" aria-label={isTl ? 'Mga araw' : 'Days'}>
@@ -97,7 +97,7 @@ const Modal: React.FC<{ title: string; onClose: () => void; children: React.Reac
         <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-center justify-between">
           <h3 className={h2}>{title}</h3>
           <button type="button" onClick={onClose} aria-label="Close" title="Close" className="w-8 h-8 rounded-lg text-[#4A608A] hover:bg-slate-100 dark:hover:bg-slate-800">
-            ✕
+            
           </button>
         </div>
         <div className="p-6 space-y-4 overflow-y-auto">{children}</div>
@@ -148,7 +148,7 @@ const SettingsPage: React.FC<Props> = ({ onTriggerToast }) => {
               <span className={`block text-[11px] ${section === id ? 'text-white/80' : 'text-[#4A608A] dark:text-[#94A8D0]'}`}>{hint}</span>
             </button>
           ))}
-          <p className={`${sub} px-3 pt-2`}>🔒 {isTl ? 'Naitatala sa Audit Trail ang bawat pagbabago.' : 'Every change is kept in the Audit Trail.'}</p>
+          <p className={`${sub} px-3 pt-2`}> {isTl ? 'Naitatala sa Audit Trail ang bawat pagbabago.' : 'Every change is kept in the Audit Trail.'}</p>
         </nav>
         <div className="min-w-0">
           {!cfg.loaded && (
@@ -197,7 +197,7 @@ const PinGate: React.FC<{ isTl: boolean; onOk: () => void }> = ({ isTl, onOk }) 
           void submit();
         }}
       >
-        <div className="text-3xl">🔒</div>
+        <div className="text-3xl"></div>
         <h2 className={h2}>{isTl ? 'Ilagay ang PIN para buksan ang Settings' : 'Enter the PIN to open Settings'}</h2>
         <p className={sub}>{isTl ? 'Pinoprotektahan ito para hindi mabago ng iba ang system.' : 'This keeps other people from changing how the system works.'}</p>
         <input
@@ -253,7 +253,7 @@ const OfficeSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
     const prev = cfg.officeHours;
     if (!(await saveConfig('office_hours', o))) return toast(NOT_SAVED(isTl));
     soundFX.playSuccessCheck();
-    toast(isTl ? '✓ Na-save. Ito na ang gagamitin ng Smart Scheduling.' : '✓ Saved. Smart Scheduling now uses these hours.', () => void saveConfig('office_hours', prev));
+    toast(isTl ? ' Na-save. Ito na ang gagamitin ng Smart Scheduling.' : ' Saved. Smart Scheduling now uses these hours.', () => void saveConfig('office_hours', prev));
   };
 
   // closed days
@@ -266,7 +266,7 @@ const OfficeSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
     await refreshLists();
     setDay('');
     setReason('');
-    toast(isTl ? `✓ Walang pasok sa ${day}. Hindi na ito iaalok sa scheduling.` : `✓ ${day} is closed. Scheduling will not offer it.`);
+    toast(isTl ? ` Walang pasok sa ${day}. Hindi na ito iaalok sa scheduling.` : ` ${day} is closed. Scheduling will not offer it.`);
   };
   const removeClosed = async (id: number, d: string, why: string) => {
     const ok = await confirmChange({
@@ -330,7 +330,7 @@ const OfficeSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
         </div>
         {problems.map((p) => (
           <p key={p} className={errText} role="alert">
-            ⚠ {p}
+             {p}
           </p>
         ))}
         <div className="flex justify-end gap-2">
@@ -395,7 +395,7 @@ const PeopleSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
   const saveCounselor = async () => {
     const prev = cfg.counselorDays;
     if (!(await saveConfig('counselor_days', days))) return toast(NOT_SAVED(isTl));
-    toast(isTl ? '✓ Na-save ang araw ng counselor. Ito na ang iaalok sa listahan ng counselor.' : '✓ Counselor days saved. The counselor list now offers these days.', () => void saveConfig('counselor_days', prev));
+    toast(isTl ? ' Na-save ang araw ng counselor. Ito na ang iaalok sa listahan ng counselor.' : ' Counselor days saved. The counselor list now offers these days.', () => void saveConfig('counselor_days', prev));
   };
   const remove = async (p: PersonSchedule) => {
     const ok = await confirmChange({
@@ -483,7 +483,7 @@ const PersonWindow: React.FC<{ isTl: boolean; person: PersonSchedule | null; onC
     if (!r) return toast(NOT_SAVED(isTl));
     await refreshLists();
     soundFX.playSuccessCheck();
-    toast(isTl ? `✓ Na-save ang schedule ni ${name.trim()}.` : `✓ ${name.trim()}'s schedule saved.`);
+    toast(isTl ? ` Na-save ang schedule ni ${name.trim()}.` : ` ${name.trim()}'s schedule saved.`);
     onClose();
   };
   return (
@@ -572,10 +572,10 @@ const OffensesSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
     if (!ok) return;
     const prev = cfg.caseRules;
     if (!(await saveConfig('case_rules', rules))) return toast(NOT_SAVED(isTl));
-    toast(isTl ? '✓ Na-save ang mga patakaran.' : '✓ Rules saved.', () => void saveConfig('case_rules', prev));
+    toast(isTl ? ' Na-save ang mga patakaran.' : ' Rules saved.', () => void saveConfig('case_rules', prev));
   };
   const setActive = async (o: OffenseRow, on: boolean) => {
-    if (!on && active.length <= 1) return toast(isTl ? '⚠️ Kailangan ng kahit isang offense sa handbook.' : '⚠️ The handbook needs at least one offense.');
+    if (!on && active.length <= 1) return toast(isTl ? ' Kailangan ng kahit isang offense sa handbook.' : ' The handbook needs at least one offense.');
     if (!on) {
       const ok = await confirmChange({
         title: isTl ? 'Alisin ang offense sa listahan?' : 'Remove this offense from the list?',
@@ -588,7 +588,7 @@ const OffensesSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
     }
     if (!(await writeRow('offense_policies', 'PATCH', { is_active: on }, o.id))) return toast(NOT_SAVED(isTl));
     await refreshLists();
-    toast(on ? (isTl ? '✓ Naibalik ang offense.' : '✓ Offense brought back.') : isTl ? 'Inalis ang offense.' : 'Offense removed.', on ? undefined : async () => {
+    toast(on ? (isTl ? ' Naibalik ang offense.' : ' Offense brought back.') : isTl ? 'Inalis ang offense.' : 'Offense removed.', on ? undefined : async () => {
       await writeRow('offense_policies', 'PATCH', { is_active: true }, o.id);
       await refreshLists();
     });
@@ -611,7 +611,7 @@ const OffensesSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
             <input type="number" min={1} max={30} data-rule="pending" value={rules.pendingSanctionDays ?? 3} onChange={(e) => setRules({ ...rules, pendingSanctionDays: Number(e.target.value) })} className={input} />
           </label>
         </div>
-        {rulesBad && <p className={errText}>⚠ {rulesBad}</p>}
+        {rulesBad && <p className={errText}> {rulesBad}</p>}
         <div className="flex justify-end">
           <button type="button" data-action="save-rules" disabled={!rulesChanged || !!rulesBad} onClick={() => void saveRules()} className={primary}>
             {isTl ? 'I-save' : 'Save'}
@@ -745,7 +745,7 @@ const OffenseWindow: React.FC<{ isTl: boolean; offense: OffenseRow | null; onClo
     if (!r) return toast(NOT_SAVED(isTl));
     await refreshLists();
     soundFX.playSuccessCheck();
-    toast(isTl ? `✓ Na-save ang "${body.title_en}". Mapipili na ito sa "+ New case".` : `✓ "${body.title_en}" saved. It can now be picked in "+ New case".`);
+    toast(isTl ? ` Na-save ang "${body.title_en}". Mapipili na ito sa "+ New case".` : ` "${body.title_en}" saved. It can now be picked in "+ New case".`);
     onClose();
   };
   const field = (k: keyof typeof f, t: string, ph = '') => (
@@ -836,7 +836,7 @@ const StudentFieldsSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToa
     const prev = cfg.studentFields;
     if (!(await saveConfig('student_fields', f))) return toast(NOT_SAVED(isTl));
     soundFX.playSuccessCheck();
-    toast(isTl ? '✓ Na-save. Ito na ang makikita sa "Add student" at "Edit".' : '✓ Saved. "Add student" and "Edit" now show these fields.', () => void saveConfig('student_fields', prev));
+    toast(isTl ? ' Na-save. Ito na ang makikita sa "Add student" at "Edit".' : ' Saved. "Add student" and "Edit" now show these fields.', () => void saveConfig('student_fields', prev));
   };
   return (
     <div className="space-y-4">
@@ -1070,7 +1070,7 @@ const SmsSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }> = 
     if (!ok) return;
     const prev = cfg.smsTemplates;
     if (!(await saveConfig('sms_templates', t))) return toast(NOT_SAVED(isTl));
-    toast(isTl ? '✓ Na-save ang SMS templates.' : '✓ SMS templates saved.', () => void saveConfig('sms_templates', prev));
+    toast(isTl ? ' Na-save ang SMS templates.' : ' SMS templates saved.', () => void saveConfig('sms_templates', prev));
   };
   return (
     <section className={`${card} p-5 space-y-4`} data-section="sms">
@@ -1103,7 +1103,7 @@ const SmsSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }> = 
             </p>
             {iss.map((x) => (
               <p key={x} className={errText}>
-                ⚠ {x}
+                 {x}
               </p>
             ))}
           </div>
@@ -1151,7 +1151,7 @@ const SecuritySection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
     if (!ok) return;
     const prev = cfg.security;
     if (!(await saveConfig('security', sec))) return toast(NOT_SAVED(isTl));
-    toast(isTl ? '✓ Na-save ang security.' : '✓ Security saved.', () => void saveConfig('security', prev));
+    toast(isTl ? ' Na-save ang security.' : ' Security saved.', () => void saveConfig('security', prev));
   };
   const changePin = async () => {
     setPinErr('');
@@ -1172,11 +1172,11 @@ const SecuritySection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
     setPinNew('');
     setPinNew2('');
     soundFX.playSuccessCheck();
-    toast(isTl ? '✓ Napalitan ang PIN.' : '✓ PIN changed.');
+    toast(isTl ? ' Napalitan ang PIN.' : ' PIN changed.');
   };
   const toggleStaff = async (a: StaffAccount) => {
     const activeCount = cfg.staff.filter((x) => x.active).length;
-    if (a.active && activeCount <= 1) return toast(isTl ? '⚠️ Kailangan ng kahit isang aktibong account para maka-sign in.' : '⚠️ At least one active account is needed to sign in.');
+    if (a.active && activeCount <= 1) return toast(isTl ? ' Kailangan ng kahit isang aktibong account para maka-sign in.' : ' At least one active account is needed to sign in.');
     if (a.active) {
       const ok = await confirmChange({
         title: isTl ? 'Patayin ang account?' : 'Turn off this account?',
@@ -1244,7 +1244,7 @@ const SecuritySection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
             </label>
           ))}
         </div>
-        {pinErr && <p className={errText} role="alert">⚠ {pinErr}</p>}
+        {pinErr && <p className={errText} role="alert"> {pinErr}</p>}
         <div className="flex justify-end">
           <button type="button" data-action="change-pin" disabled={pinOld.length !== 6 || pinNew.length !== 6 || pinNew2.length !== 6} onClick={() => void changePin()} className={primary}>
             {isTl ? 'Palitan ang PIN' : 'Change PIN'}
@@ -1267,7 +1267,7 @@ const SecuritySection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
             <input type="number" min={1} max={60} data-sec="lock" value={sec.pinLockMinutes} onChange={(e) => setSec({ ...sec, pinLockMinutes: Number(e.target.value) })} className={input} />
           </label>
         </div>
-        {secBad && <p className={errText}>⚠ {secBad}</p>}
+        {secBad && <p className={errText}> {secBad}</p>}
         <div className="flex justify-end">
           <button type="button" data-action="save-security" disabled={!secChanged || !!secBad} onClick={() => void saveSec()} className={primary}>
             {isTl ? 'I-save' : 'Save'}
@@ -1300,7 +1300,7 @@ const StaffWindow: React.FC<{ isTl: boolean; account: StaffAccount | null; onClo
     if (!r) return toast(NOT_SAVED(isTl));
     await refreshLists();
     soundFX.playSuccessCheck();
-    toast(isTl ? `✓ Na-save. Puwede nang mag-sign in ang ${clean}.` : `✓ Saved. ${clean} can now sign in.`);
+    toast(isTl ? ` Na-save. Puwede nang mag-sign in ang ${clean}.` : ` Saved. ${clean} can now sign in.`);
     onClose();
   };
   return (
@@ -1395,9 +1395,9 @@ const BackupSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
       soundFX.playSuccessCheck();
-      toast(isTl ? `✓ Na-download ang backup (${BACKUP_TABLES.length} table). Itago ito sa ligtas na lugar — may personal na data ito.` : `✓ Backup downloaded (${BACKUP_TABLES.length} tables). Keep it somewhere safe — it has personal data.`);
+      toast(isTl ? ` Na-download ang backup (${BACKUP_TABLES.length} table). Itago ito sa ligtas na lugar — may personal na data ito.` : ` Backup downloaded (${BACKUP_TABLES.length} tables). Keep it somewhere safe — it has personal data.`);
     } catch (e) {
-      toast(isTl ? `⚠️ Hindi natapos ang backup (${(e as Error).message}). I-check ang internet, tapos subukan ulit.` : `⚠️ Backup did not finish (${(e as Error).message}). Check the internet, then try again.`);
+      toast(isTl ? ` Hindi natapos ang backup (${(e as Error).message}). I-check ang internet, tapos subukan ulit.` : ` Backup did not finish (${(e as Error).message}). Check the internet, then try again.`);
     } finally {
       setBusy(false);
       setProgress('');
@@ -1411,7 +1411,7 @@ const BackupSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
     });
     if (!ok) return;
     if (!(await saveConfig('retention', { idImageDays: days }))) return toast(NOT_SAVED(isTl));
-    toast(isTl ? '✓ Na-save.' : '✓ Saved.');
+    toast(isTl ? ' Na-save.' : ' Saved.');
   };
   return (
     <div className="space-y-4">
@@ -1440,7 +1440,7 @@ const BackupSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
           <span className={label}>{isTl ? 'Araw' : 'Days'}</span>
           <input type="number" min={7} max={365} data-retention value={days} onChange={(e) => setDays(Number(e.target.value))} className={input} />
         </label>
-        {!(days >= 7 && days <= 365) && <p className={errText}>⚠ {isTl ? '7 hanggang 365 araw.' : '7 to 365 days.'}</p>}
+        {!(days >= 7 && days <= 365) && <p className={errText}> {isTl ? '7 hanggang 365 araw.' : '7 to 365 days.'}</p>}
         <div className="flex justify-end">
           <button type="button" data-action="save-retention" disabled={days === cfg.retention.idImageDays || !(days >= 7 && days <= 365)} onClick={() => void saveRetention()} className={primary}>
             {isTl ? 'I-save' : 'Save'}
