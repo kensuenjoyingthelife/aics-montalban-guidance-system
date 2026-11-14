@@ -126,66 +126,140 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
         </div>
       )}
 
-      {/* 2. Primary Navigation Menu (CDM Portal 1:1 Architecture) */}
-      <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto clean-scroll">
-        {!collapsed && (
-          <div className="px-3 pt-1 pb-2 text-[10.5px] font-extrabold tracking-[0.14em] text-[#7CB8F7]/80 uppercase">
-            WORKSPACE
-          </div>
-        )}
+      {/* 2. Primary Navigation Menu (Organized into Daily Operations vs Management) */}
+      <nav className="flex-1 px-3 py-3 space-y-3 overflow-y-auto clean-scroll">
+        {/* GROUP 1: DAILY CORE OPERATIONS */}
+        <div>
+          {!collapsed && (
+            <div className="px-3 pt-1 pb-1.5 text-[10px] font-black tracking-[0.14em] text-[#7CB8F7] uppercase flex items-center justify-between">
+              <span>{isTl ? 'Araw-araw na Gawain' : 'Daily Operations'}</span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 font-extrabold">CORE</span>
+            </div>
+          )}
 
-        {MAIN_SIDEBAR_CATEGORIES.map((item, idx) => {
-          const isActive = item.id === activeCategoryId;
-          const badgeVal = getBadgeCount(item);
-          const label = isTl ? item.labelTl : item.labelEn;
+          <div className="space-y-1">
+            {MAIN_SIDEBAR_CATEGORIES.filter((item) =>
+              ['dashboard', 'cases-hub', 'support-hub', 'parents-hub'].includes(item.id)
+            ).map((item, idx) => {
+              const isActive = item.id === activeCategoryId;
+              const badgeVal = getBadgeCount(item);
+              const label = isTl ? item.labelTl : item.labelEn;
 
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => {
-                soundFX.playKeyClick(idx);
-                onSelectCategory(item);
-              }}
-              title={label}
-              className={`w-full flex items-center ${
-                collapsed ? 'justify-center p-2.5' : 'justify-between px-3 py-2'
-              } rounded-[8px] text-left transition-all duration-150 ${
-                isActive
-                  ? 'bg-white/12 text-white font-bold border-l-[3px] border-[#7CB8F7]'
-                  : 'text-[#DCE8FF]/80 hover:bg-white/6 hover:text-white font-medium'
-              }`}
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <span
-                  className={`w-5 h-5 flex items-center justify-center shrink-0 transition-colors ${
-                    isActive ? 'text-[#7CB8F7]' : 'text-[#9BCBFF]/70'
-                  }`}
-                >
-                  <DuotoneIcon name={item.icon} size={18} />
-                </span>
-
-                {!collapsed && (
-                  <span className="text-[13.5px] tracking-tight truncate">
-                    {label}
-                  </span>
-                )}
-              </div>
-
-              {!collapsed && badgeVal !== undefined && badgeVal > 0 && (
-                <span
-                  className={`ml-2 px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0 ${
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    soundFX.playKeyClick(idx);
+                    onSelectCategory(item);
+                  }}
+                  title={label}
+                  className={`w-full flex items-center ${
+                    collapsed ? 'justify-center p-2.5' : 'justify-between px-3 py-2'
+                  } rounded-[8px] text-left transition-all duration-150 ${
                     isActive
-                      ? 'bg-[#7CB8F7] text-[#0B1F4D]'
-                      : 'bg-white/15 text-[#E4ECFC]'
+                      ? 'bg-white/15 text-white font-bold border-l-[3.5px] border-[#7CB8F7] shadow-sm'
+                      : 'text-[#DCE8FF]/85 hover:bg-white/8 hover:text-white font-medium'
                   }`}
                 >
-                  {badgeVal}
-                </span>
-              )}
-            </button>
-          );
-        })}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span
+                      className={`w-5 h-5 flex items-center justify-center shrink-0 transition-colors ${
+                        isActive ? 'text-[#7CB8F7]' : 'text-[#9BCBFF]/75'
+                      }`}
+                    >
+                      <DuotoneIcon name={item.icon} size={18} />
+                    </span>
+
+                    {!collapsed && (
+                      <span className="text-[13.5px] tracking-tight truncate">
+                        {label}
+                      </span>
+                    )}
+                  </div>
+
+                  {!collapsed && badgeVal !== undefined && badgeVal > 0 && (
+                    <span
+                      className={`ml-2 px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0 ${
+                        isActive
+                          ? 'bg-[#7CB8F7] text-[#0B1F4D]'
+                          : 'bg-white/15 text-[#E4ECFC]'
+                      }`}
+                    >
+                      {badgeVal}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* GROUP 2: RECORDS & SETTINGS */}
+        <div className="pt-2 border-t border-white/10">
+          {!collapsed && (
+            <div className="px-3 pt-1 pb-1.5 text-[10px] font-black tracking-[0.14em] text-slate-400 dark:text-slate-400 uppercase">
+              {isTl ? 'Rekord at Pamamahala' : 'Management & Records'}
+            </div>
+          )}
+
+          <div className="space-y-1">
+            {MAIN_SIDEBAR_CATEGORIES.filter((item) =>
+              ['referrals-hub', 'records-hub', 'audit-hub', 'settings-hub'].includes(item.id)
+            ).map((item, idx) => {
+              const isActive = item.id === activeCategoryId;
+              const badgeVal = getBadgeCount(item);
+              const label = isTl ? item.labelTl : item.labelEn;
+
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    soundFX.playKeyClick(idx + 4);
+                    onSelectCategory(item);
+                  }}
+                  title={label}
+                  className={`w-full flex items-center ${
+                    collapsed ? 'justify-center p-2.5' : 'justify-between px-3 py-2'
+                  } rounded-[8px] text-left transition-all duration-150 ${
+                    isActive
+                      ? 'bg-white/15 text-white font-bold border-l-[3.5px] border-[#7CB8F7] shadow-sm'
+                      : 'text-[#DCE8FF]/75 hover:bg-white/8 hover:text-white font-medium'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span
+                      className={`w-5 h-5 flex items-center justify-center shrink-0 transition-colors ${
+                        isActive ? 'text-[#7CB8F7]' : 'text-[#9BCBFF]/70'
+                      }`}
+                    >
+                      <DuotoneIcon name={item.icon} size={18} />
+                    </span>
+
+                    {!collapsed && (
+                      <span className="text-[13.5px] tracking-tight truncate">
+                        {label}
+                      </span>
+                    )}
+                  </div>
+
+                  {!collapsed && badgeVal !== undefined && badgeVal > 0 && (
+                    <span
+                      className={`ml-2 px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0 ${
+                        isActive
+                          ? 'bg-[#7CB8F7] text-[#0B1F4D]'
+                          : 'bg-white/15 text-[#E4ECFC]'
+                      }`}
+                    >
+                      {badgeVal}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </nav>
 
       {/* 3. Bottom Controls Section */}

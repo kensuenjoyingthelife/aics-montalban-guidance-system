@@ -9,7 +9,7 @@ export let SLOT_MINUTES = 45;
 /** start times in minutes after midnight */
 export let SLOT_STARTS: number[] = [8 * 60, 8 * 60 + 45, 9 * 60 + 30, 10 * 60 + 15, 11 * 60, 13 * 60, 13 * 60 + 45, 14 * 60 + 30, 15 * 60 + 15];
 export const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
-export let OFFICE_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+export let OFFICE_DAYS = ['Mon', 'Tue', 'Wed', 'Thu'];
 let CLOSED_DAYS = new Set<string>();
 
 const toMin = (hhmm: string, fallback: number) => {

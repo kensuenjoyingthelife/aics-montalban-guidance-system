@@ -207,9 +207,14 @@ export const CaseFlowPanel: React.FC<{
 
           {next === 'Parent Notified' && (
             <div className="space-y-3">
-              <p className="text-xs font-bold text-[#0F172A] dark:text-white">
-                {isTl ? 'Paano naipagbigay-alam sa Magulang ang Kaso?' : 'How was the Parent officially informed?'}
-              </p>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <p className="text-xs font-bold text-[#0F172A] dark:text-white">
+                  {isTl ? 'Paano naipagbigay-alam sa Magulang ang Kaso?' : 'How was the Parent officially informed?'}
+                </p>
+                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-400/30">
+                  {isTl ? '⏳ Pwedeng isara pansamantala habang naghihintay ng pagharap' : '⏳ Can pause/save while waiting for parent conference'}
+                </span>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {HOW.map(([en, tl]) => (
                   <button 
@@ -228,9 +233,14 @@ export const CaseFlowPanel: React.FC<{
                   </button>
                 ))}
               </div>
-              <div className="flex justify-end pt-2 border-t border-[#F1F5F9] dark:border-[#1E2E4E]">
+              <div className="flex items-center justify-between pt-2 border-t border-[#F1F5F9] dark:border-[#1E2E4E] flex-wrap gap-2">
+                <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
+                  {isTl
+                    ? 'Tip: Hindi magiging sarado/closed ang kaso kapag nag-abiso sa magulang. Mananatiling aktibo ito.'
+                    : 'Note: Notifying parent will not close the case. Case stays active until due process resolution.'}
+                </p>
                 <button type="button" data-flow="notified" disabled={busy || !how} onClick={() => onAction({ kind: 'notified', how })} className={`${primary} rounded-[6px]`}>
-                  {isTl ? '✓ Kumpirmadong Alam ng Magulang' : '✓ Confirm Parent Notified'}
+                  {isTl ? '✓ I-save: Naabisuhan na ang Magulang (Waiting Conference)' : '✓ Save: Parent Notified (Waiting Conference)'}
                 </button>
               </div>
             </div>

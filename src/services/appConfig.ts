@@ -107,13 +107,13 @@ export interface AppConfig {
 
 export const DEFAULTS: AppConfig = {
   loaded: false,
-  officeHours: { days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], start: '08:00', end: '16:00', lunchStart: '11:45', lunchEnd: '13:00', slotMinutes: 45 },
+  officeHours: { days: ['Mon', 'Tue', 'Wed', 'Thu'], start: '08:00', end: '17:00', lunchStart: '12:00', lunchEnd: '13:00', slotMinutes: 45 },
   caseRules: { escalateAfterMinors: 2, overdueDays: 14, pendingSanctionDays: 3 },
   security: { autoSignOutMinutes: 15, pinMaxTries: 5, pinLockMinutes: 5 },
   smsTemplates: {
-    notice: 'AICS Guidance Office: Magandang araw po. Inaanyayahan po kayo sa pag-uusap tungkol kay {student} sa {when}. Salamat po.',
-    reminder: 'AICS Guidance Office: Paalala po, bukas {when} ang ating pag-uusap tungkol kay {student}. Salamat po.',
-    reschedule: 'AICS Guidance Office: Inilipat po sa {when} ang ating pag-uusap tungkol kay {student}. Salamat po.',
+    notice: 'AICS Guidance: Magandang araw po. Inaanyayahan po kayo sa Parent Conference para kay {student} sa {when}. Bukas po ang guidance office Lunes-Huwebes 8AM-5PM. Salamat po.',
+    reminder: 'AICS Guidance: Paalala po, bukas {when} ang Parent Conference para kay {student} sa Guidance Room. Salamat po.',
+    reschedule: 'AICS Guidance: Inilipat po sa {when} ang Parent Conference para kay {student}. Para sa katanungan, bukas kami Lunes-Huwebes. Salamat po.',
   },
   retention: { idImageDays: 30 },
   counselorDays: ['Tue', 'Thu'],

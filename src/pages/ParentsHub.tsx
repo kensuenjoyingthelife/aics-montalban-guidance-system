@@ -1064,16 +1064,33 @@ const ScheduleWindow: React.FC<{
   const [channel, setChannel] = useState<Channel>(stu?.parentEmail ? 'both' : 'sms');
   const [sendNow, setSendNow] = useState(true);
   const free = useMemo(() => freeSlotsOn(appointments, date, ignoreId), [appointments, date, ignoreId]);
-  const autoMsg = (d: string, s: number | null) =>
-    stu && c && s !== null
-      ? buildConferenceSms({ kind: reschedule ? 'reschedule' : 'notice', parentName: stu.parentName, studentName: c.studentName, date: d, timeSlot: slotLabel(s) })
-      : '';
-  const [message, setMessage] = useState<string>(autoMsg(date, start));
+  const [msgLang, setMsgLang] = useState<'taglish' | 'english'>('taglish');
+
+  const getTemplateMsg = (d: string, s: number | null, lang: 'taglish' | 'english') => {
+    if (!stu || !c || s === null) return '';
+    const when = `${dayTitle(d)}, ${slotLabel(s)}`;
+    if (lang === 'english') {
+      if (reschedule) {
+        return `AICS Guidance Office: Good day. The parent conference regarding ${c.studentName} has been rescheduled to ${when}. Our office is open Mon-Thu 8AM-5PM. Thank you.`;
+      }
+      return `AICS Guidance Office: Good day. You are requested to attend a parent conference regarding ${c.studentName} on ${when} at the Guidance Office. Thank you.`;
+    }
+    // Taglish
+    if (reschedule) {
+      return `AICS Guidance: Magandang araw po. Inilipat po sa ${when} ang Parent Conference para kay ${c.studentName}. Bukas kami Lunes-Huwebes 8AM-5PM. Salamat po.`;
+    }
+    return `AICS Guidance: Magandang araw po. Inaanyayahan po kayo sa Parent Conference para kay ${c.studentName} sa ${when} sa Guidance Office. Salamat po.`;
+  };
+
+  const autoMsg = (d: string, s: number | null, lang: 'taglish' | 'english' = msgLang) =>
+    getTemplateMsg(d, s, lang);
+
+  const [message, setMessage] = useState<string>(autoMsg(date, start, 'taglish'));
   const [msgEdited, setMsgEdited] = useState(false);
   useEffect(() => {
-    if (!msgEdited) setMessage(autoMsg(date, start));
+    if (!msgEdited) setMessage(autoMsg(date, start, msgLang));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, start]);
+  }, [date, start, msgLang]);
   const sensitive = findSensitiveWords(message);
   const [saving, setSaving] = useState(false);
 
@@ -1253,7 +1270,7 @@ const ScheduleWindow: React.FC<{
       {/* manual pick */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-bold mb-1" htmlFor="conf-date">{isTl ? 'O pumili ng araw' : 'Or pick a day'}</label>
+          <div className="flex items-center justify-between mb-1"><label className="block text-xs font-bold" htmlFor="conf-date">{isTl ? 'O pumili ng araw' : 'Or pick a day'}</label><span className="text-[10.5px] font-extrabold text-sky-600 dark:text-sky-300">Lunes–Huwebes (8AM–5PM)</span></div>
           <input
             id="conf-date"
             type="date"
@@ -1267,7 +1284,7 @@ const ScheduleWindow: React.FC<{
           />
           {dateBad && (
             <p className="mt-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400">
-              {date < todayISO() ? (isTl ? 'Lumipas na ang araw na ito.' : 'This day has passed.') : isTl ? 'Lunes–Biyernes lang bukas ang office.' : 'The office is open Monday–Friday only.'}
+              {date < todayISO() ? (isTl ? 'Lumipas na ang araw na ito.' : 'This day has passed.') : isTl ? 'Lunes–Huwebes lamang bukas ang Guidance Office (8:00 AM – 5:00 PM).' : 'The Guidance Office is open Monday–Thursday only (8:00 AM – 5:00 PM).'}
             </p>
           )}
         </div>
@@ -1296,19 +1313,52 @@ const ScheduleWindow: React.FC<{
         </label>
         {sendNow && (
           <>
-            <div className="flex flex-wrap gap-1.5">
-              {(['sms', 'gmail', 'both'] as Channel[]).map((ch) => (
-                <button
-                  key={ch}
-                  type="button"
-                  disabled={ch !== 'sms' && !stu.parentEmail}
-                  title={ch !== 'sms' && !stu.parentEmail ? (isTl ? 'Walang email ang magulang' : 'The parent has no email') : undefined}
-                  onClick={() => setChannel(ch)}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold border disabled:opacity-40 ${channel === ch ? 'bg-[#1E469B] border-[#1E469B] text-white' : 'border-[#D3DDEE] dark:border-[#253B66]'}`}
-                >
-                  {ch === 'sms' ? 'SMS' : ch === 'gmail' ? 'Email' : 'SMS + Email'}
-                </button>
-              ))}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap gap-1.5">
+                {(['sms', 'gmail', 'both'] as Channel[]).map((ch) => (
+                  <button
+                    key={ch}
+                    type="button"
+                    disabled={ch !== 'sms' && !stu.parentEmail}
+                    title={ch !== 'sms' && !stu.parentEmail ? (isTl ? 'Walang email ang magulang' : 'The parent has no email') : undefined}
+                    onClick={() => setChannel(ch)}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold border disabled:opacity-40 ${channel === ch ? 'bg-[#1E469B] border-[#1E469B] text-white' : 'border-[#D3DDEE] dark:border-[#253B66]'}`}
+                  >
+                    {ch === 'sms' ? 'SMS' : ch === 'gmail' ? 'Email' : 'SMS + Email'}
+                  </button>
+                ))}
+              </div>
+
+              {/* Taglish / English Quick Template Selectors */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-[#4A608A] dark:text-[#94A8D0]">
+                  {isTl ? 'Template ng Mensahe:' : 'Message Template:'}
+                </span>
+                <div className="inline-flex rounded-lg border border-[#D3DDEE] dark:border-[#253B66] p-0.5 bg-white dark:bg-[#0B1527]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMsgLang('taglish');
+                      setMsgEdited(false);
+                      setMessage(autoMsg(date, start, 'taglish'));
+                    }}
+                    className={`px-2.5 py-0.5 rounded text-[11px] font-bold transition-all ${msgLang === 'taglish' ? 'bg-[#1E469B] text-white shadow-xs' : 'text-[#4A608A] dark:text-[#94A8D0]'}`}
+                  >
+                    Taglish (Natural)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMsgLang('english');
+                      setMsgEdited(false);
+                      setMessage(autoMsg(date, start, 'english'));
+                    }}
+                    className={`px-2.5 py-0.5 rounded text-[11px] font-bold transition-all ${msgLang === 'english' ? 'bg-[#1E469B] text-white shadow-xs' : 'text-[#4A608A] dark:text-[#94A8D0]'}`}
+                  >
+                    English
+                  </button>
+                </div>
+              </div>
             </div>
             {channel !== 'gmail' && smsReady === false && (
               <p className="text-[11px] font-semibold text-amber-800 dark:text-amber-300">

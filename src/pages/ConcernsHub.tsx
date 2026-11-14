@@ -719,7 +719,7 @@ const ConcernDetail: React.FC<{
       <div className="flex-1 min-h-0 p-3 grid grid-cols-[1.25fr_1fr] gap-3 bg-[#F4F7FC] dark:bg-[#0B1527]">
         {/* ---------- LEFT: who sent it ---------- */}
         <section className={cardBox} data-concern-student>
-          <p className={cardHead}>👤 {isTl ? 'Impormasyon ng estudyante' : 'Student information'}</p>
+          <p className={cardHead}>👤 {isTl ? 'Complainant / Nagsumbong na Estudyante' : 'Complainant (Reporting Student)'}</p>
           <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3" data-student-scroll>
             <div className="flex gap-3">
               {Photo({ src: account?.photoUrl ?? '', label: photoLabel, w: 'w-[88px]', h: 'h-[88px]', testId: 'photo', fit: 'cover' })}
@@ -791,17 +791,17 @@ const ConcernDetail: React.FC<{
 
         {/* ---------- RIGHT: the report ---------- */}
         <section className={cardBox} data-concern-report>
-          <p className={cardHead}>📝 {isTl ? 'Report ng estudyante' : 'Case report'}</p>
+          <p className={cardHead}>📝 {isTl ? 'Detalye ng Insidente & Respondent' : 'Incident Details & Respondent'}</p>
           <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
             <Field label={isTl ? 'Ano ang nangyari' : 'What happened'} value={c.whatHappened} empty={none} />
             <div className="grid grid-cols-2 gap-3">
               <Field label={isTl ? 'Kailan' : 'When'} value={c.when} empty={none} />
               <Field label={isTl ? 'Saan' : 'Where'} value={c.where} empty={none} />
             </div>
-            <Field label={isTl ? 'Sino ang sangkot' : 'Who was involved'} value={c.who} empty={none} />
+            <Field label={isTl ? 'Inirereklamo (Respondent / Sangkot)' : 'Respondent / Reported Student'} value={c.who} empty={none} />
             {onCreateCase && !c.linkedCaseCode && (
               <button type="button" data-action="case-from-concern" onClick={onCreateCase} className={`${btn} px-3 py-2 saas-card-subtle text-[#1E469B] dark:text-[#7CB8F7]`} title={isTl ? 'Bubuksan ang Bagong Kaso na nakapuno na. Ikaw ang pipili ng estudyanteng isinumbong.' : 'Opens New Case already filled in. You pick the student who was reported.'}>
-                ＋ {isTl ? 'Gumawa ng kaso para sa isinumbong' : 'Record a case for the reported student'}
+                ＋ {isTl ? 'Gumawa ng Disciplinary Case para sa Respondent' : 'File Disciplinary Case Against Respondent'}
               </button>
             )}
             <Field label={isTl ? 'Mga saksi' : 'Witnesses'} value={c.witnesses} empty={isTl ? 'Wala' : 'None'} />

@@ -67,7 +67,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
 
   // Submit Concern Form State
-  const [reportType, setReportType] = useState<string>('Bullying / Peer Harassment');
+  const [reportType, setReportType] = useState<string>('Vaping / Smoking Infraction');
   // Reporting Role: 'self' (Mag-report sa sarili) vs 'peer' (I-report ang nangyari sa kaibigan/kaklase)
   const [reportingRole, setReportingRole] = useState<'self' | 'peer'>('self');
   const [friendName, setFriendName] = useState<string>('');
@@ -378,7 +378,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
     const isPeer = reportingRole === 'peer';
     const finalNarrative = [
       isPeer ? `[REPORT FOR FRIEND/CLASSMATE: ${friendName} (${friendGradeSection || 'N/A'})]` : '[SELF-REPORT BY STUDENT]',
-      knowsSuspect === 'yes' ? `[SUSPECT / NAMBULLY: ${suspectName}${suspectDetails ? ` - ${suspectDetails}` : ''}]` : (knowsSuspect === 'unsure' ? '[SUSPECT / NAMBULLY: Unsure / May kutob pero hindi sigurado]' : '[SUSPECT / NAMBULLY: Hindi kilala ang nambully]'),
+      knowsSuspect === 'yes' ? `[RESPONDENT / INIREREKLAMO: ${suspectName}${suspectDetails ? ` - Palatandaan: ${suspectDetails}` : ''}]` : (knowsSuspect === 'unsure' ? `[RESPONDENT / INIREREKLAMO: Hindi tiyak ang pangalan - Palatandaan: ${suspectDetails || 'N/A'}]` : `[RESPONDENT / INIREREKLAMO: Hindi kilala ang pangalan - Palatandaan: ${suspectDetails || 'N/A'}]`),
       `[SALAYSAY / WHAT HAPPENED]:\n${moderation.sanitizedText}`
     ].join('\n\n');
 
@@ -876,7 +876,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   </div>
                   <h2 className="text-base sm:text-xl font-extrabold card-title-text mt-1">
                     {formStep === 1 && (isTl ? '1. Category ng Insidente & Para Kanino' : '1. Incident Category & Scope')}
-                    {formStep === 2 && (isTl ? '2. Nambully / Suspect & Detalye' : '2. Bully / Person Involved Details')}
+                    {formStep === 2 && (isTl ? '2. Inirereklamong Estudyante (Respondent) & Detalye' : '2. Reported Student (Respondent) & Incident Details')}
                     {formStep === 3 && (isTl ? '3. Salaysay, Konteksto & Pagsumite' : '3. Narrative Context & Submission')}
                   </h2>
                   <p className="text-xs card-subtitle-text mt-0.5">
@@ -904,7 +904,29 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
               </div>
             </div>
 
-            {submitError && (
+                        {/* AICS Guidance Operational Hours Announcement */}
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-sky-500/10 via-blue-500/10 to-indigo-500/10 border border-sky-400/30 flex items-start gap-3">
+              <div className="w-7 h-7 rounded-xl bg-sky-500/20 text-sky-600 dark:text-sky-300 flex items-center justify-center shrink-0 font-extrabold text-sm">
+                ⏰
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-black text-[#0B1F4D] dark:text-white uppercase tracking-wider">
+                    {isTl ? 'AICS Guidance Office Schedule' : 'AICS Guidance Office Hours'}
+                  </span>
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                    {isTl ? 'Bukas: Lunes - Huwebes' : 'Open: Monday - Thursday'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#1E469B] dark:text-[#9BCBFF] font-medium mt-0.5">
+                  {isTl
+                    ? 'Lunes hanggang Huwebes (8:00 AM – 5:00 PM). Ang mga isinumiteng report tuwing Biyernes o weekend ay agad na rerepasuhin pagsapit ng Lunes ng umaga.'
+                    : 'Monday to Thursday (8:00 AM – 5:00 PM). Reports submitted on Fridays or weekends will be immediately attended to first thing Monday morning.'}
+                </p>
+              </div>
+            </div>
+
+{submitError && (
               <div className="p-3.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-600 dark:text-rose-200 text-xs font-semibold flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
                 <span>{submitError}</span>
@@ -931,20 +953,26 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                       onChange={(e) => setReportType(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl cosmic-input text-xs sm:text-sm font-semibold focus:outline-none"
                     >
-                      <option value="Bullying / Peer Harassment">
-                        {isTl ? 'Bullying / Peer Harassment (Physical, Verbal, o Cyber)' : 'Bullying / Peer Harassment (Physical, Verbal, or Cyber)'}
+                      <option value="Vaping / Smoking Infraction">
+                        {isTl ? '🚭 Vaping / Paninigarilyo sa Loob ng Campus' : '🚭 Vaping / Smoking on Campus'}
                       </option>
-                      <option value="Peer Conflict / Fighting">
-                        {isTl ? 'Peer Conflict / Away ng Magkaklase' : 'Peer Conflict / Student Disputes'}
+                      <option value="Physical Bullying & Fighting">
+                        {isTl ? '👊 Physical Bullying, Away, o Pananakit' : '👊 Physical Bullying, Fighting, or Assault'}
                       </option>
-                      <option value="Academic & Attendance Stress">
-                        {isTl ? 'Academic Stress / Madalas na Absent' : 'Academic & Attendance Stress'}
+                      <option value="Weapons & Dangerous Contraband">
+                        {isTl ? '⚠️ Matatalim na Bagay o Delikadong Gamit' : '⚠️ Weapons & Dangerous Contraband'}
                       </option>
-                      <option value="Personal Welfare & Emotional Support">
-                        {isTl ? 'Personal / Family Welfare Support' : 'Personal Welfare & Emotional Support'}
+                      <option value="Extortion & Coercion">
+                        {isTl ? '💸 Panghihingi ng Pera (Extortion) o Pamimilit' : '💸 Extortion, Coercion, or Threat'}
                       </option>
-                      <option value="Other Student Discipline Concern">
-                        {isTl ? 'Iba Pang Concern sa Disiplina' : 'Other Student Discipline Concern'}
+                      <option value="Cyberbullying & Online Harassment">
+                        {isTl ? '📱 Cyberbullying, Paninirang-Puri sa Social Media' : '📱 Cyberbullying & Online Harassment'}
+                      </option>
+                      <option value="Vandalism & Campus Property Damage">
+                        {isTl ? '🔨 Pagsira sa Gamit ng Paaralan (Vandalism)' : '🔨 Vandalism & Property Damage'}
+                      </option>
+                      <option value="Other Disciplinary Infraction">
+                        {isTl ? '📋 Iba Pang Paglabag sa School Discipline Handbook' : '📋 Other Disciplinary Handbook Infraction'}
                       </option>
                     </select>
                   </div>
@@ -1067,14 +1095,14 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 >
                   <div className="p-4 sm:p-5 rounded-2xl register-section-card space-y-4">
                     <label className="text-xs font-extrabold register-section-title uppercase tracking-wider block">
-                      {isTl ? 'Kilala mo ba ang Nambully o Taong Sangkot?' : 'Do you know the Bully / Person Involved?'} *
+                      {isTl ? 'Kilala mo ba ang Inirereklamong Estudyante (Respondent)?' : 'Do you know the Reported Student (Respondent)?'} *
                     </label>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                       {[
-                        { id: 'yes', labelTl: 'Oo, Kilala ko ang Nambully', labelEn: 'Yes, I know them' },
-                        { id: 'no', labelTl: 'Hindi ko kilala', labelEn: 'No, I do not know them' },
-                        { id: 'unsure', labelTl: 'May kutob / Hindi sigurado', labelEn: 'Unsure / May suspect' },
+                        { id: 'yes', labelTl: 'Oo, Kilala ko ang Inirereklamo', labelEn: 'Yes, I know the student' },
+                        { id: 'no', labelTl: 'Hindi ko kilala (Unknown)', labelEn: 'I do not know (Unknown)' },
+                        { id: 'unsure', labelTl: 'May kutob / Hindi sigurado sa pangalan', labelEn: 'Unsure of full name / Suspected' },
                       ].map((opt) => (
                         <button
                           key={opt.id}
@@ -1094,16 +1122,37 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                       ))}
                     </div>
 
+                                        {knowsSuspect !== 'yes' && (
+                      <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-400/30 space-y-2">
+                        <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-bold text-xs">
+                          <span>🔍</span>
+                          <span>{isTl ? 'Mga Palatandaan (Physical Identifiers / Hangout Spot)' : 'Physical Identifiers & Description'}</span>
+                        </div>
+                        <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
+                          {isTl
+                            ? 'Kahit hindi mo alam ang pangalan, ilagay ang anumang palatandaan (suot, kulay ng bag, estimated grade, o kung saan karaniwang tumatambay) upang matulungan ang Guidance.'
+                            : 'Even without a name, describe their appearance, uniform, estimated grade/strand, or hangout area to aid Guidance.'}
+                        </p>
+                        <input
+                          type="text"
+                          placeholder={isTl ? 'hal. Matangkad, laging nasa 3rd floor hallway tuwing break, naka-black bag' : 'e.g. Tall, hangs out at 3rd floor hallway during recess, black backpack'}
+                          value={suspectDetails}
+                          onChange={(e) => setSuspectDetails(e.target.value)}
+                          className="w-full px-3.5 py-2 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
+                        />
+                      </div>
+                    )}
+
                     {knowsSuspect === 'yes' && (
                       <div className="space-y-3 pt-3 border-t border-slate-200 dark:border-white/10">
                         <div className="space-y-1">
                           <label className="text-xs font-bold register-label">
-                            {isTl ? 'Pangalan ng Nambully / Suspect' : 'Name of Bully / Suspect'} *
+                            {isTl ? 'Pangalan ng Inirereklamo (Respondent)' : 'Name of Reported Student (Respondent)'} *
                           </label>
                           <input
                             type="text"
                             required={knowsSuspect === 'yes'}
-                            placeholder={isTl ? 'Pangalan o alyas ng nambully' : 'Full name or alias of the suspect'}
+                            placeholder={isTl ? 'hal. Juan Dela Cruz (o alyas / palayaw)' : 'e.g. Juan Dela Cruz (or nickname / alias)'}
                             value={suspectName}
                             onChange={(e) => setSuspectName(e.target.value)}
                             className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
@@ -1111,11 +1160,11 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                         </div>
                         <div className="space-y-1">
                           <label className="text-xs font-bold register-label">
-                            {isTl ? 'Section o Pagkakakilanlan (Opsyonal)' : 'Grade, Section, or Physical Description (Optional)'}
+                            {isTl ? 'Baitang, Strand, o Palatandaan (Optional)' : 'Grade, Strand, or Physical Identifiers (Optional)'}
                           </label>
                           <input
                             type="text"
-                            placeholder={isTl ? 'hal. Kaklase sa ICT, o nakatambay sa hallway' : 'e.g. Classmate, section, or clothes worn'}
+                            placeholder={isTl ? 'hal. Grade 11 ICT-2, matangkad, laging nakasuot ng jacket na itim' : 'e.g. Grade 11 ICT-2, tall, wears black hoodie'}
                             value={suspectDetails}
                             onChange={(e) => setSuspectDetails(e.target.value)}
                             className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
@@ -1144,7 +1193,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                       onClick={() => {
                         if (knowsSuspect === 'yes' && !suspectName.trim()) {
                           soundFX.playError();
-                          setSubmitError(isTl ? 'Pakilagay ang pangalan ng suspect o nambully.' : 'Please enter the bully or suspect name.');
+                          setSubmitError(isTl ? 'Pakilagay ang pangalan ng inirereklamong estudyante.' : 'Please enter the name of the reported student.');
                           return;
                         }
                         setSubmitError(null);
@@ -1196,7 +1245,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                       </label>
                       <input
                         type="text"
-                        placeholder={isTl ? 'hal. Kaninang 10:00 AM recess' : 'e.g. Today during 10:00 AM recess'}
+                        placeholder={isTl ? 'hal. Kaninang 10:15 AM recess (o ilagay N/A kung di matandaan)' : 'e.g. Today at 10:15 AM recess (or N/A)'}
                         value={happenedWhen}
                         onChange={(e) => setHappenedWhen(e.target.value)}
                         className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
@@ -1209,7 +1258,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                       </label>
                       <input
                         type="text"
-                        placeholder={isTl ? 'hal. Sa tapat ng Computer Lab 2' : 'e.g. Near Computer Lab 2'}
+                        placeholder={isTl ? 'hal. CR ng 3rd floor malapit sa Lab 2 (o ilagay N/A)' : 'e.g. 3rd floor CR near Lab 2 (or N/A)'}
                         value={happenedWhere}
                         onChange={(e) => setHappenedWhere(e.target.value)}
                         className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
@@ -1222,7 +1271,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                       </label>
                       <input
                         type="text"
-                        placeholder={isTl ? 'hal. Mga kaklaseng nakakita' : 'e.g. Classmates who saw the event'}
+                        placeholder={isTl ? 'hal. 2 kaklase sa ICT-1 / Guwardya (o ilagay N/A kung walang saksi)' : 'e.g. 2 ICT-1 classmates / Security guard (or N/A)'}
                         value={witnesses}
                         onChange={(e) => setWitnesses(e.target.value)}
                         className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
