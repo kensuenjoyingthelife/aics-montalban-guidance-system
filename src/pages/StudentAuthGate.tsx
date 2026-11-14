@@ -204,6 +204,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   const [regContactNumber, setRegContactNumber] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regStudentNumber, setRegStudentNumber] = useState('');
+  const [regGradeLevel, setRegGradeLevel] = useState('11');
+  const [regSection, setRegSection] = useState('ICT-1');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [showRegPassword, setShowRegPassword] = useState(false);
@@ -461,6 +463,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         email: regEmail,
         studentNumber: regStudentNumber,
         password: regPassword,
+        gradeSection: `Grade ${regGradeLevel} · ${regSection}`,
         studentIdFile,
       });
 
@@ -1157,7 +1160,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase">
                     {isTl ? '2. Detalye ng Pakikipag-ugnayan at Opisyal na Student Number' : '2. Contact Details & Official Student Number'}
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-bold register-label">{isTl ? 'Contact No.' : 'Contact No.'}</label>
@@ -1202,11 +1205,44 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       <input
                         type="text"
                         required
-                        placeholder="2025-11098"
+                        placeholder="260050"
                         value={regStudentNumber}
                         onChange={(e) => setRegStudentNumber(e.target.value.toUpperCase().replace(/[^0-9-]/g, ""))}
                         className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-mono font-bold focus:outline-none"
                       />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold register-label">
+                        {isTl ? 'Baitang (Grade Level)' : 'Grade Level'}
+                      </label>
+                      <select
+                        value={regGradeLevel}
+                        onChange={(e) => setRegGradeLevel(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-bold focus:outline-none bg-slate-900 text-white"
+                      >
+                        <option value="11" className="bg-slate-900 text-white">Grade 11</option>
+                        <option value="12" className="bg-slate-900 text-white">Grade 12</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="text-sm font-bold register-label">
+                        {isTl ? 'Seksyon / Strand (Section)' : 'Section / Strand'}
+                      </label>
+                      <select
+                        value={regSection}
+                        onChange={(e) => setRegSection(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-bold focus:outline-none bg-slate-900 text-white"
+                      >
+                        <option value="ICT-1" className="bg-slate-900 text-white">ICT-1</option>
+                        <option value="ICT-2" className="bg-slate-900 text-white">ICT-2</option>
+                        <option value="STEM-1" className="bg-slate-900 text-white">STEM-1</option>
+                        <option value="STEM-2" className="bg-slate-900 text-white">STEM-2</option>
+                        <option value="ABM-1" className="bg-slate-900 text-white">ABM-1</option>
+                        <option value="HUMSS-1" className="bg-slate-900 text-white">HUMSS-1</option>
+                        <option value="GAS-1" className="bg-slate-900 text-white">GAS-1</option>
+                      </select>
                     </div>
                   </div>
                 </div>

@@ -21,6 +21,7 @@ export interface RegisterStudentParams {
   email: string;
   studentNumber: string;
   password: string;
+  gradeSection?: string;
   studentIdFile?: File | null;
   personalPhotoFile?: File | null;
   nationalIdFile?: File | null;
@@ -199,7 +200,7 @@ export async function registerStudentPortalAccount(params: RegisterStudentParams
         fullName: fullName,
         email: cleanEmail,
         contactNumber: cleanPhone,
-        gradeSection: master.gradeSection || 'SHS Student',
+        gradeSection: master.gradeSection || params.gradeSection || 'SHS Student',
         studentIdImageUrl: studentIdUrl,
         nationalIdImageUrl: nationalIdUrl,
       },
