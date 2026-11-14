@@ -566,7 +566,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
             <div>
               <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Mga conference' : 'Conferences'}</h2>
               <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
-                {isTl ? 'Lunes–Biyernes, 8:00 AM – 4:00 PM, 45 minuto bawat isa. Walang dobleng schedule.' : 'Mon–Fri, 8:00 AM – 4:00 PM, 45 minutes each. No double booking.'}
+                {isTl ? 'Lunes–Huwebes, 8:00 AM – 5:00 PM, 45 minuto bawat isa. Walang dobleng schedule.' : 'Mon–Thu, 8:00 AM – 5:00 PM, 45 minutes each. No double booking.'}
               </p>
             </div>
             <div className="inline-flex p-1 rounded-lg saas-card-subtle gap-1">
