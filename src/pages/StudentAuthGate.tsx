@@ -143,7 +143,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
   // Cloudflare Turnstile Token State
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const CLOUDFLARE_SITE_KEY = '0x4AAAAAAF_QjZNhxaPTV-5U';
+  const CLOUDFLARE_SITE_KEY = '0x4AAAAAAGAqyhAW68d155yA';
 
   // PWA & Mobile App Install Prompt State
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
