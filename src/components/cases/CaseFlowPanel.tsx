@@ -60,6 +60,19 @@ export const CaseFlowPanel: React.FC<{
   onOpenStation?: () => void;
 }> = ({ c, isTl, busy, suggestedSanction, onAction, onOpenStation }) => {
   const { done, next } = useMemo(() => flowState(c), [c]);
+
+  // Determine previous completed step for step-back/undo functionality
+  const previousStep = useMemo(() => {
+    const closed = c.status === 'Resolved';
+    if (closed) return 'Follow-Up' as CaseStep;
+    if (next === 'Closed') return 'Follow-Up' as CaseStep;
+    if (next === 'Follow-Up') return 'Decision' as CaseStep;
+    if (next === 'Decision') return (c.parentNotifiedAt ? 'Parent Notified' : 'Explanation') as CaseStep;
+    if (next === 'Parent Notified') return 'Explanation' as CaseStep;
+    if (next === 'Explanation') return 'Student Called' as CaseStep;
+    if (next === 'Student Called') return 'Reported' as CaseStep;
+    return null;
+  }, [next, c.status, c.parentNotifiedAt]);
   const [text, setText] = useState(c.explanation ?? '');
   const [how, setHow] = useState('');
   const [decision, setDecision] = useState(c.decision ?? '');
@@ -118,48 +131,106 @@ export const CaseFlowPanel: React.FC<{
 
       {/* the one next step */}
       {next && (
-        <div className="rounded-xl bg-[#F4F7FC] dark:bg-[#0B1527] border border-[#D3DDEE] dark:border-[#253B66] p-3 space-y-2" data-next-step={next}>
-          <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Susunod na gagawin' : 'Next step'}</p>
+        <div className="rounded-xl bg-white dark:bg-[#0B1527] border border-[#CBD5E1] dark:border-[#1E2E4E] p-4 space-y-3 shadow-xs" data-next-step={next}>
+          <div className="flex items-center justify-between border-b border-[#F1F5F9] dark:border-[#1E2E4E] pb-2">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
+              {isTl ? 'Kasalukuyang Hakbang (Current Action)' : 'Current Action Required'}
+            </span>
+            <span className="px-2 py-0.5 rounded-[6px] text-[10px] font-extrabold bg-[#F1F5F9] dark:bg-[#13203B] text-[#475569] dark:text-[#94A3B8] border border-[#CBD5E1] dark:border-[#334155]">
+              STEP {CASE_STEPS.indexOf(next) + 1} OF 7
+            </span>
+          </div>
+
           {next === 'Student Called' && (
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm text-[#0B1F4D] dark:text-white">{isTl ? 'Tawagin ang estudyante sa Guidance Office.' : 'Call the student to the Guidance Office.'}</p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm font-semibold text-[#0F172A] dark:text-white">
+                {isTl ? 'I-record ang pagdating ng estudyante sa Guidance Office.' : 'Record that the student was summoned to the Guidance Office.'}
+              </p>
               <button type="button" data-flow="call" disabled={busy} onClick={() => onAction({ kind: 'call' })} className={primary}>
-                {isTl ? '✓ Natawag na ang estudyante' : '✓ Student was called'}
+                {isTl ? 'Natawag na sa Opisina' : 'Mark as Called'}
               </button>
             </div>
           )}
+
           {next === 'Explanation' && (
-            <div className="space-y-2">
-              <p className="text-sm text-[#0B1F4D] dark:text-white">{isTl ? 'Isulat ang paliwanag ng estudyante (sa sarili niyang salita).' : 'Write the student’s explanation (in their own words).'}</p>
-              <textarea data-flow-text value={text} onChange={(e) => setText(e.target.value.slice(0, 2000))} rows={3} className={`${input} leading-relaxed`} placeholder={isTl ? 'hal. Na-late po ako dahil walang masakyan…' : 'e.g. I was late because there was no ride…'} />
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">{text.trim().length < 10 ? (isTl ? 'Kahit 10 letra.' : 'At least 10 letters.') : `${text.trim().length}/2000`}</span>
-                <span className="flex items-center gap-2">
-                {onOpenStation && (
-                  <button type="button" data-flow="station" disabled={busy} onClick={onOpenStation} title={isTl ? 'Bubukas ang naka-lock na screen kung saan ang estudyante mismo ang magta-type. PIN ng staff ang kailangan para makalabas.' : 'Opens a locked screen where the student types it. The staff PIN is needed to leave it.'} className={`${btn} border border-[#C9D6EC] dark:border-[#253B66] text-[#1E469B] dark:text-[#7CB8F7]`}>
-                    🖥 {isTl ? 'Ipa-type sa estudyante' : 'Let the student type it'}
-                  </button>
-                )}
-                <button type="button" data-flow="explanation" disabled={busy || text.trim().length < 10} onClick={() => onAction({ kind: 'explanation', text: text.trim() })} className={primary}>
-                  {isTl ? 'I-save ang paliwanag' : 'Save the explanation'}
-                </button>
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs font-bold text-[#0F172A] dark:text-white">
+                  {isTl ? 'Salaysay ng Pagpapaliwanag ng Naisumbong (Student’s Explanation):' : 'Official Written Explanation of the Student:'}
+                </p>
+                <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] mt-0.5">
+                  {isTl ? 'I-type ang sinabi ng estudyante, o ipa-type nang direkta sa kanya gamit ang Statement Station.' : 'Type what the student explained, or let them type it personally via Statement Station.'}
+                </p>
+              </div>
+
+              <textarea 
+                data-flow-text 
+                value={text} 
+                onChange={(e) => setText(e.target.value.slice(0, 2000))} 
+                rows={3} 
+                className={`${input} rounded-lg leading-relaxed font-normal text-xs`} 
+                placeholder={isTl ? 'hal. Na-late po ako dahil nag-aberya ang sinakyang jeep sa San Jose…' : 'e.g. I was late due to heavy traffic along San Jose…'} 
+              />
+
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-[#F1F5F9] dark:border-[#1E2E4E]">
+                <span className="text-[11px] font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                  {text.trim().length < 10 
+                    ? (isTl ? 'Kailangan ng kahit 10 letra.' : 'At least 10 characters required.') 
+                    : `${text.trim().length} / 2000 letters`}
                 </span>
+                <div className="flex items-center gap-2">
+                  {onOpenStation && (
+                    <button 
+                      type="button" 
+                      data-flow="station" 
+                      disabled={busy} 
+                      onClick={onOpenStation} 
+                      title={isTl ? 'Bubukas ang naka-lock na screen kung saan ang estudyante mismo ang magta-type.' : 'Opens a locked screen for student direct typing.'} 
+                      className={`${btn} rounded-[6px] border border-[#CBD5E1] dark:border-[#253B66] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#F8FAFC]`}
+                    >
+                      {isTl ? 'Ipa-type sa Estudyante' : 'Let Student Type'}
+                    </button>
+                  )}
+                  <button 
+                    type="button" 
+                    data-flow="explanation" 
+                    disabled={busy || text.trim().length < 10} 
+                    onClick={() => onAction({ kind: 'explanation', text: text.trim() })} 
+                    className={`${primary} rounded-[6px]`}
+                  >
+                    {isTl ? 'I-save ang Paliwanag' : 'Save Explanation'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
+
           {next === 'Parent Notified' && (
-            <div className="space-y-2">
-              <p className="text-sm text-[#0B1F4D] dark:text-white">{isTl ? 'Paano nalaman ng magulang ang tungkol sa kaso?' : 'How did the parent learn about the case?'}</p>
-              <div className="flex flex-wrap gap-1.5">
+            <div className="space-y-3">
+              <p className="text-xs font-bold text-[#0F172A] dark:text-white">
+                {isTl ? 'Paano naipagbigay-alam sa Magulang ang Kaso?' : 'How was the Parent officially informed?'}
+              </p>
+              <div className="flex flex-wrap gap-2">
                 {HOW.map(([en, tl]) => (
-                  <button key={en} type="button" data-how={en} aria-pressed={how === en} onClick={() => setHow(en)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${how === en ? 'bg-[#1E469B] text-white border-[#1E469B]' : 'border-[#D3DDEE] dark:border-[#253B66] text-[#4A608A] dark:text-[#94A8D0]'}`}>
+                  <button 
+                    key={en} 
+                    type="button" 
+                    data-how={en} 
+                    aria-pressed={how === en} 
+                    onClick={() => setHow(en)} 
+                    className={`px-3 py-1.5 rounded-[6px] text-xs font-bold border transition-colors ${
+                      how === en 
+                        ? 'bg-[#1E469B] text-white border-[#1E469B]' 
+                        : 'border-[#CBD5E1] dark:border-[#253B66] bg-[#F8FAFC] dark:bg-[#0B1527] text-[#475569] dark:text-[#94A3B8] hover:border-[#1E469B]'
+                    }`}
+                  >
                     {isTl ? tl : en}
                   </button>
                 ))}
               </div>
-              <div className="flex justify-end">
-                <button type="button" data-flow="notified" disabled={busy || !how} onClick={() => onAction({ kind: 'notified', how })} className={primary}>
-                  {isTl ? '✓ Alam na ng magulang' : '✓ Parent notified'}
+              <div className="flex justify-end pt-2 border-t border-[#F1F5F9] dark:border-[#1E2E4E]">
+                <button type="button" data-flow="notified" disabled={busy || !how} onClick={() => onAction({ kind: 'notified', how })} className={`${primary} rounded-[6px]`}>
+                  {isTl ? '✓ Kumpirmadong Alam ng Magulang' : '✓ Confirm Parent Notified'}
                 </button>
               </div>
             </div>

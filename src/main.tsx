@@ -18,6 +18,20 @@ import { applyTextSize } from './services/textSize';
 // apply the saved text size before the first paint (no jump)
 applyTextSize();
 
+// Register Service Worker for PWA Offline & Background Notifications
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(
+      (reg) => {
+        console.log('AICS SafeZone PWA Service Worker registered:', reg.scope);
+      },
+      (err) => {
+        console.warn('PWA Service Worker registration failed:', err);
+      }
+    );
+  });
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />

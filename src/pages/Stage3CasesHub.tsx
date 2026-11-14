@@ -5,6 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { PhoneInput, checkPhMobile, formatPhMobile } from '../components/ui/PhoneInput';
 import { SortControl, SortKey, loadSort, saveSort, timeOf, addedLabel } from '../components/ui/SortControl';
 import { useAppConfig, activeOffenses } from '../services/appConfig';
+import { DuotoneIcon } from '../components/ui/icons';
 import { Legend } from '../components/ui/Charts';
 import { StudentForm, StudentFormValue } from '../components/students/StudentForm';
 import { CaseFlowPanel, FlowAction, flowState } from '../components/cases/CaseFlowPanel';
@@ -581,12 +582,12 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       const r = await insertStudentInDb(stu);
       setStudentSaving(false);
       if (r === 'duplicate')
-        return onTriggerToast(isTl ? `⚠️ May estudyante na sa ${v.studentNumber}. Hanapin siya at i-edit.` : `⚠️ ${v.studentNumber} already exists. Find them and edit instead.`);
-      if (r !== 'ok') return onTriggerToast(isTl ? '⚠️ Hindi na-save. I-check ang internet, tapos subukan ulit.' : '⚠️ Not saved. Check the internet, then try again.');
+        return onTriggerToast(isTl ? ` May estudyante na sa ${v.studentNumber}. Hanapin siya at i-edit.` : ` ${v.studentNumber} already exists. Find them and edit instead.`);
+      if (r !== 'ok') return onTriggerToast(isTl ? ' Hindi na-save. I-check ang internet, tapos subukan ulit.' : ' Not saved. Check the internet, then try again.');
       setStudents((prev) => [stu, ...prev]);
       setStudentFormFor(null);
       soundFX.playSuccessCheck();
-      onTriggerToast(isTl ? `✓ Naidagdag si ${v.fullName}.` : `✓ ${v.fullName} was added.`, undefined, {
+      onTriggerToast(isTl ? ` Naidagdag si ${v.fullName}.` : ` ${v.fullName} was added.`, undefined, {
         label: isTl ? 'Magtala ng kaso para sa kanya' : 'Log a case for them',
         run: () => {
           setSelectedStudentNumbers([stu.studentNumber]);
@@ -615,13 +616,13 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     setStudentSaving(true);
     const saved = await updateStudentDetailsInDb(existing.studentNumber, patch);
     setStudentSaving(false);
-    if (!saved) return onTriggerToast(isTl ? '⚠️ Hindi na-save. I-check ang internet, tapos subukan ulit.' : '⚠️ Not saved. Check the internet, then try again.');
+    if (!saved) return onTriggerToast(isTl ? ' Hindi na-save. I-check ang internet, tapos subukan ulit.' : ' Not saved. Check the internet, then try again.');
     const updated: StudentRecord = { ...existing, fullName: v.fullName, initials: patch.initials, gradeSection, sectionCode: v.section, parentName: v.parentName, parentRelationship: v.parentRelationship, parentPhone: v.parentPhone, parentEmail: v.parentEmail, extra: v.extra };
     setStudents((prev) => prev.map((x) => (x.studentNumber === existing.studentNumber ? updated : x)));
     if (selectedStudentProfile?.studentNumber === existing.studentNumber) setSelectedStudentProfile(updated);
     setStudentFormFor(null);
     soundFX.playSuccessCheck();
-    onTriggerToast(isTl ? `✓ Na-save ang pagbabago kay ${v.fullName}.` : `✓ ${v.fullName} updated.`, async () => {
+    onTriggerToast(isTl ? ` Na-save ang pagbabago kay ${v.fullName}.` : ` ${v.fullName} updated.`, async () => {
       const back = await updateStudentDetailsInDb(existing.studentNumber, { full_name: existing.fullName, initials: existing.initials, grade_section: existing.gradeSection, section_code: existing.sectionCode, parent_name: existing.parentName, parent_relationship: existing.parentRelationship, parent_phone: existing.parentPhone, parent_email: existing.parentEmail, extra: existing.extra ?? {} });
       if (back) setStudents((prev) => prev.map((x) => (x.studentNumber === existing.studentNumber ? existing : x)));
     });
@@ -640,13 +641,13 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     });
     if (!ok) return;
     if (!(await setStudentEnrollmentInDb(stu.studentNumber, enrolled, reason)))
-      return onTriggerToast(isTl ? '⚠️ Hindi na-save. I-check ang internet, tapos subukan ulit.' : '⚠️ Not saved. Check the internet, then try again.');
+      return onTriggerToast(isTl ? ' Hindi na-save. I-check ang internet, tapos subukan ulit.' : ' Not saved. Check the internet, then try again.');
     const next = { ...stu, enrolled, leftReason: enrolled ? '' : reason };
     setStudents((prev) => prev.map((x) => (x.studentNumber === stu.studentNumber ? next : x)));
     setSelectedStudentProfile(null);
     setLeaveFor(null);
     onTriggerToast(
-      enrolled ? (isTl ? `✓ Naka-enroll ulit si ${stu.fullName}.` : `✓ ${stu.fullName} is enrolled again.`) : isTl ? `Hindi na naka-enroll si ${stu.fullName} (${reason}).` : `${stu.fullName} is marked not enrolled (${reason}).`,
+      enrolled ? (isTl ? ` Naka-enroll ulit si ${stu.fullName}.` : ` ${stu.fullName} is enrolled again.`) : isTl ? `Hindi na naka-enroll si ${stu.fullName} (${reason}).` : `${stu.fullName} is marked not enrolled (${reason}).`,
       async () => {
         if (await setStudentEnrollmentInDb(stu.studentNumber, stu.enrolled !== false, stu.leftReason || ''))
           setStudents((prev) => prev.map((x) => (x.studentNumber === stu.studentNumber ? stu : x)));
@@ -671,7 +672,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     });
     if (!ok) return;
     const r = await moveUpSchoolYearInDb();
-    if (!r) return onTriggerToast(isTl ? '⚠️ Hindi natuloy. I-check ang internet, tapos subukan ulit.' : '⚠️ Not done. Check the internet, then try again.');
+    if (!r) return onTriggerToast(isTl ? ' Hindi natuloy. I-check ang internet, tapos subukan ulit.' : ' Not done. Check the internet, then try again.');
     const prev = students;
     setStudents((list) =>
       list.map((x) =>
@@ -685,7 +686,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       )
     );
     soundFX.playSuccessCheck();
-    onTriggerToast(isTl ? `✓ ${r.promoted} ang naging Grade 12 · ${r.graduated} ang graduated.` : `✓ ${r.promoted} moved to Grade 12 · ${r.graduated} graduated.`, async () => {
+    onTriggerToast(isTl ? ` ${r.promoted} ang naging Grade 12 · ${r.graduated} ang graduated.` : ` ${r.promoted} moved to Grade 12 · ${r.graduated} graduated.`, async () => {
       if (await undoSchoolYearMoveInDb(r.id)) setStudents(prev);
     });
   };
@@ -766,7 +767,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
         issues.push(isTl ? 'Walang Pangalan ng Magulang' : 'Missing Parent Name');
       }
       if (digitsOnlyPhone.length !== 11 || !digitsOnlyPhone.startsWith('09')) {
-        issues.push(`📱 ${checkPhMobile(row.parentPhone, isTl).message}`);
+        issues.push(` ${checkPhMobile(row.parentPhone, isTl).message}`);
       }
       if (!/^Grade 1[12]\b/.test(row.gradeSection)) {
         issues.push(isTl ? 'Walang Grade Level (11 o 12)' : 'Missing Grade Level (11 or 12)');
@@ -777,7 +778,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       const email = row.parentEmail.trim();
       const ec = checkEmail(email, isTl);
       if (!ec.ok) {
-        issues.push(`✉ ${email}: ${ec.message} ${isTl ? '(itama o burahin)' : '(fix or clear it)'}`);
+        issues.push(` ${email}: ${ec.message} ${isTl ? '(itama o burahin)' : '(fix or clear it)'}`);
       }
       return issues;
     }
@@ -816,8 +817,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       soundFX.playError();
       onTriggerToast(
         isTl
-          ? '⚠️ Pumili muna ng kahit isang estudyante.'
-          : '⚠️ Please select at least one student from the list.'
+          ? ' Pumili muna ng kahit isang estudyante.'
+          : ' Please select at least one student from the list.'
       );
       return;
     }
@@ -832,7 +833,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
         {
           label: isGroupSave ? `${stu.fullName} — ${isTl ? pol.titleTl : pol.titleEn}` : stu.fullName,
           before: `${stu.minorOffenseCount} minor · ${stu.majorOffenseCount} ${isTl ? 'malubha' : 'serious'}`,
-          after: `${nextMinor} minor · ${nextMajor} ${isTl ? 'malubha' : 'serious'}${escalated ? ` ⚠ ${outcomeFor(stu, pol).word}` : ''}`,
+          after: `${nextMinor} minor · ${nextMajor} ${isTl ? 'malubha' : 'serious'}${escalated ? `  ${outcomeFor(stu, pol).word}` : ''}`,
         },
       ];
     });
@@ -965,10 +966,10 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       setSelectedStudentNumbers(failedStudents.map((x) => x.studentNumber));
       onTriggerToast(
         isTl
-          ? `⚠️ Hindi na-save ang case ni ${failedStudents.map((x) => x.fullName).join(', ')}. I-check ang internet, tapos pindutin ulit ang "I-save". Nandito pa ang form.${
+          ? ` Hindi na-save ang case ni ${failedStudents.map((x) => x.fullName).join(', ')}. I-check ang internet, tapos pindutin ulit ang "I-save". Nandito pa ang form.${
               createdCases.length ? ` (Na-save na ang ${createdCases.length}.)` : ''
             }`
-          : `⚠️ The case for ${failedStudents.map((x) => x.fullName).join(', ')} was not saved. Check the internet, then press "Save case" again. The form is still here.${
+          : ` The case for ${failedStudents.map((x) => x.fullName).join(', ')} was not saved. Check the internet, then press "Save case" again. The form is still here.${
               createdCases.length ? ` (${createdCases.length} other case(s) were saved.)` : ''
             }`
       );
@@ -978,10 +979,10 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     const firstStu = selectedStudentsList[0];
     onTriggerToast(
       isTl
-        ? `✓ Naitala na ang Case Report (${createdCases
+        ? ` Naitala na ang Case Report (${createdCases
             .map((c) => c.caseCode)
             .join(', ')}) para kay ${createdCases.map((c) => c.studentName).join(', ')}!`
-        : `✓ Case Report (${createdCases
+        : ` Case Report (${createdCases
             .map((c) => c.caseCode)
             .join(', ')}) saved for ${createdCases.map((c) => c.studentName).join(', ')}!`,
       undefined, // no undo for a saved case
@@ -1160,8 +1161,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     if (!stu) {
       onTriggerToast(
         isTl
-          ? '⚠️ Wala sa masterlist ang estudyanteng ito. I-import muna ang masterlist (Mga Kaso › I-import ang masterlist) para makuha ang number ng magulang.'
-          : '⚠️ This student is not in the masterlist. Import the masterlist first (Cases › Import masterlist) to get the parent number.'
+          ? ' Wala sa masterlist ang estudyanteng ito. I-import muna ang masterlist (Mga Kaso › I-import ang masterlist) para makuha ang number ng magulang.'
+          : ' This student is not in the masterlist. Import the masterlist first (Cases › Import masterlist) to get the parent number.'
       );
       return;
     }
@@ -1219,8 +1220,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       setCases((prev) => prev.map((c) => (c.caseCode === caseItem.caseCode ? { ...c, status: caseItem.status, closedAt: caseItem.closedAt ?? null } : c)));
       onTriggerToast(
         isTl
-          ? '⚠️ Hindi nabago ang status. I-check ang internet, tapos subukan ulit.'
-          : '⚠️ The status was not changed. Check the internet, then try again.'
+          ? ' Hindi nabago ang status. I-check ang internet, tapos subukan ulit.'
+          : ' The status was not changed. Check the internet, then try again.'
       );
       return;
     }
@@ -1234,8 +1235,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     const prevStatus = caseItem.status;
     onTriggerToast(
       isTl
-        ? `✓ ${caseItem.studentName}: ${statusWord(nextStatus)} na ang kaso.`
-        : `✓ ${caseItem.studentName}: case is now "${statusWord(nextStatus)}".`,
+        ? ` ${caseItem.studentName}: ${statusWord(nextStatus)} na ang kaso.`
+        : ` ${caseItem.studentName}: case is now "${statusWord(nextStatus)}".`,
       () => {
         setCases((prev) =>
           prev.map((c) => (c.caseCode === caseItem.caseCode ? { ...c, status: prevStatus, closedAt: caseItem.closedAt ?? null } : c))
@@ -1297,7 +1298,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     stationBefore.current = null;
     soundFX.playSuccessCheck();
     if (!before) return onTriggerToast(isTl ? 'Isinara ang Statement Station. Walang na-save.' : 'Statement Station closed. Nothing was saved.');
-    onTriggerToast(isTl ? '✓ Na-save ang salaysay ng estudyante. Susunod: ipaalam sa magulang.' : '✓ The student’s statement is saved. Next: let the parent know.', async () => {
+    onTriggerToast(isTl ? ' Na-save ang salaysay ng estudyante. Susunod: ipaalam sa magulang.' : ' The student’s statement is saved. Next: let the parent know.', async () => {
       if (await updateCaseFlowInDb(before.caseCode, { explanation: before.explanation || null, step: before.step ?? 'Reported' })) setCases((prev) => prev.map((x) => (x.caseCode === before.caseCode ? { ...x, explanation: before.explanation, step: before.step } : x)));
     });
   };
@@ -1311,29 +1312,29 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     if (a.kind === 'call') {
       db = { student_called_at: now, step: 'Student Called' };
       local = { studentCalledAt: now, step: 'Student Called' };
-      msg = isTl ? '✓ Naitala: natawag ang estudyante. Susunod: isulat ang paliwanag niya.' : '✓ Saved: student called. Next: write their explanation.';
+      msg = isTl ? ' Naitala: natawag ang estudyante. Susunod: isulat ang paliwanag niya.' : ' Saved: student called. Next: write their explanation.';
     } else if (a.kind === 'explanation') {
       db = { explanation: a.text, step: 'Explanation' };
       local = { explanation: a.text, step: 'Explanation' };
-      msg = isTl ? '✓ Na-save ang paliwanag. Susunod: ipaalam sa magulang.' : '✓ Explanation saved. Next: let the parent know.';
+      msg = isTl ? ' Na-save ang paliwanag. Susunod: ipaalam sa magulang.' : ' Explanation saved. Next: let the parent know.';
     } else if (a.kind === 'notified') {
       const activate = c.sanctionStatus === 'Pending parent notice';
       db = { parent_notified_at: now, parent_notified_how: a.how, step: c.decidedAt ? 'Decision' : 'Parent Notified', ...(activate ? { sanction_status: 'Active', status: 'Sanction In Progress' } : {}) };
       local = { parentNotifiedAt: now, parentNotifiedHow: a.how, step: c.decidedAt ? 'Decision' : 'Parent Notified', ...(activate ? { sanctionStatus: 'Active' as const, status: 'Sanction In Progress' as const } : {}) };
       msg = activate
-        ? isTl ? '✓ Alam na ng magulang — nagsimula na ang sanction.' : '✓ Parent notified — the sanction has started.'
-        : isTl ? '✓ Alam na ng magulang. Susunod: itala ang desisyon.' : '✓ Parent notified. Next: record the decision.';
+        ? isTl ? ' Alam na ng magulang — nagsimula na ang sanction.' : ' Parent notified — the sanction has started.'
+        : isTl ? ' Alam na ng magulang. Susunod: itala ang desisyon.' : ' Parent notified. Next: record the decision.';
     } else if (a.kind === 'decision') {
       const notified = !!c.parentNotifiedAt;
       db = { decision: a.decision, sanction: a.sanction, decided_at: now, step: notified ? 'Decision' : c.step || 'Explanation', sanction_status: notified ? 'Active' : 'Pending parent notice', ...(notified ? { status: 'Sanction In Progress' } : {}) };
       local = { decision: a.decision, sanction: a.sanction, decidedAt: now, step: (notified ? 'Decision' : c.step || 'Explanation') as DisciplineCaseRecord['step'], sanctionStatus: notified ? 'Active' : 'Pending parent notice', ...(notified ? { status: 'Sanction In Progress' as const } : {}) };
       msg = notified
-        ? isTl ? '✓ Na-save ang desisyon. Nagsimula na ang sanction.' : '✓ Decision saved. The sanction has started.'
-        : isTl ? '✓ Na-save ang desisyon. Maghihintay ang sanction hanggang malaman ng magulang.' : '✓ Decision saved. The sanction waits until the parent is notified.';
+        ? isTl ? ' Na-save ang desisyon. Nagsimula na ang sanction.' : ' Decision saved. The sanction has started.'
+        : isTl ? ' Na-save ang desisyon. Maghihintay ang sanction hanggang malaman ng magulang.' : ' Decision saved. The sanction waits until the parent is notified.';
     } else if (a.kind === 'followup') {
       db = { step: 'Follow-Up', status: 'Sanction In Progress' };
       local = { step: 'Follow-Up', status: 'Sanction In Progress' };
-      msg = isTl ? '✓ Nasa follow-up na. Isara ang kaso kapag tapos na ang sanction.' : '✓ In follow-up. Close the case when the sanction is done.';
+      msg = isTl ? ' Nasa follow-up na. Isara ang kaso kapag tapos na ang sanction.' : ' In follow-up. Close the case when the sanction is done.';
     } else {
       const ok = await confirmChange({
         title: isTl ? `Isara ang kaso ni ${c.studentName}?` : `Close ${c.studentName}'s case?`,
@@ -1347,12 +1348,12 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       if (!ok) return;
       db = { step: 'Closed', status: 'Resolved', ...(c.sanction ? { sanction_status: 'Done' } : {}) };
       local = { step: 'Closed', status: 'Resolved', closedAt: now, ...(c.sanction ? { sanctionStatus: 'Done' as const } : {}) };
-      msg = isTl ? `✓ Sarado na ang kaso ni ${c.studentName}.` : `✓ ${c.studentName}'s case is closed.`;
+      msg = isTl ? ` Sarado na ang kaso ni ${c.studentName}.` : ` ${c.studentName}'s case is closed.`;
     }
     setFlowBusy(true);
     const saved = await updateCaseFlowInDb(c.caseCode, db);
     setFlowBusy(false);
-    if (!saved) return onTriggerToast(isTl ? '⚠️ Hindi na-save. I-check ang internet, tapos subukan ulit.' : '⚠️ Not saved. Check the internet, then try again.');
+    if (!saved) return onTriggerToast(isTl ? ' Hindi na-save. I-check ang internet, tapos subukan ulit.' : ' Not saved. Check the internet, then try again.');
     setCases((prev) => prev.map((x) => (x.caseCode === c.caseCode ? { ...x, ...local } : x)));
     soundFX.playSuccessCheck();
     const stepWords: Record<FlowAction['kind'], [string, string]> = {
@@ -1423,8 +1424,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     if (!saved) {
       onTriggerToast(
         isTl
-          ? '⚠️ Hindi na-save. I-check ang internet, tapos pindutin ulit ang "I-save".'
-          : '⚠️ Not saved. Check the internet connection, then press "Save changes" again.'
+          ? ' Hindi na-save. I-check ang internet, tapos pindutin ulit ang "I-save".'
+          : ' Not saved. Check the internet connection, then press "Save changes" again.'
       );
       return;
     }
@@ -1438,7 +1439,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     });
     setCaseEditing(false);
     void loadCaseHistory(openCase.caseCode);
-    onTriggerToast(isTl ? '✓ Na-save ang pagbabago.' : '✓ Changes saved.');
+    onTriggerToast(isTl ? ' Na-save ang pagbabago.' : ' Changes saved.');
   };
 
   // ==========================================================================
@@ -1468,8 +1469,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     if (changes.length === 0) {
       onTriggerToast(
         isTl
-          ? `⚠️ Walang ma-auto-fix. ${stillFlagged} row ang kailangang ayusin nang mano-mano (hal. maling number, duplicate ID).`
-          : `⚠️ Nothing can be auto-fixed. ${stillFlagged} row(s) need a manual fix (e.g. wrong number, duplicate ID).`
+          ? ` Walang ma-auto-fix. ${stillFlagged} row ang kailangang ayusin nang mano-mano (hal. maling number, duplicate ID).`
+          : ` Nothing can be auto-fixed. ${stillFlagged} row(s) need a manual fix (e.g. wrong number, duplicate ID).`
       );
       return;
     }
@@ -1500,8 +1501,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     );
     onTriggerToast(
       isTl
-        ? `✓ Naayos ang format ng ${changes.length} mobile number.`
-        : `✓ Fixed the format of ${changes.length} mobile number(s).`
+        ? ` Naayos ang format ng ${changes.length} mobile number.`
+        : ` Fixed the format of ${changes.length} mobile number(s).`
     );
   };
 
@@ -1514,8 +1515,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       soundFX.playError();
       onTriggerToast(
         isTl
-          ? '⚠️ Ayusin muna ang mga naka-flag na row bago i-save sa Masterlist.'
-          : '⚠️ Please fix the flagged rows before saving to the Masterlist.'
+          ? ' Ayusin muna ang mga naka-flag na row bago i-save sa Masterlist.'
+          : ' Please fix the flagged rows before saving to the Masterlist.'
       );
       return;
     }
@@ -1619,19 +1620,19 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       soundFX.playError();
       onTriggerToast(
         isTl
-          ? `⚠️ Na-save ang ${result.saved}, pero ${result.failed} ang hindi na-save (internet o database). Nasa preview pa sila — subukan ulit.`
-          : `⚠️ Saved ${result.saved}, but ${result.failed} could not be saved (internet or database). They are still in the preview — try again.`
+          ? ` Na-save ang ${result.saved}, pero ${result.failed} ang hindi na-save (internet o database). Nasa preview pa sila — subukan ulit.`
+          : ` Saved ${result.saved}, but ${result.failed} could not be saved (internet or database). They are still in the preview — try again.`
       );
       return;
     }
     onTriggerToast(
       remaining.length > 0
         ? isTl
-          ? `✓ ${savedNew.length} bagong estudyante${savedUpd.size ? `, ${savedUpd.size} na-update` : ''}. ${remaining.length} row pa ang kailangang ayusin sa ibaba.`
-          : `✓ ${savedNew.length} new student(s)${savedUpd.size ? `, ${savedUpd.size} updated` : ''}. ${remaining.length} row(s) below still need fixing.`
+          ? ` ${savedNew.length} bagong estudyante${savedUpd.size ? `, ${savedUpd.size} na-update` : ''}. ${remaining.length} row pa ang kailangang ayusin sa ibaba.`
+          : ` ${savedNew.length} new student(s)${savedUpd.size ? `, ${savedUpd.size} updated` : ''}. ${remaining.length} row(s) below still need fixing.`
         : isTl
-        ? `✓ ${savedNew.length} bagong estudyante${savedUpd.size ? `, ${savedUpd.size} na-update` : ''}. Makikita na sila sa Mga estudyante.`
-        : `✓ ${savedNew.length} new student(s)${savedUpd.size ? `, ${savedUpd.size} updated` : ''}. You can find them under Students.`
+        ? ` ${savedNew.length} bagong estudyante${savedUpd.size ? `, ${savedUpd.size} na-update` : ''}. Makikita na sila sa Mga estudyante.`
+        : ` ${savedNew.length} new student(s)${savedUpd.size ? `, ${savedUpd.size} updated` : ''}. You can find them under Students.`
     );
     if (remaining.length === 0) setSubTab('students');
   };
@@ -1742,8 +1743,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     setImportAnalysis(null);
     onTriggerToast(
       isTl
-        ? `📥 Nabasa ang ${rows.length} estudyante mula sa ${importAnalysis.fileName}. I-check ang mga naka-flag bago i-save.`
-        : `📥 Read ${rows.length} students from ${importAnalysis.fileName}. Check flagged rows before saving.`
+        ? ` Nabasa ang ${rows.length} estudyante mula sa ${importAnalysis.fileName}. I-check ang mga naka-flag bago i-save.`
+        : ` Read ${rows.length} students from ${importAnalysis.fileName}. Check flagged rows before saving.`
     );
   };
 
@@ -1853,7 +1854,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
           >
             {prefill && (
               <div className="xl:col-span-12 rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-900 dark:text-amber-100" data-case-prefill={prefill.concernCode}>
-                📝 <b>{isTl ? `Galing sa report ${prefill.concernCode}.` : `From student report ${prefill.concernCode}.`}</b>{' '}
+                 <b>{isTl ? `Galing sa report ${prefill.concernCode}.` : `From student report ${prefill.concernCode}.`}</b>{' '}
                 {isTl
                   ? 'Nakapuno na ang lugar, mga saksi at kuwento. Piliin ang estudyanteng isinumbong'
                   : 'The place, witnesses and story are filled in. Pick the student who was reported'}
@@ -1864,7 +1865,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
             {draftPrompt && (
               <div className="xl:col-span-12 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-xs font-bold text-amber-900 dark:text-amber-200">
-                  📝{' '}
+                  {' '}
                   {isTl
                     ? `May hindi natapos na case kanina (${draftPrompt.students.length} estudyante). Itutuloy mo ba?`
                     : `You have an unfinished case from earlier (${draftPrompt.students.length} student${draftPrompt.students.length === 1 ? '' : 's'}). Continue it?`}
@@ -1973,7 +1974,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               : 'border-[#94A8D0] text-transparent'
                           }`}
                         >
-                          ✓
+                          
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs sm:text-sm font-extrabold text-[#0B1F4D] dark:text-white leading-snug">
@@ -2042,7 +2043,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 <div className="absolute inset-0 z-10 flex items-start justify-center pt-24">
                   <div className="px-4 py-3 rounded-xl bg-white dark:bg-[#0F1A30] border border-[#1E469B]/40 shadow-lg text-center max-w-xs">
                     <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
-                      👈 {isTl ? 'Pumili muna ng estudyante sa Step 1' : 'Pick a student in Step 1 first'}
+                       {isTl ? 'Pumili muna ng estudyante sa Step 1' : 'Pick a student in Step 1 first'}
                     </p>
                     <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0] mt-0.5">
                       {isTl ? 'Bubukas ang Step 2 kapag may napili na.' : 'Step 2 opens once a student is picked.'}
@@ -2063,7 +2064,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               ) && (
                 <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 space-y-2">
                   <div className="flex items-center gap-2 text-xs font-extrabold text-amber-900 dark:text-amber-300">
-                    <span>⚡</span>
+                    <span></span>
                     <span>
                       {isTl
                         ? 'Paalala: may dati nang offense'
@@ -2145,8 +2146,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       </p>
                       <p className="text-[11px] font-semibold text-amber-800 dark:text-amber-300">
                         {isTl
-                          ? '⚠ Isama lang ang may ginawang mali. Ang biktima o saksi ay ilagay sa "Saksi o patunay", hindi rito.'
-                          : '⚠ Only include students who did something wrong. Put a victim or witness in "Witness or proof", not here.'}
+                          ? ' Isama lang ang may ginawang mali. Ang biktima o saksi ay ilagay sa "Saksi o patunay", hindi rito.'
+                          : ' Only include students who did something wrong. Put a victim or witness in "Witness or proof", not here.'}
                       </p>
                     </div>
                     <div className="divide-y divide-[#E2E9F5] dark:divide-[#1E3158]">
@@ -2200,7 +2201,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               }
                               className="w-6 h-6 rounded-md text-xs font-bold text-[#4A608A] hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-950/60"
                             >
-                              ✕
+                              
                             </button>
                           </div>
                         );
@@ -2318,22 +2319,27 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               </div>
 
               {/* Incident Narrative / Notes */}
-              <div>
-                <label className="block text-xs font-bold text-[#0B1F4D] dark:text-white mb-1">
-                  {isTl
-                    ? 'Maikling kwento ng nangyari (optional)'
-                    : 'What happened, in a few words (optional)'}
-                </label>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-[#0B1F4D] dark:text-white">
+                    {isTl
+                      ? 'Buong Salaysay ng Nangyari (Incident Narrative & Notes)'
+                      : 'Complete Incident Narrative & Notes'}
+                  </label>
+                  <span className="text-[11px] font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                    {incidentNotes.trim().length > 0 ? `${incidentNotes.trim().length} characters` : (isTl ? 'Opsyonal' : 'Optional')}
+                  </span>
+                </div>
                 <textarea
-                  rows={2}
+                  rows={5}
                   value={incidentNotes}
                   onChange={(e) => setIncidentNotes(e.target.value)}
                   placeholder={
                     isTl
-                      ? 'Ilagay ang maikling detalye ng insidente o ginawang paunang counseling...'
-                      : 'Enter brief summary of the incident or initial guidance action taken...'
+                      ? 'Ilagay ang buong detalye ng insidente, paunang aksyon ng guidance, o impormasyon mula sa ulat...'
+                      : 'Enter complete summary of the incident, initial guidance action taken, or notes from student report...'
                   }
-                  className="w-full p-3 rounded-xl saas-card-subtle text-xs font-semibold text-[#0B1F4D] dark:text-white focus:outline-none focus:border-[#1E469B]"
+                  className="w-full p-3.5 rounded-xl border border-[#CBD5E1] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-medium text-[#0B1F4D] dark:text-white leading-relaxed focus:outline-none focus:border-[#1E469B] focus:ring-1 focus:ring-[#1E469B]/30 min-h-[110px] resize-y"
                 />
               </div>
 
@@ -2385,8 +2391,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   {selectedStudentNumbers.length === 0
                     ? isTl ? 'Pumili muna ng estudyante' : 'Pick a student first'
                     : isTl
-                    ? `✓ I-save ang case (${selectedStudentNumbers.length} estudyante)`
-                    : `✓ Save case (${selectedStudentNumbers.length} student${selectedStudentNumbers.length === 1 ? '' : 's'})`}
+                    ? ` I-save ang case (${selectedStudentNumbers.length} estudyante)`
+                    : ` Save case (${selectedStudentNumbers.length} student${selectedStudentNumbers.length === 1 ? '' : 's'})`}
                 </button>
               </div>
             </div>
@@ -2399,7 +2405,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
         {subTab === 'case-board' && lastSavedCodes.length > 0 && (
           <div className="mb-4 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700/60 flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
-              ✓{' '}
+              {' '}
               {isTl
                 ? `Naitala ang ${lastSavedCodes.length} case: ${cases
                     .filter((c) => lastSavedCodes.includes(c.caseCode))
@@ -2438,7 +2444,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 aria-label={isTl ? 'Isara' : 'Close'}
                 className="w-7 h-7 rounded-lg text-xs font-bold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
               >
-                ✕
+                
               </button>
             </div>
           </div>
@@ -2625,7 +2631,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               title={isTl ? 'Kasama sa iisang insidente' : 'Part of one group incident'}
                               className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300"
                             >
-                              👥 {isTl ? 'May kasama' : 'Group'} · {groupSize}
+                               {isTl ? 'May kasama' : 'Group'} · {groupSize}
                             </span>
                           )}
                         </div>
@@ -2665,7 +2671,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <span
-                            className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 ${
+                            className={`px-2.5 py-0.5 rounded-[6px] text-[11px] font-bold shrink-0 ${
                               isResolved
                                 ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300'
                                 : 'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300'
@@ -2689,7 +2695,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               title={isTl ? 'Hindi kasama ang offense sa text' : 'The message never includes the offense'}
                               className="px-3.5 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-extrabold whitespace-nowrap"
                             >
-                              ✉ {isTl ? 'I-text ang magulang' : 'Text parent'}
+                               {isTl ? 'I-text ang magulang' : 'Text parent'}
                             </button>
                           )}
                           {step.action === 'schedule' && (
@@ -2698,7 +2704,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               onClick={() => onScheduleConference?.(c.caseCode)}
                               className="px-3.5 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-extrabold whitespace-nowrap"
                             >
-                              📅 {isTl ? 'Mag-schedule' : 'Schedule conference'}
+                               {isTl ? 'Mag-schedule' : 'Schedule conference'}
                             </button>
                           )}
                           {step.action === 'flow' && (
@@ -2717,7 +2723,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               onClick={() => handleUpdateCaseStatus(c, 'Resolved')}
                               className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold whitespace-nowrap"
                             >
-                              ✓ {isTl ? 'Tapos na' : 'Mark as done'}
+                               {isTl ? 'Tapos na' : 'Mark as done'}
                             </button>
                           )}
                           <div className="relative">
@@ -2741,17 +2747,17 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                                   {[
                                     {
                                       show: true,
-                                      label: isTl ? '📄 Buksan ang buong kaso' : '📄 Open full case',
+                                      label: isTl ? ' Buksan ang buong kaso' : ' Open full case',
                                       run: () => openCaseDetails(c),
                                     },
                                     {
                                       show: step.action !== 'text',
-                                      label: isTl ? '✉ I-text ang magulang' : '✉ Text parent',
+                                      label: isTl ? ' I-text ang magulang' : ' Text parent',
                                       run: () => openComposerForCase(c),
                                     },
                                     {
                                       show: true,
-                                      label: isTl ? '🖨️ Mag-print ng form…' : '🖨️ Print a form…',
+                                      label: isTl ? '️ Mag-print ng form…' : '️ Print a form…',
                                       run: () => {
                                         soundFX.playKeyClick(2);
                                         setCallSlipCase(c);
@@ -2759,7 +2765,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                                     },
                                     {
                                       show: !isResolved && step.action !== 'done',
-                                      label: isTl ? '✓ Tapos na' : '✓ Mark as done',
+                                      label: isTl ? ' Tapos na' : ' Mark as done',
                                       run: () => handleUpdateCaseStatus(c, 'Resolved'),
                                     },
                                     {
@@ -2822,7 +2828,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     )}
                     {todo.length === 0 && groupDone && done.length > 0 && (
                       <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400 text-center py-4">
-                        ✓ {isTl ? 'Walang kasong naghihintay. Ayos!' : 'No case is waiting. All caught up!'}
+                         {isTl ? 'Walang kasong naghihintay. Ayos!' : 'No case is waiting. All caught up!'}
                       </p>
                     )}
                     {done.length > 0 &&
@@ -3015,7 +3021,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   </div>
 
                   <div className="flex items-center gap-2.5 shrink-0">
-                    <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap ${attentionBadge(stu).cls}`}>
+                    <span className={`px-2.5 py-1 rounded-[6px] text-[11px] font-bold whitespace-nowrap ${attentionBadge(stu).cls}`}>
                       {attentionBadge(stu).text}
                     </span>
 
@@ -3068,113 +3074,190 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
             SUB-TAB 4: MASTERLIST IMPORT & PREVIEW-FIX TABLE (PAGE 15)
             ================================================================== */}
         {subTab === 'masterlist' && (
-          <section className="rounded-2xl saas-card p-6 space-y-5">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
-                  {isTl
-                    ? 'I-import ang masterlist ng estudyante'
-                    : 'Import the student masterlist'}
-                </h2>
-                <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
-                  {isTl
-                    ? 'I-upload ang Excel. Ipapakita muna ang may mali (doble, kulang na number) bago i-save.'
-                    : 'Upload the Excel file. Rows with problems (duplicates, wrong numbers) are shown before saving.'}
-                </p>
-              </div>
+          <section className="space-y-6">
+            {/* CDM-INSPIRED ORGANIZED STEP WIZARD CARD */}
+            <div className="cdm-panel p-6 space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+                <div>
+                  <div className="text-[11px] font-extrabold tracking-wider uppercase text-[#1E469B] dark:text-[#7CB8F7]">
+                    REGISTRAR / STUDENT RECORDS
+                  </div>
+                  <h2 className="text-xl font-extrabold text-[#0B1F4D] dark:text-white mt-0.5">
+                    {isTl ? 'Mag-import ng Roster ng mga Estudyante' : 'Import Student Roster & Masterlist'}
+                  </h2>
+                  <p className="text-xs text-[#4A608A] dark:text-[#94A8D0] mt-1">
+                    {isTl
+                      ? 'Mag-upload ng opisyal na record nang maayos at may pre-validation bago pumasok sa database.'
+                      : 'Add official school records with instant structural validation before database insertion.'}
+                  </p>
+                </div>
 
-              <div className="flex flex-wrap items-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={handleDownloadTemplate}
-                  className="btn-press px-3.5 py-2 rounded-xl saas-card-subtle hover:border-[#1E469B] text-xs font-bold"
-                >
-                  ⬇ {isTl ? 'I-download ang Template' : 'Download Template'}
-                </button>
-
-                {totalPreviewErrors > 0 && (
+                <div className="flex flex-wrap items-center gap-2.5">
                   <button
                     type="button"
-                    onClick={handleAutoFixMasterlist}
-                    title={
-                      isTl
-                        ? 'Inaayos lang ang format ng mobile number. Ang ibang mali ay ayusin sa table.'
-                        : 'Only fixes mobile number formats. Fix other problems in the table.'
-                    }
-                    className="btn-press px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-[#0B1F4D] text-xs font-extrabold shadow-sm"
+                    onClick={handleDownloadTemplate}
+                    className="btn-press px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:border-[#1E469B] text-xs font-bold text-[#0B1F4D] dark:text-white bg-white dark:bg-[#0B1528] flex items-center gap-2 shadow-sm"
                   >
-                    ✨{' '}
-                    {isTl
-                      ? 'Ayusin ang format ng mobile number'
-                      : 'Fix mobile number formats'}
+                    <DuotoneIcon name="clipboardText" size={16} />
+                    <span>{isTl ? 'I-download ang CSV Template' : 'Download CSV Template'}</span>
                   </button>
-                )}
 
-                <button
-                  type="button"
-                  disabled={readyPreviewCount === 0 || savingMasterlist}
-                  onClick={handleCommitMasterlistToDb}
-                  className="btn-press px-4 py-2 rounded-xl bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-extrabold shadow-sm disabled:opacity-40"
+                  {totalPreviewErrors > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleAutoFixMasterlist}
+                      className="btn-press px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-[#0B1F4D] text-xs font-extrabold shadow-sm flex items-center gap-1.5"
+                    >
+                      <DuotoneIcon name="warningCircle" size={15} />
+                      <span>{isTl ? 'Auto-Fix Numbers' : 'Auto-Fix Numbers'}</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    disabled={readyPreviewCount === 0 || savingMasterlist}
+                    onClick={handleCommitMasterlistToDb}
+                    className="btn-press px-5 py-2 rounded-xl bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-extrabold shadow-sm disabled:opacity-40 flex items-center gap-2"
+                  >
+                    <DuotoneIcon name="checkSquareOffset" size={16} />
+                    <span>
+                      {savingMasterlist
+                        ? isTl ? 'Sine-save…' : 'Saving…'
+                        : isTl ? `I-save sa Masterlist (${readyPreviewCount})` : `Save to Masterlist (${readyPreviewCount})`}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 3-STEP GUIDE BOX (EXACT PATTERN FROM CDM PORTAL) */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                  {isTl ? 'Paano ito gumagana' : 'How it works'}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                  {/* Step 1 Card */}
+                  <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="cdm-step-pill">1</span>
+                      <span className="text-xs font-black text-[#0B1F4D] dark:text-white">
+                        {isTl ? 'I-download ang Template' : 'Download the template'}
+                      </span>
+                    </div>
+                    <p className="text-[11.5px] text-[#4A608A] dark:text-[#94A8D0] leading-relaxed">
+                      {isTl
+                        ? 'Gamitin ang opisyal na format kada estudyante. Panatilihin ang eksaktong headers.'
+                        : 'Use one row per student or record. Keep the exact column headers intact.'}
+                    </p>
+                  </div>
+
+                  {/* Step 2 Card */}
+                  <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="cdm-step-pill">2</span>
+                      <span className="text-xs font-black text-[#0B1F4D] dark:text-white">
+                        {isTl ? 'Punan ang Detalye' : 'Fill official record details'}
+                      </span>
+                    </div>
+                    <p className="text-[11.5px] text-[#4A608A] dark:text-[#94A8D0] leading-relaxed">
+                      {isTl
+                        ? 'Student number, buong pangalan, baitang, seksyon, pangalan ng magulang, at mobile number.'
+                        : 'Student number, full name, strand, section, parent name, and emergency contact number.'}
+                    </p>
+                  </div>
+
+                  {/* Step 3 Card */}
+                  <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="cdm-step-pill">3</span>
+                      <span className="text-xs font-black text-[#0B1F4D] dark:text-white">
+                        {isTl ? 'I-preview at I-confirm' : 'Preview and confirm'}
+                      </span>
+                    </div>
+                    <p className="text-[11.5px] text-[#4A608A] dark:text-[#94A8D0] leading-relaxed">
+                      {isTl
+                        ? 'Suriin ang mga error bago pumasok sa database. Awtomatikong sasalain ang duplicates.'
+                        : 'Correct any flagged errors first. Inactive and duplicate records are safely isolated.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40 text-[11px] text-blue-900 dark:text-blue-200 space-y-1">
+                  <p className="font-bold">
+                    {isTl ? 'Mga Kailangang Column:' : 'Required columns:'}{' '}
+                    <span className="font-normal font-mono text-[10.5px]">
+                      student_number, first_name, last_name, strand, section, parent_name, parent_phone
+                    </span>
+                  </p>
+                  <p className="font-medium text-blue-800/80 dark:text-blue-300/80">
+                    {isTl
+                      ? 'Tumatanggap ng Excel (.xlsx), CSV, at text sheets. Hindi kailanman mao-overwrite ang may kaso nang estudyante.'
+                      : 'Accepts Excel (.xlsx), CSV, and text roster exports. Existing disciplinary case logs are never overwritten.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* STEP 1 — UPLOAD ROSTER DROPZONE (CDM STYLE) */}
+              <div className="space-y-2 pt-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#0B1F4D] dark:text-white">
+                    {isTl ? 'Mag-upload ng Roster File' : 'Upload Roster'}
+                  </h3>
+                  <span className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
+                    CSV or XLSX, up to 1,000 rows
+                  </span>
+                </div>
+
+                <label
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setImportDragOver(true);
+                  }}
+                  onDragLeave={() => setImportDragOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setImportDragOver(false);
+                    void handleImportFile(e.dataTransfer.files?.[0]);
+                  }}
+                  className={`block rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition-colors ${
+                    importDragOver
+                      ? 'border-[#1E469B] bg-blue-50/50 dark:bg-blue-950/30'
+                      : 'border-slate-300 dark:border-slate-700 hover:border-[#1E469B] hover:bg-slate-50/60 dark:hover:bg-slate-900/40'
+                  }`}
                 >
-                  💾{' '}
-                  {savingMasterlist
-                    ? isTl
-                      ? 'Sine-save…'
-                      : 'Saving…'
-                    : isTl
-                    ? `I-save sa Masterlist (${readyPreviewCount})`
-                    : `Save to Masterlist (${readyPreviewCount})`}
-                </button>
+                  <input
+                    type="file"
+                    accept=".xlsx,.csv,.txt,.xls,.pdf,.ods"
+                    className="sr-only"
+                    onChange={(e) => {
+                      void handleImportFile(e.target.files?.[0]);
+                      e.target.value = '';
+                    }}
+                  />
+                  <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/40 text-[#1E469B] dark:text-[#7CB8F7] flex items-center justify-center mx-auto mb-2">
+                    <DuotoneIcon name="folderOpen" size={20} />
+                  </div>
+                  <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                    {isTl
+                      ? 'I-drag dito ang Excel o CSV file, o pindutin para pumili'
+                      : 'Choose completed CSV / Excel file or drag and drop'}
+                  </p>
+                  <p className="mt-1 text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                    {isTl
+                      ? 'Kahit anong ayos ng columns — awtomatikong tutukuyin ng scanner ang mga fields.'
+                      : 'Automatic header matching with duplicate detection.'}
+                  </p>
+                </label>
               </div>
             </div>
-
-            {/* STEP 1 — Drop zone (reading happens in the center popup) */}
-            <label
-              onDragOver={(e) => {
-                e.preventDefault();
-                setImportDragOver(true);
-              }}
-              onDragLeave={() => setImportDragOver(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setImportDragOver(false);
-                void handleImportFile(e.dataTransfer.files?.[0]);
-              }}
-              className={`block rounded-2xl border-2 border-dashed px-6 py-6 text-center cursor-pointer transition-colors ${
-                importDragOver
-                  ? 'border-[#2557BE] bg-[#E4ECFC] dark:bg-[#192D58]'
-                  : 'border-[#CFD9F2] dark:border-[#243B6B] hover:border-[#2557BE] hover:bg-[#F6F9FE] dark:hover:bg-[#12203F]'
-              }`}
-            >
-              <input
-                type="file"
-                accept=".xlsx,.csv,.txt,.xls,.pdf,.ods"
-                className="sr-only"
-                onChange={(e) => {
-                  void handleImportFile(e.target.files?.[0]);
-                  e.target.value = ''; // allow re-selecting the same file
-                }}
-              />
-              <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
-                {isTl
-                  ? '📂 I-drag dito ang Excel o CSV file, o i-click para pumili'
-                  : '📂 Drag an Excel or CSV file here, or click to choose'}
-              </p>
-              <p className="mt-1 text-xs text-[#4A608A] dark:text-[#94A8D0]">
-                {isTl
-                  ? 'Tinatanggap: .xlsx at .csv · Kahit anong ayos ng column — kami na ang maghahanap ng Name, LRN, Section, Magulang at Mobile.'
-                  : 'Accepted: .xlsx and .csv · Any column order — we find Name, LRN, Section, Parent and Mobile for you.'}
-              </p>
-            </label>
 
             {importError && (
               <div
                 role="alert"
                 className="flex items-start justify-between gap-3 px-4 py-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/60 text-[13px] font-semibold text-rose-800 dark:text-rose-200"
               >
-                <span>⚠ {importError}</span>
+                <span> {importError}</span>
                 <button type="button" onClick={() => setImportError('')} className="font-extrabold" aria-label="Dismiss">
-                  ✕
+                  
                 </button>
               </div>
             )}
@@ -3258,7 +3341,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
 
                 {importMissingRequired.length > 0 && (
                   <p className="mx-5 mb-3 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 text-[12px] font-semibold text-amber-900 dark:text-amber-200">
-                    ⚠{' '}
+                    {' '}
                     {isTl
                       ? `Hindi nakita: ${importMissingRequired.join(', ')}. Piliin ang tamang column, o ituloy at punan sa preview.`
                       : `Not found: ${importMissingRequired.join(', ')}. Pick the right column, or continue and fill them in the preview.`}
@@ -3380,8 +3463,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 <div className="p-6 rounded-xl saas-card-subtle text-center text-sm font-bold text-emerald-700 dark:text-emerald-300">
                   {previewFilter === 'issues'
                     ? isTl
-                      ? '✓ Wala nang kailangang ayusin!'
-                      : '✓ Nothing left to fix!'
+                      ? ' Wala nang kailangang ayusin!'
+                      : ' Nothing left to fix!'
                     : isTl
                     ? 'Walang row dito.'
                     : 'No rows here.'}
@@ -3413,7 +3496,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                         <td className="py-2.5 px-4 align-top w-56">
                           {row.isValid ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 font-bold whitespace-nowrap">
-                              {row.isUpdate ? `↻ ${isTl ? 'Ia-update' : 'Will update'}` : `✓ ${isTl ? 'Bago · handa nang i-save' : 'New · ready to save'}`}
+                              {row.isUpdate ? `↻ ${isTl ? 'Ia-update' : 'Will update'}` : ` ${isTl ? 'Bago · handa nang i-save' : 'New · ready to save'}`}
                             </span>
                           ) : (
                             <ul className="space-y-1">
@@ -3422,7 +3505,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                                   key={i}
                                   className="px-2 py-0.5 rounded-md bg-rose-600 text-white font-bold text-[11px] leading-snug"
                                 >
-                                  ⚠ {iss}
+                                   {iss}
                                 </li>
                               ))}
                               <li>
@@ -3637,7 +3720,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       {severityInfo(openCase.severity).word}
                     </span>
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                      className={`px-2.5 py-0.5 rounded-[6px] text-[11px] font-bold ${
                         openCase.status === 'Resolved'
                           ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300'
                           : 'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300'
@@ -3659,146 +3742,159 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   aria-label={isTl ? 'Isara' : 'Close'}
                   className="w-8 h-8 rounded-lg saas-card-subtle text-sm font-bold text-[#4A608A] disabled:opacity-40 shrink-0"
                 >
-                  ✕
+                  
                 </button>
               </div>
 
               {/* body */}
-              <div className="overflow-y-auto clean-scroll">
-              <CaseFlowPanel key={openCase.caseCode + (openCase.step ?? '') + (openCase.decidedAt ?? '')} c={openCase} isTl={isTl} busy={flowBusy} suggestedSanction={suggestedSanctionFor(openCase)} onAction={(a) => void applyFlow(openCase, a)} onOpenStation={() => setStationCase(openCase)} />
-              {stationCase && (
-                <StatementStation studentName={stationCase.studentName} gradeSection={stationCase.gradeSection} isTl={isTl} onSubmit={(s) => saveStationStatement(stationCase, s.text)} onClose={closeStation} />
-              )}
-              <div className="px-6 py-4 space-y-4 text-xs">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="col-span-2">
-                    <p className="font-bold text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Offense' : 'Offense'}</p>
-                    <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
-                      {isTl ? openCase.offenseTitleTl : openCase.offenseTitleEn}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-bold text-[#4A608A] dark:text-[#94A8D0] mb-1">{isTl ? 'Petsa' : 'Date'}</p>
-                    {caseEditing ? (
-                      <input
-                        type="date"
-                        value={editDate}
-                        onChange={(e) => setEditDate(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg saas-card-subtle font-bold text-[#0B1F4D] dark:text-white"
-                      />
-                    ) : (
-                      <p className="font-semibold text-[#0B1F4D] dark:text-white">{prettyDate(openCase.incidentDate)}</p>
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-bold text-[#4A608A] dark:text-[#94A8D0] mb-1">{isTl ? 'Nag-report' : 'Reported by'}</p>
-                    {caseEditing ? (
-                      <input
-                        type="text"
-                        value={editReportedBy}
-                        onChange={(e) => setEditReportedBy(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg saas-card-subtle font-bold text-[#0B1F4D] dark:text-white"
-                      />
-                    ) : (
-                      <p className="font-semibold text-[#0B1F4D] dark:text-white">{openCase.reportedBy}</p>
-                    )}
-                  </div>
-                  <div className="col-span-2">
-                    <p className="font-bold text-[#4A608A] dark:text-[#94A8D0] mb-1">
-                      {isTl ? 'Ano ang nangyari' : 'What happened'}
-                    </p>
-                    {caseEditing ? (
-                      <textarea
-                        rows={4}
-                        value={editNotes}
-                        onChange={(e) => setEditNotes(e.target.value)}
-                        className="w-full p-3 rounded-lg saas-card-subtle font-semibold text-[#0B1F4D] dark:text-white"
-                      />
-                    ) : (
-                      <p className="font-semibold text-[#0B1F4D] dark:text-white whitespace-pre-line">{hideIncidentMarker(openCase.notes)}</p>
-                    )}
-                    {caseEditing && (
-                      <p className="mt-1 text-[11px] text-[#687FA8] dark:text-[#89A7DF]">
-                        {isTl
-                          ? 'ⓘ Hindi mapapalitan dito ang offense dahil binabago nito ang bilang ng offense ng estudyante.'
-                          : "ⓘ The offense can't be changed here because it changes the student's offense count."}
-                      </p>
-                    )}
-                  </div>
-                  {openCaseStudent && (
-                    <div className="col-span-2">
-                      <p className="font-bold text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Magulang' : 'Parent'}</p>
-                      <p className="font-semibold text-[#0B1F4D] dark:text-white">
-                        {openCaseStudent.parentName} · {openCaseStudent.parentPhone || (isTl ? 'walang number' : 'no number')}
-                        {openCaseStudent.parentEmail ? ` · ${openCaseStudent.parentEmail}` : ''}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {openCase.incidentCode &&
-                  cases.some((x) => x.incidentCode === openCase.incidentCode && x.caseCode !== openCase.caseCode) && (
-                    <div className="p-3 rounded-xl bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800/60">
-                      <p className="font-extrabold text-violet-800 dark:text-violet-300 mb-1.5">
-                        👥 {isTl ? 'Kasama sa insidenteng ito' : 'Also in this incident'}
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {cases
-                          .filter((x) => x.incidentCode === openCase.incidentCode && x.caseCode !== openCase.caseCode)
-                          .map((x) => (
-                            <button
-                              key={x.caseCode}
-                              type="button"
-                              disabled={caseEditing}
-                              onClick={() => openCaseDetails(x)}
-                              className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#0F1A30] border border-violet-200 dark:border-violet-800/60 text-[11px] font-bold text-[#0B1F4D] dark:text-white hover:border-violet-500 disabled:opacity-50"
-                            >
-                              {x.studentName} · {isTl ? x.offenseTitleTl : x.offenseTitleEn} →
-                            </button>
-                          ))}
-                      </div>
-                    </div>
-                  )}
-
-                {/* evidence: photos / PDFs, private */}
-                <EvidencePanel
-                  caseCode={openCase.caseCode}
-                  isTl={isTl}
-                  by={appConfig.staff.find((x) => x.active)?.email ?? ''}
-                  onToast={(m, undo) => onTriggerToast(m, undo)}
-                  onChanged={() => void loadCaseHistory(openCase.caseCode)}
+              <div className="overflow-y-auto clean-scroll space-y-4 p-5 bg-[#F8FAFC] dark:bg-[#070D1B]">
+                {/* 1. 7-Step Progressive Flow Stepper & Action Card */}
+                <CaseFlowPanel 
+                  key={openCase.caseCode + (openCase.step ?? '') + (openCase.decidedAt ?? '')} 
+                  c={openCase} 
+                  isTl={isTl} 
+                  busy={flowBusy} 
+                  suggestedSanction={suggestedSanctionFor(openCase)} 
+                  onAction={(a) => void applyFlow(openCase, a)} 
+                  onOpenStation={() => setStationCase(openCase)} 
                 />
-                {/* timeline from the audit trail */}
-                <div>
-                  <p className="font-extrabold text-[#0B1F4D] dark:text-white mb-2">
-                    {isTl ? 'Mga nangyari sa kasong ito' : 'What happened on this case'}
-                  </p>
-                  {caseHistory === 'loading' ? (
-                    <p className="text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Kinukuha…' : 'Loading…'}</p>
-                  ) : caseHistory === null ? (
-                    <p className="text-rose-600 dark:text-rose-400 font-semibold">
-                      {isTl
-                        ? '⚠ Hindi makuha ang history. I-check ang internet, tapos isara at buksan ulit.'
-                        : "⚠ Couldn't load the history. Check the internet, then close and open this case again."}
-                    </p>
-                  ) : caseHistory.length === 0 ? (
-                    <p className="text-[#4A608A] dark:text-[#94A8D0]">
-                      {isTl ? 'Wala pang naitala.' : 'Nothing recorded yet.'}
-                    </p>
-                  ) : (
-                    <ol className="space-y-2 border-l-2 border-[#DCE5F2] dark:border-[#1E3158] pl-3">
-                      {caseHistory.map((h, i) => (
-                        <li key={i}>
-                          <p className="font-semibold text-[#0B1F4D] dark:text-white">{isTl ? h.actionTl : h.actionEn}</p>
-                          <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
-                            {prettyTime(h.when)} · {h.actor}
+                
+                {stationCase && (
+                  <StatementStation 
+                    studentName={stationCase.studentName} 
+                    gradeSection={stationCase.gradeSection} 
+                    isTl={isTl} 
+                    onSubmit={(s) => saveStationStatement(stationCase, s.text)} 
+                    onClose={closeStation} 
+                  />
+                )}
+
+                {/* 2. Structured Incident Details & Evidence Cards */}
+                <div className="space-y-3">
+                  {/* Incident Information Card */}
+                  <div className="rounded-xl border border-[#CBD5E1] dark:border-[#1E2E4E] bg-white dark:bg-[#0C1527] overflow-hidden shadow-xs">
+                    <div className="px-4 py-2.5 bg-[#F8FAFC] dark:bg-[#0E1A33] border-b border-[#E2E8F0] dark:border-[#1E2E4E] flex items-center justify-between">
+                      <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
+                        {isTl ? 'Detalye ng Paglabag (Incident Record)' : 'Incident & Offense Record'}
+                      </span>
+                      <span className="text-[10.5px] font-mono font-bold text-[#64748B] dark:text-[#94A3B8]">
+                        {openCase.caseCode}
+                      </span>
+                    </div>
+
+                    <div className="p-4 space-y-3 text-xs">
+                      <div>
+                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8]">
+                          {isTl ? 'Opisyal na Paglabag' : 'Violation / Offense Title'}
+                        </p>
+                        <p className="text-[14px] font-extrabold text-[#0F172A] dark:text-white mt-0.5">
+                          {isTl ? openCase.offenseTitleTl : openCase.offenseTitleEn}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 pt-1 border-t border-[#F1F5F9] dark:border-[#1E2E4E]">
+                        <div>
+                          <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] mb-1">
+                            {isTl ? 'Petsa ng Insidente' : 'Incident Date'}
                           </p>
-                        </li>
-                      ))}
-                    </ol>
-                  )}
+                          {caseEditing ? (
+                            <input
+                              type="date"
+                              value={editDate}
+                              onChange={(e) => setEditDate(e.target.value)}
+                              className="w-full px-3 py-1.5 rounded-lg border border-[#CBD5E1] font-bold text-[#0F172A] dark:text-white"
+                            />
+                          ) : (
+                            <p className="text-xs font-bold text-[#0F172A] dark:text-white">{prettyDate(openCase.incidentDate)}</p>
+                          )}
+                        </div>
+
+                        <div>
+                          <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] mb-1">
+                            {isTl ? 'Nag-ulat (Complainant / Reporter)' : 'Reported By'}
+                          </p>
+                          {caseEditing ? (
+                            <input
+                              type="text"
+                              value={editReportedBy}
+                              onChange={(e) => setEditReportedBy(e.target.value)}
+                              className="w-full px-3 py-1.5 rounded-lg border border-[#CBD5E1] font-bold text-[#0F172A] dark:text-white"
+                            />
+                          ) : (
+                            <p className="text-xs font-bold text-[#0F172A] dark:text-white">{openCase.reportedBy}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="pt-1 border-t border-[#F1F5F9] dark:border-[#1E2E4E]">
+                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] mb-1">
+                          {isTl ? 'Salaysay ng Insidente (Incident Narrative / Notes)' : 'Incident Narrative / Notes'}
+                        </p>
+                        {caseEditing ? (
+                          <textarea
+                            rows={3}
+                            value={editNotes}
+                            onChange={(e) => setEditNotes(e.target.value)}
+                            className="w-full p-2.5 rounded-lg border border-[#CBD5E1] font-medium text-xs text-[#0F172A] dark:text-white"
+                          />
+                        ) : (
+                          <div className="p-3 rounded-lg bg-[#F8FAFC] dark:bg-[#0A1224] border border-[#E2E8F0] dark:border-[#1E2E4E] text-[12.5px] leading-relaxed text-[#0F172A] dark:text-white whitespace-pre-line font-medium">
+                            {hideIncidentMarker(openCase.notes)}
+                          </div>
+                        )}
+                      </div>
+
+                      {openCaseStudent && (
+                        <div className="pt-2 border-t border-[#F1F5F9] dark:border-[#1E2E4E] flex items-center justify-between text-xs">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8]">
+                            Parent Contact:
+                          </span>
+                          <span className="font-bold text-[#0F172A] dark:text-white">
+                            {openCaseStudent.parentName} · <span className="font-mono text-[#1E469B] dark:text-[#7CB8F7]">{openCaseStudent.parentPhone || 'No Phone'}</span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Evidence Card */}
+                  <div className="rounded-xl border border-[#CBD5E1] dark:border-[#1E2E4E] bg-white dark:bg-[#0C1527] p-4 shadow-xs">
+                    <EvidencePanel
+                      caseCode={openCase.caseCode}
+                      isTl={isTl}
+                      by={appConfig.staff.find((x) => x.active)?.email ?? ''}
+                      onToast={(m, undo) => onTriggerToast(m, undo)}
+                      onChanged={() => void loadCaseHistory(openCase.caseCode)}
+                    />
+                  </div>
+
+                  {/* Case Audit Timeline Card */}
+                  <div className="rounded-xl border border-[#CBD5E1] dark:border-[#1E2E4E] bg-white dark:bg-[#0C1527] p-4 shadow-xs">
+                    <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7] mb-2.5">
+                      {isTl ? 'Timeline ng mga Aksyon sa Kaso' : 'Official Case Action History'}
+                    </p>
+                    {caseHistory === 'loading' ? (
+                      <p className="text-[#64748B] dark:text-[#94A3B8] text-xs">{isTl ? 'Kinukuha…' : 'Loading history…'}</p>
+                    ) : caseHistory === null ? (
+                      <p className="text-rose-600 text-xs font-semibold">
+                        {isTl ? 'Hindi makuha ang history.' : "Couldn't load history."}
+                      </p>
+                    ) : caseHistory.length === 0 ? (
+                      <p className="text-[#64748B] dark:text-[#94A3B8] text-xs">{isTl ? 'Wala pang naitala.' : 'No audit entries yet.'}</p>
+                    ) : (
+                      <ol className="space-y-2 border-l-2 border-[#E2E8F0] dark:border-[#1E2E4E] pl-3 text-xs">
+                        {caseHistory.map((h, i) => (
+                          <li key={i}>
+                            <p className="font-bold text-[#0F172A] dark:text-white">{isTl ? h.actionTl : h.actionEn}</p>
+                            <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
+                              {prettyTime(h.when)} · {h.actor}
+                            </p>
+                          </li>
+                        ))}
+                      </ol>
+                    )}
+                  </div>
                 </div>
-              </div>
               </div>
 
               {/* footer */}
@@ -3817,7 +3913,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       onClick={saveCaseEdit}
                       className="px-4 py-2 rounded-lg bg-[#1E469B] text-white text-xs font-extrabold"
                     >
-                      {isTl ? '✓ I-save' : '✓ Save changes'}
+                      {isTl ? ' I-save' : ' Save changes'}
                     </button>
                   </>
                 ) : (
@@ -3828,7 +3924,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                         onClick={startCaseEdit}
                         className="px-3 py-2 rounded-lg saas-card-subtle hover:border-[#1E469B] text-xs font-bold text-[#0B1F4D] dark:text-white"
                       >
-                        ✎ {isTl ? 'I-edit' : 'Edit'}
+                         {isTl ? 'I-edit' : 'Edit'}
                       </button>
                       <button
                         type="button"
@@ -3838,7 +3934,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                         }}
                         className="px-3 py-2 rounded-lg saas-card-subtle hover:border-[#1E469B] text-xs font-bold whitespace-nowrap text-[#0B1F4D] dark:text-white"
                       >
-                        🖨️ {isTl ? 'Mag-print ng form…' : 'Print a form…'}
+                        ️ {isTl ? 'Mag-print ng form…' : 'Print a form…'}
                       </button>
                       {openCaseStudent && (
                         <button
@@ -3857,7 +3953,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                           }}
                           className="px-3 py-2 rounded-lg saas-card-subtle hover:border-[#1E469B] text-xs font-bold whitespace-nowrap text-[#1E469B] dark:text-[#7CB8F7]"
                         >
-                          ✉ {isTl ? 'I-text ang magulang' : 'Text parent'}
+                           {isTl ? 'I-text ang magulang' : 'Text parent'}
                         </button>
                       )}
                     </div>
@@ -3899,9 +3995,9 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
           onPrinted={(kind) => {
             const t = FORM_TITLES[kind];
             void insertActivityLogInDb({ actor: 'Guidance Associate', actionEn: `${callSlipCase.caseCode}: printed ${t[0]}`, actionTl: `${callSlipCase.caseCode}: nag-print ng ${t[1]}`, tag: callSlipCase.caseCode, tone: 'blue' });
-            onTriggerToast(isTl ? `🖨 Binuksan ang print ng ${t[1]}. Piliin ang printer at pindutin ang Print.` : `🖨 ${t[0]} is ready to print. Pick the printer and press Print.`);
+            onTriggerToast(isTl ? ` Binuksan ang print ng ${t[1]}. Piliin ang printer at pindutin ang Print.` : ` ${t[0]} is ready to print. Pick the printer and press Print.`);
           }}
-          onFailed={() => onTriggerToast(isTl ? '⚠️ Hindi mabuksan ang print. Isara at buksan ulit ang app, tapos subukan ulit.' : '⚠️ Could not open printing. Close and reopen the app, then try again.')}
+          onFailed={() => onTriggerToast(isTl ? ' Hindi mabuksan ang print. Isara at buksan ulit ang app, tapos subukan ulit.' : ' Could not open printing. Close and reopen the app, then try again.')}
         />
       )}
 
@@ -3954,7 +4050,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   aria-label={isTl ? 'Isara' : 'Close'}
                   className="w-8 h-8 rounded-lg saas-card-subtle text-sm font-bold text-[#4A608A]"
                 >
-                  ✕
+                  
                 </button>
               </div>
 
@@ -4078,7 +4174,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               <div className="p-3.5 rounded-xl saas-card-subtle flex items-center justify-between gap-3 text-xs opacity-70">
                 <div>
                   <p className="font-extrabold text-[#0B1F4D] dark:text-white">
-                    🔑 {isTl ? 'Nakalimutan ang password sa student portal' : 'Forgot student portal password'}
+                     {isTl ? 'Nakalimutan ang password sa student portal' : 'Forgot student portal password'}
                   </p>
                   <p className="text-[#4A608A] dark:text-[#94A8D0]">
                     {isTl

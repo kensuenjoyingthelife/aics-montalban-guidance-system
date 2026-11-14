@@ -13,9 +13,9 @@ export const Legend: React.FC<{ items: LegendItem[]; className?: string }> = ({ 
     {items.map((it) => (
       <li key={it.label} className="inline-flex items-center gap-1.5 whitespace-nowrap">
         {it.shape === 'box' ? (
-          <span className="inline-block w-3 h-3 rounded-sm" style={{ background: it.color }} />
+          <span className="inline-block w-3 h-3 rounded-[3px] border border-black/10 dark:border-white/10" style={{ background: it.color }} />
         ) : it.shape === 'dot' ? (
-          <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: it.color }} />
+          <span className="inline-block w-2.5 h-2.5 rounded-[3px] border border-black/10 dark:border-white/10" style={{ background: it.color }} />
         ) : (
           <svg width="18" height="8" aria-hidden="true">
             <line x1="1" y1="4" x2="17" y2="4" stroke={it.color} strokeWidth="2.5" strokeLinecap="round" strokeDasharray={it.shape === 'dash' ? '3 3' : undefined} />

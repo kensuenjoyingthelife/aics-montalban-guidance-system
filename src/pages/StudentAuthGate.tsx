@@ -1038,7 +1038,15 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   onClick={() => soundFX.playToggleSwitch(true)}
                   className="w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center gap-2 text-xs font-extrabold text-sky-300 hover:text-white transition-all cursor-pointer"
                 >
-                  <span>🤖</span>
+                  <span>
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="10" rx="2" />
+      <circle cx="12" cy="5" r="2" />
+      <path d="M12 7v4" />
+      <line x1="8" y1="16" x2="8" y2="16" />
+      <line x1="16" y1="16" x2="16" y2="16" />
+    </svg>
+  </span>
                   <span>{isTl ? 'Mag-download ng Android APK File (.apk)' : 'Download Android APK (.apk)'}</span>
                 </a>
               </div>
@@ -1208,112 +1216,36 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
                     <div>
                       <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase flex items-center gap-2">
-                        <span>📸</span>
-                        <span>{isTl ? '3. Beripikasyon ng Identidad (Student ID at Live Photo)' : '3. Identity Verification (Student ID & Live Photo)'}</span>
+                        <span>
+    <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+    </svg>
+  </span>
+                        <span>{isTl ? '3. Beripikasyon ng Identidad (Live Photo Selfie)' : '3. Identity Verification (Live Profile Selfie)'}</span>
                       </h3>
                       <p className="text-xs opacity-80 mt-1">
                         {isMobileDevice
                           ? (isTl
-                              ? '📱 MOBILE DETECTED: Required ang LIVE CAMERA capture para sa iyong mukha at Student ID. Bawal ang file upload sa cellphone.'
-                              : '📱 MOBILE DETECTED: LIVE CAMERA capture is strictly required for your face and Student ID. Upload is disabled on mobile.')
+                              ? 'MOBILE DETECTED: Required ang LIVE CAMERA capture para sa iyong mukha at Student ID. Bawal ang file upload sa cellphone.'
+                              : 'MOBILE DETECTED: LIVE CAMERA capture is strictly required for your face and Student ID. Upload is disabled on mobile.')
                           : (isTl
-                              ? '💻 DESKTOP/LAPTOP DETECTED: Maaaring gamitin ang Webcam o mag-upload kung walang available na camera.'
-                              : '💻 DESKTOP/LAPTOP DETECTED: You may use your Webcam or upload an image file if a camera is unavailable.')}
+                              ? 'DESKTOP/LAPTOP DETECTED: Maaaring gamitin ang Webcam o mag-upload kung walang available na camera.'
+                              : 'DESKTOP/LAPTOP DETECTED: You may use your Webcam or upload an image file if a camera is unavailable.')}
                       </p>
                     </div>
-                  </div>
-
-                  {/* Sub-item A: Official Student ID Photo */}
-                  <div className="p-4 rounded-2xl register-inner-card space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-extrabold uppercase tracking-wide register-label flex items-center gap-1.5">
-                        <span>🪪</span> {isTl ? 'Litrato ng Opisyal na AICS Student ID' : 'Official AICS Student ID Photo'}
-                      </label>
-                      {renderBadge(studentIdStatus)}
-                    </div>
-
-                    {studentIdPreview ? (
-                      <div className="relative rounded-2xl overflow-hidden border-2 border-emerald-500/50 bg-black/60 flex flex-col items-center justify-center p-3">
-                        <img
-                          src={studentIdPreview}
-                          alt="Student ID Preview"
-                          className="max-h-60 w-full object-contain rounded-xl"
-                        />
-                        <div className="mt-3 flex items-center justify-between w-full px-2">
-                          <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                            <span>✓</span> {isTl ? 'Student ID Nakuha Na' : 'Student ID Captured & Ready'}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              soundFX.playBackspace();
-                              setStudentIdFile(null);
-                              setStudentIdPreview(null);
-                            }}
-                            className="px-3 py-1.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-bold transition-colors"
-                          >
-                            {isTl ? 'Kumuha Muli' : 'Retake'}
-                          </button>
-                        </div>
-                      </div>
-                    ) : isMobileDevice ? (
-                      /* Mobile Phone: Strictly Live Camera Only */
-                      <button
-                        type="button"
-                        onClick={() => {
-                          soundFX.playToggleSwitch(true);
-                          setActiveCameraModal('id');
-                        }}
-                        className="w-full h-36 rounded-2xl border-2 border-dashed border-emerald-500/50 hover:border-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 flex flex-col items-center justify-center text-center p-4 transition-all"
-                      >
-                        <span className="text-3xl animate-bounce">📸</span>
-                        <span className="text-sm font-black text-emerald-300 mt-2">
-                          {isTl ? 'Pindutin para Buksan ang Camera (Bawal Upload)' : 'Tap to Open Camera (Live Capture Only)'}
-                        </span>
-                        <span className="text-[11px] text-slate-300 mt-1">
-                          {isTl ? 'Itutok ang rear camera sa iyong Student ID' : 'Point camera to your physical Student ID'}
-                        </span>
-                      </button>
-                    ) : (
-                      /* PC / Laptop Mode: Camera Button + Fallback File Upload */
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            soundFX.playToggleSwitch(true);
-                            setActiveCameraModal('id');
-                          }}
-                          className="h-32 rounded-2xl border-2 border-dashed border-emerald-500/50 hover:border-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 flex flex-col items-center justify-center text-center p-3 transition-all"
-                        >
-                          <span className="text-2xl">📷</span>
-                          <span className="text-xs font-extrabold text-emerald-300 mt-1.5">
-                            {isTl ? 'Kumuha Gamit ang Webcam' : 'Capture via Webcam'}
-                          </span>
-                          <span className="text-[10px] opacity-75 mt-0.5">{isTl ? 'Live photo capture' : 'Instant live snap'}</span>
-                        </button>
-
-                        <label className="btn-press h-32 rounded-2xl border-2 border-dashed upload-dropzone cursor-pointer flex flex-col items-center justify-center text-center p-3 transition-colors">
-                          <span className="text-2xl">📁</span>
-                          <span className="text-xs font-extrabold register-label mt-1.5">
-                            {isTl ? 'Mag-upload ng File (PC/Laptop)' : 'Upload ID File (PC Mode)'}
-                          </span>
-                          <span className="text-[10px] opacity-75 mt-0.5">JPG, PNG</span>
-                          <input
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp,image/jpg"
-                            onChange={handleStudentIdUpload}
-                            className="hidden"
-                          />
-                        </label>
-                      </div>
-                    )}
                   </div>
 
                   {/* Sub-item B: Live Personal Face Photo (Selfie) */}
                   <div className="p-4 rounded-2xl register-inner-card space-y-3">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-extrabold uppercase tracking-wide register-label flex items-center gap-1.5">
-                        <span>👤</span> {isTl ? 'Live Personal Photo (Actual Face Selfie)' : 'Live Personal Photo (Actual Face Selfie)'}
+                        <span>
+    <svg className="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  </span> {isTl ? 'Live Personal Photo (Actual Face Selfie)' : 'Live Personal Photo (Actual Face Selfie)'}
                       </label>
                       {renderBadge(personalPhotoStatus)}
                     </div>
@@ -1352,7 +1284,12 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                         }}
                         className="w-full h-36 rounded-2xl border-2 border-dashed border-cyan-500/50 hover:border-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 flex flex-col items-center justify-center text-center p-4 transition-all"
                       >
-                        <span className="text-3xl animate-bounce">🤳</span>
+                        <div className="w-10 h-10 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center animate-pulse border border-cyan-500/40">
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+    </svg>
+  </div>
                         <span className="text-sm font-black text-cyan-300 mt-2">
                           {isTl ? 'Pindutin para sa Live Selfie (Bawal Upload)' : 'Tap for Live Face Selfie (Upload Disabled)'}
                         </span>
@@ -1371,7 +1308,12 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                           }}
                           className="h-32 rounded-2xl border-2 border-dashed border-cyan-500/50 hover:border-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 flex flex-col items-center justify-center text-center p-3 transition-all"
                         >
-                          <span className="text-2xl">🤳</span>
+                          <div className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center mx-auto mb-1 border border-cyan-500/30">
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+    </svg>
+  </div>
                           <span className="text-xs font-extrabold text-cyan-300 mt-1.5">
                             {isTl ? 'Kumuha ng Selfie sa Webcam' : 'Take Webcam Selfie'}
                           </span>
@@ -1379,7 +1321,13 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                         </button>
 
                         <label className="btn-press h-32 rounded-2xl border-2 border-dashed upload-dropzone cursor-pointer flex flex-col items-center justify-center text-center p-3 transition-colors">
-                          <span className="text-2xl">📁</span>
+                          <div className="w-8 h-8 rounded-full bg-white/10 text-slate-300 flex items-center justify-center mx-auto mb-1 border border-white/15">
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    </svg>
+  </div>
                           <span className="text-xs font-extrabold register-label mt-1.5">
                             {isTl ? 'Mag-upload ng Litrato (PC/Laptop)' : 'Upload Face Photo (PC Mode)'}
                           </span>

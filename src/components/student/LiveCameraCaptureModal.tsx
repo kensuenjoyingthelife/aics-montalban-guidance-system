@@ -60,23 +60,41 @@ export const LiveCameraCaptureModal: React.FC<LiveCameraCaptureModalProps> = ({
         );
       }
 
-      // Request natural full-resolution sensor stream (portrait 9:16 or landscape)
-      const isMobile = window.innerWidth < 768;
-      const constraints: MediaStreamConstraints = {
-        video: {
-          facingMode: { ideal: facing },
-          width: { ideal: isMobile ? 1080 : 1920 },
-          height: { ideal: isMobile ? 1920 : 1080 },
-        },
-        audio: false,
-      };
+      let stream: MediaStream | null = null;
+      // 1. Try with preferred facingMode
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: facing },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+          audio: false,
+        });
+      } catch (e1) {
+        console.warn('Initial camera constraints failed, attempting fallback to basic video:', e1);
+        // 2. Fallback to any available video stream without strict facingMode
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false,
+          });
+        } catch (e2) {
+          throw e2;
+        }
+      }
 
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      if (!stream) throw new Error('Could not initialize video stream');
+
       streamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        try {
+          await videoRef.current.play();
+        } catch {
+          // Play might require explicit user interaction in some browsers
+        }
       }
       setIsStarting(false);
     } catch (err: any) {
@@ -186,7 +204,12 @@ export const LiveCameraCaptureModal: React.FC<LiveCameraCaptureModalProps> = ({
 
           {cameraError ? (
             <div className="p-6 text-center text-rose-400 text-xs space-y-3 z-10">
-              <span className="text-4xl block">📷🚫</span>
+              <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto mb-2 border border-rose-500/30">
+    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  </div>
               <p className="font-bold text-sm">{cameraError}</p>
               <button
                 type="button"
@@ -215,7 +238,7 @@ export const LiveCameraCaptureModal: React.FC<LiveCameraCaptureModalProps> = ({
                 /* ID Card Landscape Frame (Wide rectangular ID shape) */
                 <div className="w-[85%] max-w-md aspect-[1.586/1] border-2 border-dashed border-emerald-400/80 rounded-2xl flex flex-col items-center justify-between p-3 bg-emerald-500/5 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]">
                   <span className="text-[11px] text-emerald-300 font-extrabold bg-slate-950/80 px-3 py-1 rounded-full border border-emerald-500/40">
-                    {isTl ? '🪪 I-sentro ang AICS Student ID Dito' : '🪪 Align Student ID Here'}
+                    {isTl ? 'I-sentro ang Dokumento Dito' : 'Align Document Here'}
                   </span>
                   <span className="text-[10px] text-slate-300 opacity-80 bg-black/60 px-2 py-0.5 rounded-md">
                     {isTl ? 'Tiyaking maliwanag at nababasa ang ID' : 'Ensure ID text is clear and readable'}
@@ -225,7 +248,7 @@ export const LiveCameraCaptureModal: React.FC<LiveCameraCaptureModalProps> = ({
                 /* Portrait Face Guide (Generous oval/rounded frame for natural selfies) */
                 <div className="w-[75%] max-w-xs aspect-[3/4] border-2 border-dashed border-cyan-400/80 rounded-[40px] flex flex-col items-center justify-between p-4 bg-cyan-500/5 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]">
                   <span className="text-[11px] text-cyan-300 font-extrabold bg-slate-950/80 px-3 py-1 rounded-full border border-cyan-500/40">
-                    {isTl ? '👤 I-sentro ang Iyong Mukha Dito' : '👤 Center Your Face Here'}
+                    {isTl ? 'I-sentro ang Iyong Mukha Dito' : 'Center Your Face Here'}
                   </span>
                   <span className="text-[10px] text-slate-300 opacity-80 bg-black/60 px-2 py-0.5 rounded-md">
                     {isTl ? 'Actual live selfie (Buong mukha)' : 'Actual live selfie (Full face)'}
@@ -244,7 +267,9 @@ export const LiveCameraCaptureModal: React.FC<LiveCameraCaptureModalProps> = ({
             onClick={() => setCurrentFacing((prev) => (prev === 'user' ? 'environment' : 'user'))}
             className="px-4 py-3 rounded-2xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-bold flex flex-col items-center gap-1 transition-all active:scale-95"
           >
-            <span className="text-lg">🔄</span>
+            <svg className="w-5 h-5 text-slate-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-1.19" />
+  </svg>
             <span className="text-[10px]">
               {currentFacing === 'user' ? (isTl ? 'Rear Camera' : 'Back Camera') : isTl ? 'Front Camera' : 'Front Camera'}
             </span>
@@ -258,9 +283,12 @@ export const LiveCameraCaptureModal: React.FC<LiveCameraCaptureModalProps> = ({
             className="w-20 h-20 rounded-full border-4 border-white/80 bg-emerald-500 hover:bg-emerald-400 active:scale-90 flex items-center justify-center shadow-2xl shadow-emerald-500/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             aria-label="Capture Photo"
           >
-            <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center text-slate-950 text-2xl font-black">
-              📸
-            </div>
+            <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center text-[#1E469B]">
+    <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+    </svg>
+  </div>
           </button>
 
           {/* Cancel Button */}
