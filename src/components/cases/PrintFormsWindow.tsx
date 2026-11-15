@@ -140,13 +140,43 @@ export const PrintFormsWindow: React.FC<{
           {kind === 'suspension' && <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Hindi binibilang ang Sabado, Linggo at mga araw na walang pasok sa Settings.' : 'Weekends and closed days from Settings are skipped.'}</p>}
           {bad && <p className="text-xs font-bold text-rose-700 dark:text-rose-300">⚠ {bad}</p>}
         </div>
-        <div className="px-6 py-4 border-t border-[#DCE5F2] dark:border-[#1E3158] flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-lg saas-card-subtle text-xs font-bold">
-            {isTl ? 'Kanselahin' : 'Cancel'}
-          </button>
-          <button type="button" data-action="print-form" disabled={!!bad} onClick={print} className="px-5 py-2.5 rounded-lg bg-[#1E469B] text-white text-xs font-bold disabled:opacity-50">
-            🖨 {isTl ? `I-print ang ${FORM_TITLES[kind][1]}` : `Print ${FORM_TITLES[kind][0]}`}
-          </button>
+        <div className="px-6 py-4 border-t border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-2">
+          {/* Quick Share / Softcopy Options */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                const text = `*ASIAN INSTITUTE OF COMPUTER STUDIES — GUIDANCE OFFICE*\n*${FORM_TITLES[kind][0]}*\n\nStudent: ${c.studentName} (${c.gradeSection})\nCase No: ${c.caseCode}\nOffense: ${c.offenseTitleEn}\n${when ? `Schedule: ${when}\n` : ''}\nOfficial Notice: Please coordinate with the Guidance Office. Thank you!`;
+                navigator.clipboard.writeText(text);
+                alert(isTl ? 'Na-kopya na ang softcopy text! Maaari mo na itong i-paste sa Messenger o chat sa Adviser.' : 'Softcopy text copied to clipboard! You can now paste it into Messenger or send it to the Adviser.');
+              }}
+              className="px-3.5 py-2 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#F8FAFC] dark:hover:bg-[#13203B] text-xs font-bold transition-all"
+              title="Copy text format for Messenger / Chat"
+            >
+              Copy for Messenger / Chat
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const subject = encodeURIComponent(`[AICS Guidance] ${FORM_TITLES[kind][0]} — ${c.studentName} (${c.caseCode})`);
+                const body = encodeURIComponent(`Good day,\n\nPlease find the official guidance notice below:\n\nStudent: ${c.studentName}\nGrade & Section: ${c.gradeSection}\nCase Code: ${c.caseCode}\nNotice Type: ${FORM_TITLES[kind][0]}\n${when ? `Schedule / Date: ${when}\n` : ''}\nDetails / Offense: ${c.offenseTitleEn}\n\nRespectfully,\nAICS Guidance & Student Affairs Office\nMontalban Campus`);
+                window.open(`mailto:${stu?.parentEmail || ''}?subject=${subject}&body=${body}`, '_blank');
+              }}
+              className="px-3.5 py-2 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#F8FAFC] dark:hover:bg-[#13203B] text-xs font-bold transition-all"
+              title="Open in Gmail / Email Client"
+            >
+              Send via Gmail / Email
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-lg saas-card-subtle text-xs font-bold">
+              {isTl ? 'Kanselahin' : 'Cancel'}
+            </button>
+            <button type="button" data-action="print-form" disabled={!!bad} onClick={print} className="px-5 py-2.5 rounded-lg bg-[#1E469B] text-white text-xs font-bold disabled:opacity-50 active:scale-[0.97] transition-all">
+              {isTl ? `I-print / Save as PDF (${FORM_TITLES[kind][1]})` : `Print / Save as PDF (${FORM_TITLES[kind][0]})`}
+            </button>
+          </div>
         </div>
       </div>
     </div>,
