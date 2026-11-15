@@ -1,3 +1,38 @@
+
+/* ============================================================================
+   AICS SAFEZONE INSTITUTIONAL PORTAL (INSPIRED BY CDM PORTAL CRAFT)
+   High-Prestige Editorial Guidance Architecture
+   ============================================================================ */
+:root {
+  --portal-canvas: #06152B;
+  --portal-surface: #0B2244;
+  --portal-surface-soft: #112F5C;
+  --portal-primary: #1E469B;
+  --portal-primary-hover: #163678;
+  --portal-gold: #F59E0B;
+  --portal-gold-soft: rgba(245, 158, 11, 0.15);
+  --portal-amber: #D97706;
+  --portal-teal: #0D9488;
+  --portal-border: rgba(255, 255, 255, 0.12);
+  --portal-ink: #F8FAFC;
+  --portal-muted: #94A3B8;
+}
+
+:root:not(.dark) {
+  --portal-canvas: #F8FAFC;
+  --portal-surface: #FFFFFF;
+  --portal-surface-soft: #F1F5F9;
+  --portal-primary: #0F2D6B;
+  --portal-primary-hover: #0A204C;
+  --portal-gold: #B45309;
+  --portal-gold-soft: rgba(180, 83, 9, 0.10);
+  --portal-amber: #92400E;
+  --portal-teal: #0F766E;
+  --portal-border: #CBD5E1;
+  --portal-ink: #0B1F4D;
+  --portal-muted: #475569;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -1513,3 +1548,45 @@ a.btn-press:active {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 16px 36px -6px rgba(0, 0, 0, 0.65);
 }
 
+
+
+/* ============================================================================
+   ANTI-SLOP HUMAN CRAFT & BESPOKE ACADEMIC TOKENS
+   Strict elimination of AI generic blobs, glowing gradients & template feel
+   ============================================================================ */
+
+/* High-Legibility Editorial Serifs */
+.editorial-serif {
+  font-family: var(--cdm-font-serif);
+  letter-spacing: -0.025em;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+/* Tactile 8-State Interactive Buttons */
+.btn-human-primary {
+  transition: transform 60ms var(--ease-out), background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+  will-change: transform;
+}
+.btn-human-primary:hover {
+  filter: brightness(1.05);
+}
+.btn-human-primary:active {
+  transform: scale(0.975);
+}
+.btn-human-primary:focus-visible {
+  outline: 2px solid #38BDF8;
+  outline-offset: 2px;
+}
+
+/* Hairline Solid Containment (No blurry AI drop shadows) */
+.hairline-card {
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 12px 28px -4px rgba(0, 0, 0, 0.45);
+}
+
+:root:not(.dark) .hairline-card {
+  background: #FFFFFF !important;
+  border: 1.5px solid #CBD5E1 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 10px 24px -4px rgba(15, 23, 42, 0.08) !important;
+  color: #0F172A !important;
+}
