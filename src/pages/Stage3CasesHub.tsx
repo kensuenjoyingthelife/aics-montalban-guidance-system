@@ -152,6 +152,26 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   const [incidentTime, setIncidentTime] = useState<string>('');
   const [incidentPlace, setIncidentPlace] = useState<string>(prefill?.place ?? '');
   const [incidentWitness, setIncidentWitness] = useState<string>(prefill?.witnesses ?? '');
+
+  // Synchronize prefill when prop changes (e.g. user clicks another concern in Concerns Hub)
+  useEffect(() => {
+    if (!prefill) return;
+    if (prefill.policyCode) {
+      setSelectedPolicyCode(prefill.policyCode);
+    }
+    if (prefill.search) {
+      setStudentPickerQuery(prefill.search);
+      const q = prefill.search.toLowerCase().trim();
+      const directMatch = students.find((s) => s.fullName.toLowerCase().includes(q) || q.includes(s.fullName.toLowerCase()));
+      if (directMatch) {
+        setSelectedStudentNumbers([directMatch.studentNumber]);
+      }
+    }
+    if (prefill.reportedBy) setReportedBy(prefill.reportedBy);
+    if (prefill.notes) setIncidentNotes(prefill.notes);
+    if (prefill.place) setIncidentPlace(prefill.place);
+    if (prefill.witnesses) setIncidentWitness(prefill.witnesses);
+  }, [prefill, students]);
   const offenseSelectRef = useRef<HTMLSelectElement>(null);
   const [lastSavedCodes, setLastSavedCodes] = useState<string[]>([]);
   const [showDoneCases, setShowDoneCases] = useState<boolean>(false);
