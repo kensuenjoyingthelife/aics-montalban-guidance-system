@@ -469,7 +469,7 @@ export const StudentPairInteractiveWing: React.FC<{ className?: string }> = ({ c
           transition={{ duration: 4.2, repeat: Infinity, ease: 'easeInOut' }}
           className="relative z-10"
         >
-          <AicsBoyStudentSvg className="w-48 sm:w-56 md:w-64 h-72 sm:h-84 md:h-[350px]" />
+          <AicsBoyStudentSvg className="w-44 sm:w-52 md:w-60 h-64 sm:h-72 lg:h-[295px] xl:h-[325px]" />
         </motion.div>
 
         {/* Girl Student (Right) */}
@@ -478,7 +478,7 @@ export const StudentPairInteractiveWing: React.FC<{ className?: string }> = ({ c
           transition={{ duration: 4.6, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
           className="relative z-20"
         >
-          <AicsGirlStudentSvg className="w-48 sm:w-56 md:w-64 h-72 sm:h-84 md:h-[350px]" />
+          <AicsGirlStudentSvg className="w-44 sm:w-52 md:w-60 h-64 sm:h-72 lg:h-[295px] xl:h-[325px]" />
         </motion.div>
       </div>
     </div>

@@ -642,7 +642,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   };
 
   return (
-    <div className="min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none student-portal-canvas bg-[#05112B] text-white">
+    <div className="min-h-screen lg:h-screen w-full relative flex flex-col justify-between overflow-x-hidden lg:overflow-hidden font-sans select-none student-portal-canvas bg-[#05112B] text-white">
       {/* Celestial Background: Active on Desktop, hidden/static on mobile */}
       <div className="hidden lg:block">
         <CelestialBackground />
@@ -788,7 +788,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       </header>
 
       {/* Main Glassmorphic Container: Left Student Pair & Right Form Card */}
-      <main className="relative z-20 flex-1 flex flex-col justify-center items-center p-3 sm:p-6 lg:p-8 my-1 sm:my-4">
+      <main className="relative z-20 flex-1 flex flex-col justify-center items-center p-3 sm:p-6 lg:px-8 lg:py-2 my-1 sm:my-4 lg:my-0">
         <div className="w-full max-w-7xl flex flex-col lg:flex-row items-center justify-center gap-6 xl:gap-16">
           {/* Left Wing: Boy and Girl Students Together with 1 Message Bubble (Desktop Only) */}
           {mode === 'login' && (
@@ -817,16 +817,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
           {mode === 'login' && (
             <div className="space-y-4 sm:space-y-6">
               <div className="text-center space-y-3 pb-2 sm:pb-4">
-                {/* Desktop: Official Clean AICS Seal (hidden on mobile) */}
-                <div className="hidden lg:block">
-                  <div className="w-16 h-16 rounded-full overflow-hidden mx-auto shadow-xl ring-2 ring-blue-400/40 bg-white p-0.5">
-                    <img
-                      src="/aics-logo.jpg"
-                      alt="AICS Logo"
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  </div>
-                </div>
+
 
                 {/* Mobile App: Friendly Animated Safezone Robot Companion (Visible only on Mobile) */}
                 <div className="block lg:hidden">
@@ -1032,8 +1023,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 </button>
               </div>
 
-              {/* Download Android APK (Prominent) + PWA Install (Mobile Screen Only) */}
-              <div className="pt-2 space-y-2">
+              {/* Download Android APK & PWA Install (Mobile Screen Only - hidden on desktop website) */}
+              <div className="lg:hidden pt-2 space-y-2">
                 {/* Mobile-Only PWA Home Screen Install Banner */}
                 <button
                   type="button"
@@ -1063,12 +1054,12 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   </span>
                 </button>
 
-                {/* Direct Android APK Download Button (Prominent in main spot) */}
+                {/* Direct Android APK Download Button (Mobile Only: hidden on desktop website) */}
                 <a
                   href="/aics-kalang-ba.apk"
                   download="AICS_Kalang_Ba.apk"
                   onClick={() => soundFX.playToggleSwitch(true)}
-                  className="btn-press w-full p-2.5 sm:p-3 rounded-xl bg-gradient-to-r from-sky-500/15 via-blue-600/20 to-indigo-600/20 hover:from-sky-500/25 hover:via-blue-600/30 hover:to-indigo-600/30 border border-sky-400/40 dark:border-sky-400/30 flex items-center justify-between gap-3 text-left transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md group"
+                  className="lg:hidden btn-press w-full p-2.5 sm:p-3 rounded-xl bg-gradient-to-r from-sky-500/15 via-blue-600/20 to-indigo-600/20 hover:from-sky-500/25 hover:via-blue-600/30 hover:to-indigo-600/30 border border-sky-400/40 dark:border-sky-400/30 flex items-center justify-between gap-3 text-left transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md group"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-sky-600 flex items-center justify-center text-white shadow-sm shrink-0 group-hover:scale-105 transition-transform duration-200">
