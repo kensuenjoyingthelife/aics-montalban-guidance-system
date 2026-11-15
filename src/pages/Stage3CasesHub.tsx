@@ -72,6 +72,8 @@ export interface CasePrefill {
   reportedBy: string;
   /** names the student wrote under "Who was involved" (put in the student search) */
   search: string;
+  /** Suggested or matched offense policy code from student report (e.g. 'MAJ-01' for Bullying) */
+  policyCode?: string;
 }
 
 interface Stage3CasesHubProps {
@@ -141,7 +143,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
 
   const [selectedStudentNumbers, setSelectedStudentNumbers] = useState<string[]>(initialPrefilledStudentNos);
   const [studentPickerQuery, setStudentPickerQuery] = useState<string>(prefill?.search ?? '');
-  const [selectedPolicyCode, setSelectedPolicyCode] = useState<string>('MIN-01');
+  const [selectedPolicyCode, setSelectedPolicyCode] = useState<string>(prefill?.policyCode ?? 'MIN-01');
   // Group incident: a different offense per student (empty = same as the main offense)
   const [policyOverride, setPolicyOverride] = useState<Record<string, string>>({});
   const [incidentDate, setIncidentDate] = useState<string>(() => new Date().toLocaleDateString('en-CA'));
@@ -1037,6 +1039,10 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     setLastSavedCodes(createdCases.map((c) => c.caseCode));
     if (prefill && onPrefillSaved) onPrefillSaved(createdCases.map((c) => c.caseCode));
     setSubTab('case-board');
+    // Rekta sa Due Process (open the newly created case drawer directly)
+    if (createdCases.length > 0) {
+      setOpenCaseCode(createdCases[0].caseCode);
+    }
   };
 
   // ==========================================================================
@@ -2401,19 +2407,26 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                         selectedStudentsList[0] ? outcomeFor(selectedStudentsList[0], policyFor(selectedStudentsList[0])).word : ''
                       }`}
                 </p>
-                <label className="inline-flex items-center gap-2 text-xs font-bold text-[#0B1F4D] dark:text-white cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={autoNotifyParent}
-                    onChange={(e) => setAutoNotifyParent(e.target.checked)}
-                    className="w-4 h-4 rounded accent-[#1E469B]"
-                  />
-                  <span>
-                    {isTl
-                      ? 'Ihanda rin ang text at email sa magulang'
-                      : 'Also prepare the text and email to the parent'}
-                  </span>
-                </label>
+                {/* Only offer Parent notice checkbox if the offense is Major or consecutive minor (escalated) */}
+                {selectedStudentsList.length > 0 && selectedStudentsList.some((s) => outcomeFor(s, policyFor(s)).escalated) ? (
+                  <label className="inline-flex items-center gap-2 text-xs font-bold text-[#0B1F4D] dark:text-white cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={autoNotifyParent}
+                      onChange={(e) => setAutoNotifyParent(e.target.checked)}
+                      className="w-4 h-4 rounded accent-[#1E469B]"
+                    />
+                    <span>
+                      {isTl
+                        ? 'Ihanda rin ang text at email sa magulang (Major / Serious)'
+                        : 'Also prepare text and email to parent (Major / Serious)'}
+                    </span>
+                  </label>
+                ) : (
+                  <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                    {isTl ? 'ℹ️ 1st Minor Offense: Walang SMS sa magulang (Paalala at tala lamang).' : 'ℹ️ 1st Minor Offense: Internal warning only (No parent SMS required).'}
+                  </p>
+                )}
                 </div>
 
                 <button
@@ -3977,7 +3990,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       >
                         ️ {isTl ? 'Mag-print ng form…' : 'Print a form…'}
                       </button>
-                      {openCaseStudent && (
+                      {/* Only allow Parent Text / SMS if Major or Consecutive Minor (escalated) */}
+                      {openCaseStudent && (openCase.severity.toLowerCase().includes('major') || openCase.severity.toLowerCase().includes('serious') || openCase.severity.toLowerCase().includes('grave') || openCase.severity.toLowerCase().includes('consecutive')) && (
                         <button
                           type="button"
                           title={isTl ? 'Hindi kasama ang offense sa text' : 'The message never includes the offense'}

@@ -549,6 +549,40 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
                           rawName = rawName.replace(/^\[[^\]]+\]\s*/, '');
                         }
                         const firstName = rawName.split(/,|;|\band\b|\bat\b|\(|\n/i)[0].trim().slice(0, 50);
+
+                        // Match student report type to official handbook policyCode
+                        const reportTypeLower = (selected.type || '').toLowerCase();
+                        let matchedPolicyCode = 'MIN-01'; // fallback
+                        if (reportTypeLower.includes('cyberbullying') || reportTypeLower.includes('social media')) {
+                          matchedPolicyCode = 'MAJ-02';
+                        } else if (reportTypeLower.includes('bullying') || reportTypeLower.includes('away') || reportTypeLower.includes('fighting') || reportTypeLower.includes('pananakit')) {
+                          matchedPolicyCode = 'MAJ-01';
+                        } else if (reportTypeLower.includes('vape') || reportTypeLower.includes('vaping') || reportTypeLower.includes('smoking') || reportTypeLower.includes('sigarilyo')) {
+                          matchedPolicyCode = 'MAJ-03';
+                        } else if (reportTypeLower.includes('extortion') || reportTypeLower.includes('hingi') || reportTypeLower.includes('pera') || reportTypeLower.includes('blackmail')) {
+                          matchedPolicyCode = 'MAJ-04';
+                        } else if (reportTypeLower.includes('weapon') || reportTypeLower.includes('matalim') || reportTypeLower.includes('contraband')) {
+                          matchedPolicyCode = 'MAJ-05';
+                        } else if (reportTypeLower.includes('vandalism') || reportTypeLower.includes('sira')) {
+                          matchedPolicyCode = 'MAJ-06';
+                        } else if (reportTypeLower.includes('cutting') || reportTypeLower.includes('truancy') || reportTypeLower.includes('takas')) {
+                          matchedPolicyCode = 'LSR-01';
+                        } else if (reportTypeLower.includes('forgery') || reportTypeLower.includes('pemeke') || reportTypeLower.includes('records')) {
+                          matchedPolicyCode = 'GRV-01';
+                        } else if (reportTypeLower.includes('uniform') || reportTypeLower.includes('dress code') || reportTypeLower.includes('haircut') || reportTypeLower.includes('gupit')) {
+                          matchedPolicyCode = 'MIN-02';
+                        } else if (reportTypeLower.includes('id') || reportTypeLower.includes('school id')) {
+                          matchedPolicyCode = 'MIN-03';
+                        } else if (reportTypeLower.includes('disruption') || reportTypeLower.includes('ingay') || reportTypeLower.includes('kakulitan')) {
+                          matchedPolicyCode = 'MIN-04';
+                        } else if (reportTypeLower.includes('littering') || reportTypeLower.includes('kalat')) {
+                          matchedPolicyCode = 'MIN-05';
+                        } else if (reportTypeLower.includes('phone') || reportTypeLower.includes('cellphone') || reportTypeLower.includes('gadget')) {
+                          matchedPolicyCode = 'MIN-06';
+                        } else if (reportTypeLower.includes('tardiness') || reportTypeLower.includes('late')) {
+                          matchedPolicyCode = 'MIN-01';
+                        }
+
                         onCreateCase({
                           concernId: selected.id,
                           concernCode: selected.code,
@@ -557,6 +591,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
                           reportedBy: selected.studentName || 'Student Reporter',
                           notes: `[FROM STUDENT CONCERN REPORT ${selected.code}]\nReporter / Complainant: ${selected.studentName} (ID: ${selected.studentNumber || '—'})\nWhen: ${selected.when || 'Not specified'}\nWhere: ${selected.where || 'Not specified'}\nWitnesses: ${selected.witnesses || 'None'}\nNarrative:\n${selected.whatHappened || ''}`.slice(0, 2000),
                           search: firstName,
+                          policyCode: matchedPolicyCode,
                         });
                       }
                     : undefined
