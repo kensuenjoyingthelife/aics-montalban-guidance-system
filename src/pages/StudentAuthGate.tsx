@@ -958,11 +958,11 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                         </div>
                       </div>
 
-                      {/* Primary Sign In Button */}
+                      {/* Primary Sign In Button (Bespoke Human-Crafted State) */}
                       <button
                         type="submit"
                         disabled={loginLoading || loginCooldownSeconds > 0}
-                        className="btn-press w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:opacity-95 text-white text-sm font-extrabold shadow-lg shadow-emerald-950/50 border border-white/10 disabled:opacity-50 transition-all flex items-center justify-center gap-2 mt-2"
+                        className="btn-human-primary w-full py-3.5 rounded-xl bg-[#0F3A78] hover:bg-[#15468E] active:scale-[0.975] text-white text-sm font-extrabold shadow-md border border-sky-400/30 disabled:opacity-50 transition-all flex items-center justify-center gap-2 mt-2"
                       >
                         {loginLoading ? (
                           <div className="flex items-center gap-2">

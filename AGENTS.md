@@ -27,3 +27,11 @@ Every single task, turn, prompt, and UI implementation in this project MUST stri
    - Never push cards to the extreme top with huge bottom voids on mobile phones or APK screens.
    - Keep padding compact (`p-3` or `p-4` on mobile), vertically centered or top-flow balanced with natural scrolling.
    - Notification clicks MUST deep-link directly into the target active chat or concern.
+
+
+## Anti-AI-Slop & Human-Grade Taste Directive:
+1. **Zero AI Clichés:** Ban generic dark-mode radial gradients, monotonous purple-cyan blobs, raw emojis, screaming uppercase labels, and redundant cards.
+2. **Deterministic Archetype:** Use Archetype A/B (Institutional Deep Navy #040E20, Academic Amber #F59E0B, Precision Emerald #10B981) with crisp 1px hairline borders (rgba(255,255,255,0.08) in dark, #CBD5E1 in light).
+3. **1-to-3 Rule:** Exactly 1 primary action per viewport/card, max 3 supporting logics.
+4. **8-State Interactive Feedback:** Default, hover, focus-visible, active (:scale-[0.97]), disabled, loading, error, success.
+5. **Human Restraint:** Strip decorative ballast. Every element must provide tangible utility.
