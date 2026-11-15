@@ -153,6 +153,22 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
     }
   };
 
+  // Listen to deep-link custom event from Lock Screen Notification Click
+  useEffect(() => {
+    const handleNavEvent = (e: any) => {
+      const tab = e.detail?.tab;
+      if (tab === 'chat') {
+        setActiveTab('chat');
+        soundFX.playToggleSwitch(true);
+      }
+    };
+    window.addEventListener('aics:navigate-tab', handleNavEvent);
+    if (window.location.hash === '#chat' || window.location.search.includes('tab=chat')) {
+      setActiveTab('chat');
+    }
+    return () => window.removeEventListener('aics:navigate-tab', handleNavEvent);
+  }, []);
+
   // Guided Onboarding Tour for Mobile Phone Users
   const [showMobileTour, setShowMobileTour] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -571,11 +587,11 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   };
 
   return (
-    <div className="min-h-[100dvh] w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none student-portal-canvas bg-[#F4F8FD] dark:bg-[#05112B] text-slate-900 dark:text-white transition-colors duration-150">
+    <div className="min-h-[100dvh] w-full relative flex flex-col justify-start overflow-x-hidden font-sans select-none student-portal-canvas bg-[#F4F8FD] dark:bg-[#05112B] text-slate-900 dark:text-white transition-colors duration-150">
       <WavyBackground />
 
       {/* Top Navigation Bar - Clean, Organized & Non-Congested Header */}
-      <header className="relative z-20 w-full px-3 sm:px-8 py-3 sm:py-4 border-b border-sky-200/60 dark:border-white/10 student-portal-header bg-white/90 dark:bg-[#0B1E48]/90 backdrop-blur-md safe-area-top shadow-sm">
+      <header className="relative z-20 w-full px-3 sm:px-8 py-2.5 sm:py-3.5 border-b border-sky-200/60 dark:border-white/10 student-portal-header bg-white/95 dark:bg-[#0B1E48]/95 backdrop-blur-md safe-area-top shadow-xs">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
           {/* Left Brand & Identification */}
           <div className="flex items-center gap-2.5 sm:gap-3.5">
@@ -932,8 +948,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
         )}
       </AnimatePresence>
 
-      {/* Main Workspace Area */}
-      <main className="relative z-20 flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 space-y-6">
+      {/* Main Workspace Area (Clean Responsive Vertical Flow: Compact Spacing on Mobile) */}
+      <main className="relative z-20 flex-1 max-w-4xl w-full mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6 pb-20 sm:pb-8">
         {/* Navigation Tabs (Hidden on Mobile < 768px because everything is neatly in the Right Menu Drawer) */}
         <div className="hidden md:flex items-center justify-between border-b border-sky-200/60 dark:border-white/10 pb-3 flex-wrap gap-2">
           <div className="inline-flex p-1 rounded-2xl register-section-card gap-1.5 flex-wrap">
@@ -992,12 +1008,12 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
           </span>
         </div>
 
-        {/* TAB 1: SUBMIT REPORT (Google Form-Style Step-by-Step Pagination) */}
+        {/* TAB 1: SUBMIT REPORT (Compact, Responsive Padding) */}
         {activeTab === 'submit' && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-3xl cosmic-glass-card p-5 sm:p-8 space-y-6 shadow-2xl"
+            className="rounded-2xl sm:rounded-3xl cosmic-glass-card p-4 sm:p-7 space-y-4 sm:space-y-6 shadow-xl"
           >
             {/* Form Header & Progress Tracker */}
             <div className="space-y-4">

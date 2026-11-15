@@ -777,8 +777,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       </header>
 
       {/* Main Glassmorphic Container with Left and Right Student Encouragement Wings */}
-      <main className="relative z-20 flex-1 flex items-center justify-center p-3 sm:p-6 lg:p-8 my-2 sm:my-4">
-        <div className="w-full max-w-7xl flex flex-col lg:flex-row items-center justify-center gap-6 xl:gap-12">
+      <main className="relative z-20 flex-1 flex flex-col justify-center items-center p-3 sm:p-6 lg:p-8 my-1 sm:my-4">
+        <div className="w-full max-w-7xl flex flex-col lg:flex-row items-center justify-center gap-4 xl:gap-12">
           {/* Left Wing: Boy Student (Desktop Website Only - Hidden on Mobile/PWA/Capacitor) */}
           {mode === 'login' && (
             <motion.div
@@ -791,20 +791,20 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
             </motion.div>
           )}
 
-          {/* Central Login / Register Glass Card */}
+          {/* Central Login / Register Glass Card (Responsive fit for mobile phones without excessive bottom gap) */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35 }}
             className={`w-full ${
               mode === 'register' ? 'max-w-5xl' : 'max-w-xl'
-            } cosmic-glass-card p-5 sm:p-12 space-y-6 sm:space-y-8 relative z-10`}
+            } cosmic-glass-card p-4 sm:p-10 space-y-4 sm:space-y-7 relative z-10`}
           >
           {/* ====================================================
               MODE: LOGIN SCREEN
               ==================================================== */}
           {mode === 'login' && (
-            <div className="space-y-7">
+            <div className="space-y-4 sm:space-y-6">
               <div className="text-center space-y-3 pb-2 sm:pb-4">
                 {/* Desktop: Official Clean AICS Seal (hidden on mobile) */}
                 <div className="hidden lg:block">

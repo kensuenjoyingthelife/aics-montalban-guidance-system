@@ -82,18 +82,21 @@ self.addEventListener('push', (event) => {
   event.waitUntil(self.registration.showNotification(data.title, options));
 });
 
-// Notification click to bring app to front
+// Notification click to bring app to front and navigate to chat
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const targetUrl = event.notification.data?.url || '/?tab=chat';
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
-        if (client.url && 'focus' in client) {
+        if ('focus' in client) {
+          client.navigate(targetUrl);
           return client.focus();
         }
       }
       if (clients.openWindow) {
-        return clients.openWindow('/');
+        return clients.openWindow(targetUrl);
       }
     })
   );

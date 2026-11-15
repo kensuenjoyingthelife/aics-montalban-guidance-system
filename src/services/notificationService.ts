@@ -113,17 +113,23 @@ export class NotificationEngine {
       console.log('Push notification received:', notification);
     });
 
-    // Student clicked on notification from phone lock screen
+    // Student clicked on notification from phone lock screen -> route directly to chat tab
     PushNotifications.addListener('pushNotificationActionPerformed', (notification: ActionPerformed) => {
       console.log('Student tapped push notification:', notification.actionId, notification.inputValue);
       window.focus();
+      try {
+        window.location.hash = '#chat';
+        window.dispatchEvent(new CustomEvent('aics:navigate-tab', { detail: { tab: 'chat' } }));
+      } catch {
+        // ignore
+      }
     });
   }
 
   /**
    * Trigger discreet notification to the phone's lock screen & notification bar
    */
-  public async sendDiscreetNotification(title: string, body: string): Promise<void> {
+  public async sendDiscreetNotification(title: string, body: string, targetTab: string = 'chat'): Promise<void> {
     if (!this.enabled) return;
 
     // 1. Play in-app audio chime
@@ -136,13 +142,13 @@ export class NotificationEngine {
           notifications: [
             {
               id: Date.now() % 100000,
-              title: title || 'AICS kalang ba',
-              body: body || 'AICS kalang ba message you.',
+              title: title || 'AICS Guidance Office',
+              body: body || 'May bagong mensahe o update sa iyong concern report.',
               schedule: { at: new Date(Date.now() + 100) },
               sound: 'beep.wav',
               smallIcon: 'ic_stat_icon_config_sample',
               actionTypeId: '',
-              extra: null,
+              extra: { targetTab },
             },
           ],
         });
@@ -152,29 +158,39 @@ export class NotificationEngine {
       }
     }
 
-    // 3. Web Notification API (Browser on phone / desktop)
+    // 3. Web Notification API (Browser on phone / desktop / PWA)
     if (typeof window !== 'undefined' && 'Notification' in window) {
       if (Notification.permission === 'granted') {
+        const handleNotifClick = (notifInstance: any) => {
+          window.focus();
+          try {
+            window.location.hash = '#chat';
+            window.dispatchEvent(new CustomEvent('aics:navigate-tab', { detail: { tab: 'chat' } }));
+          } catch {
+            // ignore
+          }
+          notifInstance.close();
+        };
+
         try {
-          const notif = new Notification(title || 'AICS kalang ba', {
-            body: body || 'AICS kalang ba message you.',
+          const notif = new Notification(title || 'AICS Guidance Office', {
+            body: body || 'May bagong mensahe sa iyong concern report.',
             icon: '/aics-logo.jpg',
             badge: '/aics-logo.jpg',
             silent: false,
+            data: { url: '/?tab=chat', targetTab },
           });
 
-          notif.onclick = () => {
-            window.focus();
-            notif.close();
-          };
+          notif.onclick = () => handleNotifClick(notif);
         } catch {
           // Fallback if ServiceWorker required
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker.ready.then((reg) => {
-              reg.showNotification(title || 'AICS kalang ba', {
-                body: body || 'AICS kalang ba message you.',
+              reg.showNotification(title || 'AICS Guidance Office', {
+                body: body || 'May bagong mensahe sa iyong concern report.',
                 icon: '/aics-logo.jpg',
                 badge: '/aics-logo.jpg',
+                data: { url: '/?tab=chat', targetTab },
               });
             });
           }
