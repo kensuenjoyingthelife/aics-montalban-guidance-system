@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { UserPlus } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
@@ -1801,35 +1802,35 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   return (
     <main className="p-6 lg:p-8 max-w-[1440px] w-full mx-auto space-y-5 flex-1">
       {/* ====================================================================
-          DIRECT, CLEAN SUB-TAB BAR (NO DUPLICATE KPI CARDS — STRAIGHT TO ACTION)
+          DIRECT, CLEAN SUB-TAB BAR WITH PROMINENT ACTION BUTTONS
           ==================================================================== */}
-      <div className="shrink-0 h-[54px] flex items-center justify-between gap-4 border-b border-[#DCE5F2] dark:border-[#1E3158]">
+      <div className="shrink-0 py-2 sm:h-[58px] flex flex-wrap items-center justify-between gap-3 border-b border-[#DCE5F2] dark:border-[#1E3158]">
         <div className="inline-flex p-1 rounded-xl saas-card-subtle gap-1 overflow-x-auto">
           {(
             [
               {
                 id: 'add-report',
-                labelEn: '＋ New case',
-                labelTl: '＋ Bagong kaso',
-                tip: '',
+                labelEn: '+ File New Case',
+                labelTl: '+ Gumawa ng Kaso',
+                tip: isTl ? 'Magtala ng bagong disciplinary case' : 'File a new disciplinary case',
               },
               {
                 id: 'case-board',
-                labelEn: `Cases · ${summaryStats.activeCases} open`,
-                labelTl: `Mga kaso · ${summaryStats.activeCases} bukas`,
-                tip: isTl ? 'Bilang ng kasong hindi pa tapos' : 'Number of cases not yet done',
+                labelEn: `Active Cases (${summaryStats.activeCases})`,
+                labelTl: `Mga Aktibong Kaso (${summaryStats.activeCases})`,
+                tip: isTl ? 'Talaan ng mga kasong inaaksyunan' : 'List of active open cases',
               },
               {
                 id: 'students',
-                labelEn: `Students · ${students.length}`,
-                labelTl: `Mga estudyante · ${students.length}`,
-                tip: isTl ? 'Lahat ng estudyante sa listahan' : 'All students in the list',
+                labelEn: `Student Masterlist (${students.length})`,
+                labelTl: `Talaan ng Estudyante (${students.length})`,
+                tip: isTl ? 'Lahat ng estudyante sa listahan' : 'All enrolled students directory',
               },
               {
                 id: 'masterlist',
-                labelEn: 'Import masterlist',
-                labelTl: 'I-import ang masterlist',
-                tip: isTl ? 'Mag-upload ng Excel ng mga estudyante' : 'Upload the Excel list of students',
+                labelEn: 'Import Masterlist (Excel)',
+                labelTl: 'Mag-import ng Excel Masterlist',
+                tip: isTl ? 'Mag-upload ng Excel ng mga estudyante' : 'Upload student batch spreadsheet',
               },
             ] as const
           ).map((tab) => {
@@ -1843,10 +1844,10 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   soundFX.playToggleSwitch(true);
                   setSubTab(tab.id);
                 }}
-                className={`px-4 py-2 rounded-lg text-xs sm:text-[13px] font-bold whitespace-nowrap transition-colors ${
+                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-[13px] font-extrabold whitespace-nowrap transition-all active:scale-[0.98] ${
                   isActive
-                    ? 'bg-[#1E469B] text-white shadow-sm'
-                    : 'text-[#4A608A] dark:text-[#94A8D0] hover:text-[#0B1F4D] dark:hover:text-white'
+                    ? 'bg-[#1E469B] text-white shadow-md ring-2 ring-[#1E469B]/20'
+                    : 'text-[#4A608A] dark:text-[#94A8D0] hover:text-[#0B1F4D] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
                 {isTl ? tab.labelTl : tab.labelEn}
@@ -1855,6 +1856,21 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
           })}
         </div>
 
+        {/* PROMINENT DIRECT ACTION BUTTON: ADD STUDENT */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playStepUnlock();
+              setStudentFormFor('new');
+            }}
+            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.97] text-white text-xs sm:text-[13px] font-black shadow-md flex items-center gap-1.5 transition-all"
+            title={isTl ? 'Magdagdag ng bagong estudyante sa records' : 'Register a new student directly'}
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>{isTl ? '＋ Magdagdag ng Estudyante' : '＋ Add Student to Records'}</span>
+          </button>
+        </div>
       </div>
 
       {/* ====================================================================
