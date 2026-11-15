@@ -4,7 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useConfirmChange } from '../components/ui/ConfirmChange';
 import { soundFX } from '../services/soundEngine';
 import { useAppConfig } from '../services/appConfig';
-import { Phone, PhoneCall, RefreshCw, CheckCircle, Clock, AlertTriangle, Calendar, MessageSquare, ChevronDown, ChevronRight, UserCheck, X } from 'lucide-react';
+import { Phone, PhoneCall, RefreshCw, CheckCircle, Clock, AlertTriangle, Calendar, MessageSquare, ChevronDown, ChevronRight, UserCheck, X, Edit2, Check, User, Mail } from 'lucide-react';
 import type { ToastNextAction } from './DashboardPage';
 import {
   ParentAppointmentItem,
@@ -23,6 +23,7 @@ import {
   fetchContactLogsFromDb,
   fetchSmsLogsFromDb,
   updateStudentPrefsInDb,
+  updateStudentDetailsInDb,
   ContactLogEntry,
   SmsLogEntry,
 } from '../services/supabaseClient';
@@ -1092,9 +1093,9 @@ const Overlay: React.FC<{ onClose: () => void; label: string; wide?: boolean; ch
         onClick={onClose}
         aria-label="Close"
         title="Close"
-        className="float-right w-8 h-8 rounded-lg saas-card-subtle text-sm font-bold text-[#4A608A]"
+        className="float-right w-8 h-8 rounded-lg saas-card-subtle flex items-center justify-center text-sm font-bold text-[#4A608A] hover:text-[#0B1F4D] dark:hover:text-white transition-colors"
       >
-        
+        <X className="w-4 h-4" />
       </button>
       {children}
     </div>
@@ -1122,7 +1123,7 @@ const ScheduleWindow: React.FC<{
   afterSend: () => void;
   dayTitle: (iso: string) => string;
   smsReady: boolean | null;
-}> = ({ state, onClose, isTl, appointments, setAppointments, followUps, setFollowUps, caseByCode, studentByNo, confirmChange, onTriggerToast, ensureTask, afterSend, dayTitle, smsReady }) => {
+}> = ({ state, onClose, isTl, appointments, setAppointments, followUps, setFollowUps, students, setStudents, caseByCode, studentByNo, confirmChange, onTriggerToast, ensureTask, afterSend, dayTitle, smsReady }) => {
   const cfg = useAppConfig();
   const officeSummary = useMemo(() => {
     const days = (cfg.officeHours?.days ?? ['Mon', 'Tue', 'Wed', 'Thu']).join('–');
@@ -1180,6 +1181,52 @@ const ScheduleWindow: React.FC<{
   }, [date, start, msgLang]);
   const sensitive = findSensitiveWords(message);
   const [saving, setSaving] = useState(false);
+
+  // Quick Inline Parent Information Editor
+  const [isEditingParent, setIsEditingParent] = useState(false);
+  const [parentNameInput, setParentNameInput] = useState(stu?.parentName || '');
+  const [parentPhoneInput, setParentPhoneInput] = useState(stu?.parentPhone || '');
+  const [parentEmailInput, setParentEmailInput] = useState(stu?.parentEmail || '');
+  const [savingParent, setSavingParent] = useState(false);
+
+  // Sync state if student changes
+  useEffect(() => {
+    if (stu) {
+      setParentNameInput(stu.parentName || '');
+      setParentPhoneInput(stu.parentPhone || '');
+      setParentEmailInput(stu.parentEmail || '');
+    }
+  }, [stu?.studentNumber, stu?.parentName, stu?.parentPhone, stu?.parentEmail]);
+
+  const handleSaveParentInfo = async () => {
+    if (!stu) return;
+    const cleanPhone = parentPhoneInput.trim();
+    const cleanEmail = parentEmailInput.trim();
+    const cleanName = parentNameInput.trim() || stu.parentName;
+
+    setSavingParent(true);
+    const ok = await updateStudentDetailsInDb(stu.studentNumber, {
+      parent_name: cleanName,
+      parent_phone: cleanPhone,
+      parent_email: cleanEmail,
+    });
+
+    if (ok) {
+      // Update memory state across app
+      setStudents((prev) =>
+        prev.map((s) =>
+          s.studentNumber === stu.studentNumber
+            ? { ...s, parentName: cleanName, parentPhone: cleanPhone, parentEmail: cleanEmail }
+            : s
+        )
+      );
+      setIsEditingParent(false);
+      onTriggerToast(isTl ? 'Na-update ang impormasyon ng magulang.' : 'Parent contact details updated successfully.');
+    } else {
+      onTriggerToast(isTl ? 'Hindi na-save ang impormasyon. I-check ang network.' : 'Failed to save parent details. Check network.');
+    }
+    setSavingParent(false);
+  };
 
   if (!c || !stu) {
     return (
@@ -1306,17 +1353,158 @@ const ScheduleWindow: React.FC<{
 
   return (
     <Overlay onClose={onClose} label={isTl ? 'Mag-schedule' : 'Schedule'} wide>
-      <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
-        {reschedule ? (isTl ? 'Ilipat ang conference' : 'Move the conference') : isTl ? 'Mag-schedule ng conference' : 'Schedule a conference'}
-      </h3>
-      <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
-        {stu.parentName} · {isTl ? 'magulang ni' : 'parent of'} <span className="font-bold">{c.studentName}</span> ({c.gradeSection}) · {stu.parentPhone || (isTl ? 'walang number' : 'no number')}
-        {stu.parentEmail ? ` · ${stu.parentEmail}` : ''}
-      </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
+            {reschedule ? (isTl ? 'Ilipat ang conference' : 'Move the conference') : isTl ? 'Mag-schedule ng conference' : 'Schedule a conference'}
+          </h3>
+          <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+            {isTl ? 'I-verify ang student at magulang bago magpadala ng summons o abiso' : 'Verify student & parent information before sending summons or notice'}
+          </p>
+        </div>
+      </div>
+
+      {/* Prominent Student & Parent Information Card (With Quick-Edit Capability) */}
+      <div className="rounded-xl border border-[#CBD5E1] dark:border-[#223555] bg-[#F8FAFC] dark:bg-[#0B1528] p-3.5 space-y-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2E8F0] dark:border-[#1E293B] pb-2">
+          <div className="flex items-center gap-2">
+            <span className="w-8 h-8 rounded-lg bg-[#1E469B]/10 dark:bg-[#7CB8F7]/20 flex items-center justify-center text-[#1E469B] dark:text-[#7CB8F7]">
+              <User className="w-4 h-4" />
+            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                  {c.studentName}
+                </span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#E2E8F0] dark:bg-[#1E293B] text-[#334155] dark:text-[#94A3B8]">
+                  {c.gradeSection}
+                </span>
+              </div>
+              <p className="text-[11px] font-mono text-[#64748B] dark:text-[#94A8D0]">
+                LRN / No: <span className="font-semibold">{c.studentNumber}</span> · Case: <span className="font-semibold">{c.caseCode}</span>
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsEditingParent((v) => !v)}
+            className="px-2.5 py-1 rounded-lg border border-[#CBD5E1] dark:border-[#2A3F6D] bg-white dark:bg-[#0F1E38] text-[11px] font-bold text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#EEF4FF] dark:hover:bg-[#1A2F55] active:scale-[0.97] transition-all flex items-center gap-1.5 shadow-xs"
+          >
+            <Edit2 className="w-3 h-3" />
+            {isEditingParent ? (isTl ? 'Kanselahin' : 'Cancel Edit') : (isTl ? 'Palitan / I-update' : 'Edit Parent Info')}
+          </button>
+        </div>
+
+        {/* Read-Only View vs Inline Quick Edit Mode */}
+        {!isEditingParent ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                {isTl ? 'Magulang / Guardian:' : 'Parent / Guardian:'}
+              </span>
+              <span className="font-bold text-[#0F172A] dark:text-white">
+                {stu.parentName || (isTl ? 'Walang Pangalan' : 'No Name Set')}
+              </span>
+              {stu.parentRelationship && (
+                <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">
+                  ({stu.parentRelationship})
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Phone className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7] shrink-0" />
+              <span className="font-mono font-bold text-[#0F172A] dark:text-white">
+                {stu.parentPhone || (
+                  <span className="text-rose-500 font-sans italic">{isTl ? 'Walang number (kailangan)' : 'No phone number'}</span>
+                )}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 sm:col-span-2">
+              <Mail className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7] shrink-0" />
+              <span className="font-medium text-[#0F172A] dark:text-[#E2E8F0] break-all">
+                {stu.parentEmail || (
+                  <span className="text-[#94A3B8] italic">{isTl ? 'Walang Gmail / email address' : 'No email address registered'}</span>
+                )}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2 pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] mb-1">
+                  {isTl ? 'Pangalan ng Magulang' : 'Parent / Guardian Name'}
+                </label>
+                <input
+                  type="text"
+                  value={parentNameInput}
+                  onChange={(e) => setParentNameInput(e.target.value)}
+                  placeholder="e.g. Mrs. Maria Santos"
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-[#CBD5E1] dark:border-[#2A3F6D] bg-white dark:bg-[#070D18] text-xs font-semibold text-[#0F172A] dark:text-white focus:outline-none focus:ring-1 focus:ring-[#1E469B]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] mb-1">
+                  {isTl ? 'Phone / Mobile No.' : 'Parent Mobile Number'}
+                </label>
+                <input
+                  type="text"
+                  value={parentPhoneInput}
+                  onChange={(e) => setParentPhoneInput(e.target.value)}
+                  placeholder="0917-000-0000"
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-[#CBD5E1] dark:border-[#2A3F6D] bg-white dark:bg-[#070D18] text-xs font-mono font-semibold text-[#0F172A] dark:text-white focus:outline-none focus:ring-1 focus:ring-[#1E469B]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] mb-1">
+                  {isTl ? 'Gmail / Email Address' : 'Parent Gmail / Email'}
+                </label>
+                <input
+                  type="email"
+                  value={parentEmailInput}
+                  onChange={(e) => setParentEmailInput(e.target.value)}
+                  placeholder="parent@gmail.com"
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-[#CBD5E1] dark:border-[#2A3F6D] bg-white dark:bg-[#070D18] text-xs font-semibold text-[#0F172A] dark:text-white focus:outline-none focus:ring-1 focus:ring-[#1E469B]"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setIsEditingParent(false)}
+                className="px-3 py-1 rounded-lg text-xs font-bold text-[#64748B] hover:text-[#0F172A] dark:hover:text-white transition-colors"
+              >
+                {isTl ? 'Kanselahin' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                disabled={savingParent}
+                onClick={handleSaveParentInfo}
+                className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold active:scale-[0.97] transition-all flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+              >
+                <Check className="w-3.5 h-3.5" />
+                {savingParent ? (isTl ? 'Sina-save...' : 'Saving...') : (isTl ? 'I-save ang Bagong Detalye' : 'Save Contact Info')}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {reschedule && state.from && (
-        <p className="text-[11px] font-semibold text-amber-800 dark:text-amber-300">
-          {isTl ? 'Dating schedule' : 'Old date'}: {dayTitle(state.from.date)} · {state.from.timeSlot}
-        </p>
+        <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex items-center justify-between">
+          <p className="text-xs font-bold text-amber-900 dark:text-amber-200">
+            {isTl ? 'Dating Iskedyul ng Kumperensya' : 'Original Scheduled Date'}: {dayTitle(state.from.date)} · {state.from.timeSlot}
+          </p>
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200/60 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200">
+            {isTl ? 'Ililipat' : 'Rescheduling'}
+          </span>
+        </div>
       )}
 
       {/* Smart suggestions */}

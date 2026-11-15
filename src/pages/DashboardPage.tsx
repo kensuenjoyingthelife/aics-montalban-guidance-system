@@ -1314,7 +1314,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </header>
 
         {/* Scrollable Content Container with Stable Gutter & Top Alignment */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden clean-scroll [scrollbar-gutter:stable] flex flex-col justify-between">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden clean-scroll [scrollbar-gutter:stable] flex flex-col justify-start">
 
         {/* ==================================================================
             CENTERED MINI CONFIRMATION CARD (ANIMATED CHECK + CHECK SFX)
