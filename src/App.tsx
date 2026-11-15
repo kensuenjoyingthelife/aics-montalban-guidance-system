@@ -14,6 +14,7 @@ import { StudentPortalUser } from './services/studentAuthService';
 import { applyAdaptivePerformanceClass, isCapacitorNativeApp } from './services/devicePerformance';
 import { InactivityShield } from './components/security/InactivityShield';
 import { recordSecurityAudit } from './services/securityEngine';
+import { StudentPinLockScreen } from './components/student/StudentPinLockScreen';
 
 export const App: React.FC = () => {
   // Opening sequence plays on desktop/web; on Capacitor Native mobile, skip splash for instant 0ms app start
@@ -67,6 +68,19 @@ export const App: React.FC = () => {
     return null;
   });
 
+  // Mobile App Quick PIN Lock State
+  // If app is native APK and user is remembered, lock into 5-digit PIN mode by default upon reopen
+  const [isPinLocked, setIsPinLocked] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const isLocked = localStorage.getItem('student_pin_locked') === 'true';
+      const hasUser = !!localStorage.getItem('student_portal_user');
+      return hasUser && (isLocked || isCapacitorNativeApp());
+    } catch {
+      return false;
+    }
+  });
+
   return (
     <SoundProvider>
       <ThemeProvider>
@@ -99,33 +113,50 @@ export const App: React.FC = () => {
                  STUDENT PORTAL (WEB & MOBILE) — 100% EXCLUSIVE
                  ==================================================== */
               activeStudentSession ? (
-                <InactivityShield
-                  timeoutMinutes={15}
-                  onTimeout={() => {
-                    recordSecurityAudit('AUTO_LOGOUT', activeStudentSession.studentNumber);
-                    try {
-                      localStorage.removeItem('student_portal_user');
-                    } catch {}
-                    setActiveStudentSession(null);
-                  }}
-                >
-                  <StudentDashboard
+                isPinLocked ? (
+                  <StudentPinLockScreen
                     user={activeStudentSession}
-                    onSignOut={() => {
+                    onUnlock={(unlockedUser) => {
+                      setIsPinLocked(false);
+                      setActiveStudentSession(unlockedUser);
+                    }}
+                    onSwitchAccount={() => {
+                      setIsPinLocked(false);
+                      setActiveStudentSession(null);
+                    }}
+                  />
+                ) : (
+                  <InactivityShield
+                    timeoutMinutes={15}
+                    onTimeout={() => {
+                      recordSecurityAudit('AUTO_LOGOUT', activeStudentSession.studentNumber);
                       try {
                         localStorage.removeItem('student_portal_user');
                       } catch {}
                       setActiveStudentSession(null);
                     }}
-                  />
-                </InactivityShield>
+                  >
+                    <StudentDashboard
+                      user={activeStudentSession}
+                      onSignOut={() => {
+                        try {
+                          localStorage.removeItem('student_portal_user');
+                          localStorage.removeItem('student_pin_locked');
+                        } catch {}
+                        setActiveStudentSession(null);
+                      }}
+                    />
+                  </InactivityShield>
+                )
               ) : (
                 <StudentAuthGate
                   onLoginSuccess={(user) => {
                     recordSecurityAudit('STUDENT_LOGIN', user.studentNumber);
                     try {
                       localStorage.setItem('student_portal_user', JSON.stringify(user));
+                      localStorage.removeItem('student_pin_locked');
                     } catch {}
+                    setIsPinLocked(false);
                     setActiveStudentSession(user);
                   }}
                 />

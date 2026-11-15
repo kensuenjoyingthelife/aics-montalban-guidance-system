@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { LogOut } from 'lucide-react';
+import { App as CapacitorApp } from '@capacitor/app';
 import { recordSecurityAudit } from '../../services/securityEngine';
+import { isCapacitorNativeApp } from '../../services/devicePerformance';
 
 /**
  * iPhone AssistiveTouch-Style Draggable Floating Mascot Head Quick-Exit Ball
@@ -102,33 +104,60 @@ export const QuickExitButton: React.FC<QuickExitButtonProps> = ({ onTrigger, cla
     return () => window.removeEventListener('resize', checkMobile);
   }, [applyTransform, getBounds]);
 
-  const executeEmergencyExit = useCallback(() => {
+  const executeEmergencyExit = useCallback(async () => {
     try {
       recordSecurityAudit('QUICK_EXIT');
     } catch {}
 
-    // 1. Instantly purge all student credentials and sessions
-    try {
-      sessionStorage.clear();
-      localStorage.removeItem('student_auth_session');
-      localStorage.removeItem('student_portal_user');
-      localStorage.removeItem('aics_student_cached');
-    } catch {}
+    const isNativeMobile = isCapacitorNativeApp();
 
-    // 2. Trigger parent signout callback
-    if (onTrigger) {
+    if (isNativeMobile) {
+      // DUAL-MODE DISCRETION: MOBILE APK / PHONE
+      // Lock into PIN gate immediately for safety & privacy, but DO NOT wipe student credentials
+      // When the student reopens the app, they unlock with their 5-digit PIN instead of full re-login!
       try {
-        onTrigger();
+        localStorage.setItem('student_pin_locked', 'true');
       } catch {}
+
+      if (onTrigger) {
+        try {
+          onTrigger();
+        } catch {}
+      }
+
+      // Exit / minimize app immediately
+      try {
+        await CapacitorApp.exitApp();
+        return;
+      } catch {
+        try {
+          window.close();
+        } catch {}
+        window.location.replace('https://www.google.com');
+      }
+    } else {
+      // DUAL-MODE DISCRETION: WEB BROWSER / COMPUTER (Zero-Trace Instant Purge)
+      // Completely wipe credentials, sessions, and history so shared PCs leave 0 evidence!
+      try {
+        sessionStorage.clear();
+        localStorage.removeItem('student_auth_session');
+        localStorage.removeItem('student_portal_user');
+        localStorage.removeItem('student_pin_locked');
+        localStorage.removeItem('aics_student_cached');
+      } catch {}
+
+      if (onTrigger) {
+        try {
+          onTrigger();
+        } catch {}
+      }
+
+      try {
+        window.close();
+      } catch {}
+
+      window.location.replace('https://www.google.com');
     }
-
-    // 3. Attempt to close window (works on PWAs, Android/iOS home screen apps, WebViews)
-    try {
-      window.close();
-    } catch {}
-
-    // 4. Force replace navigation to Google search
-    window.location.replace('https://www.google.com');
   }, [onTrigger]);
 
   // Desktop Esc Hotkey

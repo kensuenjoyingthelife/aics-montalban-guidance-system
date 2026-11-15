@@ -208,6 +208,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   const [regStrand, setRegStrand] = useState('ICT');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  const [regQuickPin, setRegQuickPin] = useState('');
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
 
@@ -362,6 +363,14 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     return { type: 'correct', label: 'Matched ✓' };
   }, [regConfirmPassword, regPassword]);
 
+  // 9. 5-Digit Quick Unlock PIN (for mobile & daily login convenience)
+  const quickPinStatus = useMemo(() => {
+    const cleaned = regQuickPin.trim();
+    if (!cleaned) return { type: 'not_input', label: 'Not Input' };
+    if (!/^\d{5}$/.test(cleaned)) return { type: 'wrong', label: 'Must be 5 digits' };
+    return { type: 'correct', label: '5-Digit PIN Set ✓' };
+  }, [regQuickPin]);
+
   // Check if form is ready to submit
   const isRegisterFormValid =
     lastNameStatus.type === 'correct' &&
@@ -372,7 +381,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     studentIdStatus.type === 'correct' &&
     personalPhotoStatus.type === 'correct' &&
     passwordStatus.type === 'correct' &&
-    confirmPasswordStatus.type === 'correct';
+    confirmPasswordStatus.type === 'correct' &&
+    quickPinStatus.type === 'correct';
 
   // Badge render helper
   const renderBadge = (status: { type: string; label: string }) => {
@@ -463,8 +473,10 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         email: regEmail,
         studentNumber: regStudentNumber,
         password: regPassword,
+        quickPin: regQuickPin.trim(),
         gradeSection: `Grade ${regGradeLevel} · ${regStrand}`,
         studentIdFile,
+        personalPhotoFile,
       });
 
       setRegLoading(false);
@@ -1472,6 +1484,40 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     </div>
                     <div className={passwordCriteria.special ? 'text-emerald-500 dark:text-emerald-400 font-extrabold' : 'checklist-dim'}>
                       {passwordCriteria.special ? '✓' : '○'} {isTl ? '1+ Simbolo (!@#$)' : '1+ Special (!@#$)'}
+                    </div>
+                  </div>
+
+                  {/* 5-Digit Mobile Quick Unlock PIN Section */}
+                  <div className="pt-2 border-t border-slate-200 dark:border-white/10 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="text-sm font-bold register-label flex items-center gap-1.5">
+                          <Lock className="w-4 h-4 text-emerald-500" />
+                          <span>{isTl ? '5-Digit Quick Unlock PIN (Para sa Araw-araw na Login)' : '5-Digit Quick Unlock PIN (For Daily Mobile Login)'}</span>
+                        </label>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                          {isTl
+                            ? '5 numerong PIN para hindi mo na kailangang mag-login ng mahabang password araw-araw sa cellphone.'
+                            : '5-digit PIN so you never have to re-enter your long password on your phone everyday.'}
+                        </p>
+                      </div>
+                      {renderBadge(quickPinStatus)}
+                    </div>
+                    <div className="relative max-w-xs">
+                      <input
+                        type="password"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={5}
+                        required
+                        placeholder="••••• (5 digits)"
+                        value={regQuickPin}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, '').slice(0, 5);
+                          setRegQuickPin(val);
+                        }}
+                        className="w-full px-4 py-3 rounded-xl cosmic-input text-base font-mono font-bold tracking-[0.35em] text-center focus:outline-none"
+                      />
                     </div>
                   </div>
                 </div>

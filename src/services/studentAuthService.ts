@@ -11,6 +11,7 @@ export interface StudentPortalUser {
   gradeSection?: string;
   studentIdImageUrl?: string | null;
   nationalIdImageUrl?: string | null;
+  quickPin?: string | null;
 }
 
 export interface RegisterStudentParams {
@@ -21,6 +22,7 @@ export interface RegisterStudentParams {
   email: string;
   studentNumber: string;
   password: string;
+  quickPin?: string;
   gradeSection?: string;
   studentIdFile?: File | null;
   personalPhotoFile?: File | null;
@@ -162,8 +164,9 @@ export async function registerStudentPortalAccount(params: RegisterStudentParams
       }
     }
 
-    // C. Hash password
+    // C. Hash password & PIN
     const passwordHash = await hashPassword(params.password);
+    const pinHash = params.quickPin ? await hashPassword(params.quickPin) : null;
 
     // D. Insert new portal account
     const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/portal_accounts`, {
@@ -175,6 +178,7 @@ export async function registerStudentPortalAccount(params: RegisterStudentParams
         email: cleanEmail,
         contact_number: cleanPhone,
         password_hash: passwordHash,
+        quick_pin_hash: pinHash,
         student_id_image: studentIdUrl || 'UPLOADED_STUDENT_ID',
         national_id_image: nationalIdUrl || null,
         status: 'Active', // Automatic Approved!
@@ -274,6 +278,73 @@ export async function loginStudentPortal(
         gradeSection: master.gradeSection || 'SHS Student',
         studentIdImageUrl: account.student_id_image,
         nationalIdImageUrl: account.national_id_image,
+        quickPin: account.quick_pin_hash ? 'SET' : null,
+      },
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: msg };
+  }
+}
+
+/**
+ * 5.1 Quick PIN Login / Unlock for Mobile App
+ */
+export async function verifyStudentQuickPin(
+  studentNumber: string,
+  plainPin: string
+): Promise<{
+  success: boolean;
+  error?: string;
+  account?: StudentPortalUser;
+}> {
+  try {
+    const cleanNumber = studentNumber.trim();
+    const cleanPin = plainPin.trim();
+    if (!cleanNumber || cleanPin.length !== 5) {
+      return { success: false, error: 'Please enter a valid 5-digit PIN.' };
+    }
+
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/portal_accounts?student_number=eq.${encodeURIComponent(
+        cleanNumber
+      )}&select=*`,
+      { headers: headers() }
+    );
+
+    if (!res.ok) {
+      return { success: false, error: 'Connection error with database.' };
+    }
+
+    const rows = await res.json();
+    if (!rows || rows.length === 0) {
+      return { success: false, error: 'Student account not found.' };
+    }
+
+    const account = rows[0];
+    if (account.status === 'Deactivated') {
+      return { success: false, error: 'This account is deactivated.' };
+    }
+
+    const hashedInputPin = await hashPassword(cleanPin);
+    if (!account.quick_pin_hash || account.quick_pin_hash !== hashedInputPin) {
+      return { success: false, error: 'Incorrect 5-digit PIN. Please try again or login with password.' };
+    }
+
+    const master = await verifyStudentInMasterlist(cleanNumber);
+
+    return {
+      success: true,
+      account: {
+        id: Number(account.id),
+        studentNumber: cleanNumber,
+        fullName: account.full_name,
+        email: account.email || '',
+        contactNumber: account.contact_number || '',
+        gradeSection: master.gradeSection || 'SHS Student',
+        studentIdImageUrl: account.student_id_image,
+        nationalIdImageUrl: account.national_id_image,
+        quickPin: 'SET',
       },
     };
   } catch (err: unknown) {
