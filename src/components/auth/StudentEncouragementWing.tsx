@@ -7,24 +7,33 @@ import { motion, AnimatePresence } from 'framer-motion';
  * Short, deep, 10-second Taglish messages with live animated characters (waving hands & talking mouths).
  */
 
-// Boy Student Messages: Breaking Silence, Anti-Bullying Bravery, Speaking Up (Short & Deep Taglish)
-export const BOY_ENCOURAGEMENTS = [
-  'Huwag mong sarilinin. Ligtas ka rito at handa kaming makinig.',
-  'Hindi karuwagan ang magsumbong. Protektado ka sa guidance.',
-  'Kung may nambu-bully sa iyo o sa kaibigan mo, sabihin mo na.',
-  'Hindi mo kasalanan ang ginawa nila. Karapatan mong maging ligtas.',
-  'Walang makakaalam na ikaw ang nag-report. Safe ka dito.',
-  'Tapang ang kailangan para magsalita. Nandito kami para sa iyo.',
-];
-
-// Girl Student Messages: Emotional Relief, Self-Worth, Mental Health Healing (Short & Deep Taglish)
-export const GIRL_ENCOURAGEMENTS = [
-  'Huminga ka nang malalim. Valid ang nararamdaman mo.',
-  'Walang makakapagbawas sa halaga mo bilang tao. Kaya mo ito.',
-  'Gagaan din ang dibdib mo. Nandito kami para tulungan ka.',
-  'Okay lang mapagod, pero huwag susuko. May nagmamalasakit sa iyo.',
-  'Walang manghuhusga sa iyo. Safe space mo ang portal na ito.',
-  'Mahalaga ka sa AICS. Karapatan mong mag-aral nang payapa.',
+// Combined Student Pair Messages: Reassurance, Anti-Bullying, Safety & Mental Health (Short, Warm Taglish)
+export const STUDENT_PAIR_MESSAGES = [
+  {
+    tag: 'LIGTAS DITO',
+    quote: 'Huwag mong sarilinin. Ligtas ka rito sa AICS SafeZone at handa kaming makinig sa iyo.',
+    speaker: 'AICS Student Peers'
+  },
+  {
+    tag: 'VALID KA',
+    quote: 'Huminga ka nang malalim. Valid ang nararamdaman mo at may nagmamalasakit sa iyo sa Guidance.',
+    speaker: 'AICS Student Peers'
+  },
+  {
+    tag: 'ANTI-BULLYING',
+    quote: 'Hindi karuwagan ang magsumbong. Protektado ka sa batas at 100% kumpidensyal ang report mo.',
+    speaker: 'AICS Student Peers'
+  },
+  {
+    tag: 'HINDI KA NAG-IISA',
+    quote: 'Walang manghuhusga sa iyo. Karapatan mong mag-aral nang mapayapa at walang takot.',
+    speaker: 'AICS Student Peers'
+  },
+  {
+    tag: 'KAYANG AYUSIN',
+    quote: 'Gagaan din ang dibdib mo. Nandito ang buong AICS Guidance upang samahan ka sa bawat hakbang.',
+    speaker: 'AICS Student Peers'
+  },
 ];
 
 /**
@@ -393,6 +402,88 @@ export const AicsGirlStudentSvg: React.FC<{ className?: string }> = ({ className
     <path d="M83 46 Q87 50 91 43" stroke="#1D120D" strokeWidth="0.9" fill="none" />
   </svg>
 );
+
+/**
+ * Boy Student Messages (Preserved for backwards-compatibility)
+ */
+export const BOY_ENCOURAGEMENTS = STUDENT_PAIR_MESSAGES.map((m) => m.quote);
+export const GIRL_ENCOURAGEMENTS = STUDENT_PAIR_MESSAGES.map((m) => m.quote);
+
+/**
+ * Animated Dual-Student Interactive Guidance Wing (Left Side)
+ * Renders Boy and Girl students standing together in tailored AICS uniforms,
+ * sharing one cohesive, high-impact guidance / anti-bullying speech bubble.
+ */
+export const StudentPairInteractiveWing: React.FC<{ className?: string }> = ({ className = '' }) => {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % STUDENT_PAIR_MESSAGES.length);
+    }, 9000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const current = STUDENT_PAIR_MESSAGES[index];
+
+  return (
+    <div className={`flex flex-col items-center justify-end select-none w-full max-w-xl mx-auto ${className}`}>
+      {/* 1. Shared High-Prestige Speech Bubble with Glass Bevel */}
+      <div className="relative w-full max-w-lg mb-4 min-h-[96px] flex items-center justify-center">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, y: 10, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+            className="relative w-full px-5 py-4 rounded-2xl bg-[#081832]/90 border border-white/20 text-white shadow-2xl shadow-blue-950/80 backdrop-blur-xl text-center"
+          >
+            {/* Top Amber Accent Bevel Lip */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent rounded-full" />
+
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <span className="text-[10px] font-mono font-black tracking-widest uppercase text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
+                {current.tag}
+              </span>
+              <span className="text-[11px] font-bold text-sky-300">
+                {current.speaker}
+              </span>
+            </div>
+
+            <p className="text-sm sm:text-base font-medium text-slate-100 leading-snug">
+              &ldquo;{current.quote}&rdquo;
+            </p>
+
+            {/* Speech Bubble Tail Pointing Down to Both Students */}
+            <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-[#081832]" />
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* 2. Side-by-Side Dual Student SVG Illustrations */}
+      <div className="relative flex items-end justify-center -space-x-8 sm:-space-x-12">
+        {/* Boy Student (Left) */}
+        <motion.div
+          animate={{ y: [0, -5, 0] }}
+          transition={{ duration: 4.2, repeat: Infinity, ease: 'easeInOut' }}
+          className="relative z-10"
+        >
+          <AicsBoyStudentSvg className="w-48 sm:w-56 md:w-64 h-72 sm:h-84 md:h-[350px]" />
+        </motion.div>
+
+        {/* Girl Student (Right) */}
+        <motion.div
+          animate={{ y: [0, -5, 0] }}
+          transition={{ duration: 4.6, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
+          className="relative z-20"
+        >
+          <AicsGirlStudentSvg className="w-48 sm:w-56 md:w-64 h-72 sm:h-84 md:h-[350px]" />
+        </motion.div>
+      </div>
+    </div>
+  );
+};
 
 /**
  * Animated Interactive Student Support Wing Hook

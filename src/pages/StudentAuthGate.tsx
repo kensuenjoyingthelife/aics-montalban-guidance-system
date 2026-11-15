@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { CelestialBackground } from '../components/auth/CelestialBackground';
 import { WavyBackground } from '../components/auth/WavyBackground';
-import { useStudentEncouragementWings } from '../components/auth/StudentEncouragementWing';
+import { useStudentEncouragementWings, StudentPairInteractiveWing } from '../components/auth/StudentEncouragementWing';
 import { SoundTogglePill, soundFX } from '../services/soundEngine';
 import { SkyThemePill } from '../context/ThemeContext';
 import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
@@ -761,34 +761,35 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               {/* TOP HERO ROW: Left Editorial Typography + Right Floating Login Card */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
                 
-                {/* Left Column: Authoritative Editorial Serif Typography & Mental Health Affirmations */}
-                <div className="lg:col-span-7 space-y-6 sm:space-y-7 text-left">
-                  {/* Eyebrow with Amber Dash */}
+                {/* Left Column: Boy & Girl Students with Unified Guidance Speech Bubble + Editorial Affirmation */}
+                <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-left space-y-6">
+                  {/* Eyebrow with Amber Dash & Live Status */}
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-[2px] bg-amber-400" />
                     <span className="text-xs sm:text-sm font-extrabold tracking-[0.18em] uppercase text-amber-400">
                       AICS GUIDANCE & COUNSELING SAFEGUARD
                     </span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-[10px] font-bold text-emerald-300">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      PEER SUPPORT LIVE
+                    </span>
                   </div>
 
-                  {/* Massive High-Contrast Editorial Serif Headline */}
+                  {/* Headline */}
                   <div className="space-y-1">
-                    <h1 className="text-4xl sm:text-6xl xl:text-7xl font-serif font-black tracking-tight text-white leading-[0.98]">
-                      Your Safe Space. <br />
-                      Your Voice. <br />
+                    <h1 className="text-3xl sm:text-5xl xl:text-6xl font-serif font-black tracking-tight text-white leading-[1.02]">
+                      Your Safe Space. Your Voice. <br />
                       <span className="text-amber-400 italic">One SafeZone.</span>
                     </h1>
                   </div>
 
-                  {/* Clear, Grounded Reassurance Copy */}
-                  <p className="text-base sm:text-lg text-slate-300 dark:text-slate-300 leading-relaxed max-w-2xl font-normal">
-                    {isTl
-                      ? 'Ligtas, kumpidensyal, at protektado sa ilalim ng batas. Dito sa AICS SafeZone, pinakikinggan ang iyong bawat hinaing—walang panghuhusga, walang paghihiganti, at may agarang kalinga mula sa Guidance Office.'
-                      : 'Confidential, supportive, and legally protected. AICS SafeZone empowers every student to seek care, report peer concerns, and access compassionate counseling without fear of judgment or retaliation.'}
-                  </p>
+                  {/* Dual Student Interactive Wing (Boy & Girl with Single Unified Speech Bubble) */}
+                  <div className="w-full pt-1">
+                    <StudentPairInteractiveWing />
+                  </div>
 
                   {/* 3 Pillar Reassurance Badges */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 max-w-2xl">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 w-full max-w-2xl">
                     <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-1">
                       <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold">
                         <ShieldCheck className="w-4 h-4" />
@@ -818,16 +819,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                         {isTl ? 'Mababawasan ang iyong dinadalang bigat sa eskwela.' : 'Compassionate guidance to resolve problems early.'}
                       </p>
                     </div>
-                  </div>
-
-                  {/* Mental Health Affirmation Banner */}
-                  <div className="p-4 rounded-2xl bg-sky-500/10 border border-sky-400/20 max-w-2xl flex items-center gap-3.5">
-                    <div className="w-9 h-9 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center shrink-0 text-sky-300">
-                      <Sparkles className="w-4 h-4" />
-                    </div>
-                    <p className="text-xs sm:text-sm text-sky-100 font-medium italic leading-relaxed">
-                      "{isTl ? MENTAL_HEALTH_AFFIRMATIONS[affirmationIndex].tl : MENTAL_HEALTH_AFFIRMATIONS[affirmationIndex].en}"
-                    </p>
                   </div>
                 </div>
 
