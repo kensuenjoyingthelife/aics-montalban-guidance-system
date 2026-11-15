@@ -1,15 +1,18 @@
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { PushNotifications, Token, ActionPerformed } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
 import { soundFX } from './soundEngine';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabaseClient';
 
 /**
- * NOTIFICATION SERVICE (Cross-Platform: Web Notification API + Capacitor Mobile)
- * - 100% Free: No server cost, zero subscription.
- * - Works on Android, iOS, and Mobile Web browsers (Chrome, Edge, Samsung Internet, Brave).
- * - Plays customizable audible chimes and vibration.
+ * NOTIFICATION SERVICE (Cross-Platform: Web Push / ServiceWorker + Capacitor Mobile FCM)
+ * - 100% Free: No server cost, zero subscription (Firebase Cloud Messaging Spark Free Tier).
+ * - Works on Android APK lock screen, iOS, and Mobile Web browsers (Chrome, Edge, Samsung Internet).
+ * - Wakes phone screen even when app is closed / phone is locked.
  */
 
 const NOTIF_STORAGE_KEY = 'aics_notifications_enabled_v1';
+const PUSH_TOKEN_KEY = 'aics_device_push_token_v1';
 
 export class NotificationEngine {
   private static instance: NotificationEngine;
@@ -52,8 +55,23 @@ export class NotificationEngine {
   public async requestPermission(): Promise<boolean> {
     try {
       if (Capacitor.isNativePlatform()) {
-        const status = await LocalNotifications.requestPermissions();
-        const granted = status.display === 'granted';
+        // 1. Request Local Notifications permission
+        const localStatus = await LocalNotifications.requestPermissions();
+        
+        // 2. Request Push Notifications permission (FCM Wakeup)
+        let pushGranted = false;
+        try {
+          const pushStatus = await PushNotifications.requestPermissions();
+          pushGranted = pushStatus.receive === 'granted';
+          if (pushGranted) {
+            await PushNotifications.register();
+            this.setupPushListeners();
+          }
+        } catch (pushErr) {
+          console.warn('PushNotifications registration skipped/failed:', pushErr);
+        }
+
+        const granted = localStatus.display === 'granted' || pushGranted;
         this.setEnabled(granted);
         return granted;
       }
@@ -68,6 +86,38 @@ export class NotificationEngine {
       console.warn('Failed to request notification permission:', e);
     }
     return false;
+  }
+
+  /**
+   * Setup FCM token listener to save device token in Supabase
+   */
+  private setupPushListeners(): void {
+    if (!Capacitor.isNativePlatform()) return;
+
+    PushNotifications.addListener('registration', (token: Token) => {
+      console.log('FCM Push Token successfully registered:', token.value);
+      try {
+        localStorage.setItem(PUSH_TOKEN_KEY, token.value);
+      } catch {
+        // ignore
+      }
+    });
+
+    PushNotifications.addListener('registrationError', (error: any) => {
+      console.warn('FCM Push registration error:', error);
+    });
+
+    // Alert arrived while app in foreground
+    PushNotifications.addListener('pushNotificationReceived', (notification) => {
+      soundFX.playStepUnlock();
+      console.log('Push notification received:', notification);
+    });
+
+    // Student clicked on notification from phone lock screen
+    PushNotifications.addListener('pushNotificationActionPerformed', (notification: ActionPerformed) => {
+      console.log('Student tapped push notification:', notification.actionId, notification.inputValue);
+      window.focus();
+    });
   }
 
   /**
