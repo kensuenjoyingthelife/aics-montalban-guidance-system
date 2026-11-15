@@ -3,7 +3,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { soundFX, useSound } from '../../services/soundEngine';
 import { DuotoneIcon } from '../ui/icons';
-import { TEXT_SIZES, TextSize, getTextSize, setTextSize } from '../../services/textSize';
+import { TEXT_SIZES, TextSize, getTextSize, setTextSize, TEXT_SIZE_EVENT } from '../../services/textSize';
 import {
   MAIN_SIDEBAR_CATEGORIES,
   MainCategoryId,
@@ -40,6 +40,25 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
   const { soundEnabled, toggleSound } = useSound();
   const isTl = locale === 'tl';
   const isDark = theme === 'dark';
+
+  const [currentSize, setCurrentSize] = React.useState<TextSize>(() => getTextSize());
+
+  React.useEffect(() => {
+    const handler = (e: Event) => {
+      const custom = e as CustomEvent<TextSize>;
+      if (custom.detail) setCurrentSize(custom.detail);
+    };
+    window.addEventListener(TEXT_SIZE_EVENT, handler);
+    return () => window.removeEventListener(TEXT_SIZE_EVENT, handler);
+  }, []);
+
+  const cycleTextSize = () => {
+    const idx = TEXT_SIZES.findIndex((s) => s.id === currentSize);
+    const next = TEXT_SIZES[(idx + 1) % TEXT_SIZES.length];
+    setTextSize(next.id);
+    setCurrentSize(next.id);
+    soundFX.playKeyClick();
+  };
 
   const getBadgeStyle = (count: number) => {
     if (count >= 5) {
@@ -293,6 +312,32 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
             {!collapsed && (
               <span className="truncate">
                 {isTl ? 'Tagalog (Piliin: EN)' : 'English (Select: TL)'}
+              </span>
+            )}
+          </div>
+        </button>
+
+        {/* 5-Tier Font Size Adjuster */}
+        <button
+          type="button"
+          onClick={cycleTextSize}
+          title={isTl ? 'Baguhin ang laki ng letra (5 antas)' : 'Adjust Font Size (5 levels)'}
+          className={`w-full flex items-center ${
+            collapsed ? 'justify-center p-2' : 'px-3 py-2'
+          } rounded-[8px] text-[13px] font-medium text-[#DCE8FF]/80 hover:bg-white/6 hover:text-white transition-colors`}
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="w-5 h-5 rounded-[4px] bg-white/10 flex items-center justify-center text-[10px] font-black text-[#9BCBFF] shrink-0 border border-white/15">
+              {TEXT_SIZES.find((s) => s.id === currentSize)?.short ?? 'S'}
+            </span>
+            {!collapsed && (
+              <span className="truncate flex items-center justify-between flex-1">
+                <span>{isTl ? 'Sukat ng Letra' : 'Font Size'}</span>
+                <span className="text-[11px] text-[#9BCBFF]/90 font-semibold uppercase tracking-wider">
+                  {isTl
+                    ? TEXT_SIZES.find((s) => s.id === currentSize)?.tl
+                    : TEXT_SIZES.find((s) => s.id === currentSize)?.en}
+                </span>
               </span>
             )}
           </div>

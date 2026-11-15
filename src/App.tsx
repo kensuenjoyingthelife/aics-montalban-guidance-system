@@ -16,8 +16,14 @@ import { applyAdaptivePerformanceClass, isCapacitorNativeApp } from './services/
 import { InactivityShield } from './components/security/InactivityShield';
 import { recordSecurityAudit } from './services/securityEngine';
 import { StudentPinLockScreen } from './components/student/StudentPinLockScreen';
+import { applyTextSize } from './services/textSize';
 
 export const App: React.FC = () => {
+  // Apply saved text size immediately
+  useEffect(() => {
+    applyTextSize();
+  }, []);
+
   // Instant 0ms start: Skip opening splash animation completely on Mobile Site and Mobile App (APK)
   const [showSplash, setShowSplash] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;

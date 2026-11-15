@@ -47,6 +47,7 @@ import { loadAppConfig, useAppConfig } from '../services/appConfig';
 import { sendParentMessage, isSmsConfigured, buildConferenceSms } from '../services/parentComms';
 import { todayISO, addDays, byDateTime } from '../services/scheduling';
 import { smsInfo } from '../services/smsText';
+import { TEXT_SIZES, TextSize, getTextSize, setTextSize, TEXT_SIZE_EVENT } from '../services/textSize';
 import {
   fetchLiveDashboardData,
   fetchStage3Data,
@@ -119,6 +120,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 }) => {
   const { locale } = useLanguage();
   const isTl = locale === 'tl';
+
+  // 5-Tier Font Size State
+  const [currentTextSize, setCurrentTextSize] = useState<TextSize>(() => getTextSize());
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const custom = e as CustomEvent<TextSize>;
+      if (custom.detail) setCurrentTextSize(custom.detail);
+    };
+    window.addEventListener(TEXT_SIZE_EVENT, handler);
+    return () => window.removeEventListener(TEXT_SIZE_EVENT, handler);
+  }, []);
+
+  const handleSetTextSize = (size: TextSize) => {
+    setTextSize(size);
+    setCurrentTextSize(size);
+    soundFX.playKeyClick();
+  };
 
   // Option 1 Sidebar Category navigation state (6 Main Categories)
   const [activeCategory, setActiveCategory] = useState<MainCategoryNavItem>(
@@ -1251,6 +1269,34 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 )}
               </div>
             )}
+
+            {/* 5-Tier Font Size Segmented Control */}
+            <div
+              className="flex items-center gap-0.5 p-0.5 rounded-[8px] bg-[#F1F5F9] dark:bg-[#0B1528] border border-[#CBD5E1] dark:border-[#223555]"
+              title={isTl ? 'Baguhin ang laki ng letra sa buong system' : 'Change font size across the whole system'}
+            >
+              <span className="text-[10px] font-bold text-[#64748B] dark:text-[#94A3B8] px-1.5 hidden sm:inline select-none">
+                A
+              </span>
+              {TEXT_SIZES.map((s) => {
+                const isActive = currentTextSize === s.id;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => handleSetTextSize(s.id)}
+                    className={`px-1.5 py-0.5 text-[10px] font-bold rounded-[5px] transition-all select-none active:scale-95 ${
+                      isActive
+                        ? 'bg-[#1E469B] text-white shadow-xs'
+                        : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-white'
+                    }`}
+                    title={`${isTl ? s.tl : s.en} (${Math.round(s.zoom * 100)}%)`}
+                  >
+                    {s.short}
+                  </button>
+                );
+              })}
+            </div>
 
             {/* Sign Out link */}
             <button
