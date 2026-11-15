@@ -1486,23 +1486,14 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     </div>
                   </div>
 
-                  {/* 5-Digit Mobile Quick Unlock PIN Section */}
-                  <div className="pt-3 border-t border-slate-200 dark:border-white/10 space-y-2.5">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div className="flex-1">
-                        <label className="text-sm font-bold register-label flex items-center gap-1.5">
-                          <Lock className="w-4 h-4 text-emerald-500 shrink-0" />
-                          <span>{isTl ? '5-Digit Quick Unlock PIN (Para sa Araw-araw na Login)' : '5-Digit Quick Unlock PIN (For Daily Mobile Login)'}</span>
-                        </label>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium leading-relaxed">
-                          {isTl
-                            ? '5 numerong PIN para hindi mo na kailangang mag-login ng mahabang password araw-araw sa cellphone.'
-                            : '5-digit PIN so you never have to re-enter your long password on your phone everyday.'}
-                        </p>
-                      </div>
-                      <div className="self-start sm:self-center shrink-0">
-                        {renderBadge(quickPinStatus)}
-                      </div>
+                  {/* 5-Digit PIN for Login */}
+                  <div className="pt-3 border-t border-slate-200 dark:border-white/10 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-bold register-label flex items-center gap-1.5">
+                        <Lock className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span>ENTER PIN FOR LOGIN</span>
+                      </label>
+                      {renderBadge(quickPinStatus)}
                     </div>
                     <div className="relative w-full max-w-xs">
                       <input
