@@ -688,11 +688,22 @@ function parseIncidentData(whatHappened: string, rawWho: string) {
     respondentDetails = parts.slice(1).join('-').trim();
   }
 
+  // Extract [EVIDENCE_PHOTO_1]: ...
+  const evidencePhotos: string[] = [];
+  const photoRegex = /\[EVIDENCE_PHOTO_\d+\]:\s*(data:image\/[^\n\s]+|https?:\/\/[^\n\s]+)/gi;
+  let matchPhoto: RegExpExecArray | null;
+  while ((matchPhoto = photoRegex.exec(narrativeText)) !== null) {
+    evidencePhotos.push(matchPhoto[1]);
+  }
+  // Strip evidence photo tags from clean narrative
+  narrativeText = narrativeText.replace(/\[EVIDENCE_PHOTO_\d+\]:\s*(data:image\/[^\n\s]+|https?:\/\/[^\n\s]+)/gi, '').trim();
+
   return {
     reporterType,
     respondentName: respondentName || 'Hindi tinukoy (Unknown)',
     respondentDetails,
     cleanNarrative: narrativeText || whatHappened,
+    evidencePhotos,
   };
 }
 
@@ -976,6 +987,45 @@ const ConcernDetail: React.FC<{
                       {parsed.cleanNarrative}
                     </p>
                   </div>
+
+                  {/* EVIDENCE PHOTOS CARD (Photos of injuries, damages, vape/contraband, screenshots) */}
+                  {parsed.evidencePhotos.length > 0 && (
+                    <div className="rounded-xl border border-rose-200 dark:border-rose-900/60 bg-gradient-to-br from-rose-50/40 via-white to-orange-50/20 dark:from-[#2A1018] dark:to-[#0B1527] p-3 shadow-xs space-y-2">
+                      <div className="flex items-center justify-between border-b border-rose-100 dark:border-rose-900/40 pb-1.5">
+                        <span className="text-[10.5px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
+                          <span>📷</span>
+                          <span>{isTl ? 'Kalakip na Litrato / Pisikal na Ebidensya' : 'Attached Photo & Physical Evidence'}</span>
+                        </span>
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-400/30">
+                          {parsed.evidencePhotos.length} {isTl ? 'Katibayan' : 'Photos'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
+                        {isTl
+                          ? 'I-click ang alinmang litrato upang palakihin at masusing suriin.'
+                          : 'Click any photo evidence to view full resolution.'}
+                      </p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+                        {parsed.evidencePhotos.map((imgSrc, pIdx) => (
+                          <button
+                            key={pIdx}
+                            type="button"
+                            onClick={() => setView({ src: imgSrc, label: `Ebidensya ${pIdx + 1}` })}
+                            title={isTl ? 'Pindutin para palakihin ang ebidensya' : 'Enlarge evidence'}
+                            className="relative group rounded-xl overflow-hidden border-2 border-rose-300 dark:border-rose-800 aspect-video bg-black/10 hover:ring-4 hover:ring-rose-500/30 transition-all cursor-pointer shadow-xs"
+                          >
+                            <img src={imgSrc} alt={`Evidence ${pIdx + 1}`} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
+                              🔍 {isTl ? 'Palakihin' : 'Zoom'}
+                            </div>
+                            <span className="absolute bottom-1 left-1 px-1.5 py-0.2 rounded text-[9px] font-black bg-black/70 text-white">
+                              Ebidensya {pIdx + 1}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* PABABA / VERTICAL STACKED MINI-CARDS (NO TRUNCATION, FULL TEXT DISPLAY) */}
                   {/* CARD 3: WHEN (KAILAN) */}

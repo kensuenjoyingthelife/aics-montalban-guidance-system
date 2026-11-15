@@ -16,6 +16,9 @@ import {
   RefreshCw,
   Bell,
   BellOff,
+  Camera,
+  Image as ImageIcon,
+  Trash2,
 } from 'lucide-react';
 import { WavyBackground } from '../components/auth/WavyBackground';
 import { SoundTogglePill, soundFX } from '../services/soundEngine';
@@ -81,6 +84,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   const [witnesses, setWitnesses] = useState<string>('');
   const [isUrgent, setIsUrgent] = useState<boolean>(false);
   const [truthfulAck, setTruthfulAck] = useState<boolean>(false);
+  const [evidencePhotos, setEvidencePhotos] = useState<string[]>([]);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -340,6 +345,68 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
     soundFX.playToggleSwitch(true);
   };
 
+    const handleEvidenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setPhotoError(null);
+
+    const maxPhotos = 3;
+    const remainingSlots = maxPhotos - evidencePhotos.length;
+    if (remainingSlots <= 0) {
+      setPhotoError(isTl ? 'Hanggang 3 litrato lamang ang maaaring i-upload.' : 'Maximum 3 photos allowed.');
+      return;
+    }
+
+    const filesToProcess = Array.from(files).slice(0, remainingSlots);
+
+    filesToProcess.forEach((file) => {
+      if (!file.type.startsWith('image/')) {
+        setPhotoError(isTl ? 'Litrato lamang (PNG, JPG, JPEG) ang maaaring i-attach.' : 'Only image files allowed.');
+        return;
+      }
+      if (file.size > 8 * 1024 * 1024) {
+        setPhotoError(isTl ? 'Masyadong malaki ang litrato (Maximum 8MB).' : 'Image size exceeds 8MB limit.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxDim = 800;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, w, h);
+            const compressed = canvas.toDataURL('image/jpeg', 0.65);
+            setEvidencePhotos((prev) => [...prev, compressed].slice(0, 3));
+            soundFX.playToggleSwitch(true);
+          }
+        };
+        img.src = event.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeEvidencePhoto = (idx: number) => {
+    soundFX.playBackspace();
+    setEvidencePhotos((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   const handleSubmitConcern = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!truthfulAck) {
@@ -379,7 +446,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
     const finalNarrative = [
       isPeer ? `[REPORT FOR FRIEND/CLASSMATE: ${friendName} (${friendGradeSection || 'N/A'})]` : '[SELF-REPORT BY STUDENT]',
       knowsSuspect === 'yes' ? `[RESPONDENT / INIREREKLAMO: ${suspectName}${suspectDetails ? ` - Palatandaan: ${suspectDetails}` : ''}]` : (knowsSuspect === 'unsure' ? `[RESPONDENT / INIREREKLAMO: Hindi tiyak ang pangalan - Palatandaan: ${suspectDetails || 'N/A'}]` : `[RESPONDENT / INIREREKLAMO: Hindi kilala ang pangalan - Palatandaan: ${suspectDetails || 'N/A'}]`),
-      `[SALAYSAY / WHAT HAPPENED]:\n${moderation.sanitizedText}`
+      `[SALAYSAY / WHAT HAPPENED]:\n${moderation.sanitizedText}`,
+      ...(evidencePhotos.length > 0 ? evidencePhotos.map((p, idx) => `[EVIDENCE_PHOTO_${idx + 1}]: ${p}`) : [])
     ].join('\n\n');
 
     try {
@@ -441,6 +509,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       setHappenedWhen('');
       setHappenedWhere('');
       setWitnesses('');
+      setEvidencePhotos([]);
       setTruthfulAck(false);
       setReportingRole('self');
       setFriendName('');
@@ -1277,6 +1346,78 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                         onChange={(e) => setWitnesses(e.target.value)}
                         className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
                       />
+                    </div>
+                  </div>
+
+                  {/* PHOTO & PHYSICAL EVIDENCE ATTACHMENT CARD */}
+                  <div className="p-4 rounded-2xl register-section-card space-y-3 border border-sky-300/40 dark:border-sky-800/40 bg-sky-50/40 dark:bg-[#0B1527]/60">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-7 h-7 rounded-lg bg-[#1E469B] text-white flex items-center justify-center text-xs font-black shadow-xs">
+                          📷
+                        </span>
+                        <div>
+                          <label className="text-xs font-black uppercase tracking-wider text-[#0B1F4D] dark:text-white block">
+                            {isTl ? 'Mag-attach ng Litrato o Ebidensya (Opsyonal)' : 'Attach Photo Evidence (Optional)'}
+                          </label>
+                          <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
+                            {isTl
+                              ? 'Pasa, pananakit, sira o bandalismong gamit, vape/kontrabando, o screenshot ng cyberbullying.'
+                              : 'Photos of injuries/bruises, damaged property, contraband/vape, or cyberbullying screenshots.'}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-400/20">
+                        {evidencePhotos.length} / 3 {isTl ? 'Litrato' : 'Photos'}
+                      </span>
+                    </div>
+
+                    {photoError && (
+                      <p className="text-[11px] font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        <span>{photoError}</span>
+                      </p>
+                    )}
+
+                    {/* Previews Grid & Upload Trigger */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                      {evidencePhotos.map((photoUrl, idx) => (
+                        <div key={idx} className="relative group rounded-xl overflow-hidden border-2 border-sky-400/50 dark:border-sky-700 aspect-video bg-black/5 flex items-center justify-center">
+                          <img src={photoUrl} alt={`Evidence ${idx + 1}`} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeEvidencePhoto(idx)}
+                            className="absolute top-1 right-1 w-6 h-6 rounded-full bg-rose-600/90 text-white flex items-center justify-center shadow-md hover:bg-rose-700 transition-all cursor-pointer"
+                            title={isTl ? 'Alisin ang litrato' : 'Remove photo'}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                          <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-black/60 text-white">
+                            Photo {idx + 1}
+                          </span>
+                        </div>
+                      ))}
+
+                      {evidencePhotos.length < 3 && (
+                        <label className="rounded-xl border-2 border-dashed border-sky-400/60 dark:border-sky-700 hover:border-[#1E469B] dark:hover:border-sky-400 bg-white/60 dark:bg-white/5 hover:bg-sky-50 dark:hover:bg-white/10 aspect-video flex flex-col items-center justify-center gap-1 cursor-pointer transition-all p-2 text-center">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={handleEvidenceUpload}
+                            className="hidden"
+                          />
+                          <div className="w-7 h-7 rounded-full bg-sky-500/20 text-sky-600 dark:text-sky-300 flex items-center justify-center">
+                            <Camera className="w-4 h-4" />
+                          </div>
+                          <span className="text-[11px] font-bold text-[#1E469B] dark:text-[#9BCBFF]">
+                            {isTl ? 'Kumuha o Mag-upload' : 'Take or Upload Photo'}
+                          </span>
+                          <span className="text-[9.5px] text-[#4A608A] dark:text-[#94A8D0]">
+                            Max 8MB · PNG, JPG
+                          </span>
+                        </label>
+                      )}
                     </div>
                   </div>
 
