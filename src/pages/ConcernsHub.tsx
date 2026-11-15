@@ -554,8 +554,8 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
                           concernCode: selected.code,
                           place: selected.where || '',
                           witnesses: selected.witnesses || '',
-                          reportedBy: `Student report ${selected.code} (${selected.studentName})`,
-                          notes: `From student report ${selected.code}${selected.when ? ` · When: ${selected.when}` : ''}${selected.who ? ` · Involved: ${selected.who}` : ''}\n${selected.whatHappened || ''}`.slice(0, 2000),
+                          reportedBy: selected.studentName || 'Student Reporter',
+                          notes: `[FROM STUDENT CONCERN REPORT ${selected.code}]\nReporter / Complainant: ${selected.studentName} (ID: ${selected.studentNumber || '—'})\nWhen: ${selected.when || 'Not specified'}\nWhere: ${selected.where || 'Not specified'}\nWitnesses: ${selected.witnesses || 'None'}\nNarrative:\n${selected.whatHappened || ''}`.slice(0, 2000),
                           search: firstName,
                         });
                       }
