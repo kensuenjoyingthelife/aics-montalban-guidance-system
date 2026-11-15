@@ -8,9 +8,24 @@ import {
   AlertTriangle,
   FileText,
   Shield,
+  ShieldCheck,
   Check,
   RefreshCw,
   Download,
+  MessageSquare,
+  Calendar,
+  HeartHandshake,
+  PhoneCall,
+  Search,
+  Sparkles,
+  ArrowRight,
+  ExternalLink,
+  Users,
+  Compass,
+  CheckCircle2,
+  HelpCircle,
+  FileHeart,
+  SmilePlus,
 } from 'lucide-react';
 import { CelestialBackground } from '../components/auth/CelestialBackground';
 import { WavyBackground } from '../components/auth/WavyBackground';
@@ -100,7 +115,6 @@ const MENTAL_HEALTH_AFFIRMATIONS = [
 interface StudentAuthGateProps {
   onLoginSuccess: (user: StudentPortalUser) => void;
 }
-
 export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   onLoginSuccess,
 }) => {
@@ -641,65 +655,74 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     }, 2400);
   };
 
+  
   return (
-    <div className="min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none student-portal-canvas bg-[#05112B] text-white">
-      {/* Celestial Background: Active on Desktop, hidden/static on mobile */}
-      <div className="hidden lg:block">
-        <CelestialBackground />
-      </div>
-      <div className="hidden lg:block">
-        <WavyBackground />
+    <div className="min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none bg-[#030B18] dark:bg-[#020710] text-slate-100">
+      
+      {/* Dynamic Institutional Ambient Background with Desaturated Campus Photo */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <div
+          className="absolute inset-0 bg-no-repeat bg-cover bg-center opacity-[0.22] dark:opacity-[0.14] filter saturate-[0.7] mix-blend-luminosity scale-105 transition-opacity"
+          style={{ backgroundImage: `url('/aics-campus-header.jpg')` }}
+        />
+        {/* Multi-Stop Directional Institutional Navy & Teal Gradient */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#030B18] via-[#071E3D]/92 to-[#030B18]/78" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#030B18]/95 via-transparent to-[#030B18]" />
+        
+        {/* Subtle Concentric Orbital Rings (CDM-style academic geometry) */}
+        <div className="absolute -top-32 -right-32 w-[680px] h-[680px] rounded-full border border-sky-400/10 pointer-events-none" />
+        <div className="absolute -top-16 -right-16 w-[520px] h-[520px] rounded-full border border-amber-400/10 pointer-events-none" />
+        <div className="absolute top-1/2 -left-48 w-[600px] h-[600px] rounded-full border border-teal-400/10 pointer-events-none" />
       </div>
 
-      {/* Top Floating Glass Island Navbar */}
-      <header className="relative z-30 w-full px-3 sm:px-6 pt-3 sm:pt-4 safe-area-top">
-        {/* ====================================================
-            DESKTOP NAVBAR: Original Classic Glass Capsule (Hidden on mobile)
-            ==================================================== */}
-        <div className="hidden lg:flex max-w-6xl mx-auto rounded-full bg-[#0B1E48]/85 dark:bg-[#07132B]/85 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-2xl shadow-blue-950/40 px-6 py-3 items-center justify-between gap-4 transition-all">
-          {/* Left: Official Brand Seal & Campus Title */}
+      {/* ====================================================
+          1. STICKY INSTITUTIONAL HEADER & BRAND CLUSTER
+          ==================================================== */}
+      <header className="relative z-30 w-full px-4 sm:px-8 py-3.5 border-b border-white/10 dark:border-white/5 bg-[#030B18]/85 dark:bg-[#020710]/85 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          
+          {/* Left: Official AICS Crest & Institution Typography */}
           <div className="flex items-center gap-3.5 min-w-0">
             <div className="relative shrink-0">
-              <img
-                src="/aics-logo.jpg"
-                alt="AICS Logo"
-                className="w-11 h-11 rounded-full object-cover ring-2 ring-white/50 bg-white p-0.5 shadow-md"
-              />
-              {/* Live Security Shield Dot */}
+              <div className="w-12 h-12 rounded-full p-0.5 bg-white/20 ring-2 ring-white/60 shadow-xl overflow-hidden flex items-center justify-center">
+                <img
+                  src="/aics-logo.jpg"
+                  alt="AICS Logo"
+                  className="w-full h-full object-cover rounded-full"
+                />
+              </div>
               <span
-                className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-[#0B1E48] dark:ring-[#07132B]"
+                className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-400 ring-2 ring-[#030B18] shadow-sm"
                 title="100% Confidential & RA 10173 Protected"
               />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm font-black tracking-tight text-white uppercase truncate">
-                  AICS KALANG BA
-                </h1>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-[10px] font-bold text-emerald-300">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  RA 10173
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-black tracking-wide text-white uppercase truncate">
+                  Asian Institute of Computer Studies
+                </span>
+                <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-400/30 text-[10px] font-extrabold text-amber-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  MONTALBAN CAMPUS
                 </span>
               </div>
-              <p className="text-xs text-[#9BCBFF] font-medium truncate">
-                {isTl ? 'Ligtas at Kumpidensyal na Guidance Portal' : 'Safe & Confidential Concern Reporting'}
+              <p className="text-xs text-[#9BCBFF] font-medium tracking-wide">
+                GUIDANCE & COUNSELING SERVICES · SAFEZONE PORTAL
               </p>
             </div>
           </div>
 
-          {/* Right: Unified Sleek Controls Cluster + Quick Refresh */}
-          <div className="flex items-center gap-2 ml-auto shrink-0">
+          {/* Right: Quick Controls, Language Switcher, Theme & Install */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button
               type="button"
-              onClick={() => {
-                soundFX.playToggleSwitch(true);
-                window.location.reload();
-              }}
-              title={isTl ? 'I-refresh ang pahina' : 'Refresh page'}
-              className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-sky-200 border border-white/15 shadow-sm transition-all flex items-center justify-center cursor-pointer"
+              onClick={handleInstallApp}
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/20 text-xs font-bold text-sky-200 transition-colors"
             >
-              <RefreshCw className="w-4 h-4" />
+              <Download className="w-3.5 h-3.5 text-sky-400" />
+              <span>{isTl ? 'I-install ang App' : 'Install App'}</span>
             </button>
+
             <div className="flex items-center p-1 rounded-full bg-white/10 dark:bg-white/5 border border-white/15 dark:border-white/10 shadow-inner">
               <SoundTogglePill />
               <div className="h-4 w-[1px] bg-white/20 mx-1" />
@@ -707,387 +730,587 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               <div className="h-4 w-[1px] bg-white/20 mx-1" />
               <SkyThemePill />
             </div>
-          </div>
-        </div>
 
-        {/* ====================================================
-            MOBILE APP NAVBAR: Custom Stretched Campus Background & Layout (Visible only on mobile)
-            ==================================================== */}
-        <div className="lg:hidden relative max-w-6xl mx-auto rounded-3xl overflow-hidden border border-white/25 dark:border-white/15 shadow-2xl shadow-blue-950/50 transition-all">
-          {/* Campus Photo Ambient Layer stretched to fill with blue tint */}
-          <div
-            className="absolute inset-0 bg-no-repeat pointer-events-none"
-            style={{
-              backgroundImage: `url('/aics-campus-header.jpg')`,
-              backgroundSize: '100% 100%',
-              backgroundPosition: 'center',
-            }}
-          />
-          {/* Blue Translucent Overlay */}
-          <div className="absolute inset-0 bg-[#072464]/65 mix-blend-multiply pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#020b24]/40 via-[#0a2769]/35 to-[#020b24]/70 pointer-events-none" />
-
-          {/* Inner Content: 2-column mobile layout with centered circular logo */}
-          <div className="relative z-10 px-4 py-3 flex items-center gap-3.5 min-h-[105px]">
-            {/* Left: Prominent Circular Logo */}
-            <div className="relative shrink-0 flex items-center justify-center my-auto">
-              <div className="w-[80px] h-[80px] rounded-full p-1 bg-white/20 backdrop-blur-md ring-2 ring-white/75 shadow-2xl flex items-center justify-center">
-                <img
-                  src="/aics-logo.jpg"
-                  alt="AICS Logo"
-                  className="w-full h-full rounded-full object-cover shadow-inner"
-                />
-              </div>
-              <span
-                className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-400 ring-2 ring-[#020b24] shadow-md"
-                title="100% Confidential & RA 10173 Protected"
-              />
-            </div>
-
-            {/* Right: Titles on top, Toggles on bottom */}
-            <div className="flex-1 flex flex-col justify-between gap-2.5 min-w-0">
-              <div className="space-y-0.5 min-w-0">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <h1 className="text-sm font-black tracking-wide text-white uppercase truncate drop-shadow-md">
-                    AICS KALANG BA
-                  </h1>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/25 border border-emerald-400/40 text-[10px] font-bold text-emerald-300 backdrop-blur-sm shadow-sm">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    RA 10173
-                  </span>
-                </div>
-                <p className="text-[11px] text-sky-100 font-semibold truncate drop-shadow-md">
-                  {isTl ? 'Ligtas at Kumpidensyal na Portal' : 'Safe & Confidential Concern Reporting'}
-                </p>
-              </div>
-
-              {/* Toggles cluster & Quick Refresh Button */}
-              <div className="flex items-center gap-2">
-                <div className="flex items-center p-1 rounded-full bg-slate-950/70 border border-white/25 shadow-xl backdrop-blur-md">
-                  <SoundTogglePill />
-                  <div className="h-3.5 w-[1px] bg-white/20 mx-1" />
-                  <LocaleSwitchPill />
-                  <div className="h-3.5 w-[1px] bg-white/20 mx-1" />
-                  <SkyThemePill />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFX.playToggleSwitch(true);
-                    window.location.reload();
-                  }}
-                  title={isTl ? 'I-refresh ang pahina' : 'Refresh page'}
-                  className="p-1.5 rounded-full bg-slate-950/70 hover:bg-slate-900 text-sky-200 border border-white/25 shadow-xl backdrop-blur-md transition-all flex items-center justify-center cursor-pointer"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playToggleSwitch(true);
+                window.location.reload();
+              }}
+              title={isTl ? 'I-refresh ang pahina' : 'Refresh page'}
+              className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-sky-200 border border-white/15 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Main Glassmorphic Container with Left and Right Student Encouragement Wings */}
-      <main className="relative z-20 flex-1 flex flex-col justify-center items-center p-3 sm:p-6 lg:p-8 my-1 sm:my-4">
-        <div className="w-full max-w-7xl flex flex-col lg:flex-row items-center justify-center gap-4 xl:gap-12">
-          {/* Left Wing: Boy Student (Desktop Website Only - Hidden on Mobile/PWA/Capacitor) */}
-          {mode === 'login' && (
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="hidden lg:flex shrink-0 order-1 lg:order-none"
-            >
-              {boyWing}
-            </motion.div>
-          )}
+      {/* ====================================================
+          2. MAIN HERO & FORM CONTAINER
+          ==================================================== */}
+      <main className="relative z-20 flex-1 flex flex-col justify-center px-4 sm:px-8 py-8 sm:py-12">
+        <div className="max-w-7xl mx-auto w-full">
 
-          {/* Central Login / Register Glass Card (Responsive fit for mobile phones without excessive bottom gap) */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-            className={`w-full ${
-              mode === 'register' ? 'max-w-5xl' : 'max-w-xl'
-            } cosmic-glass-card p-4 sm:p-10 space-y-4 sm:space-y-7 relative z-10`}
-          >
           {/* ====================================================
-              MODE: LOGIN SCREEN
+              MODE: LOGIN SCREEN (CDM-Style Asymmetric 2-Column Hero)
               ==================================================== */}
           {mode === 'login' && (
-            <div className="space-y-4 sm:space-y-6">
-              <div className="text-center space-y-3 pb-2 sm:pb-4">
-                {/* Desktop: Official Clean AICS Seal (hidden on mobile) */}
-                <div className="hidden lg:block">
-                  <div className="w-16 h-16 rounded-full overflow-hidden mx-auto shadow-xl ring-2 ring-blue-400/40 bg-white p-0.5">
-                    <img
-                      src="/aics-logo.jpg"
-                      alt="AICS Logo"
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  </div>
-                </div>
-
-                {/* Mobile App: Friendly Animated Safezone Robot Companion (Visible only on Mobile) */}
-                <div className="block lg:hidden">
-                  <SafezoneMascot />
-                </div>
-
-                {/* Desktop Title: AICS SAFEZONE (Hidden on mobile per user request) */}
-                <h2 className="hidden lg:block text-2xl sm:text-3xl font-extrabold tracking-tight card-title-text uppercase">
-                  AICS SAFEZONE
-                </h2>
-
-                {/* Desktop: 1 sentence only description below AICS SAFEZONE */}
-                <p className="hidden lg:block text-sm font-semibold card-subtitle-text">
-                  {isTl ? 'Bawat hinaing at alalahanin mo ay karapat-dapat sa kalinga.' : 'Every Concern Deserves Care.'}
-                </p>
-
-                {/* Mobile Phone Only: 3.5s Rotating Affirmation Carousel (Clean without quotation marks "") */}
-                <div
-                  onMouseEnter={() => setIsCarouselPaused(true)}
-                  onMouseLeave={() => setIsCarouselPaused(false)}
-                  onTouchStart={() => setIsCarouselPaused(true)}
-                  onTouchEnd={() => setIsCarouselPaused(false)}
-                  className="lg:hidden min-h-[50px] flex items-center justify-center px-4 py-2 rounded-2xl bg-blue-500/10 dark:bg-white/5 border border-blue-400/20 shadow-inner relative overflow-hidden transition-all"
-                  title="Anti-Bullying & Confidential Guidance Shield"
-                >
-                  <AnimatePresence mode="wait">
-                    <motion.p
-                      key={affirmationIndex}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.35, ease: 'easeOut' }}
-                      className="text-xs font-bold text-sky-900 dark:text-sky-200 text-center leading-relaxed"
-                    >
-                      {isTl ? MENTAL_HEALTH_AFFIRMATIONS[affirmationIndex].tl : MENTAL_HEALTH_AFFIRMATIONS[affirmationIndex].en}
-                    </motion.p>
-                  </AnimatePresence>
-                </div>
-              </div>
-
-              {loginError && (
-                <div
-                  role="alert"
-                  className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/80 border-2 border-rose-500 dark:border-rose-400 text-rose-900 dark:text-rose-100 text-xs sm:text-sm font-black flex items-start gap-3 shadow-lg anim-pop"
-                >
-                  <div className="w-6 h-6 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-black text-rose-700 dark:text-rose-300 uppercase tracking-wider text-[11px]">
-                      {isTl ? 'Maling Detalye o Hindi Nakapasok' : 'Authentication Error'}
-                    </p>
-                    <p className="mt-0.5 leading-snug">{loginError}</p>
-                  </div>
-                </div>
-              )}
-
-              <form onSubmit={handleLoginSubmit} className="space-y-6">
-                {/* Invisible Honeypot Anti-Bot Field (Hidden from real users via CSS & offscreen) */}
-                <div className="opacity-0 absolute -left-[9999px] -top-[9999px] pointer-events-none select-none h-0 w-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
-                  <label htmlFor="student_hp_verify">Leave this field empty</label>
-                  <input
-                    id="student_hp_verify"
-                    type="text"
-                    name="student_hp_verify"
-                    value={loginHoneypot}
-                    onChange={(e) => setLoginHoneypot(e.target.value)}
-                    autoComplete="off"
-                    tabIndex={-1}
-                  />
-                </div>
-
-                {/* Anti-Brute-Force Lockout Warning Countdown */}
-                {loginCooldownSeconds > 0 && (
-                  <div className="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-900 dark:text-amber-200 text-xs font-bold flex items-center justify-between gap-3 animate-pulse">
-                    <div className="flex items-center gap-2">
-                      <Shield className="w-4 h-4 text-amber-500 shrink-0" />
-                      <span>{isTl ? 'Naka-lockout ang login dahil sa sunod-sunod na maling attempts.' : 'Login locked out due to consecutive failed attempts.'}</span>
-                    </div>
-                    <span className="font-mono px-2 py-1 rounded-lg bg-amber-500/20 text-xs">
-                      {Math.floor(loginCooldownSeconds / 60)}:{(loginCooldownSeconds % 60).toString().padStart(2, '0')}
-                    </span>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <label className="text-sm font-extrabold register-label flex items-center justify-between">
-                    <span>Student ID Number</span>
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/50 pointer-events-none">
-                      <User className="w-5 h-5" />
-                    </span>
-                    <input
-                      type="text"
-                      required
-                      value={loginStudentNumber}
-                      onChange={(e) => setLoginStudentNumber(e.target.value)}
-                      placeholder="Enter your Student ID Number"
-                      className="w-full pl-12 pr-5 py-4 rounded-2xl cosmic-input text-base font-semibold focus:outline-none transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-extrabold register-label">Password</label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        soundFX.playToggleSwitch(true);
-                        setMode('forgot');
-                        setForgotIdentifier(loginStudentNumber);
-                      }}
-                      className="text-xs text-[#2557BE] dark:text-[#7CB8F7] hover:underline font-extrabold"
-                    >
-                      {isTl ? 'Nakalimutan ang Password?' : 'Forgot Password?'}
-                    </button>
-                  </div>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/50 pointer-events-none">
-                      <Lock className="w-5 h-5" />
-                    </span>
-                    <input
-                      type={showLoginPassword ? 'text' : 'password'}
-                      required
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      placeholder="Enter your password"
-                      className="w-full pl-12 pr-12 py-4 rounded-2xl cosmic-input text-base font-semibold focus:outline-none transition-all"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        soundFX.playToggleSwitch(true);
-                        setShowLoginPassword((prev) => !prev);
-                      }}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-white/60 dark:hover:text-white p-1 text-sm font-semibold transition-colors"
-                      title={showLoginPassword ? 'Hide password' : 'Show password'}
-                    >
-                      {showLoginPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loginLoading || loginCooldownSeconds > 0}
-                  className="btn-press w-full py-4 rounded-2xl bg-gradient-to-r from-[#1E469B] via-[#2557BE] to-[#1E469B] hover:opacity-95 text-white text-base font-extrabold shadow-xl shadow-blue-950/60 border border-white/20 disabled:opacity-50 transition-all flex items-center justify-center gap-2.5"
-                >
-                  {loginLoading ? (
-                    <div className="flex items-center gap-3">
-                      {/* High-tech AICS Computer Science Pulsing Circuit Core */}
-                      <div className="relative w-5 h-5 flex items-center justify-center">
-                        <span className="absolute inset-0 rounded-full border-2 border-sky-300 border-t-transparent animate-spin" />
-                        <span className="w-2 h-2 rounded-full bg-cyan-300 animate-pulse shadow-[0_0_8px_#38bdf8]" />
-                      </div>
-                      <span className="tracking-wide">
-                        {isTl ? 'Pina-process ang Cyber Security Credentials...' : 'Processing AICS Secure Credentials...'}
-                      </span>
-                    </div>
-                  ) : loginCooldownSeconds > 0 ? (
-                    <span>Locked Out ({loginCooldownSeconds}s)</span>
-                  ) : (
-                    <>
-                      <span>{isTl ? 'Pumasok sa Student Portal' : 'Sign In to Student Portal'}</span>
-                      <span className="text-lg">→</span>
-                    </>
-                  )}
-                </button>
-
-                {/* Cloudflare Turnstile Human & Bot Shield (Positioned below Sign In button) */}
-                <div className="pt-2 flex justify-center">
-                  <CloudflareTurnstile
-                    siteKey={CLOUDFLARE_SITE_KEY}
-                    onVerify={(token) => {
-                      setTurnstileToken(token);
-                      soundFX.playToggleSwitch(true);
-                    }}
-                    onExpire={() => setTurnstileToken(null)}
-                    onError={(err) => console.warn('Turnstile security notice:', err)}
-                  />
-                </div>
-              </form>
-
-              <div className="pt-4 border-t border-white/10 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
-                <span className="card-subtitle-text font-semibold">
-                  {isTl ? 'Wala ka pang student account?' : "Don't have a student account?"}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFX.playToggleSwitch(true);
-                    if (!privacyAgreed) {
-                      setShowPrivacyModal(true);
-                    } else {
-                      setMode('register');
-                    }
-                  }}
-                  className="btn-press px-6 py-2.5 rounded-xl card-back-button font-extrabold transition-all"
-                >
-                  {isTl ? '+ Mag-Create ng Account' : '+ Create Student Account'}
-                </button>
-              </div>
-
-              {/* Install AICS Kalang Ba Mobile App Banner (PWA Home Screen + Direct Android APK Download) */}
-              <div className="pt-2 space-y-2">
-                <button
-                  type="button"
-                  onClick={handleInstallApp}
-                  className="btn-press w-full p-3 rounded-2xl bg-gradient-to-r from-sky-500/20 to-blue-600/25 hover:from-sky-500/30 hover:to-blue-600/35 border-2 border-sky-400/50 flex items-center justify-between gap-3 text-left transition-all cursor-pointer shadow-lg"
-                >
+            <div className="space-y-16">
+              
+              {/* TOP HERO ROW: Left Editorial Typography + Right Floating Login Card */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
+                
+                {/* Left Column: Authoritative Editorial Serif Typography & Mental Health Affirmations */}
+                <div className="lg:col-span-7 space-y-6 sm:space-y-7 text-left">
+                  {/* Eyebrow with Amber Dash */}
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 to-[#1E469B] flex items-center justify-center text-white shadow-md shrink-0">
-                      <Download className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-black text-sky-900 dark:text-sky-200 uppercase tracking-wider">
-                          {isTl ? 'I-install ang Mobile App' : 'Install Mobile App'}
-                        </span>
-                        <span className="text-[9px] px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 font-extrabold border border-emerald-400/30">
-                          FREE
-                        </span>
+                    <div className="w-8 h-[2px] bg-amber-400" />
+                    <span className="text-xs sm:text-sm font-extrabold tracking-[0.18em] uppercase text-amber-400">
+                      AICS GUIDANCE & COUNSELING SAFEGUARD
+                    </span>
+                  </div>
+
+                  {/* Massive High-Contrast Editorial Serif Headline */}
+                  <div className="space-y-1">
+                    <h1 className="text-4xl sm:text-6xl xl:text-7xl font-serif font-black tracking-tight text-white leading-[0.98]">
+                      Your Safe Space. <br />
+                      Your Voice. <br />
+                      <span className="text-amber-400 italic">One SafeZone.</span>
+                    </h1>
+                  </div>
+
+                  {/* Clear, Grounded Reassurance Copy */}
+                  <p className="text-base sm:text-lg text-slate-300 dark:text-slate-300 leading-relaxed max-w-2xl font-normal">
+                    {isTl
+                      ? 'Ligtas, kumpidensyal, at protektado sa ilalim ng batas. Dito sa AICS SafeZone, pinakikinggan ang iyong bawat hinaing—walang panghuhusga, walang paghihiganti, at may agarang kalinga mula sa Guidance Office.'
+                      : 'Confidential, supportive, and legally protected. AICS SafeZone empowers every student to seek care, report peer concerns, and access compassionate counseling without fear of judgment or retaliation.'}
+                  </p>
+
+                  {/* 3 Pillar Reassurance Badges */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 max-w-2xl">
+                    <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-1">
+                      <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold">
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>{isTl ? '100% Kumpidensyal' : '100% Confidential'}</span>
                       </div>
-                      <p className="text-[11px] text-sky-800/80 dark:text-sky-300/80 font-medium">
-                        {isTl
-                          ? 'I-add ang AICS Kalang Ba sa iyong home screen para sa agarang pag-access'
-                          : 'Add AICS Kalang Ba to home screen with offline & push notifications'}
+                      <p className="text-[11px] text-slate-300">
+                        {isTl ? 'Guidance Office lamang ang nakakakita ng iyong report.' : 'Strictly restricted to licensed Guidance staff.'}
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-1">
+                      <div className="flex items-center gap-2 text-sky-400 text-xs font-bold">
+                        <HeartHandshake className="w-4 h-4" />
+                        <span>{isTl ? 'Walang Balikan' : 'Zero Retaliation'}</span>
+                      </div>
+                      <p className="text-[11px] text-slate-300">
+                        {isTl ? 'Protektado laban sa anumang pambu-bully o ganti.' : 'Guaranteed safety and institutional peer protection.'}
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-1">
+                      <div className="flex items-center gap-2 text-amber-400 text-xs font-bold">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>{isTl ? 'Gumaan ang Loob' : 'Peace of Mind'}</span>
+                      </div>
+                      <p className="text-[11px] text-slate-300">
+                        {isTl ? 'Mababawasan ang iyong dinadalang bigat sa eskwela.' : 'Compassionate guidance to resolve problems early.'}
                       </p>
                     </div>
                   </div>
-                  <span className="text-xs font-black text-sky-600 dark:text-sky-300 shrink-0">
-                    {isTl ? 'I-install →' : 'Install →'}
-                  </span>
-                </button>
 
-                {/* Direct Android APK Download Link */}
-                <a
-                  href="/aics-kalang-ba.apk"
-                  download="AICS_Kalang_Ba.apk"
-                  onClick={() => soundFX.playToggleSwitch(true)}
-                  className="w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center gap-2 text-xs font-extrabold text-sky-300 hover:text-white transition-all cursor-pointer"
-                >
-                  <span>
-    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="11" width="18" height="10" rx="2" />
-      <circle cx="12" cy="5" r="2" />
-      <path d="M12 7v4" />
-      <line x1="8" y1="16" x2="8" y2="16" />
-      <line x1="16" y1="16" x2="16" y2="16" />
-    </svg>
-  </span>
-                  <span>{isTl ? 'Mag-download ng Android APK File (.apk)' : 'Download Android APK (.apk)'}</span>
-                </a>
+                  {/* Mental Health Affirmation Banner */}
+                  <div className="p-4 rounded-2xl bg-sky-500/10 border border-sky-400/20 max-w-2xl flex items-center gap-3.5">
+                    <div className="w-9 h-9 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center shrink-0 text-sky-300">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <p className="text-xs sm:text-sm text-sky-100 font-medium italic leading-relaxed">
+                      "{isTl ? MENTAL_HEALTH_AFFIRMATIONS[affirmationIndex].tl : MENTAL_HEALTH_AFFIRMATIONS[affirmationIndex].en}"
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right Column: CDM-Inspired Sleek Floating Login Card */}
+                <div className="lg:col-span-5 w-full max-w-md mx-auto">
+                  <div className="relative rounded-3xl bg-[#081832]/95 dark:bg-[#061326]/95 border border-white/15 dark:border-white/10 p-6 sm:p-8 shadow-2xl backdrop-blur-xl space-y-5 text-left">
+                    
+                    {/* Top Golden Accent Indicator Bar */}
+                    <div className="w-12 h-1 rounded-full bg-amber-400" />
+
+                    {/* Card Header */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-extrabold tracking-widest uppercase text-emerald-400">
+                          {isTl ? 'PORTAL LOGIN' : 'STUDENT PORTAL ACCESS'}
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-400">
+                          RA 10173 SECURE
+                        </span>
+                      </div>
+                      <h2 className="text-2xl sm:text-3xl font-serif font-black text-white tracking-tight">
+                        {isTl ? 'Maligayang Pagbabalik' : 'Welcome back'}
+                      </h2>
+                      <p className="text-xs sm:text-sm text-slate-300 font-medium">
+                        {isTl ? 'Mag-sign in gamit ang iyong Student ID at Password.' : 'Sign in with your student credentials.'}
+                      </p>
+                    </div>
+
+                    {/* Login Error Notification */}
+                    {loginError && (
+                      <div
+                        role="alert"
+                        className="p-3.5 rounded-2xl bg-rose-500/20 border border-rose-500/50 text-rose-200 text-xs sm:text-sm font-bold flex items-start gap-2.5 shadow-md"
+                      >
+                        <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                        <div className="min-w-0 flex-1 leading-snug">
+                          {loginError}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Form Component */}
+                    <form onSubmit={handleLoginSubmit} className="space-y-4">
+                      {/* Invisible Honeypot Anti-Bot Field */}
+                      <div className="opacity-0 absolute -left-[9999px] -top-[9999px] pointer-events-none select-none h-0 w-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+                        <input
+                          id="student_hp_verify"
+                          type="text"
+                          name="student_hp_verify"
+                          value={loginHoneypot}
+                          onChange={(e) => setLoginHoneypot(e.target.value)}
+                          autoComplete="off"
+                          tabIndex={-1}
+                        />
+                      </div>
+
+                      {/* Lockout Warning */}
+                      {loginCooldownSeconds > 0 && (
+                        <div className="p-3 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-200 text-xs font-bold flex items-center justify-between">
+                          <span>{isTl ? 'Pansamantalang naka-lockout' : 'Login temporarily locked out'}</span>
+                          <span className="font-mono">
+                            {Math.floor(loginCooldownSeconds / 60)}:{(loginCooldownSeconds % 60).toString().padStart(2, '0')}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Student Number Input */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-extrabold uppercase tracking-wide text-slate-300">
+                          {isTl ? 'Student ID Number' : 'Student ID Number'}
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                            <User className="w-4 h-4" />
+                          </span>
+                          <input
+                            type="text"
+                            required
+                            value={loginStudentNumber}
+                            onChange={(e) => setLoginStudentNumber(e.target.value)}
+                            placeholder="Hal. 2024-12345"
+                            className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#040F22] border border-white/20 text-white placeholder-slate-400 text-sm font-semibold focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20 transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Password Input */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-extrabold uppercase tracking-wide text-slate-300">
+                            Password
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              soundFX.playToggleSwitch(true);
+                              setMode('forgot');
+                              setForgotIdentifier(loginStudentNumber);
+                            }}
+                            className="text-xs text-sky-400 hover:text-sky-300 hover:underline font-bold"
+                          >
+                            {isTl ? 'Nakalimutan?' : 'Forgot?'}
+                          </button>
+                        </div>
+                        <div className="relative">
+                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                            <Lock className="w-4 h-4" />
+                          </span>
+                          <input
+                            type={showLoginPassword ? 'text' : 'password'}
+                            required
+                            value={loginPassword}
+                            onChange={(e) => setLoginPassword(e.target.value)}
+                            placeholder="••••••••"
+                            className="w-full pl-10 pr-10 py-3 rounded-xl bg-[#040F22] border border-white/20 text-white placeholder-slate-400 text-sm font-semibold focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20 transition-all"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              soundFX.playToggleSwitch(true);
+                              setShowLoginPassword((prev) => !prev);
+                            }}
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                            title={showLoginPassword ? 'Hide password' : 'Show password'}
+                          >
+                            {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Primary Sign In Button */}
+                      <button
+                        type="submit"
+                        disabled={loginLoading || loginCooldownSeconds > 0}
+                        className="btn-press w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:opacity-95 text-white text-sm font-extrabold shadow-lg shadow-emerald-950/50 border border-white/10 disabled:opacity-50 transition-all flex items-center justify-center gap-2 mt-2"
+                      >
+                        {loginLoading ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <span>{isTl ? 'Pina-process ang account...' : 'Signing in...'}</span>
+                          </div>
+                        ) : (
+                          <>
+                            <span>{isTl ? 'Pumasok sa SafeZone Portal' : 'Sign in to SafeZone Portal'}</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </>
+                        )}
+                      </button>
+
+                      {/* Turnstile / Bot Verification */}
+                      <div className="pt-1 flex justify-center">
+                        <CloudflareTurnstile
+                          siteKey={CLOUDFLARE_SITE_KEY}
+                          onVerify={(token) => {
+                            setTurnstileToken(token);
+                            soundFX.playToggleSwitch(true);
+                          }}
+                          onExpire={() => setTurnstileToken(null)}
+                          onError={(err) => console.warn('Turnstile note:', err)}
+                        />
+                      </div>
+                    </form>
+
+                    {/* Divider: New Student Registration */}
+                    <div className="pt-2 border-t border-white/10 space-y-2.5">
+                      <div className="text-center">
+                        <span className="text-xs text-slate-300 font-medium">
+                          {isTl ? 'Bago ka pa lang sa AICS Guidance Portal?' : 'New to AICS SafeZone Portal?'}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundFX.playToggleSwitch(true);
+                          if (!privacyAgreed) {
+                            setShowPrivacyModal(true);
+                          } else {
+                            setMode('register');
+                          }
+                        }}
+                        className="btn-press w-full py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white text-xs sm:text-sm font-extrabold transition-all flex items-center justify-center gap-2"
+                      >
+                        <span>+ {isTl ? 'Gumawa ng Bagong Student Account' : 'Create New Student Account'}</span>
+                      </button>
+                    </div>
+
+                    {/* Direct Android APK Download Option */}
+                    <div className="pt-1 text-center">
+                      <a
+                        href="/aics-kalang-ba.apk"
+                        download="AICS_SafeZone.apk"
+                        onClick={() => soundFX.playToggleSwitch(true)}
+                        className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-sky-300 transition-colors"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>{isTl ? 'I-download ang Android APK (.apk)' : 'Download Android APK (.apk)'}</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ====================================================
+                  SECTION 3: INSTITUTIONAL GUIDANCE WORKSPACES (6-CARD GRID)
+                  Inspired by CDM Portal Academic Services Architecture
+                  ==================================================== */}
+              <div className="pt-10 border-t border-white/10 space-y-8 text-left">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-[2px] bg-sky-400" />
+                    <span className="text-xs font-extrabold tracking-[0.18em] uppercase text-sky-400">
+                      GUIDANCE WORKSPACES & SERVICES
+                    </span>
+                  </div>
+                  <h2 className="text-2xl sm:text-4xl font-serif font-black text-white tracking-tight">
+                    {isTl ? 'Ligtas na suporta sa bawat hakbang mo sa AICS.' : 'Compassionate support in one secure place.'}
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-300 max-w-2xl font-normal leading-relaxed">
+                    {isTl
+                      ? 'Mag-sign in para ma-access ang iyong kumpidensyal na dashboard at mga serbisyo ng Guidance and Counseling Office.'
+                      : 'Sign in to access authorized guidance services, monitor filed concerns, and connect with school counselors.'}
+                  </p>
+                </div>
+
+                {/* 6 Structured Guidance Capability Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                  
+                  {/* Card 1: Confidential Concern Filing */}
+                  <div className="p-5 rounded-2xl bg-[#081832]/80 border border-white/10 hover:border-sky-400/40 transition-colors space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-400/30 flex items-center justify-center text-sky-400">
+                        <MessageSquare className="w-5 h-5" />
+                      </div>
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                        {isTl ? 'Kumpidensyal' : 'Confidential'}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-white">
+                        {isTl ? '1. Pag-uulat ng Hinaing o Bullying' : '1. Safe Concern & Peer Reporting'}
+                      </h3>
+                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                        {isTl
+                          ? 'Isumite ang mga isyu sa panunukso, cyberbullying, o harassment nang walang takot sa paghihiganti.'
+                          : 'Privately submit bullying, academic distress, or peer conflicts directly to Guidance Associates.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Card 2: 1-on-1 Guidance Counseling */}
+                  <div className="p-5 rounded-2xl bg-[#081832]/80 border border-white/10 hover:border-teal-400/40 transition-colors space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="w-10 h-10 rounded-xl bg-teal-500/15 border border-teal-400/30 flex items-center justify-center text-teal-400">
+                        <HeartHandshake className="w-5 h-5" />
+                      </div>
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-teal-500/15 text-teal-300 border border-teal-500/30">
+                        {isTl ? 'Kalinga at Suporta' : '1-on-1 Counseling'}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-white">
+                        {isTl ? '2. Direktang Guidance Consultation' : '2. Direct Guidance Counseling'}
+                      </h3>
+                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                        {isTl
+                          ? 'Makisalamuha at humingi ng payo sa Guidance Associate para gumaan ang loob at mabigyan ng solusyon.'
+                          : 'Connect one-on-one with school counselors for emotional and academic well-being support.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Card 3: Real-Time Chat & Follow-ups */}
+                  <div className="p-5 rounded-2xl bg-[#081832]/80 border border-white/10 hover:border-emerald-400/40 transition-colors space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
+                        <CheckCircle2 className="w-5 h-5" />
+                      </div>
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                        {isTl ? 'Subaybay' : 'Real-Time'}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-white">
+                        {isTl ? '3. Live Case Status & Guidance Chat' : '3. Case Status Tracking & Chat'}
+                      </h3>
+                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                        {isTl
+                          ? 'Malaman agad kung inaksyunan na ng eskwelahan ang iyong report at mag-chat nang ligtas.'
+                          : 'Real-time updates as your report moves from investigation to gentle resolution.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Card 4: Quick Emergency SOS Discretion */}
+                  <div className="p-5 rounded-2xl bg-[#081832]/80 border border-white/10 hover:border-rose-400/40 transition-colors space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-400/30 flex items-center justify-center text-rose-400">
+                        <Shield className="w-5 h-5" />
+                      </div>
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                        {isTl ? 'Discretion' : 'SOS Protection'}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-white">
+                        {isTl ? '4. Emergency SOS & Instant Exit' : '4. Emergency SOS & Instant Exit'}
+                      </h3>
+                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                        {isTl
+                          ? 'Isang pindot lang sa SOS mascot, agad magsasara ang app o mag-clear ng history para walang makakitang iba.'
+                          : 'Immediate window close and session purge with 5-digit PIN quick lock protection on mobile.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Card 5: Mental Health Affirmations & Articles */}
+                  <div className="p-5 rounded-2xl bg-[#081832]/80 border border-white/10 hover:border-amber-400/40 transition-colors space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-amber-400">
+                        <FileHeart className="w-5 h-5" />
+                      </div>
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                        {isTl ? 'Kalusugang Pangkaisipan' : 'Self-Help'}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-white">
+                        {isTl ? '5. Karapatan at Gabay sa Kapayapaan' : '5. Student Rights & Wellness Guides'}
+                      </h3>
+                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                        {isTl
+                          ? 'Mga gabay alinsunod sa Anti-Bullying Act (RA 10627) upang malaman mo ang iyong proteksyon sa campus.'
+                          : 'Institutional policies, mental wellness affirmations, and peer intervention guidelines.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Card 6: Official Peer Referral Protocol */}
+                  <div className="p-5 rounded-2xl bg-[#081832]/80 border border-white/10 hover:border-purple-400/40 transition-colors space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-400/30 flex items-center justify-center text-purple-400">
+                        <Users className="w-5 h-5" />
+                      </div>
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                        {isTl ? 'Kaibigan / Kaklase' : 'Peer Referral'}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-white">
+                        {isTl ? '6. Tulong para sa Nangangailangang Kaklase' : '6. Helping a Distressed Peer'}
+                      </h3>
+                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                        {isTl
+                          ? 'Maaari mong ipaalam sa Guidance Office kung may kaklaseng labis na nalulungkot o nanganganib.'
+                          : 'Confidentially refer fellow classmates who may be struggling in silence.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Institutional Privacy & Confidentiality Guarantee Banner */}
+                <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-900/40 via-sky-900/30 to-teal-900/40 border border-sky-400/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-white">
+                        {isTl ? 'Garantisadong Ligtas sa Ilalim ng RA 10173 at RA 10627' : 'Strict Institutional Confidentiality Guarantee'}
+                      </h4>
+                      <p className="text-xs text-slate-300">
+                        {isTl
+                          ? 'Hindi kailanman ibinubunyag sa publiko ang anumang report o pagkakakilanlan.'
+                          : 'Student records and reports never appear on public screens and remain protected.'}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playToggleSwitch(true);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-xs font-bold text-white transition-colors shrink-0"
+                  >
+                    {isTl ? 'Mag-sign In para Mag-report →' : 'Sign In to File a Report →'}
+                  </button>
+                </div>
+              </div>
+
+              {/* ====================================================
+                  SECTION 4: ROLE-BASED ENTRY POINTS ("GETTING STARTED")
+                  ==================================================== */}
+              <div className="pt-6 border-t border-white/10 space-y-4 text-left">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-[2px] bg-amber-400" />
+                  <span className="text-xs font-extrabold tracking-[0.18em] uppercase text-amber-400">
+                    GETTING STARTED BY ROLE
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  
+                  {/* Role 01: Students */}
+                  <div className="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-400/30 transition-colors flex flex-col justify-between gap-4">
+                    <div className="space-y-2">
+                      <span className="text-xs font-mono font-black text-amber-400 tracking-wider">01 · STUDENTS</span>
+                      <h4 className="text-base font-bold text-white">
+                        {isTl ? 'Mag-ulat o Humingi ng Tulong' : 'Report Concerns & Seek Help'}
+                      </h4>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        {isTl
+                          ? 'Gumawa ng account gamit ang iyong Student Number upang makapagsumite ng concern at mag-chat sa Guidance.'
+                          : 'Create or unlock your student account to file concerns and track resolution in private.'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundFX.playToggleSwitch(true);
+                        if (!privacyAgreed) {
+                          setShowPrivacyModal(true);
+                        } else {
+                          setMode('register');
+                        }
+                      }}
+                      className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-300 hover:text-amber-200"
+                    >
+                      <span>{isTl ? 'Gumawa ng Account →' : 'Create Account →'}</span>
+                    </button>
+                  </div>
+
+                  {/* Role 02: Guidance Associates */}
+                  <div className="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400/30 transition-colors flex flex-col justify-between gap-4">
+                    <div className="space-y-2">
+                      <span className="text-xs font-mono font-black text-sky-400 tracking-wider">02 · GUIDANCE ASSOCIATES</span>
+                      <h4 className="text-base font-bold text-white">
+                        {isTl ? 'Opisyal na Guidance Terminal' : 'Official Guidance Terminal'}
+                      </h4>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        {isTl
+                          ? 'Nakalaan para sa awtorisadong kawani ng Guidance Office sa pamamahala ng mga kaso at interbensyon.'
+                          : 'Desktop terminal for licensed Guidance personnel to review cases and schedule sessions.'}
+                      </p>
+                    </div>
+                    <a
+                      href="?mode=staff#staff"
+                      onClick={() => soundFX.playToggleSwitch(true)}
+                      className="inline-flex items-center gap-1.5 text-xs font-extrabold text-sky-300 hover:text-sky-200"
+                    >
+                      <span>{isTl ? 'Staff Desktop Terminal →' : 'Staff Terminal Login →'}</span>
+                    </a>
+                  </div>
+
+                  {/* Role 03: Teachers & Campus Officers */}
+                  <div className="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-emerald-400/30 transition-colors flex flex-col justify-between gap-4">
+                    <div className="space-y-2">
+                      <span className="text-xs font-mono font-black text-emerald-400 tracking-wider">03 · FACULTY & STAFF</span>
+                      <h4 className="text-base font-bold text-white">
+                        {isTl ? 'Student Endorsement & Referral' : 'Student Endorsement & Care'}
+                      </h4>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        {isTl
+                          ? 'I-endorse ang mga estudyanteng nangangailangan ng agarang gabay sa silid-aralan.'
+                          : 'Endorse students exhibiting signs of distress or behavioral changes for early guidance.'}
+                      </p>
+                    </div>
+                    <a
+                      href="?mode=staff#staff"
+                      onClick={() => soundFX.playToggleSwitch(true)}
+                      className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-300 hover:text-emerald-200"
+                    >
+                      <span>{isTl ? 'Staff Referral →' : 'Staff Referral Access →'}</span>
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
           {/* ====================================================
-              MODE: CREATE ACCOUNT (SPACIOUS & ORGANIZED LAYOUT)
+              MODE: REGISTER / CREATE ACCOUNT (Clean Spacious Form)
               ==================================================== */}
           {mode === 'register' && (
             <div className="space-y-8">
@@ -1716,29 +1939,32 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               )}
             </div>
           )}
-        </motion.div>
 
-        {/* Right Wing: Girl Student (Desktop Website Only - Hidden on Mobile/PWA/Capacitor) */}
-        {mode === 'login' && (
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="hidden lg:flex shrink-0 order-3 lg:order-none"
-          >
-            {girlWing}
-          </motion.div>
-        )}
-      </div>
-    </main>
+        </div>
+      </main>
 
-      {/* Footer (Hidden on mobile or when virtual keyboard opens, keeping the screen Messenger-clean) */}
-      <footer className="relative z-20 py-4 text-center text-xs text-[#9BCBFF]/75 border-t border-white/10 bg-[#0B1E48]/50 student-footer hidden sm:block">
-        Official Student Concern & Peer Referral Portal · Asian Institute of Computer Studies – Montalban (RA 10173 Protected)
+      {/* ====================================================
+          INSTITUTIONAL FOOTER & LEGAL CLUSTER
+          ==================================================== */}
+      <footer className="relative z-20 py-8 px-4 sm:px-8 border-t border-white/10 bg-[#020814]/90 text-left">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+          <div className="flex items-center gap-2">
+            <span className="font-extrabold text-white">Asian Institute of Computer Studies – Montalban</span>
+            <span>•</span>
+            <span>Guidance & Counseling Services</span>
+          </div>
+          <div className="flex items-center gap-4 text-[11px]">
+            <span>RA 10173 (Data Privacy Act of 2012)</span>
+            <span>•</span>
+            <span>RA 10627 (Anti-Bullying Act)</span>
+            <span>•</span>
+            <span>DepEd Child Protection Policy</span>
+          </div>
+        </div>
       </footer>
 
       {/* ====================================================
-          ACCOUNT CREATED: success mini-card (privacy, safety, how to use) — no animation
+          ACCOUNT CREATED: success mini-card
           ==================================================== */}
       {successData && (
         <div className="fixed inset-0 z-50 bg-[#06122B]/90 flex items-center justify-center p-3 sm:p-6" data-reg-success>
@@ -1803,6 +2029,11 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         </div>
       )}
 
+      
+
+      {/* ====================================================
+          DATA PRIVACY TERMS & CONDITIONS MODAL
+          ==================================================== */}
       {/* ====================================================
           DATA PRIVACY TERMS & CONDITIONS MODAL
           (Appears strictly before opening Create Account form)
@@ -1956,3 +2187,4 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     </div>
   );
 };
+

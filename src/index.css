@@ -1,3 +1,38 @@
+
+/* ============================================================================
+   AICS SAFEZONE INSTITUTIONAL PORTAL (INSPIRED BY CDM PORTAL CRAFT)
+   High-Prestige Editorial Guidance Architecture
+   ============================================================================ */
+:root {
+  --portal-canvas: #06152B;
+  --portal-surface: #0B2244;
+  --portal-surface-soft: #112F5C;
+  --portal-primary: #1E469B;
+  --portal-primary-hover: #163678;
+  --portal-gold: #F59E0B;
+  --portal-gold-soft: rgba(245, 158, 11, 0.15);
+  --portal-amber: #D97706;
+  --portal-teal: #0D9488;
+  --portal-border: rgba(255, 255, 255, 0.12);
+  --portal-ink: #F8FAFC;
+  --portal-muted: #94A3B8;
+}
+
+:root:not(.dark) {
+  --portal-canvas: #F8FAFC;
+  --portal-surface: #FFFFFF;
+  --portal-surface-soft: #F1F5F9;
+  --portal-primary: #0F2D6B;
+  --portal-primary-hover: #0A204C;
+  --portal-gold: #B45309;
+  --portal-gold-soft: rgba(180, 83, 9, 0.10);
+  --portal-amber: #92400E;
+  --portal-teal: #0F766E;
+  --portal-border: #CBD5E1;
+  --portal-ink: #0B1F4D;
+  --portal-muted: #475569;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
