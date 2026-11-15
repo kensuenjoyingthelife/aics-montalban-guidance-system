@@ -857,9 +857,19 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               </div>
 
               {loginError && (
-                <div className="p-4 rounded-2xl bg-rose-500/25 border border-rose-500/50 text-rose-200 text-sm font-semibold flex items-center gap-3">
-                  <AlertTriangle className="w-5 h-5 text-rose-300 shrink-0" />
-                  <span>{loginError}</span>
+                <div
+                  role="alert"
+                  className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/80 border-2 border-rose-500 dark:border-rose-400 text-rose-900 dark:text-rose-100 text-xs sm:text-sm font-black flex items-start gap-3 shadow-lg anim-pop"
+                >
+                  <div className="w-6 h-6 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-black text-rose-700 dark:text-rose-300 uppercase tracking-wider text-[11px]">
+                      {isTl ? 'Maling Detalye o Hindi Nakapasok' : 'Authentication Error'}
+                    </p>
+                    <p className="mt-0.5 leading-snug">{loginError}</p>
+                  </div>
                 </div>
               )}
 
@@ -957,13 +967,22 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   className="btn-press w-full py-4 rounded-2xl bg-gradient-to-r from-[#1E469B] via-[#2557BE] to-[#1E469B] hover:opacity-95 text-white text-base font-extrabold shadow-xl shadow-blue-950/60 border border-white/20 disabled:opacity-50 transition-all flex items-center justify-center gap-2.5"
                 >
                   {loginLoading ? (
-                    <span>Verifying Credentials...</span>
+                    <div className="flex items-center gap-3">
+                      {/* High-tech AICS Computer Science Pulsing Circuit Core */}
+                      <div className="relative w-5 h-5 flex items-center justify-center">
+                        <span className="absolute inset-0 rounded-full border-2 border-sky-300 border-t-transparent animate-spin" />
+                        <span className="w-2 h-2 rounded-full bg-cyan-300 animate-pulse shadow-[0_0_8px_#38bdf8]" />
+                      </div>
+                      <span className="tracking-wide">
+                        {isTl ? 'Pina-process ang Cyber Security Credentials...' : 'Processing AICS Secure Credentials...'}
+                      </span>
+                    </div>
                   ) : loginCooldownSeconds > 0 ? (
                     <span>Locked Out ({loginCooldownSeconds}s)</span>
                   ) : (
                     <>
-                      <span>Sign In to Student Portal</span>
-                      <span>→</span>
+                      <span>{isTl ? 'Pumasok sa Student Portal' : 'Sign In to Student Portal'}</span>
+                      <span className="text-lg">→</span>
                     </>
                   )}
                 </button>

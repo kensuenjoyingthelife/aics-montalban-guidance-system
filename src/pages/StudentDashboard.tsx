@@ -26,6 +26,7 @@ import {
   Clock,
   Send,
   FileText,
+  Download,
 } from 'lucide-react';
 import { WavyBackground } from '../components/auth/WavyBackground';
 import { SoundTogglePill, soundFX } from '../services/soundEngine';
@@ -118,6 +119,39 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   // Quick Panic / Discretion Shield Mode
   // If someone approaches or student presses ESC / Panic button, immediately covers the screen with study notes
   const [panicMode, setPanicMode] = useState<boolean>(false);
+
+  // PWA / APK Install Prompt State
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [canInstallApp, setCanInstallApp] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+      setCanInstallApp(true);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+  }, []);
+
+  const handleInstallClick = async () => {
+    soundFX.playStepUnlock();
+    if (installPrompt) {
+      installPrompt.prompt();
+      const choice = await installPrompt.userChoice;
+      if (choice.outcome === 'accepted') {
+        setCanInstallApp(false);
+      }
+      setInstallPrompt(null);
+    } else {
+      // Guide user if on iOS Safari or already installed
+      alert(
+        isTl
+          ? 'Para i-install: Pindutin ang Share button sa Safari at piliin ang "Add to Home Screen", o pumunta sa Chrome menu at i-click ang "Install App".'
+          : 'To install: Tap the Share button in Safari and choose "Add to Home Screen", or open Chrome settings and tap "Install App".'
+      );
+    }
+  };
 
   // Guided Onboarding Tour for Mobile Phone Users
   const [showMobileTour, setShowMobileTour] = useState<boolean>(() => {
@@ -567,6 +601,17 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
           {/* Right Action Bar & Drawer Toggle */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Quick Install Button on Top Header */}
+            <button
+              type="button"
+              onClick={handleInstallClick}
+              title={isTl ? 'I-install ang app' : 'Install app'}
+              className="btn-press p-2 sm:px-3 sm:py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md flex items-center gap-1.5 font-bold text-xs cursor-pointer transition-all"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">{isTl ? 'I-install' : 'Install'}</span>
+            </button>
+
             {/* Quick Refresh Page Button */}
             <button
               type="button"
@@ -814,6 +859,16 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   </span>
                   <SoundTogglePill />
                 </div>
+
+                {/* Install App on Phone / Desktop Button */}
+                <button
+                  type="button"
+                  onClick={handleInstallClick}
+                  className="btn-press w-full p-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all"
+                >
+                  <Download className="w-4 h-4 shrink-0" />
+                  <span>{isTl ? 'I-install ang App sa Telepono / PC' : 'Install App to Phone / PC'}</span>
+                </button>
 
                 {/* User Guide Button */}
                 <button
