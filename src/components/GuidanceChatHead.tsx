@@ -22,7 +22,7 @@ export const GuidanceChatHead: React.FC = () => {
     {
       id: 'welcome-1',
       sender: 'assistant',
-      text: 'Magandang araw! Ako ang AICS Guidance Copilot. Handa akong sumagot sa mga tanong kung paano gamitin ang system (paano gumawa ng case, mag-approve, o mag-print ng reports). Walang access ang AI sa personal data ng mga mag-aaral alinsunod sa RA 10173. Paano kita matutulungan?',
+      text: 'Magandang araw! Ako si Aicy AI, ang iyong Guidance Assistant. Handa akong sumagot sa mga tanong kung paano gamitin ang system (paano gumawa ng case, mag-approve, o mag-print ng reports). Walang access ang aking sistema sa personal data ng mga mag-aaral alinsunod sa RA 10173. Paano kita matutulungan?',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -97,19 +97,27 @@ export const GuidanceChatHead: React.FC = () => {
           {/* Header */}
           <div className="px-4 py-3 bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white flex items-center justify-between border-b border-blue-600/50">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-white/15 border border-white/25 flex items-center justify-center shrink-0">
-                <Bot className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-white/10 border border-white/20 shrink-0 flex items-center justify-center">
+                <img
+                  src="/eve-safezone-robot.jpg"
+                  alt="Aicy AI Robot"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Fallback to mascot image if jpg fails
+                    (e.target as HTMLImageElement).src = '/safezone-mascot-3d.png';
+                  }}
+                />
               </div>
               <div className="min-w-0">
                 <h2 className="text-sm font-bold tracking-tight truncate leading-tight flex items-center gap-1.5">
-                  AICS Guidance Copilot
+                  Aicy AI
                   <span className="text-[10px] font-semibold px-1.5 py-0.2 bg-emerald-400 text-slate-950 rounded-full">
-                    SOP AI
+                    Guidance Copilot
                   </span>
                 </h2>
                 <p className="text-[11px] text-blue-100/90 truncate flex items-center gap-1">
                   <ShieldAlert className="w-3 h-3 text-amber-300 shrink-0" />
-                  <span>Privacy Protected · System Guide</span>
+                  <span>Privacy Guard · SOP Navigator</span>
                 </p>
               </div>
             </div>
@@ -233,8 +241,10 @@ export const GuidanceChatHead: React.FC = () => {
             onClick={() => setIsMinimized(false)}
             className="px-3.5 py-2 rounded-full bg-slate-900/90 dark:bg-slate-800/90 border border-white/20 text-white text-xs font-bold shadow-xl hover:bg-slate-900 active:scale-95 transition-all flex items-center gap-2 backdrop-blur-md"
           >
-            <Bot className="w-3.5 h-3.5 text-blue-400" />
-            <span>Guidance Copilot</span>
+            <div className="w-4 h-4 rounded-full overflow-hidden shrink-0">
+              <img src="/eve-safezone-robot.jpg" alt="Aicy AI" className="w-full h-full object-cover" />
+            </div>
+            <span>Aicy AI</span>
             <Maximize2 className="w-3 h-3 text-slate-400" />
           </button>
         )}
@@ -250,19 +260,26 @@ export const GuidanceChatHead: React.FC = () => {
               setIsMinimized(false);
             }
           }}
-          className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-blue-700 via-indigo-600 to-blue-500 text-white shadow-2xl border-2 border-white dark:border-slate-800 flex items-center justify-center hover:shadow-blue-500/30 active:scale-95 transition-all duration-200 relative group ${
+          className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-gradient-to-tr from-blue-700 via-indigo-600 to-blue-500 text-white shadow-2xl border-2 border-white dark:border-slate-800 flex items-center justify-center hover:shadow-blue-500/30 active:scale-95 transition-all duration-200 relative group ${
             isOpen && !isMinimized ? 'ring-4 ring-blue-500/20' : ''
           }`}
-          title="AICS Guidance AI Copilot (SOP & System Guide)"
-          aria-label="Toggle Guidance AI Copilot"
+          title="Aicy AI · Guidance Copilot"
+          aria-label="Toggle Aicy AI Guidance Copilot"
         >
           {isOpen && !isMinimized ? (
             <X className="w-6 h-6 text-white transition-transform group-hover:rotate-90 duration-200" />
           ) : (
             <>
-              <Bot className="w-6 h-6 text-white" />
+              <img
+                src="/eve-safezone-robot.jpg"
+                alt="Aicy AI Mascot"
+                className="w-full h-full object-cover rounded-full"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/safezone-mascot-3d.png';
+                }}
+              />
               {/* Online Dot */}
-              <span className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900" />
+              <span className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 shadow-sm" />
             </>
           )}
         </button>

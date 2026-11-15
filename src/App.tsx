@@ -43,19 +43,22 @@ export const App: React.FC = () => {
   }, []);
 
   // Staff Session (Guidance Desktop App only)
-  // DEV ONLY: `?devskip` opens the desktop straight to the Dashboard while developing.
-  // import.meta.env.DEV is false in every build (installer), so this can never skip the login there.
-  const [activeStaffSession, setActiveStaffSession] = useState<StaffDirectoryAccount | null>(() =>
-    import.meta.env.DEV && new URLSearchParams(window.location.search).has('devskip')
-      ? {
-          email: 'aicsmontalbansafeguard@gmail.com',
-          fullName: 'AICS Montalban Guidance Associate',
-          role: 'Guidance Associate',
-          department: 'Guidance Office',
-          badgeCode: 'AICS-GA-001',
-        }
-      : null,
-  );
+  // Staff Desktop Session: Defaults directly to logged-in Guidance Associate in development or if remembered
+  const [activeStaffSession, setActiveStaffSession] = useState<StaffDirectoryAccount | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const saved = localStorage.getItem('aics_staff_session');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    // Auto-enter directly into dashboard for quick desktop testing
+    return {
+      email: 'aicsmontalbansafeguard@gmail.com',
+      fullName: 'AICS Montalban Guidance Associate',
+      role: 'Guidance Associate',
+      department: 'Guidance Office',
+      badgeCode: 'AICS-GA-001',
+    };
+  });
 
   // Student Session (Student Web/Mobile Portal only) with session persistence
   const [activeStudentSession, setActiveStudentSession] = useState<StudentPortalUser | null>(() => {

@@ -12,7 +12,8 @@ const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 const GEMINI_MODEL = 'gemini-3.5-flash';
 
 const SYSTEM_INSTRUCTION = `
-You are the "AICS Guidance Copilot" (SafeZone Staff Assistant), an intelligent, supportive, and privacy-first in-app assistant built exclusively for the AICS Montalban Branch Guidance Office.
+You are "Aicy AI" (AICS Guidance Copilot & SafeZone Staff Assistant), an intelligent, supportive, and privacy-first in-app assistant built exclusively for the AICS Montalban Branch Guidance Office.
+Your name is "Aicy AI" and your icon is the friendly AICS SafeZone robot mascot.
 
 YOUR CORE ROLE & SCOPE:
 - Guide the Guidance Counselor, Guidance Associates, and Staff on how to use every single feature of the AICS SafeZone Portal.
@@ -22,7 +23,7 @@ YOUR CORE ROLE & SCOPE:
 CRITICAL PRIVACY & SECURITY GUARDRAILS (RA 10173 - DATA PRIVACY ACT OF 2012):
 1. ZERO DATABASE / STUDENT ACCESS: You DO NOT have access to read, modify, delete, or search student records, names, contact numbers, grades, or personal files.
 2. ABSOLUTE REFUSAL OF STUDENT DATA MANIPULATION: If a user asks you to delete, modify, or reveal specific student information (e.g., "idelete mo si Myka", "ano phone number ni Juan", "baguhin mo section ni..."), you MUST strictly and politely refuse.
-   - Example Refusal: "Paumanhin po, bilang AICS System Copilot, mahigpit na ipinagbabawal sa aking sistema ang paggalaw o pag-access sa database at personal na impormasyon ng mga mag-aaral alinsunod sa Data Privacy Act (RA 10173). Maaari niyo po itong isagawa nang direkta at may pahintulot sa Student Masterlist o Cases tab."
+   - Example Refusal: "Paumanhin po, bilang Aicy AI, mahigpit na ipinagbabawal sa aking sistema ang paggalaw o pag-access sa database at personal na impormasyon ng mga mag-aaral alinsunod sa Data Privacy Act (RA 10173). Hindi ko maaaring i-delete o baguhin ang records ng sinumang estudyante tulad ni Myka. Maaari niyo po itong isagawa nang direkta at may pahintulot sa Student Masterlist o Cases tab."
 
 SYSTEM KNOWLEDGE BASE:
 1. Concerns Hub:
@@ -91,7 +92,7 @@ export async function askGuidanceCopilot(
     (lower.includes('delete') || lower.includes('tanggalin') || lower.includes('burahin') || lower.includes('drop')) &&
     (lower.includes('student') || lower.includes('myka') || lower.includes('account') || lower.includes('record'))
   ) {
-    return "Paumanhin po, bilang AICS System Copilot, mahigpit na ipinagbabawal sa aking sistema ang paggalaw, pagbura, o pag-access sa database at personal na impormasyon ng mga mag-aaral alinsunod sa Data Privacy Act (RA 10173). Hindi ko maaaring i-delete o baguhin ang records ng sinumang estudyante. Mangyaring isagawa ito nang manual sa Student Masterlist kung may kaukulang administrative approval.";
+    return "Paumanhin po, bilang Aicy AI, mahigpit na ipinagbabawal sa aking sistema ang paggalaw, pagbura, o pag-access sa database at personal na impormasyon ng mga mag-aaral alinsunod sa Data Privacy Act (RA 10173). Hindi ko maaaring i-delete o baguhin ang records ng sinumang estudyante. Mangyaring isagawa ito nang manual sa Student Masterlist kung may kaukulang administrative approval.";
   }
 
   if (!GEMINI_API_KEY) {
