@@ -3908,6 +3908,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   suggestedSanction={suggestedSanctionFor(openCase)} 
                   onAction={(a) => void applyFlow(openCase, a)} 
                   onOpenStation={() => setStationCase(openCase)} 
+                  onOpenPrint={() => setCallSlipCase(openCase)}
                 />
                 
                 {stationCase && (

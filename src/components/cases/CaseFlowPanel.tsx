@@ -110,7 +110,9 @@ export const CaseFlowPanel: React.FC<{
   onAction: (a: FlowAction) => void;
   /** open the locked Student Statement Station for this case */
   onOpenStation?: () => void;
-}> = ({ c, isTl, busy, suggestedSanction, onAction, onOpenStation }) => {
+  /** print official call slip / summons form */
+  onOpenPrint?: () => void;
+}> = ({ c, isTl, busy, suggestedSanction, onAction, onOpenStation, onOpenPrint }) => {
   const { done, next, activeSteps, isMinor } = useMemo(() => flowState(c), [c]);
 
   const [text, setText] = useState(c.explanation ?? '');
@@ -303,13 +305,38 @@ export const CaseFlowPanel: React.FC<{
           </div>
 
           {next === 'Student Called' && (
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-[#0F172A] dark:text-white">
-                {isTl ? 'I-record ang pagdating ng estudyante sa Guidance Office.' : 'Record that the student was summoned to the Guidance Office.'}
-              </p>
-              <button type="button" data-flow="call" disabled={busy} onClick={() => onAction({ kind: 'call' })} className={primary}>
-                {isTl ? 'Natawag na sa Opisina' : 'Mark as Called'}
-              </button>
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs font-bold text-[#0F172A] dark:text-white">
+                  {isTl ? 'Hakbang 2: Pagpapatawag sa Estudyante (Student Summon)' : 'Step 2: Summon Student to Guidance'}
+                </p>
+                <p className="text-[11px] text-[#64748B] dark:text-[#94A8D0] mt-0.5">
+                  {isTl
+                    ? 'Maaaring mag-print ng opisyal na Call Slip para sa Subject Teacher / Adviser, o tawagan nang direkta ang adviser.'
+                    : 'Print an official Guidance Call Slip for the classroom teacher/adviser, or coordinate directly.'}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
+                {onOpenPrint && (
+                  <button
+                    type="button"
+                    onClick={onOpenPrint}
+                    className={`${btn} rounded-lg border border-[#CBD5E1] dark:border-[#253B66] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#F8FAFC] dark:hover:bg-[#13203B] flex items-center gap-1.5`}
+                  >
+                    <span>Print Official Call Slip</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  data-flow="call"
+                  disabled={busy}
+                  onClick={() => onAction({ kind: 'call' })}
+                  className={`${primary} rounded-lg`}
+                >
+                  {isTl ? '✓ Nakarating na sa Opisina' : '✓ Mark Student Summoned'}
+                </button>
+              </div>
             </div>
           )}
 
@@ -396,15 +423,21 @@ export const CaseFlowPanel: React.FC<{
               </div>
 
               <div className="flex items-center justify-between pt-2 border-t border-[#F1F5F9] dark:border-[#1E2E4E] flex-wrap gap-2">
-                <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
-                  {isTl ? 'Maitatala ito sa kalendaryo at activity log ng Guidance.' : 'This marks the conference as officially summoned in records.'}
-                </p>
+                {onOpenPrint && (
+                  <button
+                    type="button"
+                    onClick={onOpenPrint}
+                    className={`${btn} rounded-lg border border-[#CBD5E1] dark:border-[#253B66] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#F8FAFC] dark:hover:bg-[#13203B]`}
+                  >
+                    {isTl ? 'I-print ang Form ng Conference' : 'Print Conference / Summons Form'}
+                  </button>
+                )}
                 <button
                   type="button"
                   data-flow="schedule-conference"
                   disabled={busy}
                   onClick={() => onAction({ kind: 'schedule_conference', targetDate: conferenceTargetDate.trim() })}
-                  className={primary}
+                  className={`${primary} rounded-lg`}
                 >
                   {isTl ? '✓ Itala: Na-isyu ang Patawag sa Magulang' : '✓ Mark Summons Issued & Conference Set'}
                 </button>

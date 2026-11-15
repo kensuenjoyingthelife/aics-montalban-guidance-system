@@ -34,7 +34,7 @@ const longTl = (iso?: string | null) => {
 };
 const lines = (n: number) => Array.from({ length: n }, () => '<div class="line"></div>').join('');
 const sign = (labels: string[]) =>
-  `<div class="signs">${labels.map((l) => `<div class="sign"><div class="sigline"></div><div>${esc(l)}</div></div>`).join('')}</div>`;
+  `<div class="signs">${labels.map((l) => `<div class="sign"><div class="sigline"></div><div class="sign-name">${esc(l)}</div><div class="sign-title">Authorized Signature / Date</div></div>`).join('')}</div>`;
 
 export const FORM_TITLES: Record<FormKind, [string, string]> = {
   callSlip: ['Call Slip', 'Call Slip'],
@@ -50,15 +50,26 @@ export function buildFormHtml(f: FormInput, origin = ''): string {
   const today = long(new Date().toISOString());
   const parent = stu?.parentName || '';
   const signer = f.signer || 'Guidance Office';
-  const head = `<header><img src="${esc(origin)}/aics-logo.jpg" alt="" onerror="this.style.display='none'"><div>
-    <div class="school">ASIAN INSTITUTE OF COMPUTER STUDIES — MONTALBAN</div>
-    <div class="office">Guidance Office · Rodriguez, Rizal</div></div></header>`;
+  let title = FORM_TITLES[f.kind][0];
+  const head = `<header>
+    <div class="header-left">
+      <img src="${esc(origin)}/aics-logo.jpg" alt="AICS Seal" onerror="this.style.display='none'">
+      <div>
+        <div class="school-title">ASIAN INSTITUTE OF COMPUTER STUDIES</div>
+        <div class="school-sub">Montalban Campus · Rodriguez, Rizal</div>
+        <div class="office-tag">Guidance &amp; Student Affairs Office</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div>Form Series: 2026-AICS-GF</div>
+      <div class="form-badge">${esc(title)}</div>
+    </div>
+  </header>`;
   const who = `<table class="info">
     <tr><td>Student</td><td><b>${esc(c.studentName)}</b></td><td>Student no.</td><td>${esc(c.studentNumber)}</td></tr>
     <tr><td>Grade &amp; section</td><td>${esc(c.gradeSection)}</td><td>Case no.</td><td>${esc(c.caseCode)}</td></tr>
     ${parent ? `<tr><td>Parent / guardian</td><td>${esc(parent)}</td><td>Mobile</td><td>${esc(stu?.parentPhone || '')}</td></tr>` : ''}
   </table>`;
-  let title = FORM_TITLES[f.kind][0];
   let body = '';
   if (f.kind === 'callSlip') {
     body = `${who}
@@ -109,23 +120,32 @@ export function buildFormHtml(f: FormInput, origin = ''): string {
       <p class="small">Received by parent / guardian: ______________________ &nbsp; Date: __________</p>`;
   }
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} — ${esc(c.studentName)}</title><style>
-    @page { size: A4; margin: 18mm; }
-    body { font-family: Arial, Helvetica, sans-serif; color: #111; font-size: 12.5px; line-height: 1.5; }
-    header { display: flex; align-items: center; gap: 12px; border-bottom: 2px solid #0B1F4D; padding-bottom: 8px; margin-bottom: 14px; }
-    header img { width: 54px; height: 54px; object-fit: contain; }
-    .school { font-weight: bold; font-size: 14px; color: #0B1F4D; } .office { font-size: 12px; color: #333; }
-    h1 { text-align: center; font-size: 18px; margin: 6px 0 14px; letter-spacing: .5px; }
-    h3 { font-size: 13px; margin: 14px 0 4px; }
-    table.info { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-    table.info td { border: 1px solid #999; padding: 5px 7px; vertical-align: top; }
-    table.info td:nth-child(odd) { width: 18%; background: #f2f4f8; font-weight: bold; }
-    .line { border-bottom: 1px solid #777; height: 22px; }
-    .box { border: 1px solid #999; padding: 6px 8px; white-space: pre-wrap; }
-    .signs { display: flex; gap: 28px; margin-top: 46px; }
-    .sign { flex: 1; text-align: center; font-size: 12px; } .sigline { border-bottom: 1px solid #111; height: 34px; margin-bottom: 4px; }
-    .small { font-size: 11px; color: #333; margin-top: 18px; }
-    ol { margin-top: 4px; } li { margin: 4px 0; }
-  </style></head><body>${head}<h1>${esc(title)}</h1>${body}</body></html>`;
+    @page { size: A4; margin: 15mm; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #0F172A; font-size: 12px; line-height: 1.5; margin: 0; padding: 0; }
+    .page-container { border: 1.5px solid #0B1F4D; padding: 18px 24px; border-radius: 4px; }
+    header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2.5px solid #0B1F4D; padding-bottom: 12px; margin-bottom: 16px; }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    header img { width: 62px; height: 62px; object-fit: contain; }
+    .school-title { font-weight: 900; font-size: 15px; color: #0B1F4D; letter-spacing: 0.5px; }
+    .school-sub { font-size: 11.5px; color: #334155; font-weight: 600; }
+    .office-tag { font-size: 11px; font-weight: 800; color: #1E469B; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+    .header-right { text-align: right; font-size: 10.5px; color: #475569; }
+    .form-badge { display: inline-block; padding: 3px 8px; font-weight: 800; font-size: 11px; background: #0B1F4D; color: #FFF; border-radius: 3px; margin-top: 4px; }
+    h1 { text-align: center; font-size: 17px; font-weight: 900; text-transform: uppercase; margin: 12px 0 16px; letter-spacing: 1px; color: #0B1F4D; border-bottom: 1px solid #CBD5E1; padding-bottom: 6px; }
+    h3 { font-size: 12px; font-weight: 800; text-transform: uppercase; color: #0B1F4D; margin: 14px 0 4px; letter-spacing: 0.3px; }
+    table.info { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 11.5px; }
+    table.info td { border: 1px solid #94A3B8; padding: 6px 9px; vertical-align: middle; }
+    table.info td:nth-child(odd) { width: 20%; background: #F1F5F9; font-weight: 800; color: #1E293B; }
+    .line { border-bottom: 1px solid #94A3B8; height: 24px; }
+    .box { border: 1px solid #94A3B8; background: #F8FAFC; padding: 8px 12px; white-space: pre-wrap; font-size: 11.5px; border-radius: 3px; }
+    .signs { display: flex; gap: 24px; margin-top: 40px; }
+    .sign { flex: 1; text-align: center; font-size: 11px; }
+    .sigline { border-bottom: 1.5px solid #0F172A; height: 36px; margin-bottom: 5px; }
+    .sign-name { font-weight: 800; color: #0F172A; text-transform: uppercase; font-size: 11px; }
+    .sign-title { font-size: 10.5px; color: #475569; }
+    .small { font-size: 10.5px; color: #475569; margin-top: 16px; border-top: 1px dashed #CBD5E1; padding-top: 8px; }
+    ol { margin-top: 4px; padding-left: 20px; } li { margin: 5px 0; font-size: 11.5px; }
+  </style></head><body><div class="page-container">${head}<h1>${esc(title)}</h1>${body}</div></body></html>`;
 }
 
 /** Print a page made only of the form (hidden frame). Returns false when printing is not possible. */
