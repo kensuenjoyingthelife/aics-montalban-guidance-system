@@ -400,6 +400,11 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       };
       reader.readAsDataURL(file);
     });
+
+    // Reset input value so taking consecutive photos or selecting the same photo works seamlessly
+    if (e.target) {
+      e.target.value = '';
+    }
   };
 
   const removeEvidencePhoto = (idx: number) => {
@@ -1379,73 +1384,90 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                       </p>
                     )}
 
-                    {/* Previews Grid & Upload Trigger */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-                      {evidencePhotos.map((photoUrl, idx) => (
-                        <div key={idx} className="relative group rounded-xl overflow-hidden border-2 border-sky-400/50 dark:border-sky-700 aspect-video bg-black/5 flex items-center justify-center">
-                          <img src={photoUrl} alt={`Evidence ${idx + 1}`} className="w-full h-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={() => removeEvidencePhoto(idx)}
-                            className="absolute top-1 right-1 w-6 h-6 rounded-full bg-rose-600/90 text-white flex items-center justify-center shadow-md hover:bg-rose-700 transition-all cursor-pointer"
-                            title={isTl ? 'Alisin ang litrato' : 'Remove photo'}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                          <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-black/60 text-white">
-                            Photo {idx + 1}
+                    {/* Upload Triggers (Always visible if under 10 photos) */}
+                    {evidencePhotos.length < 10 && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                        {/* Option 1: Direct Camera Shutter */}
+                        <label className="rounded-xl border-2 border-dashed border-sky-400/80 dark:border-sky-700 hover:border-[#1E469B] bg-white/80 dark:bg-white/5 hover:bg-sky-50/90 p-3.5 flex items-center gap-3 cursor-pointer transition-all shadow-xs">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            onChange={handleEvidenceUpload}
+                            className="hidden"
+                          />
+                          <div className="w-9 h-9 rounded-xl bg-sky-500/20 text-sky-600 dark:text-sky-300 flex items-center justify-center shrink-0">
+                            <Camera className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0 text-left">
+                            <p className="text-xs font-black text-[#0B1F4D] dark:text-white leading-tight">
+                              {evidencePhotos.length === 0
+                                ? (isTl ? 'Picturan Agad (Camera)' : 'Take Photo (Camera)')
+                                : (isTl ? '📷 Kumuha Pa ng Litrato (Camera)' : '📷 Take Another Photo (Camera)')}
+                            </p>
+                            <p className="text-[10px] text-[#4A608A] dark:text-[#94A8D0]">
+                              {isTl ? 'Live camera capture' : 'Live camera snapshot'}
+                            </p>
+                          </div>
+                        </label>
+
+                        {/* Option 2: Upload Multiple from Gallery / Files */}
+                        <label className="rounded-xl border-2 border-dashed border-blue-400/80 dark:border-blue-700 hover:border-[#1E469B] bg-white/80 dark:bg-white/5 hover:bg-blue-50/90 p-3.5 flex items-center gap-3 cursor-pointer transition-all shadow-xs">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={handleEvidenceUpload}
+                            className="hidden"
+                          />
+                          <div className="w-9 h-9 rounded-xl bg-blue-500/20 text-[#1E469B] dark:text-sky-300 flex items-center justify-center shrink-0">
+                            <ImageIcon className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0 text-left">
+                            <p className="text-xs font-black text-[#0B1F4D] dark:text-white leading-tight">
+                              {evidencePhotos.length === 0
+                                ? (isTl ? 'Pumili sa Gallery / Files' : 'Select Photos / Gallery')
+                                : (isTl ? '🖼️ Magdagdag Pa mula Gallery' : '🖼️ Add More from Gallery')}
+                            </p>
+                            <p className="text-[10px] text-[#4A608A] dark:text-[#94A8D0]">
+                              {isTl ? 'Kahit ilan (hanggang 10)' : 'Upload more photos (up to 10)'}
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+                    )}
+
+                    {/* Previews Grid if photos are uploaded */}
+                    {evidencePhotos.length > 0 && (
+                      <div className="pt-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[11px] font-black uppercase tracking-wider text-[#0B1F4D] dark:text-white">
+                            {isTl ? 'Mga Na-attach na Litrato' : 'Attached Photos'} ({evidencePhotos.length}/10)
+                          </span>
+                          <span className="text-[10px] text-[#4A608A] dark:text-[#94A8D0]">
+                            {isTl ? 'I-click ang basurahan para alisin' : 'Click trash icon to remove'}
                           </span>
                         </div>
-                      ))}
-
-                      {evidencePhotos.length < 10 && (
-                        <div className="col-span-2 sm:col-span-2 flex flex-col sm:flex-row gap-2">
-                          {/* Option 1: Direct Camera Shutter */}
-                          <label className="flex-1 rounded-xl border-2 border-dashed border-sky-400/70 dark:border-sky-700 hover:border-[#1E469B] bg-white/70 dark:bg-white/5 hover:bg-sky-50/80 p-3 flex items-center gap-2.5 cursor-pointer transition-all shadow-xs">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              capture="environment"
-                              onChange={handleEvidenceUpload}
-                              className="hidden"
-                            />
-                            <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-600 dark:text-sky-300 flex items-center justify-center shrink-0">
-                              <Camera className="w-4 h-4" />
+                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
+                          {evidencePhotos.map((photoUrl, idx) => (
+                            <div key={idx} className="relative group rounded-xl overflow-hidden border-2 border-sky-400/50 dark:border-sky-700 aspect-video bg-black/5 flex items-center justify-center shadow-xs">
+                              <img src={photoUrl} alt={`Evidence ${idx + 1}`} className="w-full h-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => removeEvidencePhoto(idx)}
+                                className="absolute top-1 right-1 w-6 h-6 rounded-full bg-rose-600/90 text-white flex items-center justify-center shadow-md hover:bg-rose-700 transition-all cursor-pointer"
+                                title={isTl ? 'Alisin ang litrato' : 'Remove photo'}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                              <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-black/60 text-white">
+                                #{idx + 1}
+                              </span>
                             </div>
-                            <div className="min-w-0 text-left">
-                              <p className="text-[11px] font-extrabold text-[#0B1F4D] dark:text-white leading-tight">
-                                {isTl ? 'Picturan Agad (Camera)' : 'Take Photo (Camera)'}
-                              </p>
-                              <p className="text-[9.5px] text-[#4A608A] dark:text-[#94A8D0]">
-                                {isTl ? 'Kumuha ng live photo' : 'Live photo snap'}
-                              </p>
-                            </div>
-                          </label>
-
-                          {/* Option 2: Upload Multiple from Gallery / Files */}
-                          <label className="flex-1 rounded-xl border-2 border-dashed border-blue-400/70 dark:border-blue-700 hover:border-[#1E469B] bg-white/70 dark:bg-white/5 hover:bg-blue-50/80 p-3 flex items-center gap-2.5 cursor-pointer transition-all shadow-xs">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              multiple
-                              onChange={handleEvidenceUpload}
-                              className="hidden"
-                            />
-                            <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-[#1E469B] dark:text-sky-300 flex items-center justify-center shrink-0">
-                              <ImageIcon className="w-4 h-4" />
-                            </div>
-                            <div className="min-w-0 text-left">
-                              <p className="text-[11px] font-extrabold text-[#0B1F4D] dark:text-white leading-tight">
-                                {isTl ? 'Pumili sa Gallery / Files' : 'Select Photos / Gallery'}
-                              </p>
-                              <p className="text-[9.5px] text-[#4A608A] dark:text-[#94A8D0]">
-                                {isTl ? 'Kahit maramihang litrato' : 'Multiple photos'}
-                              </p>
-                            </div>
-                          </label>
+                          ))}
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Urgency & Truthfulness Checkboxes */}
