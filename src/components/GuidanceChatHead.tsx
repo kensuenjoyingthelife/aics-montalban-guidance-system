@@ -24,11 +24,12 @@ const CHAT_WINDOW_SIZE_KEY = 'aics_aicy_window_size';
 const BALL_SIZE = 56;
 const MARGIN = 16;
 
-// Official Facebook Messenger Chatbox Dimensions: 285px width x 375px height (1:1 ratio)
-const MIN_WINDOW_WIDTH = 190;
-const MIN_WINDOW_HEIGHT = 160;
-const DEFAULT_WINDOW_WIDTH = 285;
-const DEFAULT_WINDOW_HEIGHT = 375;
+// Official Facebook Messenger Web Chatbox Dimensions: 328px width x 440px height
+// Allows full multi-turn conversations and guidance instructions to be readable without aggressive clipping
+const MIN_WINDOW_WIDTH = 220;
+const MIN_WINDOW_HEIGHT = 200;
+const DEFAULT_WINDOW_WIDTH = 328;
+const DEFAULT_WINDOW_HEIGHT = 440;
 
 export const GuidanceChatHead: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -163,16 +164,14 @@ export const GuidanceChatHead: React.FC = () => {
       const savedSize = localStorage.getItem(CHAT_WINDOW_SIZE_KEY);
       if (savedSize) {
         const ps = JSON.parse(savedSize);
-        // Only keep if within modern Messenger bounds (ignore legacy oversized defaults)
-        if (typeof ps.w === 'number' && typeof ps.h === 'number' && ps.w <= 340 && ps.h <= 460) {
+        // Keep valid user resized size
+        if (typeof ps.w === 'number' && typeof ps.h === 'number' && ps.w >= MIN_WINDOW_WIDTH && ps.h >= MIN_WINDOW_HEIGHT) {
           setCustomSize({
             w: Math.max(MIN_WINDOW_WIDTH, Math.min(window.innerWidth - 8, ps.w)),
             h: Math.max(MIN_WINDOW_HEIGHT, Math.min(window.innerHeight - 8, ps.h)),
           });
         } else {
-          // Reset to default Facebook Messenger dimensions
           setCustomSize({ w: DEFAULT_WINDOW_WIDTH, h: DEFAULT_WINDOW_HEIGHT });
-          localStorage.removeItem(CHAT_WINDOW_SIZE_KEY);
         }
       }
     } catch {}
@@ -494,31 +493,29 @@ export const GuidanceChatHead: React.FC = () => {
             position: 'fixed',
             top: 0,
             left: 0,
-            width: `${customSize.w}px`,
-            height: `${customSize.h}px`,
+            width: `calc(${customSize.w}px * var(--aicy-inv-zoom, 1))`,
+            height: `calc(${customSize.h}px * var(--aicy-inv-zoom, 1))`,
             zIndex: 9990,
             touchAction: 'none',
             willChange: 'transform, width, height',
           }}
           role="dialog"
           aria-label="Guidance Assistant Chat Window"
-          className="bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 select-none relative group/window"
+          className="bg-white dark:bg-[#18191a] border border-[#cbd5e1] dark:border-[#3a3b3c] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 select-none relative group/window"
         >
-          {/* Draggable Header (Hawakan dito para ilipat) */}
+          {/* Messenger Style Clean Header */}
           <div
             onPointerDown={handleWindowPointerDown}
             onPointerMove={handleWindowPointerMove}
             onPointerUp={handleWindowPointerUp}
             onPointerCancel={handleWindowPointerUp}
-            className={`bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white flex items-center justify-between border-b border-blue-600/50 cursor-grab active:cursor-grabbing select-none shrink-0 ${
-              isMicro ? 'px-2 py-1.5' : 'px-3 py-2'
-            }`}
+            className="bg-white dark:bg-[#242526] text-slate-800 dark:text-white flex items-center justify-between border-b border-slate-200 dark:border-white/10 px-3 py-2 cursor-grab active:cursor-grabbing select-none shrink-0"
             title="I-drag ang header upang ilipat ang screen kahit saan"
           >
-            <div className="flex items-center gap-1.5 min-w-0 pointer-events-none">
-              {/* 3D EVE-Style Head Ball (Header) */}
-              <div className={`${isMicro ? 'w-5 h-5' : 'w-6 h-6'} rounded-full mascot-shell-head flex items-center justify-center p-0.5 overflow-hidden shadow-inner shrink-0`}>
-                <div className={`${isMicro ? 'w-4 h-3' : 'w-4.5 h-3.5'} rounded-full mascot-visor-glass flex items-center justify-center gap-0.5 overflow-hidden`}>
+            <div className="flex items-center gap-2 min-w-0 pointer-events-none">
+              {/* EVE Visor Mascot Avatar */}
+              <div className="w-7 h-7 rounded-full bg-blue-50 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-700/60 flex items-center justify-center p-0.5 overflow-hidden shadow-xs shrink-0">
+                <div className="w-5 h-4 rounded-full bg-slate-900 flex items-center justify-center gap-0.5 overflow-hidden">
                   <svg className="w-1.5 h-1" viewBox="0 0 20 14" fill="none">
                     <path d="M 2 12 Q 10 1 18 12" stroke="#38BDF8" strokeWidth="4" strokeLinecap="round" />
                   </svg>
@@ -528,54 +525,33 @@ export const GuidanceChatHead: React.FC = () => {
                 </div>
               </div>
 
-              {!isMicro && (
-                <div className="min-w-0">
-                  <h2 className="text-xs font-bold tracking-tight truncate leading-tight flex items-center gap-1">
-                    Aicy AI
-                  </h2>
-                </div>
-              )}
+              <div className="min-w-0">
+                <h2 className="text-[13px] font-bold tracking-tight text-slate-900 dark:text-white truncate leading-none">
+                  Aicy AI
+                </h2>
+                <p className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 mt-0.5 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Online · Guidance
+                </p>
+              </div>
             </div>
 
-            {/* Controls (Reset Size, Minimize, Close) */}
-            <div className="flex items-center gap-0.5 shrink-0">
-              {/* Reset to standard button if user resized it tiny */}
-              {isMini && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCustomSize({ w: DEFAULT_WINDOW_WIDTH, h: DEFAULT_WINDOW_HEIGHT });
-                    try {
-                      localStorage.setItem(
-                        CHAT_WINDOW_SIZE_KEY,
-                        JSON.stringify({ w: DEFAULT_WINDOW_WIDTH, h: DEFAULT_WINDOW_HEIGHT })
-                      );
-                    } catch {}
-                  }}
-                  className="w-5 h-5 rounded-md hover:bg-white/20 active:scale-95 transition-transform flex items-center justify-center text-sky-200"
-                  title="I-reset sa Standard Size"
-                  aria-label="Reset size"
-                >
-                  <Maximize2 className="w-2.5 h-2.5" />
-                </button>
-              )}
-
-              {!isMini && (
-                <button
-                  type="button"
-                  onClick={() => setShowTermsModal(true)}
-                  className="w-5.5 h-5.5 rounded-md hover:bg-white/15 active:scale-95 transition-transform flex items-center justify-center text-white/90"
-                  title="Terms & Privacy"
-                  aria-label="Terms & Privacy"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
-                </button>
-              )}
+            {/* Messenger-Style Clean Minimal Icons */}
+            <div className="flex items-center gap-1 shrink-0 text-slate-500 dark:text-slate-400">
+              <button
+                type="button"
+                onClick={() => setShowTermsModal(true)}
+                className="w-6 h-6 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center text-slate-600 dark:text-slate-300"
+                title="Terms & Privacy"
+                aria-label="Terms & Privacy"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-sky-400" />
+              </button>
 
               <button
                 type="button"
                 onClick={() => setIsMinimized(true)}
-                className="w-5.5 h-5.5 rounded-md hover:bg-white/15 active:scale-95 transition-transform flex items-center justify-center text-white/90"
+                className="w-6 h-6 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center"
                 title="Minimize chat"
                 aria-label="Minimize chat window"
               >
@@ -585,7 +561,7 @@ export const GuidanceChatHead: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="w-5.5 h-5.5 rounded-md hover:bg-white/15 active:scale-95 transition-transform flex items-center justify-center text-white/90"
+                className="w-6 h-6 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center hover:text-rose-600"
                 title="Close chat"
                 aria-label="Close chat window"
               >
@@ -594,10 +570,8 @@ export const GuidanceChatHead: React.FC = () => {
             </div>
           </div>
 
-          {/* Messages Flow */}
-          <div className={`flex-1 overflow-y-auto space-y-1.5 bg-slate-50/60 dark:bg-slate-950/60 select-text ${
-            isMicro ? 'p-1.5' : 'p-2'
-          }`}>
+          {/* Messages Flow - Messenger Crisp Bubbles */}
+          <div className="flex-1 overflow-y-auto space-y-2 p-2.5 bg-white dark:bg-[#18191a] select-text">
             {messages.map((m) => {
               const isMe = m.sender === 'user';
               return (
@@ -606,81 +580,71 @@ export const GuidanceChatHead: React.FC = () => {
                   className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
                 >
                   <div
-                    className={`max-w-[90%] rounded-xl px-2 py-1 leading-snug shadow-2xs ${
-                      isMicro ? 'text-[10px]' : 'text-[11.5px]'
-                    } ${
+                    className={`max-w-[85%] rounded-[18px] px-3 py-2 leading-relaxed text-[12px] shadow-2xs ${
                       isMe
-                        ? 'bg-blue-600 text-white rounded-br-xs font-normal'
-                        : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700/70 rounded-bl-xs font-normal'
+                        ? 'bg-[#0084ff] text-white rounded-br-[4px] font-normal'
+                        : 'bg-[#f0f2f5] dark:bg-[#303030] text-[#050505] dark:text-[#e4e6eb] rounded-bl-[4px] font-normal'
                     }`}
                   >
                     <p className="whitespace-pre-wrap">{m.text}</p>
                   </div>
-                  {!isMicro && (
-                    <span className="text-[8px] text-slate-400 dark:text-slate-500 mt-0.5 px-1">
-                      {m.timestamp}
-                    </span>
-                  )}
+                  <span className="text-[9px] text-slate-400 dark:text-slate-500 mt-1 px-1">
+                    {m.timestamp}
+                  </span>
                 </div>
               );
             })}
 
             {isLoading && (
               <div className="flex items-start gap-1">
-                <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl rounded-bl-xs px-2 py-1 flex items-center gap-1 shadow-2xs">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse [animation-delay:200ms]" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse [animation-delay:400ms]" />
+                <div className="bg-[#f0f2f5] dark:bg-[#303030] rounded-[18px] rounded-bl-[4px] px-3 py-2 flex items-center gap-1.5 shadow-2xs">
+                  <div className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse [animation-delay:200ms]" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse [animation-delay:400ms]" />
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Suggestions */}
-          {!isMini && (
-            <div className="px-2 py-1 bg-slate-100/80 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
-              <button
-                type="button"
-                onClick={() => handleQuickPrompt('Paano mag-file ng bagong case?')}
-                className="px-1.5 py-0.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[9.5px] font-medium text-slate-700 dark:text-slate-300 hover:border-blue-500 hover:text-blue-600 transition-colors shrink-0 active:scale-95"
-              >
-                Paano mag-file ng case?
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickPrompt('Ano ang mga patakaran sa Data Privacy (RA 10173)?')}
-                className="px-1.5 py-0.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[9.5px] font-medium text-slate-700 dark:text-slate-300 hover:border-blue-500 hover:text-blue-600 transition-colors shrink-0 active:scale-95"
-              >
-                Data Privacy (RA 10173)
-              </button>
-            </div>
-          )}
+          {/* Quick Suggestions Pills */}
+          <div className="px-2.5 py-1.5 bg-[#f0f2f5]/60 dark:bg-[#242526]/80 border-t border-slate-200/80 dark:border-white/5 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+            <button
+              type="button"
+              onClick={() => handleQuickPrompt('Paano mag-file ng bagong case?')}
+              className="px-2.5 py-1 rounded-full bg-white dark:bg-[#3a3b3c] border border-slate-300 dark:border-transparent text-[10.5px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#4e4f50] transition-colors shrink-0 active:scale-95 shadow-2xs"
+            >
+              Paano mag-file ng case?
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickPrompt('Ano ang mga patakaran sa Data Privacy (RA 10173)?')}
+              className="px-2.5 py-1 rounded-full bg-white dark:bg-[#3a3b3c] border border-slate-300 dark:border-transparent text-[10.5px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#4e4f50] transition-colors shrink-0 active:scale-95 shadow-2xs"
+            >
+              Data Privacy (RA 10173)
+            </button>
+          </div>
 
-          {/* Chat Input */}
+          {/* Messenger Style Chat Input */}
           <form
             onSubmit={handleSend}
-            className={`bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-1 shrink-0 ${
-              isMicro ? 'p-1' : 'p-1.5'
-            }`}
+            className="bg-white dark:bg-[#242526] border-t border-slate-200 dark:border-white/10 p-2 flex items-center gap-2 shrink-0"
           >
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={isMicro ? "Tanong..." : isMini ? "Magtanong dito..." : "Magtanong ukol sa Guidance..."}
+              placeholder="Aa"
               disabled={isLoading}
-              className={`flex-1 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:ring-1 focus:ring-blue-500 disabled:opacity-50 ${
-                isMicro ? 'text-[10px]' : 'text-[11px]'
-              }`}
+              className="flex-1 bg-[#f0f2f5] dark:bg-[#3a3b3c] rounded-full px-3.5 py-1.5 text-slate-900 dark:text-white placeholder:text-slate-500 text-[12px] focus:outline-none focus:ring-1 focus:ring-[#0084ff] disabled:opacity-50"
             />
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
-              className="w-6 h-6 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600 text-white flex items-center justify-center active:scale-95 transition-transform shrink-0"
+              className="w-7 h-7 rounded-full bg-[#0084ff] hover:bg-blue-600 disabled:opacity-40 text-white flex items-center justify-center active:scale-95 transition-transform shrink-0 shadow-xs"
               title="Send question"
             >
-              <Send className="w-2.5 h-2.5" />
+              <Send className="w-3 h-3" />
             </button>
           </form>
 

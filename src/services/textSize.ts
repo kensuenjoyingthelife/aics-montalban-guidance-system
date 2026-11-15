@@ -45,6 +45,8 @@ export function applyTextSize(size: TextSize = getTextSize()) {
   // Browser standard CSS zoom on root
   root.style.setProperty('zoom', String(z));
   root.style.setProperty('--app-zoom', String(z));
+  // Invert zoom on floating chathead & window so its layout, font size & 1:1 Messenger geometry stay perfectly stable!
+  root.style.setProperty('--aicy-inv-zoom', String(1 / z));
 }
 
 export function setTextSize(size: TextSize) {

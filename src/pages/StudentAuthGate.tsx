@@ -401,13 +401,13 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     return { type: 'correct', label: 'Matched ✓' };
   }, [regConfirmPassword, regPassword]);
 
-  // 9. 5-Digit Quick Unlock PIN (Required strictly for Mobile App)
+  // 9. Quick Unlock PIN (4 to 6 digits, easy for students)
   const quickPinStatus = useMemo(() => {
     if (!isMobileDevice) return { type: 'correct', label: 'Web Mode (Not Required)' };
     const cleaned = regQuickPin.trim();
     if (!cleaned) return { type: 'not_input', label: 'Not Input' };
-    if (!/^\d{5}$/.test(cleaned)) return { type: 'wrong', label: 'Must be 5 digits' };
-    return { type: 'correct', label: '5-Digit PIN Set ✓' };
+    if (!/^\d{4,6}$/.test(cleaned)) return { type: 'wrong', label: 'Must be 4 digits' };
+    return { type: 'correct', label: 'PIN Set ✓' };
   }, [regQuickPin, isMobileDevice]);
 
   // Check if form is ready to submit (Student ID card is no longer required as face selfie is captured)
@@ -506,7 +506,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       if (personalPhotoStatus.type !== 'correct') missingFields.push(isTl ? 'Live Photo Selfie / Face Verification' : 'Live Face Selfie / Photo Verification');
       if (passwordStatus.type !== 'correct') missingFields.push(isTl ? 'Password (6+ karakter, may 1+ numero, malaking titik at simbolo)' : 'Password (6+ chars with number, uppercase & symbol)');
       if (confirmPasswordStatus.type !== 'correct') missingFields.push(isTl ? 'Confirm Password (dapat tugma sa nilagay mong password)' : 'Confirm Password (must match your password)');
-      if (isMobileDevice && quickPinStatus.type !== 'correct') missingFields.push(isTl ? '5-Digit PIN para sa mabilisang login ng mobile app' : '5-Digit Quick Unlock PIN (Mobile App)');
+      if (isMobileDevice && quickPinStatus.type !== 'correct') missingFields.push(isTl ? '4-Digit PIN para sa mabilisang login ng mobile app' : '4-Digit Quick Unlock PIN (Mobile App)');
 
       const msg = isTl
         ? 'May mga kulang o maling impormasyon pa sa iyong form. Pakisuyong kumpletuhin ang mga ito:'
@@ -1583,13 +1583,13 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     </div>
                   </div>
 
-                  {/* 5-Digit PIN for Quick Mobile App Unlock (Visible strictly on Mobile App / Mobile Devices) */}
+                  {/* 4-Digit PIN for Quick Mobile App Unlock (Visible strictly on Mobile App / Mobile Devices) */}
                   {isMobileDevice && (
                     <div className="pt-3 border-t border-slate-200 dark:border-white/10 space-y-2">
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-bold register-label flex items-center gap-1.5">
                           <Lock className="w-4 h-4 text-emerald-500 shrink-0" />
-                          <span>ENTER 5-DIGIT PIN (MOBILE APP QUICK UNLOCK)</span>
+                          <span>ENTER 4-DIGIT PIN (MOBILE APP QUICK UNLOCK)</span>
                         </label>
                         {renderBadge(quickPinStatus)}
                       </div>
@@ -1598,12 +1598,12 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                           type="password"
                           inputMode="numeric"
                           pattern="[0-9]*"
-                          maxLength={5}
+                          maxLength={4}
                           required={isMobileDevice}
-                          placeholder="••••• (5 digits)"
+                          placeholder="•••• (4 digits)"
                           value={regQuickPin}
                           onChange={(e) => {
-                            const val = e.target.value.replace(/\D/g, '').slice(0, 5);
+                            const val = e.target.value.replace(/\D/g, '').slice(0, 4);
                             setRegQuickPin(val);
                           }}
                           className="w-full px-4 py-3 rounded-xl cosmic-input text-base font-mono font-bold tracking-[0.35em] text-center focus:outline-none"
@@ -1666,10 +1666,10 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               MODE: FORGOT PASSWORD
               ==================================================== */}
           {mode === 'forgot' && (
-            <div className="space-y-7">
-              <div className="flex items-center justify-between border-b border-white/15 dark:border-white/15 pb-4">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-white/15 pb-4">
                 <div>
-                  <h2 className="text-2xl font-extrabold tracking-tight card-title-text">
+                  <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight card-title-text">
                     Reset Student Password
                   </h2>
                   <p className="text-xs font-semibold mt-0.5 card-subtitle-text">
@@ -1683,28 +1683,28 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     setMode('login');
                     setForgotStep('request');
                   }}
-                  className="btn-press px-4 py-2 rounded-xl card-back-button text-xs font-extrabold"
+                  className="btn-press px-3.5 py-1.5 rounded-xl card-back-button text-xs font-extrabold cursor-pointer"
                 >
                   ← Back to Login
                 </button>
               </div>
 
               {forgotError && (
-                <div className="p-4 rounded-2xl bg-rose-500/25 border border-rose-500/50 text-rose-200 text-sm font-semibold flex items-center gap-3">
-                  <span className="text-base">⚠️</span>
+                <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/80 border-1.5 border-rose-500/80 dark:border-rose-400 text-rose-950 dark:text-rose-100 text-xs font-semibold flex items-center gap-2.5 shadow-md">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
                   <span>{forgotError}</span>
                 </div>
               )}
 
               {forgotSuccess && (
-                <div className="p-4 rounded-2xl bg-emerald-500/25 border border-emerald-500/50 text-emerald-200 text-sm font-semibold flex items-center gap-3">
-                  <span className="text-base">✓</span>
+                <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/80 border-1.5 border-emerald-500/80 dark:border-emerald-400 text-emerald-950 dark:text-emerald-100 text-xs font-semibold flex items-center gap-2.5 shadow-md">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span>{forgotSuccess}</span>
                 </div>
               )}
 
               {forgotStep === 'request' ? (
-                <form onSubmit={handleForgotRequestOtp} className="space-y-6">
+                <form onSubmit={handleForgotRequestOtp} className="space-y-5">
                   {/* Invisible Honeypot Field */}
                   <div className="opacity-0 absolute -left-[9999px] -top-[9999px] pointer-events-none select-none h-0 w-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
                     <input
@@ -1718,9 +1718,9 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   </div>
 
                   {forgotCooldownSeconds > 0 && (
-                    <div className="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-200 text-xs font-bold flex items-center justify-between gap-3 animate-pulse">
+                    <div className="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-900 dark:text-amber-200 text-xs font-bold flex items-center justify-between gap-3 animate-pulse">
                       <div className="flex items-center gap-2">
-                        <Shield className="w-4 h-4 text-amber-400 shrink-0" />
+                        <Shield className="w-4 h-4 text-amber-500 shrink-0" />
                         <span>Masyadong maraming paghingi ng OTP. Maghintay muna.</span>
                       </div>
                       <span className="font-mono px-2 py-1 rounded-lg bg-amber-500/20 text-xs">
@@ -1730,8 +1730,9 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   )}
 
                   <div className="space-y-2">
-                    <label className="text-sm font-extrabold text-white">
-                      Enter Student ID Number or Registered Email
+                    <label className="text-xs sm:text-sm font-extrabold register-label flex items-center gap-1.5">
+                      <User className="w-4 h-4 text-blue-600 dark:text-sky-400" />
+                      <span>Enter Student ID Number or Registered Email</span>
                     </label>
                     <input
                       type="text"
@@ -1739,9 +1740,9 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       value={forgotIdentifier}
                       onChange={(e) => setForgotIdentifier(e.target.value)}
                       placeholder="e.g. 2025-11098 or name@gmail.com"
-                      className="w-full px-5 py-4 rounded-2xl bg-black/40 border border-white/25 text-white placeholder-white/40 text-base font-semibold focus:outline-none focus:border-[#4E92DF]"
+                      className="w-full px-4 py-3 sm:py-3.5 rounded-xl cosmic-input text-sm font-semibold focus:outline-none"
                     />
-                    <p className="text-xs text-[#9BCBFF]/80">
+                    <p className="text-[11px] font-medium text-slate-600 dark:text-sky-200/90 leading-tight">
                       We will send a 6-digit OTP verification code to your registered email address.
                     </p>
                   </div>
@@ -1749,19 +1750,19 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   <button
                     type="submit"
                     disabled={forgotLoading}
-                    className="btn-press w-full py-4 rounded-2xl bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white text-base font-extrabold shadow-xl disabled:opacity-50"
+                    className="btn-press w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 hover:opacity-95 text-white text-sm font-extrabold shadow-lg shadow-blue-950/20 border border-white/20 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {forgotLoading ? 'Sending OTP Code...' : 'Send 6-Digit Verification OTP →'}
                   </button>
                 </form>
               ) : (
-                <form onSubmit={handleForgotResetPassword} className="space-y-6">
-                  <div className="p-4 rounded-2xl bg-blue-500/20 border border-blue-400/40 text-sm text-blue-200">
+                <form onSubmit={handleForgotResetPassword} className="space-y-5">
+                  <div className="p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-700 text-xs text-blue-900 dark:text-blue-100 font-medium">
                     We sent a 6-digit OTP code to <strong>{forgotMaskedEmail}</strong>. Please check your inbox.
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-extrabold text-white">Enter 6-Digit OTP</label>
+                    <label className="text-xs sm:text-sm font-extrabold register-label">Enter 6-Digit OTP</label>
                     <input
                       type="text"
                       maxLength={6}
@@ -1769,13 +1770,13 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       value={forgotOtp}
                       onChange={(e) => setForgotOtp(e.target.value)}
                       placeholder="e.g. 123456"
-                      className="w-full px-5 py-4 rounded-2xl bg-black/40 border border-white/25 text-white text-center text-xl font-mono font-extrabold tracking-widest focus:outline-none focus:border-emerald-400"
+                      className="w-full px-4 py-3 rounded-xl cosmic-input text-center text-lg font-mono font-extrabold tracking-widest focus:outline-none"
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div className="space-y-1.5">
-                      <label className="text-sm font-bold text-white">New Password</label>
+                      <label className="text-xs font-bold register-label">New Password</label>
                       <div className="relative">
                         <input
                           type={showForgotNewPassword ? 'text' : 'password'}
@@ -1783,7 +1784,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                           placeholder="Min 6 characters"
                           value={forgotNewPassword}
                           onChange={(e) => setForgotNewPassword(e.target.value)}
-                          className="w-full pl-4 pr-11 py-3 rounded-xl bg-black/40 border border-white/20 text-white text-sm font-semibold focus:outline-none focus:border-[#4E92DF]"
+                          className="w-full pl-3.5 pr-10 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
                         />
                         <button
                           type="button"
@@ -1791,15 +1792,15 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                             soundFX.playToggleSwitch(true);
                             setShowForgotNewPassword((prev) => !prev);
                           }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white text-sm"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white"
                           title={showForgotNewPassword ? 'Hide password' : 'Show password'}
                         >
-                          {showForgotNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {showForgotNewPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                         </button>
                       </div>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-sm font-bold text-white">Confirm New Password</label>
+                      <label className="text-xs font-bold register-label">Confirm New Password</label>
                       <div className="relative">
                         <input
                           type={showForgotConfirmPassword ? 'text' : 'password'}
@@ -1807,7 +1808,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                           placeholder="Repeat password"
                           value={forgotConfirmPassword}
                           onChange={(e) => setForgotConfirmPassword(e.target.value)}
-                          className="w-full pl-4 pr-11 py-3 rounded-xl bg-black/40 border border-white/20 text-white text-sm font-semibold focus:outline-none focus:border-[#4E92DF]"
+                          className="w-full pl-3.5 pr-10 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
                         />
                         <button
                           type="button"
@@ -1815,10 +1816,10 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                             soundFX.playToggleSwitch(true);
                             setShowForgotConfirmPassword((prev) => !prev);
                           }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white text-sm"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white"
                           title={showForgotConfirmPassword ? 'Hide password' : 'Show password'}
                         >
-                          {showForgotConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {showForgotConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                         </button>
                       </div>
                     </div>
@@ -1827,9 +1828,9 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   <button
                     type="submit"
                     disabled={forgotLoading}
-                    className="btn-press w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-base font-extrabold shadow-xl disabled:opacity-50"
+                    className="btn-press w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:opacity-95 text-white text-sm font-extrabold shadow-lg shadow-emerald-950/20 border border-white/20 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    {forgotLoading ? 'Updating Password...' : '✓ Reset Password & Sign In'}
+                    {forgotLoading ? 'Updating Password...' : 'Save New Password & Sign In →'}
                   </button>
                 </form>
               )}
