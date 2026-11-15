@@ -89,6 +89,15 @@ export interface OffenseRow extends OffenseHandbookRule {
   sortOrder: number;
 }
 
+export interface SignatoriesConfig {
+  guidanceAssociate: string;
+  guidanceAssociateTitle: string;
+  guidanceCounselor: string;
+  guidanceCounselorTitle: string;
+  principal: string;
+  principalTitle: string;
+}
+
 export interface AppConfig {
   loaded: boolean;
   officeHours: OfficeHours;
@@ -103,6 +112,7 @@ export interface AppConfig {
   staff: StaffAccount[];
   pin: { salt: string; hash: string } | null;
   studentFields: StudentFields;
+  signatories: SignatoriesConfig;
 }
 
 export const DEFAULTS: AppConfig = {
@@ -118,6 +128,14 @@ export const DEFAULTS: AppConfig = {
   retention: { idImageDays: 30 },
   counselorDays: ['Tue', 'Thu'],
   closedDays: [],
+  signatories: {
+    guidanceAssociate: 'Maurice Enriquez',
+    guidanceAssociateTitle: 'Guidance Associate & Student Affairs',
+    guidanceCounselor: 'Registered Guidance Counselor (RGC)',
+    guidanceCounselorTitle: 'Guidance Counselor & Hearing Officer',
+    principal: 'School Principal',
+    principalTitle: 'School Principal & Administrative Head',
+  },
   people: [
     {
       id: 1,
@@ -240,6 +258,7 @@ export async function loadAppConfig(): Promise<boolean> {
     counselorDays: Array.isArray(kv.get('counselor_days')) ? (kv.get('counselor_days') as unknown as string[]) : DEFAULTS.counselorDays,
     pin: (kv.get('app_pin') as { salt: string; hash: string } | undefined) ?? null,
     studentFields: merge(DEFAULTS.studentFields, kv.get('student_fields')),
+    signatories: merge(DEFAULTS.signatories, kv.get('signatories')),
     closedDays: (closed ?? []).map((r) => ({ id: Number(r.id), day: s(r.day).slice(0, 10), reason: s(r.reason) })),
     people: (people ?? []).map((r) => ({ id: Number(r.id), role: s(r.role), name: s(r.name), days: (r.days as string[]) ?? [], start: s(r.start_time), end: s(r.end_time), note: s(r.note) })),
     offenses: offenses && offenses.length ? offenses.map(toOffense) : DEFAULTS.offenses,
@@ -249,7 +268,10 @@ export async function loadAppConfig(): Promise<boolean> {
 }
 
 /** Save one settings key (JSON). Updates the screen only when the database said OK. */
-export async function saveConfig(key: 'office_hours' | 'case_rules' | 'security' | 'sms_templates' | 'retention' | 'counselor_days' | 'app_pin' | 'student_fields', value: unknown): Promise<boolean> {
+export async function saveConfig(
+  key: 'office_hours' | 'case_rules' | 'security' | 'sms_templates' | 'retention' | 'counselor_days' | 'app_pin' | 'student_fields' | 'signatories',
+  value: unknown
+): Promise<boolean> {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?on_conflict=key`, {
       method: 'POST',

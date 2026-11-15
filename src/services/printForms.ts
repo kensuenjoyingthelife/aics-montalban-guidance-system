@@ -3,6 +3,7 @@
 // Each form is its own small page printed from a hidden frame, so the app (sidebar, buttons) is never
 // printed, and it works the same in the browser and in Tauri (WebView2).
 import type { DisciplineCaseRecord, StudentRecord } from '../data/stage3MockData';
+import { getAppConfig } from './appConfig';
 
 export type FormKind = 'callSlip' | 'conference' | 'contract' | 'kasunduan' | 'suspension';
 
@@ -49,7 +50,8 @@ export function buildFormHtml(f: FormInput, origin = ''): string {
   const { c, stu } = f;
   const today = long(new Date().toISOString());
   const parent = stu?.parentName || '';
-  const signer = f.signer || 'Maurice Enriquez';
+  const config = getAppConfig();
+  const signer = f.signer || config.signatories?.guidanceAssociate || 'Maurice Enriquez';
   let title = FORM_TITLES[f.kind][0];
   const head = `<header>
     <div class="header-left">

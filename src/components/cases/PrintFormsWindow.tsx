@@ -1,9 +1,11 @@
 // Pick a form, fill the 1–2 things it needs, print. Everything else comes from the case.
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Printer, Copy, Check, Download, FileText } from 'lucide-react';
 import type { DisciplineCaseRecord, StudentRecord } from '../../data/stage3MockData';
 import { FormKind, FORM_TITLES, buildFormHtml, printHtml } from '../../services/printForms';
 import { isOfficeDay, todayISO, addDays } from '../../services/scheduling';
+import { getAppConfig } from '../../services/appConfig';
 
 const DESC: Record<FormKind, [string, string]> = {
   callSlip: ['Pass for the student to go to the Guidance Office', 'Pase para pumunta ang estudyante sa Guidance Office'],
@@ -100,10 +102,13 @@ export const PrintFormsWindow: React.FC<{
                 aria-checked={kind === k}
                 data-form={k}
                 onClick={() => setKind(k)}
-                className={`text-left rounded-xl border px-3 py-2.5 ${kind === k ? 'border-[#1E469B] bg-[#EEF3FC] dark:bg-[#13203B] ring-1 ring-[#1E469B]/40' : 'border-[#D3DDEE] dark:border-[#253B66]'}`}
+                className={`text-left rounded-xl border px-3 py-2.5 transition-all active:scale-[0.98] ${kind === k ? 'border-[#1E469B] bg-[#EEF3FC] dark:bg-[#13203B] ring-1 ring-[#1E469B]/40' : 'border-[#D3DDEE] dark:border-[#253B66]'}`}
               >
-                <span className="block text-sm font-extrabold text-[#0B1F4D] dark:text-white">🖨 {FORM_TITLES[k][isTl ? 1 : 0]}</span>
-                <span className="block text-[11px] text-[#4A608A] dark:text-[#94A8D0]">{DESC[k][isTl ? 1 : 0]}</span>
+                <span className="flex items-center gap-1.5 text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                  <FileText className="w-4 h-4 text-[#1E469B] dark:text-[#7CB8F7] shrink-0" />
+                  <span>{FORM_TITLES[k][isTl ? 1 : 0]}</span>
+                </span>
+                <span className="block text-[11px] text-[#4A608A] dark:text-[#94A8D0] mt-0.5">{DESC[k][isTl ? 1 : 0]}</span>
               </button>
             ))}
           </div>
@@ -150,31 +155,27 @@ export const PrintFormsWindow: React.FC<{
                 navigator.clipboard.writeText(text);
                 alert(isTl ? 'Na-kopya na ang softcopy text! Maaari mo na itong i-send sa adviser via Messenger o chat.' : 'Softcopy text copied to clipboard! You can now send it to the adviser via Messenger or chat.');
               }}
-              className="px-3.5 py-2 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#F8FAFC] dark:hover:bg-[#13203B] text-xs font-bold transition-all"
+              className="px-3.5 py-2.5 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#F8FAFC] dark:hover:bg-[#13203B] text-xs font-bold transition-all active:scale-[0.97] inline-flex items-center gap-1.5"
               title="Copy text format to send to Adviser via Messenger"
             >
-              SOFTCOPY - SEND IN ADVISER
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const subject = encodeURIComponent(`[AICS Guidance] ${FORM_TITLES[kind][0]} — ${c.studentName} (${c.caseCode})`);
-                const body = encodeURIComponent(`Good day,\n\nPlease find the official guidance notice below:\n\nStudent: ${c.studentName}\nGrade & Section: ${c.gradeSection}\nCase Code: ${c.caseCode}\nNotice Type: ${FORM_TITLES[kind][0]}\n${when ? `Schedule / Date: ${when}\n` : ''}\nDetails / Offense: ${c.offenseTitleEn}\n\nRespectfully,\nMaurice Enriquez\nGuidance Associate & Student Affairs\nAICS Montalban Campus`);
-                window.open(`mailto:${stu?.parentEmail || ''}?subject=${subject}&body=${body}`, '_blank');
-              }}
-              className="px-3.5 py-2 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#F8FAFC] dark:hover:bg-[#13203B] text-xs font-bold transition-all"
-              title="Open in Gmail / Email Client"
-            >
-              Send via Gmail / Email
+              <Copy className="w-3.5 h-3.5" />
+              <span>SOFTCOPY - SEND IN ADVISER</span>
             </button>
           </div>
 
           <div className="flex items-center gap-2">
-            <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-lg saas-card-subtle text-xs font-bold">
+            <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-lg saas-card-subtle text-xs font-bold active:scale-[0.97] transition-all">
               {isTl ? 'Kanselahin' : 'Cancel'}
             </button>
-            <button type="button" data-action="print-form" disabled={!!bad} onClick={print} className="px-5 py-2.5 rounded-lg bg-[#1E469B] text-white text-xs font-bold disabled:opacity-50 active:scale-[0.97] transition-all">
-              {isTl ? `I-download ang Softcopy / Print (${FORM_TITLES[kind][1]})` : `Download the Softcopy / Print (${FORM_TITLES[kind][0]})`}
+            <button
+              type="button"
+              data-action="print-form"
+              disabled={!!bad}
+              onClick={print}
+              className="px-5 py-2.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-bold disabled:opacity-50 active:scale-[0.97] transition-all shadow-sm inline-flex items-center gap-1.5"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>{isTl ? `I-DOWNLOAD ANG SOFTCOPY (PDF)` : `DOWNLOAD THE SOFTCOPY (PDF)`}</span>
             </button>
           </div>
         </div>

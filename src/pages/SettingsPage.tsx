@@ -391,6 +391,42 @@ const PeopleSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
   const [days, setDays] = useState<string[]>(cfg.counselorDays);
   useEffect(() => setDays(cfg.counselorDays), [cfg.counselorDays]);
   const [edit, setEdit] = useState<PersonSchedule | 'new' | null>(null);
+
+  // Dedicated Official Signatories State (Customizable for letters, call slips, & DepEd reports)
+  const [sigGuidance, setSigGuidance] = useState(cfg.signatories?.guidanceAssociate || 'Maurice Enriquez');
+  const [sigCounselor, setSigCounselor] = useState(cfg.signatories?.guidanceCounselor || 'Registered Guidance Counselor (RGC)');
+  const [sigPrincipal, setSigPrincipal] = useState(cfg.signatories?.principal || 'School Principal');
+  const [savingSignatories, setSavingSignatories] = useState(false);
+
+  useEffect(() => {
+    setSigGuidance(cfg.signatories?.guidanceAssociate || 'Maurice Enriquez');
+    setSigCounselor(cfg.signatories?.guidanceCounselor || 'Registered Guidance Counselor (RGC)');
+    setSigPrincipal(cfg.signatories?.principal || 'School Principal');
+  }, [cfg.signatories]);
+
+  const signatoriesChanged =
+    sigGuidance !== (cfg.signatories?.guidanceAssociate || 'Maurice Enriquez') ||
+    sigCounselor !== (cfg.signatories?.guidanceCounselor || 'Registered Guidance Counselor (RGC)') ||
+    sigPrincipal !== (cfg.signatories?.principal || 'School Principal');
+
+  const saveSignatories = async () => {
+    setSavingSignatories(true);
+    const newSignatories = {
+      guidanceAssociate: sigGuidance.trim() || 'Maurice Enriquez',
+      guidanceAssociateTitle: 'Guidance Associate & Student Affairs',
+      guidanceCounselor: sigCounselor.trim() || 'Registered Guidance Counselor (RGC)',
+      guidanceCounselorTitle: 'Guidance Counselor & Hearing Officer',
+      principal: sigPrincipal.trim() || 'School Principal',
+      principalTitle: 'School Principal & Administrative Head',
+    };
+    const prev = cfg.signatories;
+    const ok = await saveConfig('signatories', newSignatories);
+    setSavingSignatories(false);
+    if (!ok) return toast(NOT_SAVED(isTl));
+    soundFX.playSuccessCheck();
+    toast(isTl ? ' Na-save ang mga opisyal na pipirma sa mga form at liham.' : ' Official document signatories updated successfully.', () => void saveConfig('signatories', prev));
+  };
+
   const changed = JSON.stringify(days) !== JSON.stringify(cfg.counselorDays);
   const saveCounselor = async () => {
     const prev = cfg.counselorDays;
@@ -414,6 +450,77 @@ const PeopleSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
   };
   return (
     <div className="space-y-4">
+      {/* CARD 1: OFFICIAL FORM SIGNATORIES (FULL CONTROL) */}
+      <section className={`${card} p-5 space-y-4 border-2 border-[#1E469B]/30`} data-section="signatories">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#DCE5F2] dark:border-[#1E3158] pb-3">
+          <div>
+            <h2 className={h2}>{isTl ? 'Mga Opisyal na Pipirma sa mga Dokumento' : 'Official Form Signatories & Approvers'}</h2>
+            <p className={sub}>
+              {isTl
+                ? 'Ito ang mga pangalang lalabas sa Call Slip, Summons, Kasunduan, Suspension Letter, at DepEd Compliance Reports. Madaling palitan sakaling magkaroon ng bagong tauhan.'
+                : 'Names appearing on Call Slips, Summons Letters, Behavioral Contracts, and DepEd Reports. Change here anytime staff changes.'}
+            </p>
+          </div>
+          <span className="px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase bg-[#EEF3FC] dark:bg-[#13203B] text-[#1E469B] dark:text-[#7CB8F7] border border-[#1E469B]/30">
+            {isTl ? 'Awtomatikong Ginagamit sa PDF' : 'Active on all PDFs'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <label className="block">
+            <span className={label}>{isTl ? 'Guidance Associate (Tagapangasiwa)' : 'Guidance Associate (Intake Officer)'}</span>
+            <input
+              type="text"
+              value={sigGuidance}
+              onChange={(e) => setSigGuidance(e.target.value)}
+              placeholder="e.g. Maurice Enriquez"
+              className={input}
+            />
+            <span className="block text-[10px] text-[#4A608A] dark:text-[#94A8D0] mt-1">
+              {isTl ? 'Pumipirma sa Call Slip at Summons' : 'Signs Call Slips and Summons'}
+            </span>
+          </label>
+
+          <label className="block">
+            <span className={label}>{isTl ? 'Guidance Counselor (RGC)' : 'Registered Guidance Counselor'}</span>
+            <input
+              type="text"
+              value={sigCounselor}
+              onChange={(e) => setSigCounselor(e.target.value)}
+              placeholder="e.g. Registered Guidance Counselor (RGC)"
+              className={input}
+            />
+            <span className="block text-[10px] text-[#4A608A] dark:text-[#94A8D0] mt-1">
+              {isTl ? 'Pumipirma sa Case Evaluations at DepEd Reports' : 'Signs Evaluations & DepEd Reports'}
+            </span>
+          </label>
+
+          <label className="block">
+            <span className={label}>{isTl ? 'Punong-Guro (School Principal)' : 'School Principal / Director'}</span>
+            <input
+              type="text"
+              value={sigPrincipal}
+              onChange={(e) => setSigPrincipal(e.target.value)}
+              placeholder="e.g. School Principal"
+              className={input}
+            />
+            <span className="block text-[10px] text-[#4A608A] dark:text-[#94A8D0] mt-1">
+              {isTl ? 'Pumipirma sa Suspension at Administrative Decisions' : 'Signs Suspensions & CPC Certifications'}
+            </span>
+          </label>
+        </div>
+
+        <div className="flex justify-end pt-1">
+          <button
+            type="button"
+            disabled={!signatoriesChanged || savingSignatories}
+            onClick={() => void saveSignatories()}
+            className={`${primary} active:scale-[0.97] transition-all`}
+          >
+            {savingSignatories ? (isTl ? 'Sine-save…' : 'Saving…') : isTl ? 'I-save ang mga Pipirma' : 'Save Signatories'}
+          </button>
+        </div>
+      </section>
       <section className={`${card} p-5 space-y-3`} data-section="counselor">
         <div>
           <h2 className={h2}>{isTl ? 'Araw ng guidance counselor' : 'Guidance counselor days'}</h2>

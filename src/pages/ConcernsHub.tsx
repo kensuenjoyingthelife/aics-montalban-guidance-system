@@ -49,6 +49,7 @@ import {
   AlertTriangle,
   Target,
   Camera,
+  CheckCheck,
 } from 'lucide-react';
 
 export type ConcernsTab = 'reports' | 'chats' | 'accounts';
@@ -1531,9 +1532,18 @@ const Bubbles = React.memo(function Bubbles({ msgs, showAll, studentName, when }
       {visible.map((m) => (
         <div key={m.id} className={`flex ${m.sender === 'office' ? 'justify-end' : 'justify-start'}`}>
           <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words ${m.sender === 'office' ? 'bg-[#1E469B] text-white rounded-br-md' : 'bg-white dark:bg-[#13203B] text-[#0B1F4D] dark:text-white border border-[#D3DDEE] dark:border-[#253B66] rounded-bl-md'}`}>
-            <p className={`text-[11px] font-extrabold mb-0.5 ${m.sender === 'office' ? 'text-white/80' : 'text-[#4A608A] dark:text-[#94A8D0]'}`}>
-              {m.sender === 'office' ? 'Guidance Office' : studentName} · {when(m.createdAt)}
-            </p>
+            <div className={`flex items-center justify-between gap-2 text-[11px] font-extrabold mb-0.5 ${m.sender === 'office' ? 'text-white/80' : 'text-[#4A608A] dark:text-[#94A8D0]'}`}>
+              <span>{m.sender === 'office' ? 'Guidance Office' : studentName}</span>
+              <div className="flex items-center gap-1">
+                <span>{when(m.createdAt)}</span>
+                {m.sender === 'office' && (
+                  <span className="inline-flex items-center gap-0.5 text-sky-200" title="Delivered & Seen">
+                    <CheckCheck className="w-3 h-3 text-sky-300" />
+                    <span className="text-[9px] font-sans font-black tracking-wider uppercase">Seen</span>
+                  </span>
+                )}
+              </div>
+            </div>
             {m.body}
           </div>
         </div>

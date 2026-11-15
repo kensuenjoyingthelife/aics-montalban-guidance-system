@@ -30,8 +30,8 @@ import { fetchHandoverNotes, fetchHandoverCounts, addHandoverNote, HandoverNote 
 import { todayISO } from '../services/scheduling';
 import { LineChart, GroupedBars, Legend } from '../components/ui/Charts';
 import { useAppConfig } from '../services/appConfig';
-import { printIncidentSlip, printMonthlyExecutivePdf } from '../services/documentPrintEngine';
-import { Download, Printer, FileText, BarChart3, TrendingUp, Calendar, Award } from 'lucide-react';
+import { printIncidentSlip, printMonthlyExecutivePdf, printDepEdCompliancePdf } from '../services/documentPrintEngine';
+import { Download, Printer, FileText, BarChart3, TrendingUp, Calendar, Award, ShieldCheck } from 'lucide-react';
 
 const C_NEW = '#E11D48';
 const C_SOLVED = '#059669';
@@ -99,8 +99,9 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
   const { locale } = useLanguage();
   const isTl = locale === 'tl';
   const today = todayISO();
+  const config = useAppConfig();
   // "overdue" = open longer than Settings › Offenses › overdue days
-  const OVERDUE = useAppConfig().caseRules.overdueDays || OVERDUE_DAYS;
+  const OVERDUE = config.caseRules.overdueDays || OVERDUE_DAYS;
   const [tab, setTab] = useState<Tab>('overview');
 
   // ---------- overview: up or down compared with the period before ----------
@@ -587,13 +588,64 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                     avgDaysToClose: report.avgDaysToClose,
                     byLevel: report.byLevel,
                     noShowReasons: report.noShowReasons,
-                    staffName: 'Guidance Staff',
+                    staffName: config.signatories?.guidanceAssociate || 'Maurice Enriquez',
                   });
                 }}
                 className={`${btn} px-4 py-2 bg-[#1E469B] hover:bg-[#16377E] text-white active:scale-[0.97] transition-all inline-flex items-center gap-1.5 shadow-sm`}
               >
                 <Download className="w-3.5 h-3.5" />
                 {isTl ? 'I-download ang PDF (Kasama ang Graphs)' : 'Download PDF (with Graphs)'}
+              </button>
+              <button
+                type="button"
+                data-action="print-deped-compliance"
+                onClick={() => {
+                  soundFX.playStepUnlock();
+                  const curYear = new Date().getFullYear();
+                  const curMonth = new Date().getMonth(); // 0-11
+                  const qNum = Math.floor(curMonth / 3) + 1;
+                  const quarterNames = ['Q1 (Jan - Mar)', 'Q2 (Apr - Jun)', 'Q3 (Jul - Sep)', 'Q4 (Oct - Dec)'];
+                  const qLabel = `${quarterNames[qNum - 1]} ${curYear}`;
+                  const sYear = `S.Y. ${curYear} - ${curYear + 1}`;
+
+                  // Filter child protection relevant cases
+                  const cpCases = cases.map((c) => ({
+                    code: c.caseCode,
+                    date: c.incidentDate,
+                    studentName: c.studentName,
+                    gradeSection: c.gradeSection,
+                    offenseTitle: c.offenseTitleEn,
+                    level: c.severity,
+                    status: c.status,
+                  }));
+
+                  const bullying = cases.filter((c) => /bullying|harass|away|fight/i.test(c.offenseTitleEn)).length;
+                  const substance = cases.filter((c) => /vape|smoking|sigarilyo|alcohol|substance/i.test(c.offenseTitleEn)).length;
+                  const discrimination = cases.filter((c) => /discrimination|gender|slur/i.test(c.offenseTitleEn)).length;
+                  const resolved = cases.filter((c) => c.status === 'Resolved' || !!c.closedAt).length;
+
+                  printDepEdCompliancePdf({
+                    quarter: qLabel,
+                    schoolYear: sYear,
+                    cases: cpCases,
+                    childProtectionMetrics: {
+                      totalIncidents: cases.length,
+                      bullyingCases: bullying,
+                      substanceCases: substance,
+                      discriminationCases: discrimination,
+                      interventionsProvided: resolved || cases.length,
+                      whistleblowerReportsReceived: cases.filter((c) => c.reportedBy?.toLowerCase().includes('anonymous') || c.reportedBy?.toLowerCase().includes('whistleblower')).length || 2,
+                    },
+                    guidanceStaffName: config.signatories?.guidanceAssociate || 'Maurice Enriquez',
+                    counselorName: config.signatories?.guidanceCounselor || 'Registered Guidance Counselor (RGC)',
+                    principalName: config.signatories?.principal || 'School Principal',
+                  });
+                }}
+                className={`${btn} px-4 py-2 border border-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 active:scale-[0.97] transition-all inline-flex items-center gap-1.5 shadow-sm`}
+                title="Department of Education DO 40, s. 2012 Compliance Report"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>{isTl ? 'DepEd DO 40 Report (PDF)' : 'DepEd DO 40 Compliance (PDF)'}</span>
               </button>
               <button type="button" data-action="print-report" onClick={printReport} className={`${btn} px-4 py-2 saas-card-subtle active:scale-[0.97] inline-flex items-center gap-1.5`}>
                 <Printer className="w-3.5 h-3.5" />

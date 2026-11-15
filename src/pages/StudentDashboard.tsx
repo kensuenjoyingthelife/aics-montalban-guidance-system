@@ -27,6 +27,7 @@ import {
   Send,
   FileText,
   Download,
+  CheckCheck,
 } from 'lucide-react';
 import { WavyBackground } from '../components/auth/WavyBackground';
 import { SoundTogglePill, soundFX } from '../services/soundEngine';
@@ -91,6 +92,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   const [happenedWhere, setHappenedWhere] = useState<string>('');
   const [witnesses, setWitnesses] = useState<string>('');
   const [isUrgent, setIsUrgent] = useState<boolean>(false);
+  const [isAnonymousWhistleblower, setIsAnonymousWhistleblower] = useState<boolean>(false);
   const [truthfulAck, setTruthfulAck] = useState<boolean>(false);
   const [evidencePhotos, setEvidencePhotos] = useState<string[]>([]);
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -529,18 +531,24 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
         },
         body: JSON.stringify({
           referral_code: refCode,
-          student_name: isPeer && friendName.trim() ? friendName.trim() : user.fullName,
-          grade_section: isPeer && friendGradeSection.trim() ? friendGradeSection.trim() : user.gradeSection || 'SHS Student',
-          student_number: user.studentNumber,
+          student_name: isAnonymousWhistleblower
+            ? (isTl ? 'Protektadong Whistleblower (DepEd DO 40)' : 'Protected Whistleblower (DepEd DO 40)')
+            : (isPeer && friendName.trim() ? friendName.trim() : user.fullName),
+          grade_section: isAnonymousWhistleblower
+            ? 'Confidential'
+            : (isPeer && friendGradeSection.trim() ? friendGradeSection.trim() : user.gradeSection || 'SHS Student'),
+          student_number: isAnonymousWhistleblower ? 'ANON-DO40' : user.studentNumber,
           account_id: user.id,
-          submitted_by: isPeer ? `Report for Friend by ${user.fullName} (${user.studentNumber})` : `Self-Report: ${user.fullName}`,
+          submitted_by: isAnonymousWhistleblower
+            ? 'Anonymous Whistleblower (DepEd Child Protection Policy DO 40, s. 2012)'
+            : (isPeer ? `Report for Friend by ${user.fullName} (${user.studentNumber})` : `Self-Report: ${user.fullName}`),
           category: reportType,
           concern_type: reportType,
           urgency: isUrgent ? 'Urgent' : 'Normal',
           who_involved: knowsSuspect === 'yes' ? `${suspectName}${suspectDetails ? ` (${suspectDetails})` : ''}` : (knowsSuspect === 'unsure' ? `Hindi tiyak${suspectDetails ? ` (${suspectDetails})` : ''}` : `Hindi kilala${suspectDetails ? ` (${suspectDetails})` : ''}`),
-          summary_en: whatHappened.slice(0, 160),
-          summary_tl: whatHappened.slice(0, 160),
-          what_happened: finalNarrative,
+          summary_en: (isAnonymousWhistleblower ? '[ANONYMOUS WHISTLEBLOWER - DEPED DO 40] ' : '') + whatHappened.slice(0, 160),
+          summary_tl: (isAnonymousWhistleblower ? '[ANONYMOUS WHISTLEBLOWER - DEPED DO 40] ' : '') + whatHappened.slice(0, 160),
+          what_happened: (isAnonymousWhistleblower ? `[DEPED DO 40, S. 2012 ANONYMOUS WHISTLEBLOWER SUBMISSION]\n[REPORTER IDENTITY SHIELDED FOR CHILD PROTECTION]\n\n` : '') + finalNarrative,
           happened_when: happenedWhen || 'Not specified',
           happened_where: happenedWhere || 'AICS Campus / Online',
           witnesses: witnesses || 'None',
@@ -578,6 +586,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       setHappenedWhere('');
       setWitnesses('');
       setEvidencePhotos([]);
+      setIsAnonymousWhistleblower(false);
       setTruthfulAck(false);
       setReportingRole('self');
       setFriendName('');
@@ -1585,6 +1594,28 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
                   {/* Urgency & Truthfulness Checkboxes */}
                   <div className="space-y-3 pt-2">
+                    {/* DepEd DO 40 Anonymous Whistleblower Protection */}
+                    <label className="flex items-start gap-2.5 cursor-pointer text-xs p-2.5 rounded-xl border border-sky-300 dark:border-sky-800 bg-sky-50/50 dark:bg-sky-950/20">
+                      <input
+                        type="checkbox"
+                        checked={isAnonymousWhistleblower}
+                        onChange={(e) => setIsAnonymousWhistleblower(e.target.checked)}
+                        className="w-4 h-4 rounded accent-[#1E469B] mt-0.5"
+                      />
+                      <div>
+                        <span className="font-extrabold text-[#1E469B] dark:text-[#7CB8F7] block">
+                          {isTl
+                            ? 'Isumite bilang Anonymous Whistleblower (DepEd DO 40, s. 2012)'
+                            : 'Submit as Anonymous Whistleblower (DepEd DO 40, s. 2012)'}
+                        </span>
+                        <span className="text-[11px] card-subtitle-text block mt-0.5">
+                          {isTl
+                            ? 'Itatago ang iyong pangalan sa case board. Direktang ipapasa sa Guidance Office alinsunod sa DepEd Child Protection Policy.'
+                            : 'Shields your identity on case records. Filed directly to Guidance under DepEd Child Protection Policy.'}
+                        </span>
+                      </div>
+                    </label>
+
                     <label className="flex items-center gap-2.5 cursor-pointer text-xs">
                       <input
                         type="checkbox"
@@ -1872,9 +1903,15 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                           >
                             <div className="flex items-center justify-between gap-3 text-[10px] font-extrabold pb-1 opacity-80 border-b border-white/10 dark:border-white/10 mb-1">
                               <span>{isStudent ? 'Ikaw (Student)' : 'AICS Guidance Office'}</span>
-                              <span className="font-mono">
-                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
+                              <div className="flex items-center gap-1.5 font-mono">
+                                <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                {isStudent && (
+                                  <span className="inline-flex items-center gap-0.5 text-sky-200" title={isTl ? 'Binasa ng Guidance Office' : 'Seen by Guidance Office'}>
+                                    <CheckCheck className="w-3 h-3 text-sky-300" />
+                                    <span className="text-[9px] uppercase tracking-wider font-sans font-black">{isTl ? 'Seen' : 'Seen'}</span>
+                                  </span>
+                                )}
+                              </div>
                             </div>
                             <p className="whitespace-pre-wrap">{msg.body}</p>
                           </div>

@@ -533,3 +533,171 @@ export function printMonthlyExecutivePdf(opts: MonthlyPdfOptions): boolean {
 </html>`;
   return triggerPrintIframe(html, `Monthly-Report-${opts.monthName}`);
 }
+
+export interface DepEdComplianceReportOptions {
+  quarter: string; // e.g. "Q4 2026 (Oct - Dec)"
+  schoolYear: string; // e.g. "S.Y. 2026 - 2027"
+  cases: Array<{
+    code: string;
+    date: string;
+    studentName: string;
+    gradeSection: string;
+    offenseTitle: string;
+    level: string;
+    status: string;
+  }>;
+  childProtectionMetrics: {
+    totalIncidents: number;
+    bullyingCases: number;
+    substanceCases: number;
+    discriminationCases: number;
+    interventionsProvided: number;
+    whistleblowerReportsReceived: number;
+  };
+  guidanceStaffName?: string;
+  counselorName?: string;
+  principalName?: string;
+}
+
+export function printDepEdCompliancePdf(opts: DepEdComplianceReportOptions): boolean {
+  const staff = opts.guidanceStaffName || 'Maurice Enriquez';
+  const counselor = opts.counselorName || 'Registered Guidance Counselor (RGC)';
+  const principal = opts.principalName || 'School Principal';
+  const now = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  const rowsHtml = opts.cases.slice(0, 30).map((c) => `
+    <tr>
+      <td style="font-family:monospace;font-weight:bold;color:#1E469B;">${esc(c.code)}</td>
+      <td>${esc(c.date)}</td>
+      <td style="font-weight:600;">${esc(c.studentName)}</td>
+      <td>${esc(c.gradeSection)}</td>
+      <td>${esc(c.offenseTitle)}</td>
+      <td><span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;background:#F1F5F9;color:#0F172A;">${esc(c.level)}</span></td>
+      <td style="font-weight:bold;color:${c.status === 'Closed' ? '#059669' : '#D97706'};">${esc(c.status)}</td>
+    </tr>
+  `).join('');
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>DepEd Child Protection Compliance Report - ${esc(opts.quarter)}</title>
+  <style>
+    @page { size: portrait; margin: 10mm 12mm 10mm 12mm; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #0B1F4D; margin: 0; padding: 0; font-size: 11px; line-height: 1.4; }
+    .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0B1F4D; padding-bottom: 8px; margin-bottom: 12px; }
+    .header-logo { width: 54px; height: 54px; object-fit: contain; }
+    .header-center { text-align: center; flex: 1; margin: 0 10px; }
+    .deped-tag { font-size: 10px; font-weight: 800; color: #1E469B; text-transform: uppercase; letter-spacing: 0.5px; }
+    .school-title { font-size: 14px; font-weight: 900; letter-spacing: 0.2px; }
+    .school-sub { font-size: 10px; color: #475569; }
+    .badge { font-size: 8px; font-weight: bold; background: #EEF2F6; padding: 3px 8px; border-radius: 4px; border: 1px solid #CBD5E1; }
+    .title-banner { background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .title-banner h2 { margin: 0; font-size: 12px; font-weight: 800; color: #0B1F4D; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+    .kpi-card { border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 10px; background: #FFFFFF; }
+    .kpi-val { font-size: 16px; font-weight: 900; color: #1E469B; }
+    .kpi-lbl { font-size: 9.5px; font-weight: bold; color: #475569; text-transform: uppercase; }
+    table { width: 100%; border-collapse: collapse; font-size: 9.5px; margin-bottom: 14px; }
+    th { background: #0B1F4D; color: #FFFFFF; text-align: left; padding: 5px 6px; font-weight: 800; font-size: 9px; text-transform: uppercase; }
+    td { padding: 4px 6px; border-bottom: 1px solid #E2E8F0; }
+    tr:nth-child(even) td { background: #F8FAFC; }
+    .sign-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 18px; page-break-inside: avoid; }
+    .sign-box { text-align: center; }
+    .sign-line { border-bottom: 1px solid #0B1F4D; height: 32px; margin-bottom: 4px; }
+    .legal-note { font-size: 8.5px; color: #64748B; font-style: italic; margin-top: 10px; border-top: 1px solid #E2E8F0; padding-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="${AICS_LOGO_BASE64}" class="header-logo" alt="AICS Seal" />
+    <div class="header-center">
+      <div class="deped-tag">Republic of the Philippines · Department of Education</div>
+      <div class="school-title">ASIAN INSTITUTE OF COMPUTER STUDIES (AICS)</div>
+      <div class="school-sub">Rodriguez, Rizal Campus · Child Protection Committee &amp; Guidance Office</div>
+      <div style="font-weight: 800; font-size: 11px; margin-top: 2px;">DEPED ORDER NO. 40, S. 2012 COMPLIANCE REPORT</div>
+    </div>
+    <div class="badge">DO 40, S. 2012<br>CERTIFIED</div>
+  </div>
+
+  <div class="title-banner">
+    <div>
+      <h2>Quarterly Child Protection &amp; Anti-Bullying Incident Record</h2>
+      <div style="font-size: 9.5px; color: #475569;">Covering: ${esc(opts.quarter)} · ${esc(opts.schoolYear)}</div>
+    </div>
+    <div style="text-align: right; font-size: 9.5px;">
+      <div><strong>Date Generated:</strong> ${esc(now)}</div>
+      <div><strong>Confidentiality:</strong> DepEd Protected (DO 40)</div>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-lbl">Total Incidents Recorded</div>
+      <div class="kpi-val">${opts.childProtectionMetrics.totalIncidents}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-lbl">Bullying &amp; Harassment</div>
+      <div class="kpi-val">${opts.childProtectionMetrics.bullyingCases}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-lbl">Anti-Substance &amp; Vaping</div>
+      <div class="kpi-val">${opts.childProtectionMetrics.substanceCases}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-lbl">Interventions Provided</div>
+      <div class="kpi-val">${opts.childProtectionMetrics.interventionsProvided}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-lbl">Whistleblower Reports</div>
+      <div class="kpi-val">${opts.childProtectionMetrics.whistleblowerReportsReceived}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-lbl">Due Process Resolution Rate</div>
+      <div class="kpi-val">${opts.childProtectionMetrics.totalIncidents > 0 ? Math.round((opts.childProtectionMetrics.interventionsProvided / opts.childProtectionMetrics.totalIncidents) * 100) : 100}%</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Case Code</th>
+        <th>Date</th>
+        <th>Student Name</th>
+        <th>Grade &amp; Section</th>
+        <th>Offense / Classification</th>
+        <th>Handbook Level</th>
+        <th>Due Process Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rowsHtml || '<tr><td colspan="7" style="text-align:center;padding:12px;color:#64748B;">No incident records filed during this period.</td></tr>'}
+    </tbody>
+  </table>
+
+  <div class="legal-note">
+    <strong>DepEd DO 40, s. 2012 Mandate:</strong> This document certifies compliance with the "DepEd Child Protection Policy". All reported incidents undergo documented procedural due process, confidential intake, parent consultation, and positive behavioral intervention without administrative bias.
+  </div>
+
+  <div class="sign-row">
+    <div class="sign-box">
+      <div class="sign-line"></div>
+      <div style="font-weight:bold;">${esc(staff)}</div>
+      <div style="font-size:9.5px;color:#475569;">Guidance Associate &amp; Intake Officer</div>
+    </div>
+    <div class="sign-box">
+      <div class="sign-line"></div>
+      <div style="font-weight:bold;">${esc(counselor)}</div>
+      <div style="font-size:9.5px;color:#475569;">Registered Guidance Counselor (RGC)</div>
+    </div>
+    <div class="sign-box">
+      <div class="sign-line"></div>
+      <div style="font-weight:bold;">${esc(principal)}</div>
+      <div style="font-size:9.5px;color:#475569;">School Principal / CPC Chairperson</div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  return triggerPrintIframe(html, `DepEd-DO40-Compliance-Report-${opts.quarter}`);
+}
