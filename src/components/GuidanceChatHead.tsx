@@ -25,8 +25,9 @@ const CHAT_WINDOW_SIZE_KEY = 'aics_aicy_window_size';
 const BALL_SIZE = 56;
 const MARGIN = 16;
 
-// Official Facebook Messenger Web Chatbox Dimensions: 330px width x 440px height
-// Docks directly at the bottom-right corner, exactly like Facebook Messenger
+// 4 Corner Docking Positions for Desktop & Web
+export type CornerDock = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+const CHAT_DOCK_CORNER_KEY = 'aics_aicy_dock_corner_v1';
 const MIN_WINDOW_WIDTH = 240;
 const MIN_WINDOW_HEIGHT = 220;
 const DEFAULT_WINDOW_WIDTH = 330;
@@ -39,6 +40,33 @@ export const GuidanceChatHead: React.FC = () => {
   const [termsAccepted, setTermsAccepted] = useState<boolean>(isAicyTermsAccepted);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Flexible 4-Corner Docking: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'
+  const [dockCorner, setDockCorner] = useState<CornerDock>(() => {
+    try {
+      const saved = localStorage.getItem(CHAT_DOCK_CORNER_KEY) as CornerDock | null;
+      if (saved && ['bottom-right', 'bottom-left', 'top-right', 'top-left'].includes(saved)) {
+        return saved;
+      }
+    } catch {}
+    return 'bottom-right';
+  });
+
+  const cycleCorner = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    soundFX.playToggleSwitch(true);
+    setDockCorner((prev) => {
+      let next: CornerDock = 'bottom-right';
+      if (prev === 'bottom-right') next = 'bottom-left';
+      else if (prev === 'bottom-left') next = 'top-left';
+      else if (prev === 'top-left') next = 'top-right';
+      else if (prev === 'top-right') next = 'bottom-right';
+      try {
+        localStorage.setItem(CHAT_DOCK_CORNER_KEY, next);
+      } catch {}
+      return next;
+    });
+  };
 
   // Freeform resizable window size (defaults to standard 380x520)
   const [customSize, setCustomSize] = useState<{ w: number; h: number }>({
@@ -443,23 +471,65 @@ export const GuidanceChatHead: React.FC = () => {
   const isMini = customSize.w < 260 || customSize.h < 260;
   const isMicro = customSize.w < 220 || customSize.h < 200;
 
+  // Corner positioning CSS resolver
+  const getWindowCornerStyle = (): React.CSSProperties => {
+    const style: React.CSSProperties = {
+      position: 'fixed',
+      width: `${customSize.w}px`,
+      height: `${customSize.h}px`,
+      maxWidth: 'calc(100vw - 32px)',
+      maxHeight: 'calc(100vh - 32px)',
+      zIndex: 9990,
+      touchAction: 'none',
+    };
+    if (dockCorner === 'bottom-right') {
+      style.bottom = '16px';
+      style.right = '16px';
+    } else if (dockCorner === 'bottom-left') {
+      style.bottom = '16px';
+      style.left = '80px'; // Give room to sidebar
+    } else if (dockCorner === 'top-right') {
+      style.top = '72px'; // Below topbar
+      style.right = '16px';
+    } else if (dockCorner === 'top-left') {
+      style.top = '72px';
+      style.left = '80px';
+    }
+    return style;
+  };
+
+  const getBallCornerStyle = (): React.CSSProperties => {
+    const style: React.CSSProperties = {
+      position: 'fixed',
+      zIndex: 9995,
+      touchAction: 'none',
+      userSelect: 'none',
+      WebkitUserSelect: 'none',
+      cursor: 'pointer',
+    };
+    if (dockCorner === 'bottom-right') {
+      style.bottom = '20px';
+      style.right = '20px';
+    } else if (dockCorner === 'bottom-left') {
+      style.bottom = '20px';
+      style.left = '84px';
+    } else if (dockCorner === 'top-right') {
+      style.top = '76px';
+      style.right = '20px';
+    } else if (dockCorner === 'top-left') {
+      style.top = '76px';
+      style.left = '84px';
+    }
+    return style;
+  };
+
   return (
     <>
-      {/* Docked Messenger Chat Window (Anchored cleanly at bottom-right corner) */}
+      {/* Docked Messenger Chat Window (Anchored cleanly at 4 corners: left, right, up, down) */}
       {isOpen && !isMinimized && (
         <div
           ref={windowRef}
-          style={{
-            position: 'fixed',
-            bottom: '16px',
-            right: '16px',
-            width: `${customSize.w}px`,
-            height: `${customSize.h}px`,
-            maxWidth: 'calc(100vw - 32px)',
-            maxHeight: 'calc(100vh - 32px)',
-            zIndex: 9990,
-            touchAction: 'none',
-          }}
+          style={getWindowCornerStyle()}
           role="dialog"
           aria-label="Guidance Assistant Chat Window"
           className="bg-white dark:bg-[#18191a] border border-[#cbd5e1] dark:border-[#3a3b3c] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 select-none relative group/window"
@@ -494,6 +564,17 @@ export const GuidanceChatHead: React.FC = () => {
 
             {/* Messenger-Style Clean Minimal Icons */}
             <div className="flex items-center gap-1 shrink-0 text-slate-500 dark:text-slate-400">
+              {/* Switch Corner (Left, Right, Up, Down) */}
+              <button
+                type="button"
+                onClick={cycleCorner}
+                className="w-6 h-6 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center text-slate-600 dark:text-slate-300"
+                title={`Ilipat ng sulok (Kasalukuyan: ${dockCorner})`}
+                aria-label="Move corner"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+              </button>
+
               <button
                 type="button"
                 onClick={() => setShowTermsModal(true)}
@@ -699,7 +780,7 @@ export const GuidanceChatHead: React.FC = () => {
         </div>
       )}
 
-      {/* Docked Messenger-Style Chat Head Bubble (Anchored bottom-right) */}
+      {/* Docked Messenger-Style Chat Head Bubble (Anchored cleanly at 4 corners: left, right, up, down) */}
       <div
         ref={ballRef}
         onClick={() => {
@@ -713,16 +794,11 @@ export const GuidanceChatHead: React.FC = () => {
             }
           }
         }}
-        style={{
-          position: 'fixed',
-          bottom: '20px',
-          right: '20px',
-          zIndex: 9995,
-          touchAction: 'none',
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
-          cursor: 'pointer',
+        onContextMenu={(e) => {
+          e.preventDefault();
+          cycleCorner();
         }}
+        style={getBallCornerStyle()}
         className="flex items-center gap-2 select-none active:scale-95 transition-transform"
       >
         {/* Minimized Pill Bar when minimized */}
