@@ -295,13 +295,20 @@
 /* LIGHT MODE CARD with Clean Off-White Surface & Defined Solid Slate Border */
 :root:not(.dark) .cosmic-glass-card {
   position: relative;
-  background: #FFFFFF !important;
+  background: linear-gradient(
+    145deg,
+    #FFFFFF 0%,
+    #F0F7FF 35%,
+    #E1EFFF 70%,
+    #D0E5FF 100%
+  ) !important;
   border-radius: 32px;
-  border: 1.5px solid #CBD5E1 !important;
+  border: 1.5px solid #94A3B8 !important;
   box-shadow:
-    0 10px 30px -5px rgba(15, 23, 42, 0.08),
-    0 1px 3px rgba(15, 23, 42, 0.04) !important;
-  color: #0F172A !important;
+    0 15px 35px -5px rgba(30, 58, 138, 0.12),
+    0 4px 12px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  color: #0B1F4D !important;
 }
 
 /* DARK MODE CARD with Vivid Deep AICS Brand Gradient Shift */
@@ -358,8 +365,9 @@ body.low-tier-device .cosmic-glass-card {
   font-weight: 800 !important;
 }
 :root:not(.dark) .card-title-text {
-  color: #0B1F4D !important;
+  color: #06163A !important;
   font-weight: 900 !important;
+  letter-spacing: -0.02em !important;
 }
 
 /* Subtitles */
@@ -378,7 +386,7 @@ body.low-tier-device .cosmic-glass-card {
   font-weight: 700 !important;
 }
 :root:not(.dark) .register-label {
-  color: #0B1F4D !important;
+  color: #06163A !important;
   font-weight: 800 !important;
 }
 
@@ -388,8 +396,9 @@ body.low-tier-device .cosmic-glass-card {
   font-weight: 800 !important;
 }
 :root:not(.dark) .register-section-title {
-  color: #1E3A8A !important;
+  color: #0E3A8A !important;
   font-weight: 900 !important;
+  letter-spacing: 0.04em !important;
 }
 
 /* Back Button */
@@ -397,6 +406,12 @@ body.low-tier-device .cosmic-glass-card {
   background: rgba(255, 255, 255, 0.1) !important;
   border: 1px solid rgba(255, 255, 255, 0.22) !important;
   color: #FFFFFF !important;
+}
+:root:not(.dark) .card-back-button {
+  background: #EEF6FF !important;
+  border: 1.5px solid #94A3B8 !important;
+  color: #0B1F4D !important;
+  font-weight: 800 !important;
 }
 :root.dark .card-back-button:hover {
   background: rgba(255, 255, 255, 0.2) !important;
@@ -462,14 +477,14 @@ body.low-tier-device .cosmic-glass-card {
 
 /* Light Mode Section Cards (Solid Contrast: #F1F5F9 Slate Background, Crisp 1.5px #94A3B8 Border, Deep Text) */
 :root:not(.dark) .register-section-card {
-  background: #F8FAFC !important;
+  background: linear-gradient(160deg, #FFFFFF 0%, #F4F9FF 100%) !important;
   border: 1.5px solid #94A3B8 !important;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06) !important;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06) !important;
 }
 :root:not(.dark) .register-inner-card {
   background: #FFFFFF !important;
-  border: 1.5px solid #CBD5E1 !important;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+  border: 1.5px solid #94A3B8 !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05) !important;
 }
 
 /* 7. UPLOAD DROPZONES */
@@ -542,10 +557,10 @@ body.low-tier-device .cosmic-glass-card {
   font-weight: 700 !important;
 }
 :root:not(.dark) .badge-not-input {
-  background: #F1F5F9 !important;
-  border: 1px solid #CBD5E1 !important;
-  color: #334155 !important;
-  font-weight: 700 !important;
+  background: #E2E8F0 !important;
+  border: 1.5px solid #94A3B8 !important;
+  color: #0F172A !important;
+  font-weight: 800 !important;
 }
 
 /* Mobile responsive padding and radius for Capacitor & PWA phones */
@@ -1205,13 +1220,13 @@ body.low-tier-device .cosmic-glass-card {
 
 :root:not(.dark) body.capacitor-mobile .cosmic-glass-card,
 :root:not(.dark) body.low-tier-device .cosmic-glass-card {
-  background-color: #ffffff !important;
+  background: linear-gradient(145deg, #FFFFFF 0%, #F0F7FF 50%, #DCEEFF 100%) !important;
   box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15) !important;
 }
 
 @media (max-width: 768px) {
   :root:not(.dark) .cosmic-glass-card {
-    background-color: #ffffff !important;
+    background: linear-gradient(145deg, #FFFFFF 0%, #F0F7FF 50%, #DCEEFF 100%) !important;
     box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15) !important;
   }
 }
