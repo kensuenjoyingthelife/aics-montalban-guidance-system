@@ -647,6 +647,55 @@ const Field: React.FC<{ label: string; value: string; empty: string }> = ({ labe
   </div>
 );
 
+// Smart helper: extracts structured cards from student submission narrative
+function parseIncidentData(whatHappened: string, rawWho: string) {
+  let reporterType = '';
+  let respondentRaw = rawWho || '';
+  let narrativeText = whatHappened || '';
+
+  // Extract [REPORT FOR FRIEND / SELF-REPORT]
+  const reportTypeMatch = narrativeText.match(/\[(REPORT FOR FRIEND[^\n\]]*|SELF-REPORT[^\n\]]*)\]/i);
+  if (reportTypeMatch) {
+    reporterType = reportTypeMatch[1].trim();
+    narrativeText = narrativeText.replace(reportTypeMatch[0], '').trim();
+  }
+
+  // Extract [RESPONDENT / INIREREKLAMO: ...]
+  const respondentMatch = narrativeText.match(/\[RESPONDENT[^:]*:\s*([^\n\]]+)\]/i);
+  if (respondentMatch) {
+    if (!respondentRaw || respondentRaw.toLowerCase().includes('not answered')) {
+      respondentRaw = respondentMatch[1].trim();
+    }
+    narrativeText = narrativeText.replace(respondentMatch[0], '').trim();
+  }
+
+  // Extract [SALAYSAY / WHAT HAPPENED]: ...
+  const salaysayMatch = narrativeText.match(/\[SALAYSAY[^:]*:\s*([\s\S]*)$/i);
+  if (salaysayMatch) {
+    narrativeText = salaysayMatch[1].trim();
+  }
+
+  // Parse respondent details (e.g. "Mark Santos - Palatandaan: Grade 11 ICT-2")
+  let respondentName = respondentRaw;
+  let respondentDetails = '';
+  if (respondentRaw.includes('- Palatandaan:')) {
+    const parts = respondentRaw.split('- Palatandaan:');
+    respondentName = parts[0].trim();
+    respondentDetails = parts[1].trim();
+  } else if (respondentRaw.includes('-')) {
+    const parts = respondentRaw.split('-');
+    respondentName = parts[0].trim();
+    respondentDetails = parts.slice(1).join('-').trim();
+  }
+
+  return {
+    reporterType,
+    respondentName: respondentName || 'Hindi tinukoy (Unknown)',
+    respondentDetails,
+    cleanNarrative: narrativeText || whatHappened,
+  };
+}
+
 const ConcernDetail: React.FC<{
   c: ConcernItem;
   isTl: boolean;
@@ -796,45 +845,170 @@ const ConcernDetail: React.FC<{
           )}
         </section>
 
-        {/* ---------- RIGHT: the report ---------- */}
+        {/* ---------- RIGHT: the report (Organized High-Clarity Mini Cards) ---------- */}
         <section className={cardBox} data-concern-report>
-          <p className={cardHead}>📝 {isTl ? 'Detalye ng Insidente & Respondent' : 'Incident Details & Respondent'}</p>
-          <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
-            <Field label={isTl ? 'Ano ang nangyari' : 'What happened'} value={c.whatHappened} empty={none} />
-            <div className="grid grid-cols-2 gap-3">
-              <Field label={isTl ? 'Kailan' : 'When'} value={c.when} empty={none} />
-              <Field label={isTl ? 'Saan' : 'Where'} value={c.where} empty={none} />
-            </div>
-            <Field label={isTl ? 'Inirereklamo (Respondent / Sangkot)' : 'Respondent / Reported Student'} value={c.who} empty={none} />
-            {onCreateCase && !c.linkedCaseCode && (
-              <button type="button" data-action="case-from-concern" onClick={onCreateCase} className={`${btn} px-3 py-2 saas-card-subtle text-[#1E469B] dark:text-[#7CB8F7]`} title={isTl ? 'Bubuksan ang Bagong Kaso na nakapuno na. Ikaw ang pipili ng estudyanteng isinumbong.' : 'Opens New Case already filled in. You pick the student who was reported.'}>
-                ＋ {isTl ? 'Gumawa ng Disciplinary Case para sa Respondent' : 'File Disciplinary Case Against Respondent'}
-              </button>
-            )}
-            <Field label={isTl ? 'Mga saksi' : 'Witnesses'} value={c.witnesses} empty={isTl ? 'Wala' : 'None'} />
-            <p className={`text-xs font-bold ${c.truthful ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-300'}`}>
-              {c.truthful
-                ? isTl ? '✓ Nangako ang estudyante na totoo ang sinabi niya.' : '✓ The student promised this is true.'
-                : isTl ? '⚠ Walang pangako na totoo ang sinabi.' : '⚠ No promise that this is true.'}
-            </p>
-            {c.status === 'Rejected' && (
-              <div className="rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 p-3">
-                <p className="text-[11px] font-extrabold uppercase text-rose-800 dark:text-rose-300">{isTl ? 'Dahilan (nakikita ng estudyante)' : 'Reason (the student sees this)'}</p>
-                <p className="text-sm text-rose-900 dark:text-rose-100">{c.rejectReason || '—'}</p>
-              </div>
-            )}
-            {c.status === 'Approved' && c.linkedCaseCode && (
-              <p className="text-xs text-[#0B1F4D] dark:text-white">
-                {isTl ? 'Naka-link sa kaso' : 'Linked to case'}:{' '}
-                {onOpenCase ? (
-                  <button type="button" onClick={() => onOpenCase(c.linkedCaseCode)} className="font-extrabold text-[#1E469B] dark:text-[#7CB8F7] underline">
-                    {c.linkedCaseCode}
-                  </button>
-                ) : (
-                  <b>{c.linkedCaseCode}</b>
-                )}
-              </p>
-            )}
+          <div className="px-4 py-2.5 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-center justify-between bg-slate-50/60 dark:bg-[#0B1527]/60">
+            <span className="text-[11px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7] flex items-center gap-1.5">
+              <span>📋</span>
+              <span>{isTl ? 'Mga Tala ng Insidente (Incident Record)' : 'Incident Breakdown & Record'}</span>
+            </span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-400/20">
+              {c.code}
+            </span>
+          </div>
+
+          <div className="flex-1 min-h-0 overflow-y-auto p-3.5 space-y-3 clean-scroll">
+            {(() => {
+              const parsed = parseIncidentData(c.whatHappened, c.who);
+              return (
+                <>
+                  {/* CARD 1: RESPONDENT CARD (Prominent Identification) */}
+                  <div className="rounded-xl border border-sky-200 dark:border-sky-900/60 bg-gradient-to-br from-sky-50/60 via-white to-blue-50/30 dark:from-[#0E1D3B] dark:to-[#0B1527] p-3 shadow-xs space-y-2">
+                    <div className="flex items-center justify-between border-b border-sky-100 dark:border-sky-800/40 pb-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-5 h-5 rounded-md bg-[#1E469B] text-white flex items-center justify-center text-[10px] font-black">
+                          🎯
+                        </span>
+                        <span className="text-[10.5px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
+                          {isTl ? 'Inirereklamong Estudyante (Respondent)' : 'Reported Student (Respondent)'}
+                        </span>
+                      </div>
+                      {onCreateCase && !c.linkedCaseCode && (
+                        <button
+                          type="button"
+                          data-action="case-from-concern"
+                          onClick={onCreateCase}
+                          className="px-2.5 py-1 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-[10.5px] font-extrabold shadow-xs transition-all flex items-center gap-1 cursor-pointer"
+                          title={isTl ? 'Gumawa ng opisyal na disciplinary case para kay ' + parsed.respondentName : 'File formal case'}
+                        >
+                          <span>＋</span>
+                          <span>{isTl ? 'Gumawa ng Kaso' : 'File Case'}</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div className="rounded-lg bg-white/80 dark:bg-[#0B1527]/80 p-2 border border-sky-100 dark:border-sky-900/40">
+                        <p className="text-[9.5px] font-extrabold uppercase text-[#4A608A] dark:text-[#94A8D0]">
+                          {isTl ? 'Pangalan ng Inirereklamo' : 'Student Name'}
+                        </p>
+                        <p className="text-[13px] font-black text-[#0B1F4D] dark:text-white mt-0.5 truncate" title={parsed.respondentName}>
+                          {parsed.respondentName}
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg bg-white/80 dark:bg-[#0B1527]/80 p-2 border border-sky-100 dark:border-sky-900/40">
+                        <p className="text-[9.5px] font-extrabold uppercase text-[#4A608A] dark:text-[#94A8D0]">
+                          {isTl ? 'Section / Palatandaan' : 'Section / Attributes'}
+                        </p>
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate" title={parsed.respondentDetails || none}>
+                          {parsed.respondentDetails || none}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CARD 2: NARRATIVE CARD (Salaysay ng Pangyayari) */}
+                  <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-3 shadow-xs space-y-2">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-1.5">
+                      <span className="text-[10.5px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                        <span>📝</span>
+                        <span>{isTl ? 'Buong Salaysay ng Pangyayari (Narrative)' : 'Official Narrative of What Happened'}</span>
+                      </span>
+                      {parsed.reporterType && (
+                        <span className="text-[9.5px] font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                          {parsed.reporterType}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[12.5px] leading-relaxed text-[#0B1F4D] dark:text-slate-100 font-medium whitespace-pre-wrap p-2.5 rounded-lg bg-slate-50/70 dark:bg-[#0B1527]/70 border border-slate-200/60 dark:border-white/5">
+                      {parsed.cleanNarrative}
+                    </p>
+                  </div>
+
+                  {/* CARD 3: TIME, LOCATION & WITNESSES MINI-CARDS */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-2.5 shadow-xs">
+                      <div className="flex items-center gap-1 text-[10px] font-extrabold uppercase text-[#4A608A] dark:text-[#94A8D0]">
+                        <span>⏰</span>
+                        <span>{isTl ? 'Kailan' : 'When'}</span>
+                      </div>
+                      <p className="text-xs font-bold text-[#0B1F4D] dark:text-white mt-1 leading-snug truncate" title={c.when || none}>
+                        {c.when || none}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-2.5 shadow-xs">
+                      <div className="flex items-center gap-1 text-[10px] font-extrabold uppercase text-[#4A608A] dark:text-[#94A8D0]">
+                        <span>📍</span>
+                        <span>{isTl ? 'Saan' : 'Where'}</span>
+                      </div>
+                      <p className="text-xs font-bold text-[#0B1F4D] dark:text-white mt-1 leading-snug truncate" title={c.where || none}>
+                        {c.where || none}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-2.5 shadow-xs">
+                      <div className="flex items-center gap-1 text-[10px] font-extrabold uppercase text-[#4A608A] dark:text-[#94A8D0]">
+                        <span>👥</span>
+                        <span>{isTl ? 'Mga Saksi' : 'Witnesses'}</span>
+                      </div>
+                      <p className="text-xs font-bold text-[#0B1F4D] dark:text-white mt-1 leading-snug truncate" title={c.witnesses || (isTl ? 'Wala' : 'None')}>
+                        {c.witnesses || (isTl ? 'Wala' : 'None')}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* TRUTHFULNESS & DATA PRIVACY BANNER */}
+                  <div className="flex items-center justify-between p-2.5 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20">
+                    <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                      <span>✓</span>
+                      <span>
+                        {c.truthful
+                          ? (isTl ? 'Nangako ang estudyante na totoo ang buong salaysay (RA 10173 Protected).' : 'Student certified this report truthful under RA 10173.')
+                          : (isTl ? 'Walang pormal na pangako.' : 'Uncertified submission.')}
+                      </span>
+                    </span>
+                    <span className="text-[9.5px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                      VERIFIED
+                    </span>
+                  </div>
+
+                  {/* REJECTION OR CASE LINK NOTICES */}
+                  {c.status === 'Rejected' && (
+                    <div className="rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 p-3">
+                      <p className="text-[10px] font-black uppercase text-rose-800 dark:text-rose-300">
+                        {isTl ? 'Dahilan ng Pag-reject (Nakikita ng Estudyante)' : 'Rejection Reason'}
+                      </p>
+                      <p className="text-xs font-semibold text-rose-900 dark:text-rose-100 mt-0.5">
+                        {c.rejectReason || '—'}
+                      </p>
+                    </div>
+                  )}
+
+                  {c.status === 'Approved' && c.linkedCaseCode && (
+                    <div className="p-2.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 flex items-center justify-between">
+                      <span className="text-xs text-[#0B1F4D] dark:text-white font-medium">
+                        {isTl ? 'Naka-link sa Opisyal na Kaso:' : 'Linked Case:'}
+                      </span>
+                      {onOpenCase ? (
+                        <button
+                          type="button"
+                          onClick={() => onOpenCase(c.linkedCaseCode)}
+                          className="px-2.5 py-1 rounded bg-[#1E469B] text-white text-xs font-black shadow-xs hover:bg-[#16377E]"
+                        >
+                          {c.linkedCaseCode} ↗
+                        </button>
+                      ) : (
+                        <span className="font-extrabold text-[#1E469B] dark:text-[#7CB8F7] text-xs">
+                          {c.linkedCaseCode}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
           {(c.status === 'Pending' || c.chatStatus === 'Open' || c.chatStatus === 'Closed') && (
             <div className={`${cardFoot} justify-end`}>

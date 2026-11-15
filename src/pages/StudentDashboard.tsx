@@ -401,6 +401,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
           category: reportType,
           concern_type: reportType,
           urgency: isUrgent ? 'Urgent' : 'Normal',
+          who_involved: knowsSuspect === 'yes' ? `${suspectName}${suspectDetails ? ` (${suspectDetails})` : ''}` : (knowsSuspect === 'unsure' ? `Hindi tiyak${suspectDetails ? ` (${suspectDetails})` : ''}` : `Hindi kilala${suspectDetails ? ` (${suspectDetails})` : ''}`),
           summary_en: whatHappened.slice(0, 160),
           summary_tl: whatHappened.slice(0, 160),
           what_happened: finalNarrative,
