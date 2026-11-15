@@ -18,6 +18,11 @@
   --cdm-font-sans: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --cdm-font-mono: "JetBrains Mono", "Fira Code", monospace;
 
+  /* Emil Kowalski Easing Curves & Timing */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
   --cdm-radius-xs: 4px;
   --cdm-radius-sm: 8px;
   --cdm-radius-md: 12px;
@@ -1438,3 +1443,84 @@ body.low-tier-device .cosmic-glass-card {
   color: #F8FAFC;
   border-bottom-color: #162441;
 }
+
+/* ============================================================================
+   EMIL KOWALSKI CRAFT & IMPECCABLE TASTE UTILITIES (GLOBAL WEB & MOBILE)
+   ============================================================================ */
+/* Buttons & interactive surfaces: physical active state & swift ease-out */
+.btn-press,
+button.btn-press,
+a.btn-press {
+  transition: transform 160ms var(--ease-out), filter 160ms var(--ease-out), background-color 160ms var(--ease-out), border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out) !important;
+  will-change: transform;
+}
+
+.btn-press:active,
+button.btn-press:active,
+a.btn-press:active {
+  transform: scale(0.97) !important;
+}
+
+/* Micro-interaction card: subtle hover lift and press */
+.card-interactive {
+  transition: transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out), border-color 180ms var(--ease-out);
+  will-change: transform;
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+}
+
+.card-interactive:active {
+  transform: scale(0.985);
+}
+
+/* Emil Kowalski Organic Modals & Popovers: Never scale(0), always scale(0.96) -> 1 with ease-out */
+.dialog-enter {
+  animation: emilDialogEnter 220ms var(--ease-out) forwards;
+}
+
+.popover-enter {
+  animation: emilPopoverEnter 180ms var(--ease-out) forwards;
+  transform-origin: var(--transform-origin, top center);
+}
+
+@keyframes emilDialogEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes emilPopoverEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Layered soft shadows (no harsh borders or generic heavy drop shadows) */
+.craft-shadow-subtle {
+  box-shadow: 0 1px 2px rgba(11, 31, 77, 0.04), 0 4px 12px -2px rgba(11, 31, 77, 0.06);
+}
+
+.dark .craft-shadow-subtle {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px -2px rgba(0, 0, 0, 0.45);
+}
+
+.craft-shadow-elevated {
+  box-shadow: 0 1px 3px rgba(11, 31, 77, 0.05), 0 12px 28px -6px rgba(11, 31, 77, 0.1);
+}
+
+.dark .craft-shadow-elevated {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 16px 36px -6px rgba(0, 0, 0, 0.65);
+}
+
