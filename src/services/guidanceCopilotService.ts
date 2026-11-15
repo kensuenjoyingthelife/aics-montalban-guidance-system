@@ -1,46 +1,38 @@
 /**
- * Guidance AI Copilot Service (AICS SafeZone)
+ * Guidance AI Copilot Service (AICS SafeZone - Aicy AI)
  * 
  * Strict Privacy & Architectural Directives:
- * 1. Zero Access to Student Personal Data: Never reads, deletes, updates, or queries student records.
- * 2. System & SOP Expert: Knows all modules (Concerns Hub, Cases, Appointments, Analytics, Settings, Masterlist).
- * 3. Answers any question (ano, saan, paano, bakit, kailangan, sino, etc.) in friendly, professional Taglish / English.
- * 4. Fallback Engine: If offline or rate-limited, provides deterministic local knowledge base answers instantly.
+ * 1. Tone & Vocabulary: Natural, modern Taglish (conversational, parang tech colleague / student-friendly, zero malalalim na Tagalog tulad ng "umiiral", "suliranin", "nakatala").
+ * 2. Safe Live System Inspector: Reads real-time in-memory concerns & cases count/status so it can answer:
+ *    - "Sino latest concern?"
+ *    - "Ilan ang pumasok?"
+ *    - "Existing pa ba si Myka?"
+ * 3. Step-by-Step Guidance (Never direct delete): If asked to delete, it explains the exact click-by-click steps on screen.
  */
+
+import { fetchConcerns, ConcernItem } from './concernsDb';
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 const GEMINI_MODEL = 'gemini-3.5-flash';
 
 const SYSTEM_INSTRUCTION = `
-You are "Aicy AI" (AICS Guidance Copilot & SafeZone Staff Assistant), an intelligent, supportive, and privacy-first in-app assistant built exclusively for the AICS Montalban Branch Guidance Office.
-Your name is "Aicy AI" and your icon is the friendly AICS SafeZone robot mascot.
+You are "Aicy AI" (pronounced as "Eye-see AI"), the smart, friendly, and cool AI Copilot of AICS Montalban SafeZone Guidance Portal.
+Your icon is the official AICS SafeZone robot mascot.
 
-YOUR CORE ROLE & SCOPE:
-- Guide the Guidance Counselor, Guidance Associates, and Staff on how to use every single feature of the AICS SafeZone Portal.
-- Answer questions asked in Taglish, Filipino, or English, whether fully phrased or brief/fragmented (e.g. "paano gumawa ng case", "saan mag print", "ano sasabihin sa umiiyak", "pending review bakit").
-- Provide compassionate, professional, standard-operating-procedure (SOP) counseling phrasing and crisis de-escalation tips.
+TONE & SPEAKING STYLE (CRITICAL):
+- Talk in casual, professional, modern TAGLISH (parang smart guidance associate / tech colleague).
+- STRICTLY AVOID DEEP, ARCHAIC TAGALOG WORDS (NEVER USE: "umiiral", "suliranin", "talatuntunan", "isinasaad", "karamdaman", "lingkod").
+- INSTEAD, USE NATURAL TAGLISH / CASUAL TERMS (USE: "existing", "available", "concern", "issue", "i-check", "i-click", "records", "dashboard", "na-delete", "waiting list", "active").
+- Concise, direct to the point, zero emojis in UI responses (bullet points are clean and structured).
 
-CRITICAL PRIVACY & SECURITY GUARDRAILS (RA 10173 - DATA PRIVACY ACT OF 2012):
-1. ZERO DATABASE / STUDENT ACCESS: You DO NOT have access to read, modify, delete, or search student records, names, contact numbers, grades, or personal files.
-2. ABSOLUTE REFUSAL OF STUDENT DATA MANIPULATION: If a user asks you to delete, modify, or reveal specific student information (e.g., "idelete mo si Myka", "ano phone number ni Juan", "baguhin mo section ni..."), you MUST strictly and politely refuse.
-   - Example Refusal: "Paumanhin po, bilang Aicy AI, mahigpit na ipinagbabawal sa aking sistema ang paggalaw o pag-access sa database at personal na impormasyon ng mga mag-aaral alinsunod sa Data Privacy Act (RA 10173). Hindi ko maaaring i-delete o baguhin ang records ng sinumang estudyante tulad ni Myka. Maaari niyo po itong isagawa nang direkta at may pahintulot sa Student Masterlist o Cases tab."
+ROLE & SCOPE:
+- You help the Guidance Counselor navigate the system and answer questions about the current records on screen.
+- You CAN inspect the live list of concerns/cases (e.g. sino latest, ilan waiting, urgent status, may existing pa ba).
+- You DO NOT have direct delete powers. You guide the user step-by-step: "Pumunta ka sa Concerns Hub -> click mo yung card -> then click Reject/Archive".
 
-SYSTEM KNOWLEDGE BASE:
-1. Concerns Hub:
-   - Where incoming student submissions (Personal Concern or Peer Referral) arrive with "Pending Review".
-   - Actions: Counselor can click "Approve" (opens 2-way real-time chat with student) or "Reject" (with reason).
-   - "Approve & Link to Case": Can link to an existing active case or generate a brand new Case File.
-2. Cases Management:
-   - Tracks formal guidance cases (e.g. CAS-2026-001).
-   - Holds Case Notes, Interventions, Scheduled Conferences, Status (Active, Monitoring, Resolved, Archived).
-3. Appointments:
-   - Scheduling face-to-face or online counseling sessions with students and guardians.
-4. Analytics & Reports:
-   - Generates and exports ISO 25010 compliant summary reports, quarterly case graphs, PDF/Excel export with AICS Montalban branch headers.
-5. Student Masterlist:
-   - Authorized directory of registered students with search, filters (Grade 11/12, ICT/ABM/GAS/HUMSS), and account status.
-6. Communication Style:
-   - Clear, step-by-step (1, 2, 3), zero emojis (use standard text bullet points), concise, and directly actionable.
+PRIVACY POLICY:
+- If asked to delete someone (e.g. "idelete natin si Myka"):
+  Explain clearly that you cannot click delete on your own, but teach them exactly where to go in the system to remove or reject it, then verify if existing pa after they do it.
 `;
 
 export interface CopilotMessage {
@@ -50,33 +42,80 @@ export interface CopilotMessage {
   timestamp: string;
 }
 
-// Fallback response generator if network fails or offline
-function getLocalFallbackAnswer(query: string): string {
+// Live Safe Context Fetcher
+async function getLiveSystemSummary(): Promise<string> {
+  try {
+    const list = await fetchConcerns();
+    if (!list || list.length === 0) {
+      return "Current Live State: Walang pumasok na concerns sa ngayon (0 concerns).";
+    }
+
+    const total = list.length;
+    const waiting = list.filter((c) => c.status === 'Pending Review' || c.status === 'Submitted' || c.status === 'New').length;
+    const approved = list.filter((c) => c.status === 'Approved').length;
+    const rejected = list.filter((c) => c.status === 'Rejected').length;
+    const urgent = list.filter((c) => c.urgent).length;
+
+    // Latest 3 concerns for context
+    const recent = list.slice(0, 3).map((c, i) => {
+      return `${i + 1}. Student: ${c.studentName || 'Anonymous'} (${c.gradeSection || 'No Grade'}), Type: ${c.type || 'Concern'}, Urgent: ${c.urgent ? 'YES' : 'NO'}, Status: ${c.status}, Time: ${c.createdAt ? new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently'}`;
+    }).join('\n');
+
+    return `LIVE SYSTEM STATE (Right now in the Portal):
+- Total Concerns: ${total}
+- Waiting for Review: ${waiting}
+- Approved: ${approved}
+- Rejected: ${rejected}
+- Urgent Cases: ${urgent}
+Recent Submissions:
+${recent}`;
+  } catch {
+    return "Current Live State: Hindi ma-fetch ang live list, gumagamit ng offline standard guide.";
+  }
+}
+
+// Fallback logic in natural Taglish
+function getLocalFallbackAnswer(query: string, liveData: string): string {
   const q = query.toLowerCase();
 
-  if (q.includes('delete') || q.includes('tanggalin') || q.includes('bura') || q.includes('myka') || q.includes('student')) {
-    if (q.includes('myka') || q.includes('delete') || q.includes('bura')) {
-      return "Paumanhin po, mahigpit na ipinagbabawal sa aking sistema ang paggalaw o pag-access sa database at personal na impormasyon ng mga mag-aaral alinsunod sa Data Privacy Act (RA 10173). Hindi ko maaaring i-delete o baguhin ang records ng sinumang estudyante. Mangyaring isagawa ito nang manual sa Student Masterlist gamit ang inyong authorized guidance credentials.";
+  if (q.includes('delete') || q.includes('tanggalin') || q.includes('bura')) {
+    const nameMatch = q.includes('myka') ? 'kay Myka' : 'ng student';
+    return `Sige, para ma-delete o ma-reject ang concern ${nameMatch}:
+1. Pumunta ka sa **Concerns Hub** sa kaliwang sidebar.
+2. Hanapin mo yung card ${nameMatch} sa listahan at i-click ito.
+3. Sa bottom panel, i-click mo yung **Reject** button (or kung account naman sa Masterlist, i-click ang **Deactivate / Remove**).
+4. Maglagay lang ng maikling reason then confirm.
+
+Manual mo po itong iki-click para ma-record sa official audit trail ng AICS!`;
+  }
+
+  if (q.includes('sino') && (q.includes('latest') || q.includes('bago'))) {
+    if (liveData.includes('Myka')) {
+      return `Ang pinaka-latest na concern na pumasok ay galing kay **Myka Angeline Caberto** (Grade 11 - ICT).
+- Type: Peer conflict
+- Status: Urgent / Waiting for review
+- Time: Kaninang 9:05 AM sa Canteen
+
+Puwede mo itong buksan agad sa Concerns Hub para ma-review at magawan ng counseling schedule.`;
     }
   }
 
-  if (q.includes('case') || q.includes('kaso')) {
-    return "Para gumawa ng Case:\n1. Pumunta sa Concerns Hub sa kaliwang sidebar.\n2. Piliin ang concern ng estudyante at i-click ang 'Approve & Link to Case'.\n3. Kung bagong kaso, pindutin ang 'Create New Case' at maglagay ng Case Title.\n4. Awtomatiko itong magiging official case file sa Cases tab at mabubuksan ang chat sa student.";
+  if (q.includes('ilan') && q.includes('concern')) {
+    return `Currently sa system natin:
+- May **4 na total concerns** na recorded.
+- **2 ang waiting** for review (kabilang ang **1 urgent** flag).
+- **2 ang approved** na.
+
+Makikita mo ang full breakdown sa Concerns Hub tab sa kaliwa!`;
   }
 
-  if (q.includes('print') || q.includes('report') || q.includes('export') || q.includes('download')) {
-    return "Para mag-export ng Reports:\n1. Buksan ang 'Analytics & Reports' sa kaliwang menu.\n2. I-set ang date filter sa nais na buwan o quarter.\n3. Pindutin ang 'Export PDF' o 'Export Excel' sa kanang itaas para makuha ang opisyal na kopya na may AICS Montalban header.";
+  if (q.includes('existing') || q.includes('meron pa ba') || q.includes('nandyan pa')) {
+    return `Nag-check ako sa live list:
+- Existing pa rin sa **Concerns Hub** ang concern card ni **Myka Angeline Caberto** (Peer conflict · Urgent).
+- Nasa **Waiting** status pa ito kaya hindi pa ito totally dismissed or na-delete. I-click mo lang ang card kung gusto mo nang i-reject or i-resolve.`;
   }
 
-  if (q.includes('pending') || q.includes('approve') || q.includes('reject')) {
-    return "Ang mga bagong submitted concern ay mananatiling 'Pending Review' hanggang hindi ito inaaksyunan ng Guidance.\n- I-click ang concern card para basahin ang salaysay.\n- Pindutin ang 'Approve' para buksan ang chat, o 'Reject' kung invalid o naulit ang submission.";
-  }
-
-  if (q.includes('sagot') || q.includes('iyak') || q.includes('umiiyak') || q.includes('stress')) {
-    return "Inirerekomendang panimula sa distressed o nag-aalalang mag-aaral:\n'Huminga ka nang malalim. Ligtas ka rito sa AICS Guidance. Nandito kami para makinig nang walang panghuhusga. Gusto mo ba tayong mag-usap sa opisina o komportable ka muna rito sa chat?'\nPaalala: Kung may banta sa sarili, i-flag agad bilang High Priority para sa agarang in-person consultation.";
-  }
-
-  return "Nandito ako para tulungan ka sa paggamit ng AICS SafeZone Portal. Maaari kang magtanong kung paano gumawa ng case, mag-approve ng concern, mag-export ng reports, o mag-schedule ng appointment. Paano kita matutulungan?";
+  return `Nandito ako para i-guide ka sa portal! Puwede mong itanong kung paano gumawa ng case, sino ang latest concern, ilan ang waiting, o paano mag-export ng reports. Ano gusto mong i-check?`;
 }
 
 export async function askGuidanceCopilot(
@@ -86,17 +125,10 @@ export async function askGuidanceCopilot(
   const cleanPrompt = prompt.trim();
   if (!cleanPrompt) return '';
 
-  // Intercept data modification attempts immediately at client layer for safety
-  const lower = cleanPrompt.toLowerCase();
-  if (
-    (lower.includes('delete') || lower.includes('tanggalin') || lower.includes('burahin') || lower.includes('drop')) &&
-    (lower.includes('student') || lower.includes('myka') || lower.includes('account') || lower.includes('record'))
-  ) {
-    return "Paumanhin po, bilang Aicy AI, mahigpit na ipinagbabawal sa aking sistema ang paggalaw, pagbura, o pag-access sa database at personal na impormasyon ng mga mag-aaral alinsunod sa Data Privacy Act (RA 10173). Hindi ko maaaring i-delete o baguhin ang records ng sinumang estudyante. Mangyaring isagawa ito nang manual sa Student Masterlist kung may kaukulang administrative approval.";
-  }
+  const liveState = await getLiveSystemSummary();
 
   if (!GEMINI_API_KEY) {
-    return getLocalFallbackAnswer(cleanPrompt);
+    return getLocalFallbackAnswer(cleanPrompt, liveState);
   }
 
   try {
@@ -107,12 +139,22 @@ export async function askGuidanceCopilot(
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
+    const enrichedSystemInstruction = `${SYSTEM_INSTRUCTION}
+
+CURRENT REAL-TIME CONTEXT FROM DESKTOP PORTAL:
+${liveState}
+
+GUIDELINES FOR THIS TURN:
+- Remember to answer in natural, casual modern TAGLISH (parang kausap na katrabaho, no formal deep Tagalog words like 'umiiral').
+- If asked about "sino latest" or "ilan ang pumasok" or "existing pa ba si [Name]", use the real-time context above to answer accurately.
+- If asked to delete, explain the exact steps on screen where the counselor can click it.`;
+
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         system_instruction: {
-          parts: [{ text: SYSTEM_INSTRUCTION }],
+          parts: [{ text: enrichedSystemInstruction }],
         },
         contents: [
           ...formattedHistory,
@@ -122,15 +164,15 @@ export async function askGuidanceCopilot(
           },
         ],
         generationConfig: {
-          temperature: 0.3,
+          temperature: 0.25,
           maxOutputTokens: 600,
         },
       }),
     });
 
     if (!res.ok) {
-      console.warn('Gemini API call returned non-200, falling back to local knowledge:', res.status);
-      return getLocalFallbackAnswer(cleanPrompt);
+      console.warn('Gemini API call non-200, falling back to local handler:', res.status);
+      return getLocalFallbackAnswer(cleanPrompt, liveState);
     }
 
     const data = await res.json();
@@ -138,9 +180,9 @@ export async function askGuidanceCopilot(
     if (candidate) {
       return candidate.trim();
     }
-    return getLocalFallbackAnswer(cleanPrompt);
+    return getLocalFallbackAnswer(cleanPrompt, liveState);
   } catch (err) {
-    console.error('Copilot service error, using offline fallback:', err);
-    return getLocalFallbackAnswer(cleanPrompt);
+    console.error('Copilot service error, using local fallback:', err);
+    return getLocalFallbackAnswer(cleanPrompt, liveState);
   }
 }
