@@ -132,12 +132,7 @@ export const GuidanceChatHead: React.FC = () => {
   }, []);
 
   const applyBallTransform = useCallback((x: number, y: number, withTransition = false) => {
-    if (!ballRef.current) return;
-    ballPosRef.current = { x, y };
-    ballRef.current.style.transition = withTransition
-      ? 'transform 0.28s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.2s ease'
-      : 'none';
-    ballRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    // If element is fixed with bottom/right, transform is not needed
   }, []);
 
   // Calculate boundary bounds for chat window
@@ -150,12 +145,7 @@ export const GuidanceChatHead: React.FC = () => {
   }, [customSize.w, customSize.h]);
 
   const applyWindowTransform = useCallback((x: number, y: number, withTransition = false) => {
-    if (!windowRef.current) return;
-    windowPosRef.current = { x, y };
-    windowRef.current.style.transition = withTransition
-      ? 'transform 0.24s cubic-bezier(0.23, 1, 0.32, 1)'
-      : 'none';
-    windowRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    // Window uses fixed bottom/right
   }, []);
 
   // Initialize size and position from localStorage or default
