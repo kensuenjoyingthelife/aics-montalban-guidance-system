@@ -1291,12 +1291,14 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   };
 
   /** the handbook sanction for the 1st / 2nd / 3rd time this student did this offense */
-  const suggestedSanctionFor = (c: DisciplineCaseRecord): string => {
-    const rule = HANDBOOK.find((r) => r.titleEn.trim().toLowerCase() === c.offenseTitleEn.trim().toLowerCase());
+  const suggestedSanctionFor = (c?: DisciplineCaseRecord | null): string => {
+    if (!c || !c.offenseTitleEn) return '';
+    const offenseTitleClean = (c.offenseTitleEn || '').trim().toLowerCase();
+    const rule = HANDBOOK.find((r) => (r.titleEn || '').trim().toLowerCase() === offenseTitleClean);
     if (!rule) return '';
-    const nth = cases.filter((x) => x.studentNumber === c.studentNumber && x.offenseTitleEn === c.offenseTitleEn && x.incidentDate <= c.incidentDate).length;
+    const nth = cases.filter((x) => x.studentNumber === c.studentNumber && (x.offenseTitleEn || '').trim().toLowerCase() === offenseTitleClean && x.incidentDate <= c.incidentDate).length;
     const pick = nth >= 3 ? [rule.sanction3rdEn, rule.sanction3rdTl] : nth === 2 ? [rule.sanction2ndEn, rule.sanction2ndTl] : [rule.sanction1stEn, rule.sanction1stTl];
-    return isTl ? pick[1] : pick[0];
+    return isTl ? pick[1] || pick[0] || '' : pick[0] || pick[1] || '';
   };
 
   /** Statement Station: the student's statement is the case's explanation step */
