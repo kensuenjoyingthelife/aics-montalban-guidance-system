@@ -773,70 +773,121 @@ const ConcernDetail: React.FC<{
       </div>
 
       <div className="flex-1 min-h-0 p-3 grid grid-cols-[1.25fr_1fr] gap-3 bg-[#F4F7FC] dark:bg-[#0B1527]">
-        {/* ---------- LEFT: who sent it ---------- */}
+        {/* ---------- LEFT: COMPLAINANT (REPORTING STUDENT) - CLEAN STRUCTURED PROFILE ---------- */}
         <section className={cardBox} data-concern-student>
-          <p className={cardHead}>👤 {isTl ? 'Complainant / Nagsumbong na Estudyante' : 'Complainant (Reporting Student)'}</p>
-          <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3" data-student-scroll>
-            <div className="flex gap-3">
-              {Photo({ src: account?.photoUrl ?? '', label: photoLabel, w: 'w-[88px]', h: 'h-[88px]', testId: 'photo', fit: 'cover' })}
-              <div className="min-w-0 space-y-1">
-                <div>
-                  <p className={lab}>{isTl ? 'Pangalan' : 'Name'}</p>
-                  <p className={`${val} font-extrabold`}>{c.studentName}</p>
+          <div className="px-4 py-2.5 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-center justify-between bg-slate-50/60 dark:bg-[#0B1527]/60">
+            <span className="text-[11px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7] flex items-center gap-1.5">
+              <span>👤</span>
+              <span>{isTl ? 'Complainant / Nagsumbong na Estudyante' : 'Complainant (Reporting Student)'}</span>
+            </span>
+            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+              {isTl ? 'Verified Portal Account' : 'Portal Verified'}
+            </span>
+          </div>
+
+          <div className="flex-1 min-h-0 overflow-y-auto p-3.5 space-y-3 clean-scroll" data-student-scroll>
+            {/* Primary Profile Identity Mini-Card */}
+            <div className="p-3.5 rounded-xl border border-sky-100 dark:border-sky-900/40 bg-gradient-to-br from-white via-sky-50/30 to-blue-50/20 dark:from-[#0E1D3B] dark:to-[#0B1527] shadow-xs space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1E469B] to-[#2557BE] text-white flex items-center justify-center text-lg font-black shrink-0 shadow-sm ring-2 ring-sky-300/40">
+                  {c.studentName ? c.studentName.charAt(0).toUpperCase() : 'S'}
                 </div>
-                <div>
-                  <p className={lab}>{isTl ? 'Student no. · Grade at section' : 'Student no. · Grade & section'}</p>
-                  <p className={val}>
-                    {c.studentNumber || (isTl ? 'Walang student no.' : 'No student no.')} · {c.gradeSection || '—'}
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
+                    {isTl ? 'Buong Pangalan ng Nagsumbong' : 'Reporting Student Full Name'}
+                  </p>
+                  <p className="text-sm font-black text-[#0B1F4D] dark:text-white leading-tight mt-0.5 truncate" title={c.studentName}>
+                    {c.studentName}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <span className="text-[11px] font-bold text-[#1E469B] dark:text-[#7CB8F7] bg-white dark:bg-[#0B1527] px-2 py-0.5 rounded-md border border-sky-200 dark:border-sky-900">
+                      LRN / ID: {c.studentNumber || '—'}
+                    </span>
+                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-[#0B1527] px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-800">
+                      {c.gradeSection || '—'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Masterlist Verification Mini-Card */}
+            <div className="p-3 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs space-y-1.5">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0] flex items-center gap-1">
+                <span>📋</span>
+                <span>{isTl ? 'Pagtutugma sa Registrar Masterlist' : 'Registrar Masterlist Status'}</span>
+              </p>
+              {match ? (
+                <div className="p-2.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-black shrink-0">✓</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-emerald-900 dark:text-emerald-200 truncate">
+                      {match.fullName}
+                    </p>
+                    <p className="text-[10.5px] text-emerald-700 dark:text-emerald-300 font-medium">
+                      {match.gradeSection} · Senior High School
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-2.5 rounded-lg bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 flex items-center gap-2">
+                  <span className="text-rose-600 font-bold">⚠️</span>
+                  <p className="text-xs font-bold text-rose-800 dark:text-rose-200 leading-tight">
+                    {isTl ? 'Wala sa masterlist. Kumpirmahin muna ang account ng mag-aaral.' : 'Not verified in the official masterlist.'}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Contact Details Mini-Card */}
+            <div className="p-3 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs space-y-2">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0] flex items-center gap-1">
+                <span>📞</span>
+                <span>{isTl ? 'Impormasyon sa Pakikipag-ugnayan' : 'Contact Information'}</span>
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <div className="p-2 rounded-lg bg-slate-50 dark:bg-[#0B1527] border border-slate-100 dark:border-white/5">
+                  <p className="text-[9.5px] font-bold text-[#4A608A] dark:text-[#94A8D0]">Email Address</p>
+                  <p className="font-bold text-[#0B1F4D] dark:text-white mt-0.5 truncate" title={account?.email || '—'}>
+                    {account?.email || '—'}
+                  </p>
+                </div>
+
+                <div className="p-2 rounded-lg bg-slate-50 dark:bg-[#0B1527] border border-slate-100 dark:border-white/5">
+                  <p className="text-[9.5px] font-bold text-[#4A608A] dark:text-[#94A8D0]">Mobile Number</p>
+                  <p className="font-bold text-[#0B1F4D] dark:text-white mt-0.5 truncate" title={account?.contactNumber || '—'}>
+                    {account?.contactNumber || '—'}
                   </p>
                 </div>
               </div>
-            </div>
-            <div className="flex gap-3">
-              {Photo({ src: account?.idPhotoUrl ?? '', label: idLabel, w: 'w-[88px]', h: 'h-[132px]', testId: 'id', fit: 'contain' })}
-              <div className="min-w-0 space-y-1">
-                <div>
-                  <p className={lab}>Masterlist</p>
-                  {match ? (
-                    <p className="text-[13px] leading-snug font-bold text-emerald-700 dark:text-emerald-400">✓ {match.fullName} · {match.gradeSection}</p>
-                  ) : (
-                    <p className="text-[13px] leading-snug font-bold text-rose-700 dark:text-rose-300">
-                      ⚠ {isTl ? 'Wala sa masterlist. Ikumpara muna ang litrato at ID.' : 'Not in the masterlist. Compare the photo and ID first.'}
-                    </p>
-                  )}
+
+              {c.submittedBy && !/^self-report/i.test(c.submittedBy.trim()) && (
+                <div className="p-2 rounded-lg bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                  <p className="text-[9.5px] font-extrabold text-amber-800 dark:text-amber-300 uppercase">
+                    {isTl ? 'Paraan ng Pagpasa (Report Scope)' : 'Submission Type'}
+                  </p>
+                  <p className="text-xs font-bold text-amber-900 dark:text-amber-100 mt-0.5">
+                    {c.submittedBy}
+                  </p>
                 </div>
-                {account?.email && (
-                  <div>
-                    <p className={lab}>Email</p>
-                    <p className={val}>{account.email}</p>
-                  </div>
-                )}
-                {account?.contactNumber && (
-                  <div>
-                    <p className={lab}>{isTl ? 'Mobile' : 'Mobile'}</p>
-                    <p className={val}>{account.contactNumber}</p>
-                  </div>
-                )}
-                {c.submittedBy && !/^self-report/i.test(c.submittedBy.trim()) && (
-                  <div>
-                    <p className={lab}>{isTl ? 'Pinagmulan' : 'Sent as'}</p>
-                    <p className={val}>{c.submittedBy}</p>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
+
             {account?.status === 'Deactivated' && (
-              <p className="text-xs font-bold text-rose-700 dark:text-rose-300">🚫 {isTl ? 'Naka-block na ang account na ito.' : 'This account is already blocked.'}</p>
+              <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-700">
+                🚫 {isTl ? 'Naka-block na ang account na ito.' : 'This account is blocked.'}
+              </div>
             )}
-            {!account && <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Walang portal account na naka-link (hal. ipinasok ng office).' : 'No portal account linked (e.g. entered by the office).'}</p>}
           </div>
+
           {account && account.status !== 'Deactivated' && (
             <div className={cardFoot}>
               <button
                 type="button"
                 data-action="deactivate"
                 onClick={onDeactivate}
-                className={`${btn} px-4 py-2.5 saas-card-subtle text-rose-700 dark:text-rose-300`}
+                className={`${btn} px-4 py-2.5 saas-card-subtle text-rose-700 dark:text-rose-300 w-full sm:w-auto`}
                 title={isTl ? 'Para sa account na hindi totoong estudyante' : 'For accounts that are not real students'}
               >
                 🚫 {isTl ? 'I-block ang fake account' : 'Block fake account'}
@@ -926,35 +977,42 @@ const ConcernDetail: React.FC<{
                     </p>
                   </div>
 
-                  {/* CARD 3: TIME, LOCATION & WITNESSES MINI-CARDS */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-2.5 shadow-xs">
-                      <div className="flex items-center gap-1 text-[10px] font-extrabold uppercase text-[#4A608A] dark:text-[#94A8D0]">
-                        <span>⏰</span>
-                        <span>{isTl ? 'Kailan' : 'When'}</span>
-                      </div>
-                      <p className="text-xs font-bold text-[#0B1F4D] dark:text-white mt-1 leading-snug truncate" title={c.when || none}>
+                  {/* PABABA / VERTICAL STACKED MINI-CARDS (NO TRUNCATION, FULL TEXT DISPLAY) */}
+                  {/* CARD 3: WHEN (KAILAN) */}
+                  <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-3 shadow-xs space-y-1">
+                    <div className="flex items-center gap-1.5 text-[10.5px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      <span>⏰</span>
+                      <span>{isTl ? 'Kailan Nangyari (When)' : 'When It Happened (Date & Time)'}</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-50/70 dark:bg-[#0B1527]/70 border border-slate-200/60 dark:border-white/5">
+                      <p className="text-xs font-bold text-[#0B1F4D] dark:text-white leading-relaxed whitespace-pre-wrap break-words">
                         {c.when || none}
                       </p>
                     </div>
+                  </div>
 
-                    <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-2.5 shadow-xs">
-                      <div className="flex items-center gap-1 text-[10px] font-extrabold uppercase text-[#4A608A] dark:text-[#94A8D0]">
-                        <span>📍</span>
-                        <span>{isTl ? 'Saan' : 'Where'}</span>
-                      </div>
-                      <p className="text-xs font-bold text-[#0B1F4D] dark:text-white mt-1 leading-snug truncate" title={c.where || none}>
+                  {/* CARD 4: WHERE (SAAN) */}
+                  <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-3 shadow-xs space-y-1">
+                    <div className="flex items-center gap-1.5 text-[10.5px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      <span>📍</span>
+                      <span>{isTl ? 'Saan Nangyari (Where)' : 'Location of Incident (Where)'}</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-50/70 dark:bg-[#0B1527]/70 border border-slate-200/60 dark:border-white/5">
+                      <p className="text-xs font-bold text-[#0B1F4D] dark:text-white leading-relaxed whitespace-pre-wrap break-words">
                         {c.where || none}
                       </p>
                     </div>
+                  </div>
 
-                    <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-2.5 shadow-xs">
-                      <div className="flex items-center gap-1 text-[10px] font-extrabold uppercase text-[#4A608A] dark:text-[#94A8D0]">
-                        <span>👥</span>
-                        <span>{isTl ? 'Mga Saksi' : 'Witnesses'}</span>
-                      </div>
-                      <p className="text-xs font-bold text-[#0B1F4D] dark:text-white mt-1 leading-snug truncate" title={c.witnesses || (isTl ? 'Wala' : 'None')}>
-                        {c.witnesses || (isTl ? 'Wala' : 'None')}
+                  {/* CARD 5: WITNESSES (MGA SAKSI) */}
+                  <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-3 shadow-xs space-y-1">
+                    <div className="flex items-center gap-1.5 text-[10.5px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      <span>👥</span>
+                      <span>{isTl ? 'Mga Saksi sa Pangyayari (Witnesses)' : 'Witnesses Present'}</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-50/70 dark:bg-[#0B1527]/70 border border-slate-200/60 dark:border-white/5">
+                      <p className="text-xs font-bold text-[#0B1F4D] dark:text-white leading-relaxed whitespace-pre-wrap break-words">
+                        {c.witnesses || (isTl ? 'Wala / Hindi sinagot' : 'None / Not answered')}
                       </p>
                     </div>
                   </div>
