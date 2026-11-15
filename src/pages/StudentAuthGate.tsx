@@ -896,9 +896,11 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               <div className="text-center space-y-3 pb-2 sm:pb-4">
 
 
-                {/* Mobile App: Friendly Animated Safezone Robot Companion (Visible only on Mobile) */}
-                <div className="block lg:hidden">
-                  <SafezoneMascot />
+                {/* Mobile App: Friendly Animated Safezone Robot Companion in White-Blue Gradient Card (Visible only on Mobile) */}
+                <div className="block lg:hidden my-2">
+                  <div className="p-3 sm:p-4 rounded-3xl bg-gradient-to-br from-white via-sky-50 to-blue-100/80 dark:from-slate-900/90 dark:via-sky-950/50 dark:to-blue-900/40 border-2 border-sky-300/80 dark:border-sky-500/40 shadow-lg shadow-sky-950/10 dark:shadow-none flex flex-col items-center justify-center">
+                    <SafezoneMascot />
+                  </div>
                 </div>
 
                 {/* Desktop Title: AICS SAFEZONE (Hidden on mobile per user request) */}
@@ -938,16 +940,18 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               {loginError && (
                 <div
                   role="alert"
-                  className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/80 border-2 border-rose-500 dark:border-rose-400 text-rose-900 dark:text-rose-100 text-xs sm:text-sm font-black flex items-start gap-3 shadow-lg anim-pop"
+                  className="p-3.5 sm:p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/80 border-1.5 border-rose-500/80 dark:border-rose-400 text-rose-950 dark:text-rose-100 text-xs sm:text-sm flex items-start gap-3 shadow-md anim-pop"
                 >
-                  <div className="w-6 h-6 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                  <div className="w-5.5 h-5.5 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
                     <AlertTriangle className="w-3.5 h-3.5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-black text-rose-700 dark:text-rose-300 uppercase tracking-wider text-[11px]">
-                      {isTl ? 'Maling Detalye o Hindi Nakapasok' : 'Authentication Error'}
+                    <p className="font-extrabold text-rose-700 dark:text-rose-300 uppercase tracking-wider text-[11px]">
+                      {isTl ? 'Paunawa sa Pag-Sign In' : 'Sign In Notice'}
                     </p>
-                    <p className="mt-0.5 leading-snug">{loginError}</p>
+                    <p className="mt-1 text-xs font-normal text-rose-900 dark:text-rose-200 leading-relaxed">
+                      {loginError}
+                    </p>
                   </div>
                 </div>
               )}
@@ -1121,8 +1125,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                           PWA
                         </span>
                       </div>
-                      <p className="text-[10px] text-sky-800/80 dark:text-sky-300/80 font-medium truncate">
-                        {isTl ? 'Home screen shortcut at offline support' : 'Offline access & push notifications'}
+                      <p className="text-[10px] text-sky-800/90 dark:text-sky-300 font-bold uppercase tracking-wider truncate">
+                        ANDROID &amp; IOS
                       </p>
                     </div>
                   </div>
@@ -1195,15 +1199,17 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               </div>
 
               {regError && (
-                <div className="p-4 sm:p-5 rounded-2xl bg-rose-50 dark:bg-rose-950/80 border-2 border-rose-600 dark:border-rose-400 text-rose-950 dark:text-rose-100 text-sm font-bold flex items-start gap-3.5 shadow-lg">
-                  <div className="w-6 h-6 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
-                    <AlertTriangle className="w-4 h-4" />
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/80 border-1.5 border-rose-500/80 dark:border-rose-400 text-rose-950 dark:text-rose-100 flex items-start gap-3 shadow-md">
+                  <div className="w-5.5 h-5.5 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                    <AlertTriangle className="w-3.5 h-3.5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-black uppercase tracking-wider text-rose-700 dark:text-rose-300">
-                      {isTl ? 'Abiso sa Pagpaparehistro' : 'Registration Notice'}
+                    <p className="text-[11px] font-extrabold uppercase tracking-wider text-rose-700 dark:text-rose-300">
+                      {isTl ? 'Paunawa sa Pagpaparehistro' : 'Registration Notice'}
                     </p>
-                    <p className="mt-0.5 leading-snug">{regError}</p>
+                    <p className="mt-1 text-xs font-normal text-rose-900 dark:text-rose-200 leading-relaxed">
+                      {regError}
+                    </p>
                   </div>
                 </div>
               )}
@@ -1612,15 +1618,17 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
                 {/* Bottom Inline Status Notification (High Contrast & Visible in Light/Dark Mode) */}
                 {regError && (
-                  <div className="p-4 sm:p-5 rounded-2xl bg-rose-50 dark:bg-rose-950/80 border-2 border-rose-600 dark:border-rose-400 text-rose-950 dark:text-rose-100 text-sm font-bold flex items-start gap-3.5 shadow-lg">
-                    <div className="w-6 h-6 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
-                      <AlertTriangle className="w-4 h-4" />
+                  <div className="p-3.5 sm:p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/80 border-1.5 border-rose-500/80 dark:border-rose-400 text-rose-950 dark:text-rose-100 flex items-start gap-3 shadow-md">
+                    <div className="w-5.5 h-5.5 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                      <AlertTriangle className="w-3.5 h-3.5" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-black uppercase tracking-wider text-rose-700 dark:text-rose-300">
-                        {isTl ? 'Kailangan Ayusin Bago Mag-Submit' : 'Action Required Before Submitting'}
+                      <p className="text-[11px] font-extrabold uppercase tracking-wider text-rose-700 dark:text-rose-300">
+                        {isTl ? 'Kailangan Ayusin Bago Magpatuloy' : 'Action Required Before Submitting'}
                       </p>
-                      <p className="mt-0.5 leading-snug">{regError}</p>
+                      <p className="mt-1 text-xs font-normal text-rose-900 dark:text-rose-200 leading-relaxed">
+                        {regError}
+                      </p>
                     </div>
                   </div>
                 )}

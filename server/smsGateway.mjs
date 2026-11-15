@@ -111,12 +111,13 @@ export function smsProvider() {
 }
 
 async function sendViaPhilSms(cfg, number, info) {
-  const res = await fetch('https://app.philsms.com/api/v3/sms/send', {
+  const host = cfg.philUrl || 'https://dashboard.philsms.com';
+  const res = await fetch(`${host}/api/v3/sms/send`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${cfg.philToken}`, Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify({
       recipient: '63' + number.slice(1), // 09171234567 → 639171234567
-      sender_id: cfg.philSender || 'PhilSMS',
+      sender_id: cfg.philSender || 'AICS-MNTLBN',
       type: info.unicode ? 'unicode' : 'plain',
       message: info.text,
     }),

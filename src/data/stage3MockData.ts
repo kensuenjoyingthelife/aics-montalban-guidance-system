@@ -526,12 +526,44 @@ export interface DisciplineCaseRecord {
   counselingNotes?: string;
   /** Whether parent attended the conference or was a no-show */
   parentConferenceStatus?: 'Attended' | 'No-Show' | 'Pending';
+  /** Parent summons & conference schedule timestamp */
+  conferenceScheduledAt?: string | null;
+  conferenceTargetDate?: string | null;
   /** when the case was logged (ISO) */
   createdAt?: string;
 }
 
-export const CASE_STEPS = ['Reported', 'Student Called', 'Explanation', 'Parent Notified', 'Decision', 'Follow-Up', 'Closed'] as const;
+export const CASE_STEPS = [
+  'Reported',
+  'Student Called',
+  'Explanation',
+  'Schedule Conference',
+  'Parent Conference Attendance',
+  'Parent Notified',
+  'Decision',
+  'Follow-Up',
+  'Closed',
+] as const;
 export type CaseStep = (typeof CASE_STEPS)[number];
+
+export const MINOR_CASE_STEPS: CaseStep[] = [
+  'Reported',
+  'Student Called',
+  'Explanation',
+  'Decision',
+  'Closed',
+];
+
+export const MAJOR_CASE_STEPS: CaseStep[] = [
+  'Reported',
+  'Student Called',
+  'Explanation',
+  'Schedule Conference',
+  'Parent Conference Attendance',
+  'Decision',
+  'Follow-Up',
+  'Closed',
+];
 
 export const INITIAL_DISCIPLINE_CASES: DisciplineCaseRecord[] = [
   {

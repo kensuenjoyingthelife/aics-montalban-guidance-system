@@ -612,6 +612,10 @@ export async function fetchStage3Data(): Promise<DbStage3Snapshot | null> {
       sanctionStatus: (r.sanction_status as DisciplineCaseRecord['sanctionStatus']) || '',
       decidedAt: r.decided_at ? String(r.decided_at) : null,
       closedAt: r.closed_at ? String(r.closed_at) : null,
+      parentConferenceStatus: (r.parent_conference_status as DisciplineCaseRecord['parentConferenceStatus']) || undefined,
+      conferenceScheduledAt: r.conference_scheduled_at ? String(r.conference_scheduled_at) : null,
+      conferenceTargetDate: r.conference_target_date ? String(r.conference_target_date) : null,
+      counselingNotes: r.counseling_notes ? String(r.counseling_notes) : undefined,
       // column if it exists, otherwise the marker saved in the notes (see insertDisciplineCaseInDb)
       incidentCode: r.incident_code
         ? String(r.incident_code)
@@ -937,3 +941,17 @@ export async function updateCaseFlowInDb(caseCode: string, patch: Record<string,
     return reportWrite(null, 'updateCaseFlowInDb');
   }
 }
+
+/** Permanently delete an errantly filed case with an audit log reason */
+export async function deleteDisciplineCaseInDb(caseCode: string): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/discipline_cases?case_code=eq.${encodeURIComponent(caseCode)}`,
+      { method: 'DELETE', headers: getHeaders() }
+    );
+    return reportWrite(res, 'deleteDisciplineCaseInDb');
+  } catch {
+    return reportWrite(null, 'deleteDisciplineCaseInDb');
+  }
+}
+

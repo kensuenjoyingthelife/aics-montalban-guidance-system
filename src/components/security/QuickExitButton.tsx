@@ -329,10 +329,8 @@ export const QuickExitButton: React.FC<QuickExitButtonProps> = ({ onTrigger, cla
               </svg>
             </div>
 
-            {/* Red "SOS" Badge at bottom of mascot head */}
-            <span className="absolute bottom-0.5 px-1 py-[0.5px] rounded-full bg-rose-600 text-[6.5px] font-black text-white tracking-widest uppercase leading-none shadow-md border border-rose-400/40">
-              SOS
-            </span>
+            {/* Subtle Clean Indicator at bottom of mascot head (No SOS text) */}
+            <span className="absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-rose-500 shadow-xs border border-rose-300/60" />
           </div>
         </div>
       </div>

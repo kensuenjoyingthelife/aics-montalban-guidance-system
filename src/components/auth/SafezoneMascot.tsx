@@ -320,12 +320,19 @@ const SafezoneMascotComponent: React.FC = () => {
             />
 
             {/* Main Floating Capsule Body */}
-            <div className="w-[52px] h-[64px] rounded-b-[32px] rounded-t-[14px] mascot-shell-body flex flex-col items-center justify-start pt-2.5 relative">
-              {/* Center Gentle Glow Dot */}
-              <div className="w-2.5 h-2.5 rounded-full bg-sky-400/60 shadow-[0_0_10px_rgba(56,189,248,0.8)]" />
+            <div className="w-[52px] h-[64px] rounded-b-[32px] rounded-t-[14px] mascot-shell-body flex flex-col items-center justify-start pt-2 relative">
+              {/* Center Glowing Circular Crest with Official AICS Logo */}
+              <div className="relative w-5.5 h-5.5 rounded-full p-0.5 bg-white/95 border border-sky-400/90 shadow-[0_0_12px_rgba(56,189,248,0.85)] flex items-center justify-center overflow-hidden">
+                <span className="absolute inset-0 rounded-full bg-sky-400/20 animate-pulse pointer-events-none" />
+                <img
+                  src="/aics-logo.jpg"
+                  alt="AICS Seal"
+                  className="w-full h-full object-cover rounded-full relative z-10"
+                />
+              </div>
               
               {/* Body inner accent arc */}
-              <div className="w-7 h-5 mt-2 rounded-full border-b-2 border-slate-300/60" />
+              <div className="w-7 h-4 mt-1.5 rounded-full border-b-2 border-slate-300/60" />
             </div>
 
             {/* Right Arm: Waving during greeting / safe, streamlined while running */}

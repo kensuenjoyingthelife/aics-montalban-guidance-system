@@ -6,6 +6,8 @@ import { soundFX } from '../services/soundEngine';
 import { AuditEntry, fetchAuditPage, TABLE_WORDS, changedFields, fieldWord, showValue, whoOf, keyWord } from '../services/auditDb';
 import { todayISO, addDays } from '../services/scheduling';
 import { Legend } from '../components/ui/Charts';
+import { printAuditTrailPdf } from '../services/documentPrintEngine';
+import { Printer, Download, Filter, RefreshCw, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 
 const PAGE_SIZE = 50;
 const btn = 'px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap';
@@ -27,6 +29,7 @@ const AuditTrail: React.FC = () => {
   const [search, setSearch] = useState('');
   const [term, setTerm] = useState(''); // debounced search
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(25);
   const [rows, setRows] = useState<AuditEntry[] | null>(null);
   const [total, setTotal] = useState(0);
   const [error, setError] = useState(false);
@@ -38,14 +41,14 @@ const AuditTrail: React.FC = () => {
     const t = window.setTimeout(() => setTerm(search), 350);
     return () => window.clearTimeout(t);
   }, [search]);
-  useEffect(() => setPage(0), [table, from, to, term]);
+  useEffect(() => setPage(0), [table, from, to, term, pageSize]);
 
   const badDates = !!from && !!to && from > to;
   useEffect(() => {
     if (badDates) return;
     const id = ++reqId.current;
     setRows(null);
-    void fetchAuditPage({ table, from, to, search: term, page, pageSize: PAGE_SIZE }).then((r) => {
+    void fetchAuditPage({ table, from, to, search: term, page, pageSize }).then((r) => {
       if (id !== reqId.current) return; // an older request finished late
       if (!r) {
         setError(true);
@@ -56,16 +59,60 @@ const AuditTrail: React.FC = () => {
       setRows(r.rows);
       setTotal(r.total);
     });
-  }, [table, from, to, term, page, badDates, retry]);
+  }, [table, from, to, term, page, pageSize, badDates, retry]);
 
   const timeFmt = useMemo(
     () => new Intl.DateTimeFormat(isTl ? 'fil-PH' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }),
     [isTl]
   );
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const first = total === 0 ? 0 : page * PAGE_SIZE + 1;
-  const last = Math.min(total, (page + 1) * PAGE_SIZE);
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  const first = total === 0 ? 0 : page * pageSize + 1;
+  const last = Math.min(total, (page + 1) * pageSize);
   const filtered = !!table || !!term || from !== addDays(todayISO(), -30) || to !== todayISO();
+
+  const handleDownloadPdf = () => {
+    if (!rows || rows.length === 0) return;
+    soundFX.playStepUnlock();
+    const formattedRows = rows.map((e) => {
+      const a = ACTION[e.action] ?? ACTION.update;
+      const fields = changedFields(e);
+      const who = whoOf(e);
+      const [en, tl] = TABLE_WORDS[e.table] ?? [e.table, e.table];
+      const desc = `${isTl ? tl : en}${who ? ' · ' + who : ''}`;
+      const detailStr = fields
+        .map((f) => {
+          const fName = fieldWord(f.key, isTl);
+          if (e.action === 'update') {
+            return `${fName}: ${showValue(f.before, isTl)} → ${showValue(f.after, isTl)}`;
+          }
+          return `${fName}: ${showValue(e.action === 'insert' ? f.after : f.before, isTl)}`;
+        })
+        .join('; ');
+
+      return {
+        date: e.at ? timeFmt.format(new Date(e.at)) : '—',
+        actor: e.actor || 'System',
+        action: isTl ? a.tl : a.en,
+        table: isTl ? tl : en,
+        description: desc,
+        detail: detailStr || (isTl ? 'Walang partikular na field' : 'No specific field changed'),
+      };
+    });
+
+    const filterText = [
+      table ? `Module: ${table}` : 'Module: All',
+      term ? `Search: "${term}"` : '',
+    ]
+      .filter(Boolean)
+      .join(' · ');
+
+    printAuditTrailPdf({
+      rows: formattedRows,
+      filterSummary: filterText || 'All Modules',
+      dateRange: `${from} to ${to}`,
+      staffName: 'Guidance Staff',
+    });
+  };
 
   return (
     <main className="p-5 lg:p-6 max-w-[1440px] w-full mx-auto space-y-5 flex-1">
@@ -86,6 +133,15 @@ const AuditTrail: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={!rows || rows.length === 0}
+            onClick={handleDownloadPdf}
+            className={`${btn} bg-[#1E469B] hover:bg-[#16377E] text-white active:scale-[0.97] transition-all inline-flex items-center gap-1.5 shadow-sm disabled:opacity-50`}
+          >
+            <Download className="w-3.5 h-3.5" />
+            {isTl ? 'I-download ang PDF (Audit Log)' : 'Export Audit Trail (PDF)'}
+          </button>
           <span className="cdm-badge-ready">
             ✓ IMMUTABLE LOGS
           </span>
@@ -171,16 +227,44 @@ const AuditTrail: React.FC = () => {
               { color: '#F43F5E', label: isTl ? 'Inalis' : 'Removed', shape: 'box' },
             ]}
           />
-          <div className="flex gap-1.5">
-            <button type="button" data-audit-page="newer" disabled={page === 0 || rows === null} onClick={() => setPage((p) => Math.max(0, p - 1))} className={`${btn} saas-card-subtle disabled:opacity-40`}>
-              ← {isTl ? 'Mas bago' : 'Newer'}
-            </button>
-            <span className={`${sub} self-center px-1`}>
-              {page + 1}/{pages}
-            </span>
-            <button type="button" data-audit-page="older" disabled={page + 1 >= pages || rows === null} onClick={() => setPage((p) => p + 1)} className={`${btn} saas-card-subtle disabled:opacity-40`}>
-              {isTl ? 'Mas luma' : 'Older'} →
-            </button>
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-[#4A608A] dark:text-[#94A8D0]">
+              <span>{isTl ? 'Bawat pahina:' : 'Rows:'}</span>
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                className="px-2 py-1 rounded-lg border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-bold"
+              >
+                {[15, 25, 50, 100].map((sz) => (
+                  <option key={sz} value={sz}>{sz}</option>
+                ))}
+              </select>
+            </label>
+            <div className="flex gap-1.5">
+              <button
+                type="button"
+                data-audit-page="newer"
+                disabled={page === 0 || rows === null}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                className={`${btn} saas-card-subtle disabled:opacity-40 inline-flex items-center gap-1`}
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                {isTl ? 'Mas bago' : 'Newer'}
+              </button>
+              <span className={`${sub} self-center px-1 font-mono font-bold`}>
+                {page + 1} / {pages}
+              </span>
+              <button
+                type="button"
+                data-audit-page="older"
+                disabled={page + 1 >= pages || rows === null}
+                onClick={() => setPage((p) => p + 1)}
+                className={`${btn} saas-card-subtle disabled:opacity-40 inline-flex items-center gap-1`}
+              >
+                {isTl ? 'Mas luma' : 'Older'}
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         </div>
         <div className="p-3 sm:p-4 space-y-2 bg-[#F4F7FC] dark:bg-[#0B1527] min-h-[240px]">

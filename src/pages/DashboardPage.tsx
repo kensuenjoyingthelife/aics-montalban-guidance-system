@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { Phone, PhoneCall, Calendar, PhoneOff, AlertTriangle, CheckCircle2, User, BookOpen, X, Info, Send, Mail, MessageSquare, RotateCcw, MapPin, Clock, ShieldCheck, FileText, Bell } from 'lucide-react';
 import { PhoneInput, checkPhMobile } from '../components/ui/PhoneInput';
 import { useConfirmChange } from '../components/ui/ConfirmChange';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -1251,21 +1252,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </div>
             )}
 
-            {/* CDM User Profile Pill */}
-            <div className="flex items-center gap-2.5 pl-2 py-1 pr-3 rounded-full bg-[#F1F5F9] dark:bg-[#0F1A30] border border-[#E2E8F0] dark:border-[#1E2E4E]">
-              <div className="w-7 h-7 rounded-full bg-[#1E469B] text-white flex items-center justify-center font-bold text-[11px] tracking-wider shrink-0 shadow-xs">
-                GA
-              </div>
-              <div className="hidden sm:flex flex-col text-left leading-tight">
-                <span className="text-[12px] font-bold text-[#0F172A] dark:text-white truncate max-w-[140px]">
-                  AICS Guidance Staff
-                </span>
-                <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8] truncate">
-                  Guidance Associate
-                </span>
-              </div>
-            </div>
-
             {/* Sign Out link */}
             <button
               type="button"
@@ -1726,99 +1712,102 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 2. 4 COLOR-GRADIENT SaaS KPI SUMMARY CARDS (LOCKED HEIGHT: h-[106px])
                 ================================================================ */}
             <section className="shrink-0 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-              {/* KPI 1: Royal Cobalt Blue Gradient */}
+              {/* KPI 1: Active Cases */}
               <button
                 type="button"
                 onClick={() => openCasesTab('case-board')}
                 title={isTl ? 'Buksan ang listahan ng bukas na kaso' : 'Open the list of open cases'}
-                className="group h-[84px] px-4 py-3 rounded-2xl text-left transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2557BE] bg-gradient-to-br from-[#1E469B] via-[#2557BE] to-[#153478] text-white shadow-md border border-white/15 flex flex-col justify-between">
+                className="group h-[84px] px-4 py-3 rounded-2xl text-left transition-all duration-150 active:scale-[0.98] border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs flex flex-col justify-between hover:border-[#1E469B]/60"
+              >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold tracking-wide text-white/90">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
                     {isTl ? 'Mga Aktibong Kaso' : 'Open Guidance Cases'}
                   </span>
-                  <span className="w-7 h-7 rounded-lg bg-white/20 ring-1 ring-white/25 text-white flex items-center justify-center">
-                    <DuotoneIcon name="folderOpen" size={18} />
+                  <span className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-[#1E3158] text-[#1E469B] dark:text-[#7CB8F7] flex items-center justify-center">
+                    <DuotoneIcon name="folderOpen" size={16} />
                   </span>
                 </div>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[26px] leading-none font-extrabold text-white font-mono">
+                  <span className="text-2xl font-black text-[#0B1F4D] dark:text-white font-mono">
                     {cases.filter((c) => c.status !== 'Resolved').length}
                   </span>
-                  <span className="px-2 py-0.5 rounded-[6px] bg-white/15 text-[11px] font-bold text-white">
-                    {cases.length} total cases
+                  <span className="text-[11px] font-bold text-[#64748B] dark:text-[#94A8D0]">
+                    {cases.length} {isTl ? 'kabuuang kaso' : 'total'}
                   </span>
                 </div>
               </button>
 
-              {/* KPI 2: Deep Indigo / Violet Gradient */}
+              {/* KPI 2: Offenses This Month */}
               <button
                 type="button"
                 onClick={() => (() => { soundFX.playToggleSwitch(true); setActiveTab('analytics'); })()}
                 title={isTl ? 'Tingnan ang statistics' : 'See the statistics'}
-                className="group h-[84px] px-4 py-3 rounded-2xl text-left transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2557BE] bg-gradient-to-br from-[#4338CA] via-[#4F46E5] to-[#312E81] text-white shadow-md border border-white/15 flex flex-col justify-between">
+                className="group h-[84px] px-4 py-3 rounded-2xl text-left transition-all duration-150 active:scale-[0.98] border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs flex flex-col justify-between hover:border-[#1E469B]/60"
+              >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold tracking-wide text-white/90">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
                     {isTl ? 'Kaso Ngayong Buwan' : 'Offenses This Month'}
                   </span>
-                  <span className="w-7 h-7 rounded-lg bg-white/20 ring-1 ring-white/25 text-white flex items-center justify-center">
-                    <DuotoneIcon name="chartBar" size={18} />
+                  <span className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-[#1E3158] text-[#1E469B] dark:text-[#7CB8F7] flex items-center justify-center">
+                    <DuotoneIcon name="chartBar" size={16} />
                   </span>
                 </div>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[26px] leading-none font-extrabold text-white font-mono">
+                  <span className="text-2xl font-black text-[#0B1F4D] dark:text-white font-mono">
                     {offensesThisMonth}
                   </span>
-                  <span className="px-2 py-0.5 rounded-[6px] bg-white/20 text-[11px] font-bold text-white">
-                    {isTl ? 'Naitala ngayong buwan' : 'Logged this month'}
+                  <span className="text-[11px] font-bold text-[#64748B] dark:text-[#94A8D0]">
+                    {isTl ? 'ngayong buwan' : 'this month'}
                   </span>
                 </div>
               </button>
 
-              {/* KPI 3: Vibrant Emerald Teal Gradient */}
+              {/* KPI 3: Parent Attendance Rate */}
               <button
                 type="button"
                 onClick={() => goToQueue('dash-conferences')}
                 title={isTl ? 'Tingnan ang mga conference ngayong araw' : 'See today’s conferences'}
-                className="group h-[84px] px-4 py-3 rounded-2xl text-left transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2557BE] bg-gradient-to-br from-[#059669] via-[#10B981] to-[#065F46] text-white shadow-md border border-white/15 flex flex-col justify-between">
+                className="group h-[84px] px-4 py-3 rounded-2xl text-left transition-all duration-150 active:scale-[0.98] border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs flex flex-col justify-between hover:border-[#1E469B]/60"
+              >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold tracking-wide text-white/95">
-                    {isTl ? 'Pagdalo ng Magulang' : 'Parent Attendance Rate'}
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
+                    {isTl ? 'Pagdalo ng Magulang' : 'Parent Attendance'}
                   </span>
-                  <span className="w-7 h-7 rounded-lg bg-white/20 ring-1 ring-white/25 text-white flex items-center justify-center">
-                    <DuotoneIcon name="calendarCheck" size={18} />
+                  <span className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-[#1E3158] text-[#1E469B] dark:text-[#7CB8F7] flex items-center justify-center">
+                    <DuotoneIcon name="calendarCheck" size={16} />
                   </span>
                 </div>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[26px] leading-none font-extrabold text-white font-mono">
+                  <span className="text-2xl font-black text-[#0B1F4D] dark:text-white font-mono">
                     {attendanceStats.ratePercent === null ? '—' : `${attendanceStats.ratePercent}%`}
                   </span>
-                  <span className="px-2 py-0.5 rounded-[6px] bg-white/20 text-[11px] font-extrabold text-white">
-                    {attendanceStats.attended} of {attendanceStats.total}{' '}
-                    {isTl ? 'dumalo ngayon' : 'attended today'}
+                  <span className="text-[11px] font-bold text-[#64748B] dark:text-[#94A8D0]">
+                    {attendanceStats.attended}/{attendanceStats.total} {isTl ? 'dumalo' : 'attended'}
                   </span>
                 </div>
               </button>
 
-              {/* KPI 4: Warm Amber / Gold Gradient */}
+              {/* KPI 4: Follow-Ups Due Today */}
               <button
                 type="button"
                 onClick={() => goToQueue('dash-followups')}
                 title={isTl ? 'Tingnan ang mga follow-up' : 'See the follow-ups'}
-                className="group h-[84px] px-4 py-3 rounded-2xl text-left transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2557BE] bg-gradient-to-br from-[#D97706] via-[#EA580C] to-[#9A3412] text-white shadow-md border border-white/15 flex flex-col justify-between">
+                className="group h-[84px] px-4 py-3 rounded-2xl text-left transition-all duration-150 active:scale-[0.98] border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs flex flex-col justify-between hover:border-[#1E469B]/60"
+              >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold tracking-wide text-white/95">
-                    {isTl ? 'Follow-Up Ngayong Araw' : 'Follow-Ups Due Today'}
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
+                    {isTl ? 'Follow-Up Ngayong Araw' : 'Follow-Ups Due'}
                   </span>
-                  <span className="w-7 h-7 rounded-lg bg-white/20 ring-1 ring-white/25 text-white flex items-center justify-center">
-                    <DuotoneIcon name="phoneCall" size={18} />
+                  <span className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-[#1E3158] text-[#1E469B] dark:text-[#7CB8F7] flex items-center justify-center">
+                    <DuotoneIcon name="phoneCall" size={16} />
                   </span>
                 </div>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[26px] leading-none font-extrabold text-white font-mono">
+                  <span className="text-2xl font-black text-[#0B1F4D] dark:text-white font-mono">
                     {activeFollowUpCount}
                   </span>
-                  <span className="px-2 py-0.5 rounded-[6px] bg-white/20 text-[11px] font-bold text-white">
-                    {isTl ? 'Tawag at SMS reminder' : 'Calls & SMS reminders'}
+                  <span className="text-[11px] font-bold text-[#64748B] dark:text-[#94A8D0]">
+                    {isTl ? 'kailangang tawagan' : 'pending outreach'}
                   </span>
                 </div>
               </button>
@@ -1883,18 +1872,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
                 {/* LEFT 7 COLS: Today's Parent Appointments */}
                 <div id="dash-conferences" className="xl:col-span-7 rounded-2xl saas-card overflow-hidden scroll-mt-4">
-                  <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-3">
+                  <div className="px-6 py-3.5 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
                         {isTl
                           ? 'Iskedyul ng Parent Conference Ngayong Araw'
                           : "Today's Scheduled Parent Conferences"}
                       </h2>
-                      <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
-                        {isTl
-                          ? 'Pindutin ang Dumalo o Hindi dumalo pagdating ng oras.'
-                          : 'Press Attended or Did not attend when the time comes.'}
-                      </p>
                     </div>
 
                     <div className="inline-flex p-1 rounded-lg saas-card-subtle gap-1">
@@ -2180,16 +2164,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
                 {/* RIGHT 5 COLS: Follow-Up Tasks Due */}
                 <div id="dash-followups" className="xl:col-span-5 rounded-2xl saas-card overflow-hidden scroll-mt-4">
-                  <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-2">
+                  <div className="px-6 py-3.5 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
                         {isTl ? 'Follow-Up Tasks Due' : 'Follow-Up Tasks Due'}
                       </h2>
-                      <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
-                        {isTl
-                          ? 'Missed conferences at bigong SMS na kailangan tawagan'
-                          : 'Missed conferences & failed SMS requiring outreach'}
-                      </p>
                     </div>
 
                     <select
@@ -2238,60 +2217,56 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                       return (
                       <div
                         key={task.id}
-                        className={`px-6 py-4 space-y-2.5 border-l-4 transition-colors ${rowTone}`}
+                        className={`px-5 py-3 space-y-1.5 border-l-4 transition-colors ${rowTone}`}
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-1.5">
                               <span className={`w-2 h-2 rounded-full ${dotTone}`} />
-                              <span className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                              <span className="text-xs font-black text-[#0B1F4D] dark:text-white truncate">
                                 {task.studentName}
                               </span>
-                              <span className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                              <span className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
                                 ({task.gradeSection})
                               </span>
                               {task.resolved ? (
-                                <span className="px-2 py-0.5 rounded-[6px] bg-emerald-600 text-white text-[10px] font-extrabold">
-                                  {isTl ? '✓ Tapos na' : '✓ Done'}
+                                <span className="px-1.5 py-0.2 rounded bg-emerald-600 text-white text-[9.5px] font-bold">
+                                  {isTl ? 'Tapos na' : 'Done'}
                                 </span>
                               ) : escalate ? (
-                                <span className="px-2 py-0.5 rounded-[6px] bg-rose-600 text-white text-[10px] font-extrabold">
-                                  {isTl ? 'I-escalate na' : 'Escalate'}
+                                <span className="px-1.5 py-0.2 rounded bg-rose-600 text-white text-[9.5px] font-bold">
+                                  {isTl ? 'I-escalate' : 'Escalate'}
                                 </span>
                               ) : null}
                             </div>
-                            <p className="text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7] mt-0.5">
+                            <p className="text-[11.5px] font-bold text-[#1E469B] dark:text-[#7CB8F7] mt-0.5 truncate">
                               {plainAttendanceWords(isTl ? task.reasonTl : task.reasonEn)}
-                            </p>
-                            <p className="text-xs text-[#4A608A] dark:text-[#94A8D0] mt-0.5">
-                              {isTl ? task.diagnosticNoteTl : task.diagnosticNoteEn}
-                              {task.createdAt ? <span data-added> · {addedLabel(task.createdAt, isTl)}</span> : null}
                             </p>
                           </div>
 
                           <span
                             title={isTl ? 'Ilang beses nang na-contact' : 'Contact attempts'}
-                            className={`px-2 py-0.5 rounded-md text-[11px] font-mono font-bold ${attemptsTone}`}
+                            className={`px-2 py-0.5 rounded-md text-[10.5px] font-mono font-bold shrink-0 ${attemptsTone}`}
                           >
                             {task.attemptsCount}x
                           </span>
                         </div>
 
-                        <div className="flex items-center justify-between pt-1">
-                          <span className="text-xs font-medium text-[#4A608A] dark:text-[#94A8D0]">
-                            {task.parentName} · {task.parentPhone}
+                        <div className="flex items-center justify-between pt-0.5 gap-2">
+                          <span className="text-[11px] font-semibold text-[#4A608A] dark:text-[#94A8D0] truncate">
+                            {task.parentName} · <a href={`tel:${task.parentPhone.replace(/\D/g, '')}`} className="font-mono text-[#0B1F4D] dark:text-white hover:underline">{task.parentPhone}</a>
                           </span>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 shrink-0">
                             <button
                               type="button"
                               onClick={() => {
                                 soundFX.playKeyClick(1);
                                 setCallLogTarget(task);
                               }}
-                              className="px-3 py-1 rounded-lg saas-card-subtle hover:border-[#1E469B] text-xs font-bold whitespace-nowrap"
+                              className="px-2.5 py-1 rounded-lg saas-card-subtle hover:border-[#1E469B] text-[11px] font-bold whitespace-nowrap active:scale-[0.97]"
                             >
-                              {isTl ? 'I-log ang Tawag' : 'Log Call'}
+                              {isTl ? 'Log Call' : 'Log Call'}
                             </button>
                             <button
                               type="button"
@@ -2303,13 +2278,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                   parentPhone: task.parentPhone,
                                   parentEmail: task.parentEmail,
                                   scheduleText: '',
+                                  caseCode: task.caseId || undefined,
                                 })
                               }
                               title={isTl ? `I-text si ${task.parentName}` : `Text ${task.parentName}`}
-                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-bold whitespace-nowrap"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-[11px] font-bold whitespace-nowrap active:scale-[0.97]"
                             >
-                              <DuotoneIcon name="paperPlaneTilt" size={13} />
-                              {isTl ? 'I-text' : 'Text'}
+                              <DuotoneIcon name="paperPlaneTilt" size={12} />
+                              <span>{isTl ? 'Text' : 'Text'}</span>
                             </button>
                           </div>
                         </div>
@@ -2723,7 +2699,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       </AnimatePresence>
 
       {/* ====================================================================
-          MODAL 2: QUICK CALL ATTEMPT LOGGER MODAL
+          MODAL 2: QUICK CALL ATTEMPT LOGGER MODAL (RICH CONTEXT & EMIL KOWALSKI POLISH)
           ==================================================================== */}
       <AnimatePresence>
         {callLogTarget && (
@@ -2731,68 +2707,155 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 !m-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
+            className="fixed inset-0 !m-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
           >
             <motion.form
               onSubmit={handleSaveCallAttempt}
               initial={{ scale: 0.96, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.96, opacity: 0 }}
-              className="w-full max-w-md rounded-2xl saas-card p-6 space-y-4"
+              transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+              className="w-full max-w-lg rounded-2xl saas-card p-6 space-y-4 shadow-2xl border border-slate-300 dark:border-white/10"
             >
-              <div className="flex items-center justify-between">
-                <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
-                  {isTl ? 'Itala ang Tawag sa Magulang' : 'Log Parent Call Attempt'}
-                </h3>
+              {/* Modal Header */}
+              <div className="flex items-start justify-between pb-3 border-b border-slate-200 dark:border-white/10">
+                <div>
+                  <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white leading-tight">
+                    {isTl ? 'Itala ang Tawag sa Magulang' : 'Log Parent Call Attempt'}
+                  </h3>
+                  <p className="text-[11px] font-semibold text-[#4A608A] dark:text-[#94A8D0]">
+                    {isTl ? 'Piliin ang kinalabasan ng pakikipag-ugnayan' : 'Document call outcome for follow-up record'}
+                  </p>
+                </div>
                 <button
                   aria-label={isTl ? 'Isara' : 'Close'}
                   title={isTl ? 'Isara' : 'Close'}
                   type="button"
                   onClick={() => setCallLogTarget(null)}
-                  className="text-sm font-bold text-[#4A608A]"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[#4A608A] hover:text-[#0B1F4D] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-[0.97]"
                 >
-                  ✕
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="space-y-2">
-                {CALL_OUTCOMES.map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => setCallOutcome(opt)}
-                    className={`w-full text-left p-3 rounded-xl text-xs font-bold transition-colors ${
-                      callOutcome === opt
-                        ? 'bg-[#1E469B] text-white'
-                        : 'saas-card-subtle text-[#0B1F4D] dark:text-white'
-                    }`}
-                  >
-                    {isTl ? CALL_OUTCOMES_TL[opt] : opt}
-                  </button>
-                ))}
+              {/* Target Parent & Student Context Card */}
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 space-y-2 text-xs">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-bold text-[#0B1F4D] dark:text-white truncate">
+                      {callLogTarget.parentName}
+                    </div>
+                    <div className="text-[11px] text-[#4A608A] dark:text-slate-400 mt-0.5 truncate">
+                      {isTl ? 'Magulang / Guardian ni' : 'Parent / Guardian of'}{' '}
+                      <span className="font-semibold text-[#0B1F4D] dark:text-slate-200">{callLogTarget.studentName}</span>
+                      {callLogTarget.gradeSection ? ` · ${callLogTarget.gradeSection}` : ''}
+                    </div>
+                  </div>
+                  <div className="shrink-0 flex flex-col items-end gap-1">
+                    <span className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-blue-100 dark:bg-blue-950 text-[#1E469B] dark:text-blue-300 border border-blue-200 dark:border-blue-900">
+                      {callLogTarget.caseId}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60">
+                      {isTl ? `Pagtatangka #${callLogTarget.attemptsCount + 1}` : `Attempt #${callLogTarget.attemptsCount + 1}`}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Phone & Reason Bar */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200/80 dark:border-white/5">
+                  <div className="text-[11px] text-[#4A608A] dark:text-slate-400">
+                    <span>{isTl ? 'Telepono: ' : 'Contact: '}</span>
+                    <a
+                      href={`tel:${callLogTarget.parentPhone}`}
+                      className="font-mono font-bold text-[#1E469B] dark:text-blue-300 hover:underline"
+                      title={isTl ? 'Pindutin para tumawag' : 'Click to call'}
+                    >
+                      {callLogTarget.parentPhone}
+                    </a>
+                  </div>
+
+                  <div className="text-[11px] text-amber-700 dark:text-amber-400 font-medium truncate max-w-[210px]" title={isTl ? callLogTarget.reasonTl : callLogTarget.reasonEn}>
+                    <span className="truncate">{isTl ? callLogTarget.reasonTl : callLogTarget.reasonEn}</span>
+                  </div>
+                </div>
               </div>
 
-              <input
-                type="text"
-                value={callCustomNotes}
-                onChange={(e) => setCallCustomNotes(e.target.value)}
-                placeholder={isTl ? 'Karagdagang tala (opsyonal)...' : 'Optional call notes...'}
-                className="w-full px-3.5 py-2 rounded-xl saas-card-subtle text-xs font-semibold"
-              />
+              {/* Call Outcome Options */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#0B1F4D] dark:text-slate-200 block">
+                  {isTl ? 'Ano ang kinalabasan ng tawag?' : 'What happened on this call?'}
+                </label>
+                <div className="space-y-2">
+                  {CALL_OUTCOMES.map((opt) => {
+                    const isSelected = callOutcome === opt;
+                    const isCome = opt === CALL_WILL_COME;
+                    const isResched = opt === 'Reached — asked for a new date';
+                    const isNoAns = opt === 'No answer';
+                    const isWrong = opt === 'Wrong number';
 
-              <div className="flex justify-end gap-2 pt-2">
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setCallOutcome(opt)}
+                        className={`w-full text-left p-3 rounded-xl text-xs font-semibold transition-all border flex items-center justify-between active:scale-[0.98] ${
+                          isSelected
+                            ? 'bg-[#1E469B] text-white border-[#1E469B] shadow-sm'
+                            : 'bg-white dark:bg-slate-800/80 text-[#0B1F4D] dark:text-white border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                        }`}
+                      >
+                        <div>
+                          <span className="font-bold">{isTl ? CALL_OUTCOMES_TL[opt] : opt}</span>
+                          <p className={`text-[10px] mt-0.5 ${isSelected ? 'text-blue-100' : 'text-[#4A608A] dark:text-slate-400'}`}>
+                            {isCome && (isTl ? 'Kukumpletuhin ang follow-up task (Resolved).' : 'Marks this follow-up task resolved.')}
+                            {isResched && (isTl ? 'Mananatiling bukas para magtakda ng bagong schedule.' : 'Keeps open; queues reschedule.')}
+                            {isNoAns && (isTl ? 'Mananatiling bukas; tatawagan muli mamaya.' : 'Increments attempt counter for retry.')}
+                            {isWrong && (isTl ? 'I-flag para suriin ang numero ng magulang.' : 'Flags contact details for staff review.')}
+                          </p>
+                        </div>
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                          isSelected ? 'border-white bg-white text-[#1E469B]' : 'border-slate-300 dark:border-slate-600'
+                        }`}>
+                          {isSelected && <span className="w-2 h-2 rounded-full bg-[#1E469B]" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Optional Custom Notes Input */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-[#4A608A] dark:text-slate-300 block">
+                  {isTl ? 'Karagdagang Tala (Opsyonal)' : 'Additional Notes (Optional)'}
+                </label>
+                <input
+                  type="text"
+                  value={callCustomNotes}
+                  onChange={(e) => setCallCustomNotes(e.target.value)}
+                  placeholder={
+                    isTl
+                      ? 'Halimbawa: "Humiling ng alas-2 ng hapon bukas", "Nasa trabaho pa"...'
+                      : 'e.g. "Requested 2:00 PM tomorrow", "Mother answered at work"...'
+                  }
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-semibold text-[#0B1F4D] dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#1E469B]"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-200 dark:border-white/10">
                 <button
                   type="button"
                   onClick={() => setCallLogTarget(null)}
-                  className="px-4 py-2 rounded-lg saas-card-subtle text-xs font-bold"
+                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-white/10 text-xs font-bold text-[#0B1F4D] dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-[0.97]"
                 >
                   {isTl ? 'Kanselahin' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg bg-[#1E469B] text-white text-xs font-bold"
+                  className="px-5 py-2 rounded-xl bg-[#1E469B] hover:bg-[#163574] text-white text-xs font-bold transition-all shadow-sm active:scale-[0.97]"
                 >
-                  {isTl ? 'I-save' : 'Save Call Log'}
+                  {isTl ? 'I-save ang Tala' : 'Save Call Log'}
                 </button>
               </div>
             </motion.form>
@@ -2809,22 +2872,31 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 !m-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
+            className="fixed inset-0 !m-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
           >
             <motion.form
               onSubmit={handleSendParentNotice}
               initial={{ scale: 0.96, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.96, opacity: 0 }}
-              className="w-full max-w-2xl rounded-2xl saas-card p-6 space-y-4 max-h-[calc(92vh/var(--app-zoom,1))] overflow-y-auto clean-scroll"
+              transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+              className="w-full max-w-2xl rounded-2xl saas-card p-6 space-y-4 max-h-[calc(92vh/var(--app-zoom,1))] overflow-y-auto clean-scroll border border-slate-300 dark:border-white/10 shadow-2xl"
             >
-              <div className="flex items-center justify-between">
+              {/* Modal Header with Case Badge */}
+              <div className="flex items-start justify-between pb-3 border-b border-slate-200 dark:border-white/10">
                 <div>
-                  <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
-                    Parent SMS & Live Gmail Notice Composer
-                  </h3>
-                  <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
-                    RA 10173 Data Privacy Guarded · Editable Message
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white leading-tight">
+                      {isTl ? 'Parent SMS & Live Gmail Notice Composer' : 'Parent SMS & Live Gmail Notice Composer'}
+                    </h3>
+                    {composerCaseCode && (
+                      <span className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-blue-100 dark:bg-blue-950 text-[#1E469B] dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                        {composerCaseCode}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] font-semibold text-[#4A608A] dark:text-[#94A8D0]">
+                    {isTl ? 'RA 10173 Data Privacy Guarded · Na-e-edit na Mensahe' : 'RA 10173 Data Privacy Guarded · Editable Official Notice'}
                   </p>
                 </div>
                 <button
@@ -2832,101 +2904,194 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   title={isTl ? 'Isara' : 'Close'}
                   type="button"
                   onClick={() => setComposerOpen(false)}
-                  className="text-sm font-bold text-[#4A608A]"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[#4A608A] hover:text-[#0B1F4D] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-[0.97]"
                 >
-                  ✕
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 p-1 rounded-xl saas-card-subtle">
+              {/* Delivery Channel Selector */}
+              <div className="grid grid-cols-3 gap-2 p-1 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/5">
                 {(
                   [
                     { key: 'both', label: 'SMS + Live Gmail' },
                     { key: 'sms', label: 'SMS Only' },
                     { key: 'gmail', label: 'Live Gmail Only' },
                   ] as const
-                ).map((ch) => (
-                  <button
-                    key={ch.key}
-                    type="button"
-                    onClick={() => setComposerChannel(ch.key)}
-                    className={`py-1.5 rounded-lg text-xs font-bold ${
-                      composerChannel === ch.key
-                        ? 'bg-[#1E469B] text-white'
-                        : 'text-[#4A608A] dark:text-[#94A8D0]'
-                    }`}
-                  >
-                    {ch.label}
-                  </button>
-                ))}
+                ).map((ch) => {
+                  const isSelected = composerChannel === ch.key;
+                  return (
+                    <button
+                      key={ch.key}
+                      type="button"
+                      onClick={() => setComposerChannel(ch.key)}
+                      className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all active:scale-[0.98] ${
+                        isSelected
+                          ? 'bg-[#1E469B] text-white shadow-sm'
+                          : 'text-[#4A608A] dark:text-slate-400 hover:text-[#0B1F4D] dark:hover:text-white'
+                      }`}
+                    >
+                      {ch.label}
+                    </button>
+                  );
+                })}
               </div>
 
+              {/* Parent, Student & Contact Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div>
-                  <label className="block font-bold mb-1">Parent Name</label>
+                  <label className="block font-bold text-[#0B1F4D] dark:text-slate-200 mb-1">
+                    {isTl ? 'Pangalan ng Magulang / Guardian' : 'Parent / Guardian Name'}
+                  </label>
                   <input
                     type="text"
                     value={composerParentName}
                     onChange={(e) => setComposerParentName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg saas-card-subtle font-semibold"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 font-semibold text-[#0B1F4D] dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#1E469B]"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold mb-1">Student & Section</label>
+                  <label className="block font-bold text-[#0B1F4D] dark:text-slate-200 mb-1">
+                    {isTl ? 'Estudyante at Seksiyon' : 'Student & Section'}
+                  </label>
                   <input
                     type="text"
-                    value={`${composerStudentName} (${composerGradeSection})`}
+                    value={`${composerStudentName}${composerGradeSection ? ` (${composerGradeSection})` : ''}`}
                     readOnly
-                    className="w-full px-3 py-2 rounded-lg saas-card-subtle font-semibold opacity-80"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300/80 dark:border-white/5 bg-slate-100 dark:bg-slate-800/60 font-semibold text-[#0B1F4D] dark:text-slate-300 cursor-not-allowed opacity-90"
                   />
                 </div>
                 <div>
-                  <label htmlFor="composer-phone" className="block font-bold mb-1">
-                    Mobile Number (SMS)
+                  <label htmlFor="composer-phone" className="block font-bold text-[#0B1F4D] dark:text-slate-200 mb-1">
+                    {isTl ? 'Mobile Number (SMS)' : 'Mobile Number (SMS)'}
+                    {composerChannel === 'gmail' && <span className="text-[10px] text-slate-400 font-normal ml-1">({isTl ? 'Hindi gagamitin' : 'Bypassed'})</span>}
                   </label>
                   <PhoneInput
                     id="composer-phone"
                     value={composerPhone}
                     onChange={setComposerPhone}
                     isTl={isTl}
-                    className="w-full px-3 py-2 rounded-lg saas-card-subtle font-mono font-semibold"
+                    disabled={composerChannel === 'gmail'}
+                    className={`w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 font-mono font-semibold text-[#0B1F4D] dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#1E469B] ${
+                      composerChannel === 'gmail' ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                   />
                 </div>
                 <div>
-                  <label className="block font-bold mb-1">Parent Email (Live Gmail SMTP)</label>
+                  <label className="block font-bold text-[#0B1F4D] dark:text-slate-200 mb-1">
+                    {isTl ? 'Parent Email (Live Gmail SMTP)' : 'Parent Email (Live Gmail SMTP)'}
+                    {composerChannel === 'sms' && <span className="text-[10px] text-slate-400 font-normal ml-1">({isTl ? 'Hindi gagamitin' : 'Bypassed'})</span>}
+                  </label>
                   <input
                     type="email"
                     value={composerEmail}
                     onChange={(e) => setComposerEmail(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg saas-card-subtle font-semibold"
+                    disabled={composerChannel === 'sms'}
+                    placeholder={composerChannel === 'sms' ? (isTl ? 'Naka-SMS Only' : 'SMS Only mode') : 'parent@example.com'}
+                    className={`w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 font-semibold text-[#0B1F4D] dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#1E469B] ${
+                      composerChannel === 'sms' ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                   />
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs font-bold">
-                  <span>Message Content</span>
-                  <span className="font-mono text-[#1E469B] dark:text-[#7CB8F7]">
-                    {(() => {
-                      const i = smsInfo(composerMessage);
-                      return isTl ? `${i.length} letra · ${i.parts} SMS` : `${i.length} letters · ${i.parts} SMS`;
-                    })()}
+              {/* Conference Schedule & Venue Settings */}
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 space-y-2.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-[#0B1F4D] dark:text-white">
+                    {isTl ? 'Iskedyul at Lugar ng Pag-uusap' : 'Conference Schedule & Venue'}
+                  </span>
+                  <span className="text-[10px] text-[#4A608A] dark:text-slate-400">
+                    {isTl ? 'Isingit sa mensahe sa isang pindot' : 'Inserted directly into the notice'}
                   </span>
                 </div>
-                <textarea
-                  rows={8}
-                  value={composerMessage}
-                  onChange={(e) => setComposerMessage(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl saas-card-subtle text-sm font-medium leading-relaxed resize-y min-h-[190px] focus:outline-none focus:border-[#1E469B]"
-                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <label className="text-[10px] font-bold text-[#4A608A] dark:text-slate-400 block mb-0.5">
+                      {isTl ? 'Petsa at Oras (Kailan)' : 'Date & Time (When)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={composerSchedule}
+                      onChange={(e) => setComposerSchedule(e.target.value)}
+                      placeholder={isTl ? 'Hal. Bukas, 10:15 AM' : 'e.g. Tomorrow, 10:15 AM'}
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-semibold text-[#0B1F4D] dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#1E469B]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-[#4A608A] dark:text-slate-400 block mb-0.5">
+                      {isTl ? 'Lugar / Deskripsyon' : 'Venue / Room'}
+                    </label>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        readOnly
+                        value="Guidance Office (Main Campus Room 204)"
+                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-not-allowed"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {detectedSensitiveTerms.length > 0 ? (
-                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-300 text-rose-800 dark:text-rose-200 text-xs space-y-2">
-                  <p className="font-bold">
-                    ⚠️ RA 10173 Privacy Alert: Sensitive word ({detectedSensitiveTerms.join(', ')})
-                    detected!
-                  </p>
+              {/* Quick Template Presets */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-[#0B1F4D] dark:text-slate-200">
+                    {isTl ? 'Mabilis na Templates' : 'Standard Templates'}
+                  </span>
+                  <span className="text-[10px] text-[#4A608A] dark:text-slate-400">
+                    {isTl ? 'Pindutin para mag-apply ng standard format' : 'Click to apply handbook standard message'}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const when = composerSchedule ? ` sa ${composerSchedule}` : '';
+                      setComposerMessage(
+                        `AICS Guidance Office: Magandang araw po. Inaanyayahan po kayo sa Parent Conference para kay ${composerStudentName}${when} sa Guidance Office. Salamat po.`
+                      );
+                    }}
+                    className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/80 hover:border-[#1E469B] text-[#0B1F4D] dark:text-white text-[11px] font-bold transition-all active:scale-[0.97]"
+                  >
+                    {isTl ? 'Unang Paanyaya' : 'First Notice'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const when = composerSchedule ? ` bukas ${composerSchedule}` : ' bukas';
+                      setComposerMessage(
+                        `AICS Guidance: Paalala po, may Parent Conference po kayo para kay ${composerStudentName}${when} sa Guidance Room. Mangyaring dumalo po. Salamat po.`
+                      );
+                    }}
+                    className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/80 hover:border-[#1E469B] text-[#0B1F4D] dark:text-white text-[11px] font-bold transition-all active:scale-[0.97]"
+                  >
+                    {isTl ? 'Paalala (Reminder)' : 'Reminder'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const when = composerSchedule ? ` sa ${composerSchedule}` : '';
+                      setComposerMessage(
+                        `AICS Guidance Office: Inilipat po ang ating pag-uusap para kay ${composerStudentName}${when}. Ipagbigay-alam po kung matatanggap. Salamat po.`
+                      );
+                    }}
+                    className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/80 hover:border-[#1E469B] text-[#0B1F4D] dark:text-white text-[11px] font-bold transition-all active:scale-[0.97]"
+                  >
+                    {isTl ? 'Reschedule' : 'Reschedule'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setComposerMessage(
+                        `AICS Guidance: Urgent follow-up po ito para sa kapakanan ni ${composerStudentName}. Mangyaring makipag-ugnayan agad sa Guidance Office. Salamat po.`
+                      );
+                    }}
+                    className="px-2.5 py-1 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 hover:border-rose-400 text-rose-800 dark:text-rose-300 text-[11px] font-bold transition-all active:scale-[0.97]"
+                  >
+                    {isTl ? 'Urgent Follow-up' : 'Urgent Notice'}
+                  </button>
                   <button
                     type="button"
                     onClick={() =>
@@ -2940,24 +3105,88 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         })
                       )
                     }
-                    className="px-3 py-1 rounded-lg bg-rose-600 text-white font-bold"
+                    className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/40 text-[#4A608A] dark:text-slate-400 text-[11px] font-semibold active:scale-[0.97] ml-auto"
+                    title={isTl ? 'Ibalik sa orihinal na template' : 'Reset to default template'}
                   >
-                    Restore RA 10173 Safe Message
+                    {isTl ? 'I-reset' : 'Reset'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Message Content & Character Counter */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center text-xs font-bold">
+                  <span className="text-[#0B1F4D] dark:text-slate-200">{isTl ? 'Nilalaman ng Mensahe' : 'Message Content'}</span>
+                  <div className="flex items-center gap-2">
+                    {composerChannel !== 'gmail' && (
+                      <span className="font-mono text-[11px] text-[#1E469B] dark:text-[#7CB8F7]">
+                        {(() => {
+                          const i = smsInfo(composerMessage);
+                          return isTl ? `${i.length} letra · ${i.parts} SMS` : `${i.length} letters · ${i.parts} SMS`;
+                        })()}
+                      </span>
+                    )}
+                    {composerChannel === 'gmail' && (
+                      <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400">
+                        {isTl ? 'Walang limit sa haba (Live Gmail)' : 'Unlimited characters (Live Gmail)'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <textarea
+                  rows={5}
+                  value={composerMessage}
+                  onChange={(e) => setComposerMessage(e.target.value)}
+                  placeholder={isTl ? 'I-type ang mensahe para sa magulang...' : 'Type official notice message...'}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-medium text-[#0B1F4D] dark:text-white leading-relaxed resize-y min-h-[120px] focus:outline-hidden focus:ring-2 focus:ring-[#1E469B]"
+                />
+              </div>
+
+              {/* RA 10173 Privacy Compliance Check Banner */}
+              {detectedSensitiveTerms.length > 0 ? (
+                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-300 text-rose-800 dark:text-rose-200 text-xs space-y-2">
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>
+                      {isTl
+                        ? `RA 10173 Privacy Alert: May sensitibong salita (${detectedSensitiveTerms.join(', ')}) na ipinagbabawal sa bukas na SMS!`
+                        : `RA 10173 Privacy Alert: Sensitive term (${detectedSensitiveTerms.join(', ')}) detected!`}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setComposerMessage(
+                        buildDefaultParentMessage({
+                          parentName: composerParentName,
+                          studentName: composerStudentName,
+                          gradeSection: composerGradeSection,
+                          scheduleText: composerSchedule,
+                          locale: 'tl',
+                        })
+                      )
+                    }
+                    className="px-3 py-1 rounded-lg bg-rose-600 text-white font-bold text-xs inline-flex items-center gap-1 active:scale-[0.97]"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>{isTl ? 'Ibalik sa RA 10173 Safe Format' : 'Restore RA 10173 Safe Message'}</span>
                   </button>
                 </div>
               ) : (
-                <div className="px-3 py-2 rounded-xl saas-card-subtle text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                  ✓ RA 10173 Data Privacy Check Passed
+                <div className="px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-xs font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>{isTl ? '✓ RA 10173 Data Privacy Check Passed: Walang sensitibong detalye ng offense sa mensahe' : '✓ RA 10173 Data Privacy Check Passed: No offense details exposed in public transit'}</span>
                 </div>
               )}
 
-              <div className="flex justify-end gap-2 pt-2">
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-200 dark:border-white/10">
                 <button
                   type="button"
                   onClick={() => setComposerOpen(false)}
-                  className="px-4 py-2 rounded-lg saas-card-subtle text-xs font-bold"
+                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-white/10 text-xs font-bold text-[#0B1F4D] dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-[0.97]"
                 >
-                  Cancel
+                  {isTl ? 'Kanselahin' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
@@ -2972,9 +3201,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         : 'Fix the mobile number first'
                       : undefined
                   }
-                  className="px-5 py-2 rounded-lg bg-[#1E469B] text-white text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-5 py-2 rounded-xl bg-[#1E469B] hover:bg-[#163574] text-white text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm active:scale-[0.97]"
                 >
-                  {isSendingNotice ? 'Sending...' : 'Send Official Notice'}
+                  <span>{isSendingNotice ? (isTl ? 'Ipinapadala...' : 'Sending...') : (isTl ? 'I-send ang Opisyal na Notice' : 'Send Official Notice')}</span>
                 </button>
               </div>
             </motion.form>

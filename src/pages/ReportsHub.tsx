@@ -30,6 +30,8 @@ import { fetchHandoverNotes, fetchHandoverCounts, addHandoverNote, HandoverNote 
 import { todayISO } from '../services/scheduling';
 import { LineChart, GroupedBars, Legend } from '../components/ui/Charts';
 import { useAppConfig } from '../services/appConfig';
+import { printIncidentSlip, printMonthlyExecutivePdf } from '../services/documentPrintEngine';
+import { Download, Printer, FileText, BarChart3, TrendingUp, Calendar, Award } from 'lucide-react';
 
 const C_NEW = '#E11D48';
 const C_SOLVED = '#059669';
@@ -569,12 +571,37 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                 className="px-3 py-2 rounded-xl border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-sm text-[#0B1F4D] dark:text-white"
               />
             </label>
-            <div className="flex gap-2">
-              <button type="button" data-action="print-report" onClick={printReport} className={`${btn} px-4 py-2 bg-[#1E469B] text-white`}>
-                 {isTl ? 'I-print' : 'Print'}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                data-action="print-executive-pdf"
+                onClick={() => {
+                  soundFX.playStepUnlock();
+                  printMonthlyExecutivePdf({
+                    monthName,
+                    newCases: report.newCases,
+                    attended: report.attended,
+                    conferencesHeld: report.conferencesHeld,
+                    attendanceRate: report.attendanceRate,
+                    overdueCount: report.overdue.length,
+                    avgDaysToClose: report.avgDaysToClose,
+                    byLevel: report.byLevel,
+                    noShowReasons: report.noShowReasons,
+                    staffName: 'Guidance Staff',
+                  });
+                }}
+                className={`${btn} px-4 py-2 bg-[#1E469B] hover:bg-[#16377E] text-white active:scale-[0.97] transition-all inline-flex items-center gap-1.5 shadow-sm`}
+              >
+                <Download className="w-3.5 h-3.5" />
+                {isTl ? 'I-download ang PDF (Kasama ang Graphs)' : 'Download PDF (with Graphs)'}
               </button>
-              <button type="button" data-action="csv-report" onClick={downloadCsv} className={`${btn} px-4 py-2 saas-card-subtle`}>
-                ⬇ {isTl ? 'I-download (Excel)' : 'Download (Excel)'}
+              <button type="button" data-action="print-report" onClick={printReport} className={`${btn} px-4 py-2 saas-card-subtle active:scale-[0.97] inline-flex items-center gap-1.5`}>
+                <Printer className="w-3.5 h-3.5" />
+                {isTl ? 'Quick Table Print' : 'Quick Table Print'}
+              </button>
+              <button type="button" data-action="csv-report" onClick={downloadCsv} className={`${btn} px-4 py-2 saas-card-subtle active:scale-[0.97] inline-flex items-center gap-1.5`}>
+                <FileText className="w-3.5 h-3.5" />
+                {isTl ? 'Excel / CSV' : 'Excel / CSV'}
               </button>
             </div>
           </div>
@@ -695,11 +722,35 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                       {sel.caseCode} · {isTl ? sel.offenseTitleTl || sel.offenseTitleEn : sel.offenseTitleEn}
                     </p>
                   </div>
-                  {onOpenCase && (
-                    <button type="button" onClick={() => onOpenCase(sel.caseCode)} className={`${btn} saas-card-subtle`}>
-                      {isTl ? 'Buksan sa Mga Kaso' : 'Open in Cases'}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundFX.playStepUnlock();
+                        printIncidentSlip({
+                          caseCode: sel.caseCode,
+                          incidentDate: dt(sel.incidentDate),
+                          studentName: sel.studentName,
+                          studentNumber: sel.studentNumber,
+                          gradeSection: sel.gradeSection,
+                          offenseType: levelOf(sel.severity),
+                          offenseCommitted: isTl ? sel.offenseTitleTl || sel.offenseTitleEn : sel.offenseTitleEn,
+                          details: sel.notes || sel.explanation || 'Incident details documented in system repository.',
+                          penaltyAction: sel.sanction || (sel.status === 'Resolved' ? 'Resolved / Completed' : 'Under Guidance Evaluation'),
+                          guidanceStaffName: 'Guidance Staff',
+                        });
+                      }}
+                      className={`${btn} bg-[#1E469B] hover:bg-[#16377E] text-white active:scale-[0.97] transition-all inline-flex items-center gap-1.5 shadow-sm`}
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      {isTl ? 'I-print ang Incident Slip (PDF)' : 'Print Incident Slip (PDF)'}
                     </button>
-                  )}
+                    {onOpenCase && (
+                      <button type="button" onClick={() => onOpenCase(sel.caseCode)} className={`${btn} saas-card-subtle active:scale-[0.97]`}>
+                        {isTl ? 'Buksan sa Mga Kaso' : 'Open in Cases'}
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <dl className="px-6 py-4 grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3 text-sm">
                   {[

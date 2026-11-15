@@ -28,6 +28,7 @@ import {
 } from '../services/concernsDb';
 import { isOfficeDay, todayISO } from '../services/scheduling';
 import { Legend } from '../components/ui/Charts';
+import { StudentGenderAvatar } from '../components/students/StudentGenderAvatar';
 import {
   Lock,
   CheckCircle,
@@ -425,15 +426,15 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
 
       {/* ================= SUBMITTED REPORTS ================= */}
       {tab === 'reports' && (
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(300px,380px)_1fr] gap-4 items-stretch h-[calc(100vh-245px)] min-h-[520px]" data-concern-grid>
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-3 items-stretch h-[calc(100vh-245px)] min-h-[520px]" data-concern-grid>
           <section className={`${card} flex flex-col min-h-0`}>
-            <div className="px-4 py-3 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap gap-1.5">
+            <div className="p-2 border-b border-[#DCE5F2] dark:border-[#1E3158] grid grid-cols-4 gap-1">
               {(
                 [
-                  ['waiting', isTl ? `Naghihintay · ${waiting.length}` : `Waiting · ${waiting.length}`],
-                  ['approved', `Approved · ${list.filter((c) => c.status === 'Approved').length}`],
-                  ['rejected', `Rejected · ${list.filter((c) => c.status === 'Rejected').length}`],
-                  ['all', isTl ? `Lahat · ${list.length}` : `All · ${list.length}`],
+                  ['waiting', isTl ? `Waiting (${waiting.length})` : `Waiting (${waiting.length})`],
+                  ['approved', `Approved (${list.filter((c) => c.status === 'Approved').length})`],
+                  ['rejected', `Rejected (${list.filter((c) => c.status === 'Rejected').length})`],
+                  ['all', isTl ? `All (${list.length})` : `All (${list.length})`],
                 ] as const
               ).map(([id, label]) => (
                 <button
@@ -445,21 +446,17 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
                     setLimit(PAGE);
                     setSelectedId(null);
                   }}
-                  className={`${btn} ${filter === id ? 'bg-[#1E469B] text-white' : 'saas-card-subtle text-[#4A608A] dark:text-[#94A8D0]'}`}
+                  className={`py-1.5 px-1 rounded-lg text-center text-[11px] font-bold transition-all truncate ${
+                    filter === id
+                      ? 'bg-[#1E469B] text-white shadow-xs'
+                      : 'bg-white dark:bg-[#0D182E] border border-slate-200 dark:border-[#1E3158] text-[#4A608A] dark:text-[#94A8D0] hover:border-[#1E469B]'
+                  }`}
+                  title={label}
                 >
                   {label}
                 </button>
               ))}
             </div>
-            <Legend
-              className="px-4 py-2 border-b border-[#DCE5F2] dark:border-[#1E3158]"
-              items={[
-                { color: '#E11D48', label: isTl ? 'Urgent' : 'Urgent', shape: 'box' },
-                { color: '#F59E0B', label: isTl ? 'Naghihintay' : 'Waiting', shape: 'box' },
-                { color: '#10B981', label: isTl ? 'Approved / nasa masterlist' : 'Approved / in masterlist', shape: 'box' },
-                { color: '#8B5CF6', label: isTl ? 'Confidential' : 'Confidential', shape: 'box' },
-              ]}
-            />
             <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1.5 bg-[#F4F7FC] dark:bg-[#0B1527]">
               {concerns === null && !loadError && <p className={`${sub} p-6 text-center`}>{isTl ? 'Kinukuha ang mga concern…' : 'Loading concerns…'}</p>}
               {concerns !== null && shown.length === 0 && (
@@ -480,29 +477,32 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
                   type="button"
                   data-concern-row={c.code}
                   onClick={() => setSelectedId(c.id)}
-                  className={`w-full text-left rounded-xl px-3 py-2.5 border transition-colors ${
+                  className={`w-full text-left rounded-xl p-3 border transition-all ${
                     selectedId === c.id
-                      ? 'bg-white dark:bg-[#13203B] border-[#1E469B] dark:border-[#7CB8F7] ring-1 ring-[#1E469B]/30'
+                      ? 'bg-white dark:bg-[#13203B] border-[#1E469B] dark:border-[#7CB8F7] ring-1 ring-[#1E469B]/30 shadow-xs'
                       : c.urgent && c.status === 'Pending'
-                      ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800'
+                      ? 'bg-rose-50/80 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800'
                       : 'bg-white dark:bg-[#0F1A30] border-[#D3DDEE] dark:border-[#253B66] hover:border-[#1E469B]/50'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white truncate">
-                      
-                      {c.studentName}
-                    </p>
-                    <span className="text-[11px] text-[#4A608A] dark:text-[#94A8D0] whitespace-nowrap">{when(c.createdAt)}</span>
+                  <div className="flex items-center gap-2.5">
+                    <StudentGenderAvatar fullName={c.studentName} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <p className="text-xs font-black text-[#0B1F4D] dark:text-white truncate">
+                          {c.studentName}
+                        </p>
+                        <span className="text-[10px] text-[#4A608A] dark:text-[#94A8D0] whitespace-nowrap">{when(c.createdAt)}</span>
+                      </div>
+                      <p className="text-[11px] font-semibold text-[#4A608A] dark:text-[#94A8D0] truncate mt-0.5">{c.type || (isTl ? 'Walang uri' : 'No type')}</p>
+                    </div>
                   </div>
-                  <p className="text-xs text-[#4A608A] dark:text-[#94A8D0] truncate">{c.type || (isTl ? 'Walang uri' : 'No type')}</p>
-                  <div className="mt-1 flex flex-wrap gap-1">
+                  <div className="mt-2 flex flex-wrap gap-1">
                     {c.urgent && c.status === 'Pending' && (
-                      <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-600 text-white">URGENT</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white">URGENT</span>
                     )}
                     {statusPill(c)}
                     {matchPill(c)}
-                    {c.practice && <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200">practice</span>}
                   </div>
                 </button>
               ))}
@@ -822,119 +822,112 @@ const ConcernDetail: React.FC<{
 
   return (
     <div data-concern-detail={c.code} className="h-full flex flex-col">
-      <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] space-y-1.5">
+      <div className="px-5 py-3 border-b border-[#DCE5F2] dark:border-[#1E3158] space-y-1">
         <div className="flex flex-wrap items-center gap-1.5">
-          {c.urgent && c.status === 'Pending' && <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-600 text-white">URGENT · {isTl ? 'Nangyayari ngayon' : 'Happening now'}</span>}
+          {c.urgent && c.status === 'Pending' && <span className="px-2 py-0.5 rounded-full text-[10.5px] font-extrabold bg-rose-600 text-white">URGENT · {isTl ? 'Nangyayari ngayon' : 'Happening now'}</span>}
           {statusPill}
           {matchPill}
           {c.confidential && (
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200" title={isTl ? 'Gustong ilihim ng estudyante ang concern na ito' : 'The student asked to keep this private'}>
+            <span className="px-2 py-0.5 rounded-full text-[10.5px] font-extrabold bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200" title={isTl ? 'Gustong ilihim ng estudyante ang concern na ito' : 'The student asked to keep this private'}>
               {isTl ? 'Confidential' : 'Confidential'}
             </span>
           )}
         </div>
-        <h2 className="text-lg font-extrabold text-[#0B1F4D] dark:text-white break-words">{c.type || (isTl ? 'Concern' : 'Concern')}</h2>
-        <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+        <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white break-words">{c.type || (isTl ? 'Concern' : 'Concern')}</h2>
+        <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
           {c.code} · {isTl ? 'Ipinadala' : 'Sent'} {when(c.createdAt)}
         </p>
       </div>
 
-      <div className="flex-1 min-h-0 p-3 grid grid-cols-[1.25fr_1fr] gap-3 bg-[#F4F7FC] dark:bg-[#0B1527]">
-        {/* ---------- LEFT: COMPLAINANT (REPORTING STUDENT) - CLEAN STRUCTURED PROFILE ---------- */}
+      <div className="flex-1 min-h-0 p-3 grid grid-cols-1 md:grid-cols-[250px_1fr] gap-3 bg-[#F4F7FC] dark:bg-[#0B1527]">
+        {/* ---------- LEFT: COMPLAINANT (REPORTING STUDENT) - COMPACT PROFILE ---------- */}
         <section className={cardBox} data-concern-student>
-          <div className="px-4 py-2.5 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-center justify-between bg-slate-50/60 dark:bg-[#0B1527]/60">
-            <span className="text-[11px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7] flex items-center gap-1.5">
+          <div className="px-3 py-2 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-center justify-between bg-slate-50/60 dark:bg-[#0B1527]/60">
+            <span className="text-[10px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7] flex items-center gap-1">
               <User className="w-3.5 h-3.5 text-slate-400" />
-              <span>{isTl ? 'Complainant / Nagsumbong na Estudyante' : 'Complainant (Reporting Student)'}</span>
+              <span>{isTl ? 'Nagsumbong' : 'Reporting Student'}</span>
             </span>
-            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-              {isTl ? 'Verified Portal Account' : 'Portal Verified'}
+            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+              {isTl ? 'Verified' : 'Verified'}
             </span>
           </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto p-3.5 space-y-3 clean-scroll" data-student-scroll>
-            {/* Primary Profile Identity Mini-Card */}
-            <div className="p-3.5 rounded-xl border border-sky-100 dark:border-sky-900/40 bg-gradient-to-br from-white via-sky-50/30 to-blue-50/20 dark:from-[#0E1D3B] dark:to-[#0B1527] shadow-xs space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1E469B] to-[#2557BE] text-white flex items-center justify-center text-lg font-black shrink-0 shadow-sm ring-2 ring-sky-300/40">
-                  {c.studentName ? c.studentName.charAt(0).toUpperCase() : 'S'}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
-                    {isTl ? 'Buong Pangalan ng Nagsumbong' : 'Reporting Student Full Name'}
-                  </p>
-                  <p className="text-sm font-black text-[#0B1F4D] dark:text-white leading-tight mt-0.5 truncate" title={c.studentName}>
-                    {c.studentName}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <span className="text-[11px] font-bold text-[#1E469B] dark:text-[#7CB8F7] bg-white dark:bg-[#0B1527] px-2 py-0.5 rounded-md border border-sky-200 dark:border-sky-900">
-                      LRN / ID: {c.studentNumber || '—'}
-                    </span>
-                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-[#0B1527] px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-800">
-                      {c.gradeSection || '—'}
-                    </span>
-                  </div>
+          <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-2 clean-scroll" data-student-scroll>
+            {/* Primary Profile Identity */}
+            <div className="p-2.5 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs flex items-center gap-2.5">
+              <StudentGenderAvatar fullName={c.studentName} size="md" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-black text-[#0B1F4D] dark:text-white leading-tight truncate" title={c.studentName}>
+                  {c.studentName}
+                </p>
+                <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                  <span className="text-[10px] font-mono font-bold text-[#1E469B] dark:text-[#7CB8F7]">
+                    #{c.studentNumber || '—'}
+                  </span>
+                  <span className="text-[10px] text-[#4A608A] dark:text-[#94A8D0]">
+                    · {c.gradeSection || '—'}
+                  </span>
                 </div>
               </div>
             </div>
 
             {/* Masterlist Verification Mini-Card */}
-            <div className="p-3 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs space-y-1.5">
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0] flex items-center gap-1">
-                <FileText className="w-3.5 h-3.5 text-slate-400" />
-                <span>{isTl ? 'Pagtutugma sa Registrar Masterlist' : 'Registrar Masterlist Status'}</span>
+            <div className="p-2 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs space-y-1">
+              <p className="text-[9px] font-extrabold uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0] flex items-center gap-1">
+                <FileText className="w-3 h-3 text-slate-400" />
+                <span>{isTl ? 'Registrar Masterlist' : 'Masterlist Match'}</span>
               </p>
               {match ? (
-                <div className="p-2.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <div className="p-1.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-emerald-900 dark:text-emerald-200 truncate">
+                    <p className="text-[11px] font-bold text-emerald-900 dark:text-emerald-200 truncate">
                       {match.fullName}
                     </p>
-                    <p className="text-[10.5px] text-emerald-700 dark:text-emerald-300 font-medium">
-                      {match.gradeSection} · Senior High School
+                    <p className="text-[9.5px] text-emerald-700 dark:text-emerald-300">
+                      {match.gradeSection} · SHS
                     </p>
                   </div>
                 </div>
               ) : (
-                <div className="p-2.5 rounded-lg bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
-                  <p className="text-xs font-bold text-rose-800 dark:text-rose-200 leading-tight">
-                    {isTl ? 'Wala sa masterlist. Kumpirmahin muna ang account ng mag-aaral.' : 'Not verified in the official masterlist.'}
+                <div className="p-1.5 rounded-lg bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                  <p className="text-[10.5px] font-bold text-rose-800 dark:text-rose-200 leading-tight">
+                    {isTl ? 'Wala sa masterlist' : 'Not verified in masterlist'}
                   </p>
                 </div>
               )}
             </div>
 
             {/* Contact Details Mini-Card */}
-            <div className="p-3 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs space-y-2">
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0] flex items-center gap-1">
-                <Phone className="w-3.5 h-3.5 text-slate-400" />
-                <span>{isTl ? 'Impormasyon sa Pakikipag-ugnayan' : 'Contact Information'}</span>
+            <div className="p-2 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs space-y-1">
+              <p className="text-[9px] font-extrabold uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0] flex items-center gap-1">
+                <Phone className="w-3 h-3 text-slate-400" />
+                <span>{isTl ? 'Contact Details' : 'Contact Details'}</span>
               </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                <div className="p-2 rounded-lg bg-slate-50 dark:bg-[#0B1527] border border-slate-100 dark:border-white/5">
-                  <p className="text-[9.5px] font-bold text-[#4A608A] dark:text-[#94A8D0]">Email Address</p>
-                  <p className="font-bold text-[#0B1F4D] dark:text-white mt-0.5 truncate" title={account?.email || '—'}>
+              <div className="space-y-1 text-xs">
+                <div className="px-2 py-1 rounded-lg bg-slate-50 dark:bg-[#0B1527] border border-slate-100 dark:border-white/5 flex items-center justify-between">
+                  <span className="text-[9px] font-bold text-[#4A608A] dark:text-[#94A8D0]">Email</span>
+                  <span className="text-[10.5px] font-bold text-[#0B1F4D] dark:text-white truncate max-w-[140px]" title={account?.email || '—'}>
                     {account?.email || '—'}
-                  </p>
+                  </span>
                 </div>
 
-                <div className="p-2 rounded-lg bg-slate-50 dark:bg-[#0B1527] border border-slate-100 dark:border-white/5">
-                  <p className="text-[9.5px] font-bold text-[#4A608A] dark:text-[#94A8D0]">Mobile Number</p>
-                  <p className="font-bold text-[#0B1F4D] dark:text-white mt-0.5 truncate" title={account?.contactNumber || '—'}>
+                <div className="px-2 py-1 rounded-lg bg-slate-50 dark:bg-[#0B1527] border border-slate-100 dark:border-white/5 flex items-center justify-between">
+                  <span className="text-[9px] font-bold text-[#4A608A] dark:text-[#94A8D0]">Mobile</span>
+                  <span className="text-[10.5px] font-mono font-bold text-[#0B1F4D] dark:text-white truncate max-w-[140px]" title={account?.contactNumber || '—'}>
                     {account?.contactNumber || '—'}
-                  </p>
+                  </span>
                 </div>
               </div>
 
               {c.submittedBy && !/^self-report/i.test(c.submittedBy.trim()) && (
-                <div className="p-2 rounded-lg bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
-                  <p className="text-[9.5px] font-extrabold text-amber-800 dark:text-amber-300 uppercase">
-                    {isTl ? 'Paraan ng Pagpasa (Report Scope)' : 'Submission Type'}
+                <div className="p-1.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 mt-1">
+                  <p className="text-[8.5px] font-extrabold text-amber-800 dark:text-amber-300 uppercase">
+                    {isTl ? 'Uri ng Pagpasa' : 'Submission Type'}
                   </p>
-                  <p className="text-xs font-bold text-amber-900 dark:text-amber-100 mt-0.5">
+                  <p className="text-[10.5px] font-bold text-amber-900 dark:text-amber-100">
                     {c.submittedBy}
                   </p>
                 </div>
@@ -942,19 +935,19 @@ const ConcernDetail: React.FC<{
             </div>
 
             {account?.status === 'Deactivated' && (
-              <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-700">
-                {isTl ? 'Naka-block na ang account na ito.' : 'This account is blocked.'}
+              <div className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-[10.5px] font-bold text-rose-700">
+                {isTl ? 'Naka-block ang account.' : 'Account is blocked.'}
               </div>
             )}
           </div>
 
           {account && account.status !== 'Deactivated' && (
-            <div className={cardFoot}>
+            <div className="p-2 border-t border-[#DCE5F2] dark:border-[#1E3158]">
               <button
                 type="button"
                 data-action="deactivate"
                 onClick={onDeactivate}
-                className={`${btn} px-4 py-2.5 saas-card-subtle text-rose-700 dark:text-rose-300 w-full sm:w-auto`}
+                className={`${btn} px-2.5 py-1 text-[11px] saas-card-subtle text-rose-700 dark:text-rose-300 w-full`}
                 title={isTl ? 'Para sa account na hindi totoong estudyante' : 'For accounts that are not real students'}
               >
                 {isTl ? 'I-block ang fake account' : 'Block fake account'}
@@ -965,122 +958,139 @@ const ConcernDetail: React.FC<{
 
         {/* ---------- RIGHT: the report (Organized High-Clarity Mini Cards) ---------- */}
         <section className={cardBox} data-concern-report>
-          <div className="px-4 py-2.5 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-center justify-between bg-slate-50/60 dark:bg-[#0B1527]/60">
-            <span className="text-[11px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7] flex items-center gap-1.5">
+          <div className="px-4 py-2 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-center justify-between bg-slate-50/60 dark:bg-[#0B1527]/60">
+            <span className="text-[10px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7] flex items-center gap-1.5">
               <FileText className="w-3.5 h-3.5 text-slate-400" />
-              <span>{isTl ? 'Mga Tala ng Insidente (Incident Record)' : 'Incident Breakdown & Record'}</span>
+              <span>{isTl ? 'Mga Tala ng Insidente' : 'Incident Details & Record'}</span>
             </span>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-400/20">
               {c.code}
             </span>
           </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto p-3.5 space-y-3 clean-scroll">
+          <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2 clean-scroll">
             {(() => {
               const parsed = parseIncidentData(c.whatHappened, c.who);
               return (
                 <>
-                  {/* CARD 1: RESPONDENT CARD (Prominent Identification) */}
-                  <div className="rounded-xl border border-sky-200 dark:border-sky-900/60 bg-gradient-to-br from-sky-50/60 via-white to-blue-50/30 dark:from-[#0E1D3B] dark:to-[#0B1527] p-3 shadow-xs space-y-2">
-                    <div className="flex items-center justify-between border-b border-sky-100 dark:border-sky-800/40 pb-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-5 h-5 rounded-md bg-[#1E469B] text-white flex items-center justify-center text-[10px] font-black">
-                          <Target className="w-3.5 h-3.5 text-indigo-500" />
-                        </span>
-                        <span className="text-[10.5px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
-                          {isTl ? 'Inirereklamong Estudyante (Respondent)' : 'Reported Student (Respondent)'}
-                        </span>
-                      </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
-              {isTl ? 'Disciplinary Case Connection:' : 'Disciplinary Case Connection:'}
-            </span>
-            {onCreateCase && (
-              <button
-                type="button"
-                data-action="create-case-always"
-                onClick={onCreateCase}
-                className="px-2.5 py-1 rounded-lg bg-[#1E469B] hover:bg-[#16377E] active:scale-95 text-white text-[10.5px] font-black shadow-xs transition-all flex items-center gap-1 cursor-pointer"
-                title={isTl ? 'Pumunta sa Cases para gawan ng pormal na kaso ang inirereklamo' : 'Open Cases form for the reported student'}
-              >
-                <span>＋</span>
-                <span>{isTl ? 'Gumawa ng Kaso para sa Inirereklamo' : 'Create Case for Respondent'}</span>
-              </button>
-            )}
-          </div>
+                  {/* CARD 1: RESPONDENT CARD (Aligned & Clean) */}
+                  <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-2.5 shadow-xs space-y-2">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-1.5">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
+                        {isTl ? 'Inirereklamo (Respondent)' : 'Respondent'}
+                      </span>
+
+                      {onCreateCase && (
+                        <button
+                          type="button"
+                          data-action="create-case-always"
+                          onClick={onCreateCase}
+                          className="px-2.5 py-1 rounded-lg bg-[#1E469B] hover:bg-[#16377E] active:scale-[0.97] text-white text-[10px] font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer"
+                          title={isTl ? 'Gumawa ng pormal na kaso para sa inirereklamo' : 'Create case for respondent'}
+                        >
+                          <span>+</span>
+                          <span>{isTl ? 'Gumawa ng Kaso' : 'Create Case'}</span>
+                        </button>
+                      )}
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                      <div className="rounded-lg bg-white/80 dark:bg-[#0B1527]/80 p-2 border border-sky-100 dark:border-sky-900/40">
-                        <p className="text-[9.5px] font-extrabold uppercase text-[#4A608A] dark:text-[#94A8D0]">
-                          {isTl ? 'Pangalan ng Inirereklamo' : 'Student Name'}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="rounded-lg bg-slate-50/80 dark:bg-[#0B1527]/80 px-2.5 py-2 border border-slate-200/60 dark:border-white/5">
+                        <p className="text-[9px] font-black uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
+                          {isTl ? 'Pangalan' : 'Student Name'}
                         </p>
-                        <p className="text-[13px] font-black text-[#0B1F4D] dark:text-white mt-0.5 truncate" title={parsed.respondentName}>
+                        <p className="text-xs font-normal text-[#0B1F4D] dark:text-slate-200 mt-0.5 truncate" title={parsed.respondentName}>
                           {parsed.respondentName}
                         </p>
                       </div>
 
-                      <div className="rounded-lg bg-white/80 dark:bg-[#0B1527]/80 p-2 border border-sky-100 dark:border-sky-900/40">
-                        <p className="text-[9.5px] font-extrabold uppercase text-[#4A608A] dark:text-[#94A8D0]">
+                      <div className="rounded-lg bg-slate-50/80 dark:bg-[#0B1527]/80 px-2.5 py-2 border border-slate-200/60 dark:border-white/5">
+                        <p className="text-[9px] font-black uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
                           {isTl ? 'Section / Palatandaan' : 'Section / Attributes'}
                         </p>
-                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate" title={parsed.respondentDetails || none}>
+                        <p className="text-xs font-normal text-[#0B1F4D] dark:text-slate-200 mt-0.5 truncate" title={parsed.respondentDetails || none}>
                           {parsed.respondentDetails || none}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* CARD 2: NARRATIVE CARD (Salaysay ng Pangyayari) */}
+                  {/* COMPACT METRIC STRIP: WHEN · LOCATION · WITNESSES (Pantay na pantay, Bold Labels, Regular Text) */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="p-2.5 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs">
+                      <p className="text-[9px] font-black uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
+                        {isTl ? 'Kailan' : 'When'}
+                      </p>
+                      <p className="text-xs font-normal text-[#0B1F4D] dark:text-slate-200 mt-1 truncate" title={c.when || none}>
+                        {c.when || none}
+                      </p>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs">
+                      <p className="text-[9px] font-black uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
+                        {isTl ? 'Saan' : 'Where'}
+                      </p>
+                      <p className="text-xs font-normal text-[#0B1F4D] dark:text-slate-200 mt-1 truncate" title={c.where || none}>
+                        {c.where || none}
+                      </p>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs">
+                      <p className="text-[9px] font-black uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
+                        {isTl ? 'Mga Saksi' : 'Witnesses'}
+                      </p>
+                      <p className="text-xs font-normal text-[#0B1F4D] dark:text-slate-200 mt-1 truncate" title={c.witnesses || none}>
+                        {c.witnesses || (isTl ? 'Wala' : 'None')}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* NARRATIVE STATEMENT (Pantay, Bold Label, Regular Answer) */}
                   <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-3 shadow-xs space-y-2">
                     <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-1.5">
-                      <span className="text-[10.5px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                        <FileText className="w-3.5 h-3.5 text-sky-500" />
-                        <span>{isTl ? 'Buong Salaysay ng Pangyayari (Narrative)' : 'Official Narrative of What Happened'}</span>
+                      <span className="text-[10px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
+                        {isTl ? 'Salaysay ng Pangyayari (Statement)' : 'Narrative Statement'}
                       </span>
                       {parsed.reporterType && (
-                        <span className="text-[9.5px] font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
                           {parsed.reporterType}
                         </span>
                       )}
                     </div>
-                    <p className="text-[12.5px] leading-relaxed text-[#0B1F4D] dark:text-slate-100 font-medium whitespace-pre-wrap p-2.5 rounded-lg bg-slate-50/70 dark:bg-[#0B1527]/70 border border-slate-200/60 dark:border-white/5">
-                      {parsed.cleanNarrative}
-                    </p>
+                    <div className="p-2.5 rounded-lg bg-slate-50/80 dark:bg-[#0B1527]/80 border border-slate-200/60 dark:border-white/5">
+                      <p className="text-xs leading-relaxed text-[#0B1F4D] dark:text-slate-200 font-normal whitespace-pre-wrap">
+                        {parsed.cleanNarrative}
+                      </p>
+                    </div>
                   </div>
 
                   {/* EVIDENCE PHOTOS CARD (Photos of injuries, damages, vape/contraband, screenshots) */}
                   {parsed.evidencePhotos.length > 0 && (
-                    <div className="rounded-xl border border-rose-200 dark:border-rose-900/60 bg-gradient-to-br from-rose-50/40 via-white to-orange-50/20 dark:from-[#2A1018] dark:to-[#0B1527] p-3 shadow-xs space-y-2">
-                      <div className="flex items-center justify-between border-b border-rose-100 dark:border-rose-900/40 pb-1.5">
-                        <span className="text-[10.5px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
-                          <Camera className="w-3.5 h-3.5 text-sky-500" />
-                          <span>{isTl ? 'Kalakip na Litrato / Pisikal na Ebidensya' : 'Attached Photo & Physical Evidence'}</span>
+                    <div className="rounded-xl border border-rose-200 dark:border-rose-900/60 bg-gradient-to-br from-rose-50/40 via-white to-orange-50/20 dark:from-[#2A1018] dark:to-[#0B1527] p-2 shadow-xs space-y-1.5">
+                      <div className="flex items-center justify-between border-b border-rose-100 dark:border-rose-900/40 pb-1">
+                        <span className="text-[9.5px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-300 flex items-center gap-1">
+                          <Camera className="w-3 h-3 text-rose-500" />
+                          <span>{isTl ? 'Kalakip na Ebidensya' : 'Photo Evidence'}</span>
                         </span>
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-400/30">
-                          {parsed.evidencePhotos.length} {isTl ? 'Katibayan' : 'Photos'}
+                        <span className="text-[9px] font-black px-1.5 py-0.2 rounded-full bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-400/30">
+                          {parsed.evidencePhotos.length} {isTl ? 'Litrato' : 'Photos'}
                         </span>
                       </div>
-                      <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
-                        {isTl
-                          ? 'I-click ang alinmang litrato upang palakihin at masusing suriin.'
-                          : 'Click any photo evidence to view full resolution.'}
-                      </p>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+                      <div className="grid grid-cols-3 gap-2 pt-0.5">
                         {parsed.evidencePhotos.map((imgSrc, pIdx) => (
                           <button
                             key={pIdx}
                             type="button"
                             onClick={() => setView({ src: imgSrc, label: `Ebidensya ${pIdx + 1}` })}
                             title={isTl ? 'Pindutin para palakihin ang ebidensya' : 'Enlarge evidence'}
-                            className="relative group rounded-xl overflow-hidden border-2 border-rose-300 dark:border-rose-800 aspect-video bg-black/10 hover:ring-4 hover:ring-rose-500/30 transition-all cursor-pointer shadow-xs"
+                            className="relative group rounded-lg overflow-hidden border border-rose-300 dark:border-rose-800 aspect-video bg-black/10 hover:ring-2 hover:ring-rose-500/40 transition-all cursor-pointer shadow-xs active:scale-[0.97]"
                           >
                             <img src={imgSrc} alt={`Evidence ${pIdx + 1}`} className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
+                            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold">
                               <span className='flex items-center gap-1'><Maximize2 className='w-3 h-3' /><span>{isTl ? 'Palakihin' : 'Zoom'}</span></span>
                             </div>
-                            <span className="absolute bottom-1 left-1 px-1.5 py-0.2 rounded text-[9px] font-black bg-black/70 text-white">
-                              Ebidensya {pIdx + 1}
+                            <span className="absolute bottom-1 left-1 px-1 py-0.2 rounded text-[8px] font-black bg-black/70 text-white">
+                              {pIdx + 1}
                             </span>
                           </button>
                         ))}
@@ -1088,66 +1098,26 @@ const ConcernDetail: React.FC<{
                     </div>
                   )}
 
-                  {/* PABABA / VERTICAL STACKED MINI-CARDS (NO TRUNCATION, FULL TEXT DISPLAY) */}
-                  {/* CARD 3: WHEN (KAILAN) */}
-                  <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-3 shadow-xs space-y-1">
-                    <div className="flex items-center gap-1.5 text-[10.5px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                      <span>⏰</span>
-                      <span>{isTl ? 'Kailan Nangyari (When)' : 'When It Happened (Date & Time)'}</span>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-slate-50/70 dark:bg-[#0B1527]/70 border border-slate-200/60 dark:border-white/5">
-                      <p className="text-xs font-bold text-[#0B1F4D] dark:text-white leading-relaxed whitespace-pre-wrap break-words">
-                        {c.when || none}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* CARD 4: WHERE (SAAN) */}
-                  <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-3 shadow-xs space-y-1">
-                    <div className="flex items-center gap-1.5 text-[10.5px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                      <MapPin className="w-3.5 h-3.5 text-sky-500" />
-                      <span>{isTl ? 'Saan Nangyari (Where)' : 'Location of Incident (Where)'}</span>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-slate-50/70 dark:bg-[#0B1527]/70 border border-slate-200/60 dark:border-white/5">
-                      <p className="text-xs font-bold text-[#0B1F4D] dark:text-white leading-relaxed whitespace-pre-wrap break-words">
-                        {c.where || none}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* CARD 5: WITNESSES (MGA SAKSI) */}
-                  <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-3 shadow-xs space-y-1">
-                    <div className="flex items-center gap-1.5 text-[10.5px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                      <Users className="w-3.5 h-3.5 text-sky-500" />
-                      <span>{isTl ? 'Mga Saksi sa Pangyayari (Witnesses)' : 'Witnesses Present'}</span>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-slate-50/70 dark:bg-[#0B1527]/70 border border-slate-200/60 dark:border-white/5">
-                      <p className="text-xs font-bold text-[#0B1F4D] dark:text-white leading-relaxed whitespace-pre-wrap break-words">
-                        {c.witnesses || (isTl ? 'Wala / Hindi sinagot' : 'None / Not answered')}
-                      </p>
-                    </div>
-                  </div>
-
                   {/* TRUTHFULNESS & DATA PRIVACY BANNER */}
-                  <div className="flex items-center justify-between p-2.5 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20">
-                    <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                  <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20">
+                    <span className="text-[9.5px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                       <span>
                         {c.truthful
-                          ? (isTl ? 'Nangako ang estudyante na totoo ang buong salaysay (RA 10173 Protected).' : 'Student certified this report truthful under RA 10173.')
+                          ? (isTl ? 'Sertipikadong totoo ang salaysay (RA 10173 Protected).' : 'Student certified truthful under RA 10173.')
                           : (isTl ? 'Walang pormal na pangako.' : 'Uncertified submission.')}
                       </span>
                     </span>
-                    <span className="text-[9.5px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                    <span className="text-[8.5px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
                       VERIFIED
                     </span>
                   </div>
 
                   {/* REJECTION OR CASE LINK NOTICES */}
                   {c.status === 'Rejected' && (
-                    <div className="rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 p-3">
-                      <p className="text-[10px] font-black uppercase text-rose-800 dark:text-rose-300">
-                        {isTl ? 'Dahilan ng Pag-reject (Nakikita ng Estudyante)' : 'Rejection Reason'}
+                    <div className="rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 p-2">
+                      <p className="text-[9px] font-black uppercase text-rose-800 dark:text-rose-300">
+                        {isTl ? 'Dahilan ng Pag-reject' : 'Rejection Reason'}
                       </p>
                       <p className="text-xs font-semibold text-rose-900 dark:text-rose-100 mt-0.5">
                         {c.rejectReason || '—'}
@@ -1156,15 +1126,15 @@ const ConcernDetail: React.FC<{
                   )}
 
                   {c.status === 'Approved' && c.linkedCaseCode && (
-                    <div className="p-2.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 flex items-center justify-between">
+                    <div className="p-2 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 flex items-center justify-between">
                       <span className="text-xs text-[#0B1F4D] dark:text-white font-medium">
-                        {isTl ? 'Naka-link sa Opisyal na Kaso:' : 'Linked Case:'}
+                        {isTl ? 'Naka-link sa Kaso:' : 'Linked Case:'}
                       </span>
                       {onOpenCase ? (
                         <button
                           type="button"
                           onClick={() => onOpenCase(c.linkedCaseCode)}
-                          className="px-2.5 py-1 rounded bg-[#1E469B] text-white text-xs font-black shadow-xs hover:bg-[#16377E]"
+                          className="px-2.5 py-0.5 rounded bg-[#1E469B] text-white text-xs font-black shadow-xs hover:bg-[#16377E] active:scale-[0.97]"
                         >
                           {c.linkedCaseCode} ↗
                         </button>
@@ -1183,15 +1153,15 @@ const ConcernDetail: React.FC<{
             <div className={`${cardFoot} justify-end`}>
               {c.status === 'Pending' ? (
                 <>
-                  <button type="button" disabled={busy} data-action="reject" onClick={onReject} className={`${btn} px-4 py-2.5 saas-card-subtle text-rose-700 dark:text-rose-300`}>
+                  <button type="button" disabled={busy} data-action="reject" onClick={onReject} className={`${btn} px-3.5 py-2 text-xs saas-card-subtle text-rose-700 dark:text-rose-300 active:scale-[0.97]`}>
                     {isTl ? 'I-reject' : 'Reject'}
                   </button>
-                  <button type="button" disabled={busy} data-action="approve" onClick={onApprove} className={`${btn} px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50`}>
+                  <button type="button" disabled={busy} data-action="approve" onClick={onApprove} className={`${btn} px-4 py-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 active:scale-[0.97]`}>
                     {isTl ? 'I-approve' : 'Approve'}
                   </button>
                 </>
               ) : (
-                <button type="button" onClick={onOpenChat} className={`${btn} px-5 py-2.5 bg-[#1E469B] text-white`}>
+                <button type="button" onClick={onOpenChat} className={`${btn} px-4 py-2 text-xs bg-[#1E469B] text-white active:scale-[0.97]`}>
                   {c.chatStatus === 'Open' ? (isTl ? 'Buksan ang chat' : 'Open the chat') : isTl ? 'Tingnan ang chat (sarado)' : 'View chat (closed)'}
                 </button>
               )}

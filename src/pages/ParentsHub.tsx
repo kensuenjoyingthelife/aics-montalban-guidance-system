@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useConfirmChange } from '../components/ui/ConfirmChange';
 import { soundFX } from '../services/soundEngine';
+import { useAppConfig } from '../services/appConfig';
+import { Phone, PhoneCall, RefreshCw, CheckCircle, Clock, AlertTriangle, Calendar, MessageSquare, ChevronDown, ChevronRight, UserCheck, X } from 'lucide-react';
 import type { ToastNextAction } from './DashboardPage';
 import {
   ParentAppointmentItem,
@@ -145,9 +147,31 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
   // ---------------- derived data ----------------
   const studentByNo = useMemo(() => new Map(students.map((s) => [s.studentNumber, s])), [students]);
   const caseByCode = useMemo(() => new Map(cases.map((c) => [c.caseCode, c])), [cases]);
+  const cfg = useAppConfig();
+  const officeSummary = useMemo(() => {
+    const days = (cfg.officeHours?.days ?? ['Mon', 'Tue', 'Wed', 'Thu']).join('–');
+    const start = cfg.officeHours?.start ?? '08:00';
+    const end = cfg.officeHours?.end ?? '17:00';
+    const mins = cfg.officeHours?.slotMinutes ?? 45;
+    return {
+      textEn: `${days}, ${start} - ${end} (${mins} mins/slot)`,
+      textTl: `${days}, ${start} - ${end} (${mins} minuto bawat slot)`,
+      fullEn: `${days}, ${start} to ${end}`,
+      fullTl: `${days}, ${start} hanggang ${end}`,
+    };
+  }, [cfg.officeHours]);
+
+  // Active appointments: scheduled upcoming PLUS appointments marked "Did Not Attend" that have not been rescheduled yet!
+  const unresolvedNoShows = useMemo(
+    () => appointments.filter((a) => a.status === 'Did Not Attend' && !appointments.some((sub) => sub.rescheduledFrom === a.id)),
+    [appointments]
+  );
   const upcoming = useMemo(
-    () => appointments.filter((a) => a.status === 'Scheduled' && a.date >= today).sort(byDateTime),
-    [appointments, today]
+    () => [
+      ...unresolvedNoShows,
+      ...appointments.filter((a) => a.status === 'Scheduled' && a.date >= today),
+    ].sort(byDateTime),
+    [appointments, today, unresolvedNoShows]
   );
   const nextAptByCase = useMemo(() => {
     const m = new Map<string, ParentAppointmentItem>();
@@ -386,21 +410,49 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
           <div className="flex flex-wrap items-center gap-1.5">
             {a.date <= today && (
               <>
-                <button type="button" onClick={() => markAttended(a)} className={`${btn} bg-emerald-600 hover:bg-emerald-700 text-white`}>
-                   {isTl ? 'Dumalo' : 'Attended'}
+                <button type="button" onClick={() => markAttended(a)} className={`${btn} bg-emerald-600 hover:bg-emerald-700 active:scale-[0.97] transition-transform text-white inline-flex items-center gap-1.5`}>
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  {isTl ? 'Dumalo' : 'Attended'}
                 </button>
-                <button type="button" onClick={() => { setNoShowReason(NO_SHOW_REASONS[0]); setNoShowFor(a); }} className={`${btn} bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300`}>
-                   {isTl ? 'Hindi dumalo' : 'Did not attend'}
+                <button type="button" onClick={() => { setNoShowReason(NO_SHOW_REASONS[0]); setNoShowFor(a); }} className={`${btn} bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 active:scale-[0.97] transition-transform inline-flex items-center gap-1.5`}>
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  {isTl ? 'Hindi dumalo' : 'Did not attend'}
                 </button>
               </>
             )}
             {!a.noticeReceived && (
-              <button type="button" onClick={() => setContactFor({ caseCode: a.caseId, apt: a })} className={subtleBtn}>
-                 {isTl ? 'Tawagan' : 'Call parent'}
+              <button type="button" onClick={() => setContactFor({ caseCode: a.caseId, apt: a })} className={`${subtleBtn} active:scale-[0.97] transition-transform inline-flex items-center gap-1.5`}>
+                <PhoneCall className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
+                {isTl ? 'Tawagan' : 'Call parent'}
               </button>
             )}
-            <button type="button" onClick={() => setSchedule({ mode: 'reschedule', caseCode: a.caseId, from: a })} className={subtleBtn}>
-              ↻ {isTl ? 'Ilipat' : 'Reschedule'}
+            <button type="button" onClick={() => setSchedule({ mode: 'reschedule', caseCode: a.caseId, from: a })} className={`${subtleBtn} active:scale-[0.97] transition-transform inline-flex items-center gap-1.5`}>
+              <RefreshCw className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
+              {isTl ? 'Ilipat' : 'Reschedule'}
+            </button>
+          </div>
+        )}
+        {showActions && a.status === 'Did Not Attend' && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2.5 py-1 rounded-lg border border-rose-200 dark:border-rose-800 inline-flex items-center gap-1">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              {isTl ? 'Kailangang i-reschedule' : 'Needs reschedule'}
+            </span>
+            <button
+              type="button"
+              onClick={() => setSchedule({ mode: 'reschedule', caseCode: a.caseId, from: a })}
+              className={`${btn} bg-[#1E469B] hover:bg-[#16377E] text-white active:scale-[0.97] transition-transform inline-flex items-center gap-1.5 shadow-sm`}
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              {isTl ? 'Ilipat ang Petsa (Reschedule)' : 'Reschedule Conference'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setContactFor({ caseCode: a.caseId, apt: a })}
+              className={`${subtleBtn} active:scale-[0.97] transition-transform inline-flex items-center gap-1.5`}
+            >
+              <Phone className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
+              {isTl ? 'Tawagan ang Magulang' : 'Call Parent'}
             </button>
           </div>
         )}
@@ -566,7 +618,9 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
             <div>
               <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Mga conference' : 'Conferences'}</h2>
               <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
-                {isTl ? 'Lunes–Huwebes, 8:00 AM – 5:00 PM, 45 minuto bawat isa. Walang dobleng schedule.' : 'Mon–Thu, 8:00 AM – 5:00 PM, 45 minutes each. No double booking.'}
+                {isTl
+                  ? `${officeSummary.textTl}. Awtomatikong pinagbubukod ang mga kailangan pang ilipat.`
+                  : `${officeSummary.textEn}. Prioritizes missed appointments that need rescheduling.`}
               </p>
             </div>
             <div className="inline-flex p-1 rounded-lg saas-card-subtle gap-1">
@@ -586,22 +640,41 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
           <div className="p-4 sm:p-5 space-y-4 bg-[#F4F7FC] dark:bg-[#0B1527]">
             {calView === 'list' && (
               <>
-                {upcoming.length === 0 && (
+                {unresolvedNoShows.length > 0 && (
+                  <div className="rounded-xl border border-rose-300 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/20 p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                        <span className="text-xs font-extrabold uppercase tracking-wider text-rose-800 dark:text-rose-300">
+                          {isTl ? 'Kailangang Ilipat / Reschedule' : 'Needs Reschedule'} · {unresolvedNoShows.length}
+                        </span>
+                      </div>
+                      <span className="text-[11px] font-semibold text-rose-700 dark:text-rose-400">
+                        {isTl ? 'Hindi nakadalo ang magulang' : 'Parent did not attend previous schedule'}
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {unresolvedNoShows.map((a) => confRow(a))}
+                    </div>
+                  </div>
+                )}
+
+                {upcoming.filter((a) => a.status === 'Scheduled').length === 0 && unresolvedNoShows.length === 0 && (
                   <div className="py-8 text-center space-y-3">
                     <p className="text-sm font-bold text-[#0B1F4D] dark:text-white">{isTl ? 'Walang darating na conference.' : 'No upcoming conferences.'}</p>
                     {toSchedule.length > 0 && (
-                      <button type="button" onClick={() => setTab('schedule')} className={`${btn} bg-[#1E469B] text-white`}>
+                      <button type="button" onClick={() => setTab('schedule')} className={`${btn} bg-[#1E469B] text-white active:scale-[0.97]`}>
                         {isTl ? `${toSchedule.length} kaso ang kailangang i-schedule →` : `${toSchedule.length} case(s) need a date →`}
                       </button>
                     )}
                   </div>
                 )}
-                {[...new Set(upcoming.map((a) => a.date))].map((d) => (
+                {[...new Set(upcoming.filter((a) => a.status === 'Scheduled').map((a) => a.date))].map((d) => (
                   <div key={d} className="space-y-2">
                     <p className="text-[11px] font-extrabold tracking-[0.08em] uppercase text-[#4A608A] dark:text-[#94A8D0]">
-                      {dayTitle(d)} · {upcoming.filter((a) => a.date === d).length}
+                      {dayTitle(d)} · {upcoming.filter((a) => a.status === 'Scheduled' && a.date === d).length}
                     </p>
-                    {upcoming.filter((a) => a.date === d).map((a) => confRow(a))}
+                    {upcoming.filter((a) => a.status === 'Scheduled' && a.date === d).map((a) => confRow(a))}
                   </div>
                 ))}
                 {pastConfs.length > 0 && (
@@ -1050,6 +1123,20 @@ const ScheduleWindow: React.FC<{
   dayTitle: (iso: string) => string;
   smsReady: boolean | null;
 }> = ({ state, onClose, isTl, appointments, setAppointments, followUps, setFollowUps, caseByCode, studentByNo, confirmChange, onTriggerToast, ensureTask, afterSend, dayTitle, smsReady }) => {
+  const cfg = useAppConfig();
+  const officeSummary = useMemo(() => {
+    const days = (cfg.officeHours?.days ?? ['Mon', 'Tue', 'Wed', 'Thu']).join('–');
+    const start = cfg.officeHours?.start ?? '08:00';
+    const end = cfg.officeHours?.end ?? '17:00';
+    const mins = cfg.officeHours?.slotMinutes ?? 45;
+    return {
+      textEn: `${days}, ${start} - ${end} (${mins} mins/slot)`,
+      textTl: `${days}, ${start} - ${end} (${mins} minuto bawat slot)`,
+      fullEn: `${days}, ${start} to ${end}`,
+      fullTl: `${days}, ${start} hanggang ${end}`,
+    };
+  }, [cfg.officeHours]);
+
   const c = caseByCode.get(state.caseCode);
   const stu = c ? studentByNo.get(c.studentNumber) : undefined;
   const reschedule = state.mode === 'reschedule' && state.from;
@@ -1270,7 +1357,12 @@ const ScheduleWindow: React.FC<{
       {/* manual pick */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <div className="flex items-center justify-between mb-1"><label className="block text-xs font-bold" htmlFor="conf-date">{isTl ? 'O pumili ng araw' : 'Or pick a day'}</label><span className="text-[10.5px] font-extrabold text-sky-600 dark:text-sky-300">Lunes–Huwebes (8AM–5PM)</span></div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-xs font-bold" htmlFor="conf-date">{isTl ? 'O pumili ng araw' : 'Or pick a day'}</label>
+            <span className="text-[10.5px] font-extrabold text-[#1E469B] dark:text-[#7CB8F7]">
+              {isTl ? officeSummary.fullTl : officeSummary.fullEn}
+            </span>
+          </div>
           <input
             id="conf-date"
             type="date"
@@ -1284,7 +1376,9 @@ const ScheduleWindow: React.FC<{
           />
           {dateBad && (
             <p className="mt-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400">
-              {date < todayISO() ? (isTl ? 'Lumipas na ang araw na ito.' : 'This day has passed.') : isTl ? 'Lunes–Huwebes lamang bukas ang Guidance Office (8:00 AM – 5:00 PM).' : 'The Guidance Office is open Monday–Thursday only (8:00 AM – 5:00 PM).'}
+              {date < todayISO()
+                ? (isTl ? 'Lumipas na ang araw na ito.' : 'This day has passed.')
+                : (isTl ? `Bukas lamang ang Guidance Office tuwing ${officeSummary.fullTl}.` : `Guidance Office is open ${officeSummary.fullEn} only.`)}
             </p>
           )}
         </div>
@@ -1472,33 +1566,134 @@ const ContactWindow: React.FC<{
   };
 
   return (
-    <Overlay onClose={onClose} label={isTl ? 'Itala ang tawag' : 'Log a call'}>
-      <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Itala ang tawag o text' : 'Log a call or text'}</h3>
-      <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
-        {parentName} · <a className="font-mono font-bold text-[#1E469B] dark:text-[#7CB8F7]" href={`tel:${phone.replace(/\D/g, '')}`}>{phone || (isTl ? 'walang number' : 'no number')}</a>
-        {target.apt ? ` · ${isTl ? 'conference' : 'conference'}: ${target.apt.date} ${target.apt.timeSlot.split('–')[0].trim()}` : ''}
-      </p>
-      <div className="flex flex-wrap gap-1.5">
-        {(['Call', 'Text', 'Student call-out'] as const).map((m) => (
-          <button key={m} type="button" onClick={() => setMethod(m)} className={`px-3 py-1 rounded-lg text-xs font-bold border ${method === m ? 'bg-[#1E469B] border-[#1E469B] text-white' : 'border-[#D3DDEE] dark:border-[#253B66]'}`}>
-            {m === 'Call' ? (isTl ? ' Tawag' : ' Call') : m === 'Text' ? (isTl ? ' Text' : ' Text') : isTl ? '‍ Pinatawag ang estudyante' : '‍ Student call-out'}
-          </button>
-        ))}
-      </div>
-      <div className="grid grid-cols-1 gap-1.5">
-        {CONTACT_RESULTS.map((r) => (
-          <label key={r} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-bold cursor-pointer ${result === r ? 'border-[#1E469B] bg-[#EEF3FC] dark:bg-[#192D58]' : 'border-[#D3DDEE] dark:border-[#253B66]'}`}>
-            <input type="radio" name="result" checked={result === r} onChange={() => setResult(r)} className="accent-[#1E469B]" />
-            {isTl ? CONTACT_RESULTS_TL[r] : r}
+    <Overlay onClose={onClose} label={isTl ? 'Itala ang pakikipag-ugnayan' : 'Log parent contact'}>
+      <div className="space-y-4">
+        {/* Header with clear student/parent details */}
+        <div className="border-b border-[#DCE5F2] dark:border-[#1E3158] pb-3">
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-[#E4ECFC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7]">
+              <PhoneCall className="w-4 h-4" />
+            </span>
+            <div>
+              <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white leading-tight">
+                {isTl ? 'Tawagan o I-text ang Magulang' : 'Call or Text Parent'}
+              </h3>
+              <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                {parentName} · <span className="font-semibold">{c?.studentName ?? target.task?.studentName}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Big One-Tap Phone Number Dial Box */}
+        <div className="rounded-xl border-2 border-[#1E469B]/30 bg-[#EEF3FC]/50 dark:bg-[#13203B]/60 p-3.5 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
+              {isTl ? 'Numero ng Telepono' : 'Parent Phone Number'}
+            </p>
+            <p className="text-lg font-mono font-black text-[#0B1F4D] dark:text-white tracking-wide">
+              {phone || (isTl ? 'Walang nakatalang numero' : 'No recorded phone number')}
+            </p>
+            {target.apt && (
+              <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0] mt-0.5">
+                Conference: <span className="font-semibold">{target.apt.date} · {target.apt.timeSlot.split('–')[0].trim()}</span>
+              </p>
+            )}
+          </div>
+          {phone ? (
+            <a
+              href={`tel:${phone.replace(/\D/g, '')}`}
+              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.97] transition-transform text-white text-xs font-black whitespace-nowrap inline-flex items-center gap-2 shadow-sm"
+            >
+              <Phone className="w-4 h-4" />
+              {isTl ? 'Tawagan Ngayon' : 'Dial Number'}
+            </a>
+          ) : null}
+        </div>
+
+        {/* Method selection */}
+        <div>
+          <label className="block text-xs font-bold text-[#0B1F4D] dark:text-white mb-1.5">
+            {isTl ? 'Paraan ng Pakikipag-ugnayan' : 'Contact Method'}
           </label>
-        ))}
-      </div>
-      <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={isTl ? 'Tala (optional), hal. "Darating ng 9 AM"' : 'Note (optional), e.g. "Will come at 9 AM"'} className="w-full px-3 py-2 rounded-lg saas-card-subtle text-xs font-semibold" />
-      <div className="flex justify-end gap-2 pt-1">
-        <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg saas-card-subtle text-xs font-bold">{isTl ? 'Kanselahin' : 'Cancel'}</button>
-        <button type="button" disabled={busy} onClick={save} className="px-5 py-2 rounded-lg bg-[#1E469B] text-white text-xs font-extrabold disabled:opacity-50">
-          {busy ? (isTl ? 'Sine-save…' : 'Saving…') : isTl ? ' I-save' : ' Save'}
-        </button>
+          <div className="grid grid-cols-3 gap-2">
+            {(['Call', 'Text', 'Student call-out'] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMethod(m)}
+                className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all text-center ${
+                  method === m
+                    ? 'bg-[#1E469B] border-[#1E469B] text-white shadow-xs'
+                    : 'border-[#D3DDEE] dark:border-[#253B66] text-[#0B1F4D] dark:text-white hover:border-[#1E469B]'
+                }`}
+              >
+                {m === 'Call'
+                  ? isTl ? 'Tawag sa Phone' : 'Phone Call'
+                  : m === 'Text'
+                  ? isTl ? 'SMS / Text' : 'SMS Text'
+                  : isTl ? 'Pinatawag ang Bata' : 'Student Call-out'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Outcome quick choices */}
+        <div>
+          <label className="block text-xs font-bold text-[#0B1F4D] dark:text-white mb-1.5">
+            {isTl ? 'Ano ang naging resulta ng pakikipag-usap?' : 'What was the result?'}
+          </label>
+          <div className="grid grid-cols-1 gap-1.5">
+            {CONTACT_RESULTS.map((r) => {
+              const isSelected = result === r;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setResult(r)}
+                  className={`w-full text-left px-3.5 py-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-between ${
+                    isSelected
+                      ? 'border-[#1E469B] bg-[#EEF3FC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7]'
+                      : 'border-[#D3DDEE] dark:border-[#253B66] text-[#0B1F4D] dark:text-white hover:border-[#94A8D0]'
+                  }`}
+                >
+                  <span>{isTl ? CONTACT_RESULTS_TL[r] : r}</span>
+                  {isSelected && <span className="w-2 h-2 rounded-full bg-[#1E469B] dark:bg-[#7CB8F7]" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Note field */}
+        <div>
+          <input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder={isTl ? 'Karagdagang tala (hal. "Bukas ng 9 AM makakarating")' : 'Additional note (e.g. "Will come tomorrow at 9 AM")'}
+            className="w-full px-3.5 py-2.5 rounded-xl saas-card-subtle text-xs font-semibold"
+          />
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex justify-end gap-2 pt-2 border-t border-[#DCE5F2] dark:border-[#1E3158]">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl saas-card-subtle text-xs font-bold hover:border-[#1E469B]"
+          >
+            {isTl ? 'Kanselahin' : 'Cancel'}
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={save}
+            className="px-5 py-2 rounded-xl bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-black active:scale-[0.97] transition-transform disabled:opacity-50 inline-flex items-center gap-1.5 shadow-sm"
+          >
+            <CheckCircle className="w-3.5 h-3.5" />
+            {busy ? (isTl ? 'Sine-save…' : 'Saving…') : isTl ? 'I-save ang Resulta' : 'Save Contact Log'}
+          </button>
+        </div>
       </div>
     </Overlay>
   );

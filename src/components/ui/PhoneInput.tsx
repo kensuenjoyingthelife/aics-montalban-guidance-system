@@ -96,6 +96,7 @@ type PhoneInputProps = {
   /** Compact mode for table cells: smaller hint text. */
   compact?: boolean;
   id?: string;
+  disabled?: boolean;
 };
 
 export const PhoneInput: React.FC<PhoneInputProps> = ({
@@ -105,12 +106,14 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
   className = '',
   compact = false,
   id,
+  disabled = false,
 }) => {
   const check = checkPhMobile(value, isTl);
   const empty = phoneDigits(value).length === 0;
   const hintId = id ? `${id}-hint` : undefined;
 
   const handleChange = (next: string) => {
+    if (disabled) return;
     // Keep +63 visible so we can tell the user how to fix it; otherwise auto-format.
     if (next.trim().startsWith('+')) {
       onChange(next.replace(/[^\d+\s-]/g, ''));
@@ -137,6 +140,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
         id={id}
         type="tel"
         inputMode="numeric"
+        disabled={disabled}
         autoComplete="tel"
         placeholder="09XX-XXX-XXXX"
         value={value}

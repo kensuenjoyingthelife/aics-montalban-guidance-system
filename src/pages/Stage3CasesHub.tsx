@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { PhoneInput, checkPhMobile, formatPhMobile } from '../components/ui/PhoneInput';
+import { StudentGenderAvatar } from '../components/students/StudentGenderAvatar';
 import { SortControl, SortKey, loadSort, saveSort, timeOf, addedLabel } from '../components/ui/SortControl';
 import { useAppConfig, activeOffenses } from '../services/appConfig';
 import { DuotoneIcon } from '../components/ui/icons';
@@ -60,7 +61,7 @@ import {
   CaseHistoryEntry,
 } from '../services/supabaseClient';
 
-export type Stage3SubTab = 'add-report' | 'case-board' | 'students' | 'masterlist';
+export type Stage3SubTab = 'add-report' | 'case-board' | 'closed-cases' | 'students' | 'masterlist';
 
 /** A New Case started from a student's concern (Concerns > "+ Record a case") */
 export interface CasePrefill {
@@ -305,9 +306,10 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   // ==========================================================================
   const summaryStats = useMemo(() => {
     const activeCases = cases.filter((c) => c.status !== 'Resolved').length;
+    const closedCases = cases.filter((c) => c.status === 'Resolved').length;
     const watchStudents = students.filter((s) => s.minorOffenseCount >= 2).length;
     const totalStudents = students.length;
-    return { activeCases, watchStudents, totalStudents };
+    return { activeCases, closedCases, watchStudents, totalStudents };
   }, [cases, students]);
 
   // Selected Student Objects for Add Report
@@ -1411,6 +1413,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     const stepWords: Record<FlowAction['kind'], [string, string]> = {
       call: ['Student called to the Guidance Office', 'Tinawag ang estudyante sa Guidance Office'],
       explanation: ['Student explanation written', 'Naisulat ang paliwanag ng estudyante'],
+      schedule_conference: ['Parent conference scheduled', 'Naitakda ang conference ng magulang'],
+      conference_outcome: ['Parent conference outcome documented', 'Naitala ang kinalabasan ng conference'],
       notified: [`Parent notified (${a.kind === 'notified' ? a.how : ''})`, `Naabisuhan ang magulang (${a.kind === 'notified' ? a.how : ''})`],
       decision: [`Decision: ${a.kind === 'decision' ? a.decision : ''} · Sanction: ${a.kind === 'decision' ? a.sanction : ''}`, `Desisyon: ${a.kind === 'decision' ? a.decision : ''} · Sanction: ${a.kind === 'decision' ? a.sanction : ''}`],
       followup: ['Follow-up started (sanction being served)', 'Nagsimula ang follow-up (ginagawa ang sanction)'],
@@ -1847,6 +1851,12 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 tip: isTl ? 'Talaan ng mga kasong inaaksyunan' : 'List of active open cases',
               },
               {
+                id: 'closed-cases',
+                labelEn: `Closed Cases (${summaryStats.closedCases})`,
+                labelTl: `Mga Saradong Kaso (${summaryStats.closedCases})`,
+                tip: isTl ? 'Talaan ng mga natapos at naresolbang kaso' : 'List of resolved and closed cases',
+              },
+              {
                 id: 'students',
                 labelEn: `Student Masterlist (${students.length})`,
                 labelTl: `Talaan ng Estudyante (${students.length})`,
@@ -1997,9 +2007,6 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 className="w-full px-3.5 py-2 rounded-xl saas-card-subtle text-xs font-semibold text-[#0B1F4D] dark:text-white focus:outline-none focus:border-[#1E469B]"
               />
               <div className="-mt-2 flex items-center justify-between gap-3">
-                <p id="picker-hint" className="text-[11px] text-[#687FA8] dark:text-[#89A7DF] min-w-0">
-                  {isTl ? 'Tip: mag-type, tapos Enter para piliin.' : 'Tip: type, then press Enter to pick.'}
-                </p>
                 <SortControl id="picker" value={pickerSort} onChange={setPickerSort} isTl={isTl} />
                 <button
                   type="button"
@@ -2937,6 +2944,98 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
         )}
 
         {/* ==================================================================
+            SUB-TAB: CLOSED CASES ARCHIVE
+            ================================================================== */}
+        {subTab === 'closed-cases' && (
+          <section className="rounded-2xl saas-card overflow-hidden">
+            <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
+                  {isTl ? 'Mga Saradong Kaso' : 'Closed Cases'}
+                </h2>
+                <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                  {isTl
+                    ? 'Opisyal na talaan ng mga naresolbang kaso at tapos na sanctions sa AICS.'
+                    : 'Official record of resolved and closed student disciplinary cases.'}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300">
+                  {summaryStats.closedCases} {isTl ? 'Naresolba' : 'Resolved'}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-4 sm:p-5 space-y-3 bg-[#F4F7FC] dark:bg-[#0B1527]">
+              {(() => {
+                const closed = cases.filter((c) => c.status === 'Resolved');
+                if (closed.length === 0) {
+                  return (
+                    <div className="py-12 text-center space-y-2">
+                      <p className="text-sm font-bold text-[#4A608A] dark:text-[#94A8D0]">
+                        {isTl ? 'Walang saradong kaso sa kasalukuyan.' : 'No closed cases found.'}
+                      </p>
+                      <p className="text-xs text-[#687FA8] dark:text-[#89A7DF]">
+                        {isTl ? 'Kapag minarkahang Resolved ang kaso, lalabas ito rito.' : 'Cases marked as Resolved will be stored here.'}
+                      </p>
+                    </div>
+                  );
+                }
+
+                return closed.map((c) => (
+                  <div
+                    key={c.caseCode}
+                    onClick={() => {
+                      soundFX.playStepUnlock();
+                      setOpenCaseCode(c.caseCode);
+                    }}
+                    className="rounded-xl bg-white dark:bg-[#0F1A30] border border-[#D3DDEE] dark:border-[#253B66] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer hover:border-[#1E469B] hover:shadow-md transition-all active:scale-[0.99]"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <StudentGenderAvatar fullName={c.studentName} size="md" />
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                            {c.studentName}
+                          </span>
+                          <span className="font-mono text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7]">
+                            {c.caseCode}
+                          </span>
+                          <span className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                            · {c.gradeSection}
+                          </span>
+                        </div>
+                        <p className="text-xs font-semibold text-[#4A608A] dark:text-[#94A8D0] truncate mt-0.5">
+                          {isTl ? c.offenseTitleTl : c.offenseTitleEn} ({c.severity})
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="px-2.5 py-1 rounded-md text-[11px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300">
+                        {isTl ? 'Naresolba / Tapos na' : 'Resolved & Closed'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          soundFX.playStepUnlock();
+                          setOpenCaseCode(c.caseCode);
+                        }}
+                        className="px-3 py-1.5 rounded-lg saas-card-subtle text-xs font-extrabold text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#1E469B] hover:text-white transition-colors"
+                      >
+                        {isTl ? 'Tingnan ang Rekord' : 'View Record'}
+                      </button>
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
+          </section>
+        )}
+
+        {/* ==================================================================
             SUB-TAB 3: STUDENT DIRECTORY & OFFENSE HISTORY (PAGE 4)
             ================================================================== */}
         {subTab === 'students' && (
@@ -3064,9 +3163,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   className="px-6 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer hover:bg-[#F8FAFE] dark:hover:bg-[#13203B] transition-colors"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-10 h-10 rounded-full bg-[#E4ECFC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7] font-extrabold text-xs flex items-center justify-center shrink-0">
-                      {stu.initials}
-                    </div>
+                    <StudentGenderAvatar fullName={stu.fullName} size="md" />
                     <div className="min-w-0 space-y-0.5">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
@@ -4105,9 +4202,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full bg-[#1E469B] text-white font-extrabold text-sm flex items-center justify-center">
-                    {selectedStudentProfile.initials}
-                  </div>
+                  <StudentGenderAvatar fullName={selectedStudentProfile.fullName} size="lg" />
                   <div>
                     <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
                       {selectedStudentProfile.fullName}

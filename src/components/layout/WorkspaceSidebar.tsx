@@ -41,6 +41,19 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
   const isTl = locale === 'tl';
   const isDark = theme === 'dark';
 
+  const getBadgeStyle = (count: number) => {
+    if (count >= 5) {
+      // High count: Alert red / crimson
+      return 'bg-rose-600 text-white shadow-xs animate-pulse';
+    }
+    if (count >= 3) {
+      // Medium count: Orange alert
+      return 'bg-amber-500 text-[#0B1F4D] font-black shadow-xs';
+    }
+    // 1-2 items: Warm energetic amber/yellow as requested ("siguro yellow tapos pag marami na red")
+    return 'bg-amber-400 text-[#0B1F4D] font-black shadow-xs';
+  };
+
   const getBadgeCount = (item: MainCategoryNavItem): number | undefined => {
     if (item.badgeKey === 'cases') return openCasesCount;
     if (item.badgeKey === 'parents') return todayAppointmentsCount;
@@ -180,11 +193,9 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
 
                   {!collapsed && badgeVal !== undefined && badgeVal > 0 && (
                     <span
-                      className={`ml-2 px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0 ${
-                        isActive
-                          ? 'bg-[#7CB8F7] text-[#0B1F4D]'
-                          : 'bg-white/15 text-[#E4ECFC]'
-                      }`}
+                      className={`ml-2 px-2 py-0.5 rounded-full text-[11px] font-black shrink-0 transition-colors ${getBadgeStyle(
+                        badgeVal
+                      )}`}
                     >
                       {badgeVal}
                     </span>
@@ -246,11 +257,9 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
 
                   {!collapsed && badgeVal !== undefined && badgeVal > 0 && (
                     <span
-                      className={`ml-2 px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0 ${
-                        isActive
-                          ? 'bg-[#7CB8F7] text-[#0B1F4D]'
-                          : 'bg-white/15 text-[#E4ECFC]'
-                      }`}
+                      className={`ml-2 px-2 py-0.5 rounded-full text-[11px] font-black shrink-0 transition-colors ${getBadgeStyle(
+                        badgeVal
+                      )}`}
                     >
                       {badgeVal}
                     </span>

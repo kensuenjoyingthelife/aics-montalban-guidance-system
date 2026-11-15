@@ -18,8 +18,17 @@ import { recordSecurityAudit } from './services/securityEngine';
 import { StudentPinLockScreen } from './components/student/StudentPinLockScreen';
 
 export const App: React.FC = () => {
-  // Opening sequence plays on desktop/web; on Capacitor Native mobile, skip splash for instant 0ms app start
-  const [showSplash, setShowSplash] = useState<boolean>(() => !isCapacitorNativeApp());
+  // Instant 0ms start: Skip opening splash animation completely on Mobile Site and Mobile App (APK)
+  const [showSplash, setShowSplash] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    // If running in Capacitor Android/iOS App OR mobile browser viewport/device, NEVER show opening splash animation
+    const isMobileDevice =
+      window.innerWidth < 768 ||
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+      isCapacitorNativeApp();
+    if (isMobileDevice) return false;
+    return true;
+  });
   // no right-click (except in text boxes) and no inspect shortcuts in real builds
   useEffect(() => installNoInspect(), []);
 

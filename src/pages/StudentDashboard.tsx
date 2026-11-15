@@ -294,7 +294,13 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
         });
         prevStatusesRef.current = newStatuses;
 
-        setHistory(mapped);
+        // Only update state if data actually changed to prevent mobile screen flicker / glitching!
+        setHistory((prev) => {
+          if (JSON.stringify(prev) === JSON.stringify(mapped)) {
+            return prev; // Zero DOM re-render = Zero screen jump/glitch!
+          }
+          return mapped;
+        });
 
         // If no chat is selected yet, automatically select the most recent concern with an Open or Closed chat
         if (!selectedChatConcern && mapped.length > 0) {
