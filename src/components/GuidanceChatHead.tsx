@@ -24,11 +24,11 @@ const CHAT_WINDOW_SIZE_KEY = 'aics_aicy_window_size';
 const BALL_SIZE = 56;
 const MARGIN = 16;
 
-// Official Facebook Messenger Web Chatbox Dimensions: 328px width x 440px height
-// Allows full multi-turn conversations and guidance instructions to be readable without aggressive clipping
-const MIN_WINDOW_WIDTH = 220;
-const MIN_WINDOW_HEIGHT = 200;
-const DEFAULT_WINDOW_WIDTH = 328;
+// Official Facebook Messenger Web Chatbox Dimensions: 330px width x 440px height
+// Docks directly at the bottom-right corner, exactly like Facebook Messenger
+const MIN_WINDOW_WIDTH = 240;
+const MIN_WINDOW_HEIGHT = 220;
+const DEFAULT_WINDOW_WIDTH = 330;
 const DEFAULT_WINDOW_HEIGHT = 440;
 
 export const GuidanceChatHead: React.FC = () => {
@@ -143,8 +143,8 @@ export const GuidanceChatHead: React.FC = () => {
   const getWindowBounds = useCallback((w = customSize.w, h = customSize.h) => {
     const wWidth = Math.min(w, window.innerWidth - 8);
     const wHeight = Math.min(h, window.innerHeight - 8);
-    const maxX = Math.max(8, window.innerWidth - wWidth - 8);
-    const maxY = Math.max(8, window.innerHeight - wHeight - 8);
+    const maxX = Math.max(8, window.innerWidth - wWidth - 16);
+    const maxY = Math.max(8, window.innerHeight - wHeight - 16);
     return { minX: 8, maxX, minY: 8, maxY, wWidth, wHeight };
   }, [customSize.w, customSize.h]);
 
@@ -159,54 +159,23 @@ export const GuidanceChatHead: React.FC = () => {
 
   // Initialize size and position from localStorage or default
   useEffect(() => {
-    // Load saved window size (user's custom resized dimensions)
+    // Clear legacy localStorage positions so window and ball always dock cleanly at the bottom-right corner like real Messenger
     try {
-      const savedSize = localStorage.getItem(CHAT_WINDOW_SIZE_KEY);
-      if (savedSize) {
-        const ps = JSON.parse(savedSize);
-        // Keep valid user resized size
-        if (typeof ps.w === 'number' && typeof ps.h === 'number' && ps.w >= MIN_WINDOW_WIDTH && ps.h >= MIN_WINDOW_HEIGHT) {
-          setCustomSize({
-            w: Math.max(MIN_WINDOW_WIDTH, Math.min(window.innerWidth - 8, ps.w)),
-            h: Math.max(MIN_WINDOW_HEIGHT, Math.min(window.innerHeight - 8, ps.h)),
-          });
-        } else {
-          setCustomSize({ w: DEFAULT_WINDOW_WIDTH, h: DEFAULT_WINDOW_HEIGHT });
-        }
-      }
+      localStorage.removeItem(CHAT_WINDOW_POS_KEY);
+      localStorage.removeItem(CHAT_BALL_POS_KEY);
     } catch {}
 
     const initPositions = () => {
       const bBounds = getBallBounds();
-      let initBallX = bBounds.maxX;
-      let initBallY = Math.max(bBounds.minY, window.innerHeight - BALL_SIZE - 28);
-
-      try {
-        const savedBall = localStorage.getItem(CHAT_BALL_POS_KEY);
-        if (savedBall) {
-          const p = JSON.parse(savedBall);
-          if (typeof p.x === 'number' && typeof p.y === 'number') {
-            initBallX = Math.min(Math.max(bBounds.minX, p.x), bBounds.maxX);
-            initBallY = Math.min(Math.max(bBounds.minY, p.y), bBounds.maxY);
-          }
-        }
-      } catch {}
+      // Dock ball exactly at bottom-right corner
+      const initBallX = bBounds.maxX;
+      const initBallY = Math.max(bBounds.minY, window.innerHeight - BALL_SIZE - 20);
       applyBallTransform(initBallX, initBallY, false);
 
+      // Dock chat window strictly at the bottom-right corner, 16px from edge
       const wBounds = getWindowBounds(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
-      let initWinX = Math.max(wBounds.minX, window.innerWidth - DEFAULT_WINDOW_WIDTH - 20);
-      let initWinY = Math.max(wBounds.minY, window.innerHeight - DEFAULT_WINDOW_HEIGHT - 20);
-
-      try {
-        const savedWin = localStorage.getItem(CHAT_WINDOW_POS_KEY);
-        if (savedWin) {
-          const pw = JSON.parse(savedWin);
-          if (typeof pw.x === 'number' && typeof pw.y === 'number') {
-            initWinX = Math.min(Math.max(wBounds.minX, pw.x), wBounds.maxX);
-            initWinY = Math.min(Math.max(wBounds.minY, pw.y), wBounds.maxY);
-          }
-        }
-      } catch {}
+      const initWinX = Math.max(wBounds.minX, window.innerWidth - DEFAULT_WINDOW_WIDTH - 20);
+      const initWinY = Math.max(wBounds.minY, window.innerHeight - DEFAULT_WINDOW_HEIGHT - 20);
       applyWindowTransform(initWinX, initWinY, false);
     };
 
