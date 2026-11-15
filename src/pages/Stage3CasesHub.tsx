@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Printer, Layers } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
@@ -14,7 +14,7 @@ import { CaseFlowPanel, FlowAction, flowState } from '../components/cases/CaseFl
 import { StatementStation } from '../components/cases/StatementStation';
 import { PrintFormsWindow } from '../components/cases/PrintFormsWindow';
 import { EvidencePanel } from '../components/cases/EvidencePanel';
-import { FORM_TITLES } from '../services/printForms';
+import { FORM_TITLES, buildBatchCallSlipsHtml, printHtml } from '../services/printForms';
 import { useConfirmChange } from '../components/ui/ConfirmChange';
 import { soundFX } from '../services/soundEngine';
 import { checkEmail } from '../services/validators';
@@ -2554,7 +2554,45 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   </button>
                 ))}
               </div>
-              <SortControl id="cases" value={caseSort} onChange={setCaseSort} isTl={isTl} />
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  data-action="batch-print-call-slips"
+                  onClick={() => {
+                    // Pick cases needing student call or immediate action (Step 1/2 or Open)
+                    const queue = cases.filter((c) => c.status !== 'Resolved' && (!c.step || c.step === 'Reported' || c.step === 'Student Called'));
+                    const toPrint = queue.length ? queue.slice(0, 4) : cases.slice(0, 4);
+                    if (!toPrint.length) {
+                      onTriggerToast(isTl ? 'Walang case na ma-print ang call slip.' : 'No cases available for call slip printing.');
+                      return;
+                    }
+                    soundFX.playStepUnlock();
+                    const html = buildBatchCallSlipsHtml(
+                      toPrint.map((c) => ({
+                        caseCode: c.caseCode,
+                        studentName: c.studentName,
+                        gradeSection: c.gradeSection,
+                        offenseTitle: c.offenseTitleEn,
+                        when: isTl ? 'Agad / Unang Period ng Guidance' : 'Immediate / Next Guidance Period',
+                      })),
+                      window.location.origin
+                    );
+                    printHtml(html);
+                    onTriggerToast(
+                      isTl
+                        ? `Naihanda na ang 4-in-1 Batch Call Slip sheet (${toPrint.map((x) => x.studentName).join(', ')}).`
+                        : `4-in-1 Batch Call Slip sheet generated (${toPrint.map((x) => x.studentName).join(', ')}).`
+                    );
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg border border-[#1E469B]/40 bg-[#EEF3FC] dark:bg-[#13203B] hover:bg-[#E0EBFB] dark:hover:bg-[#192A4E] text-[#1E469B] dark:text-[#7CB8F7] text-xs font-bold transition-all active:scale-[0.97] inline-flex items-center gap-1.5 shadow-xs"
+                  title="Morning Routine: Batch print 4 call slips on a single bond paper"
+                >
+                  <Layers className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
+                  <span>{isTl ? 'Batch Call Slips (4-in-1 Sheet)' : 'Batch Call Slips (4-in-1 Sheet)'}</span>
+                </button>
+                <SortControl id="cases" value={caseSort} onChange={setCaseSort} isTl={isTl} />
+              </div>
             </div>
             {/* more filters: grade, period, overdue / waiting sanction */}
             <div className="px-6 py-2 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center gap-2" data-case-filters>

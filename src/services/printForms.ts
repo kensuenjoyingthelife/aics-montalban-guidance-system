@@ -51,14 +51,19 @@ export function buildFormHtml(f: FormInput, origin = ''): string {
   const today = long(new Date().toISOString());
   const parent = stu?.parentName || '';
   const config = getAppConfig();
+  const campus = config.campus || {
+    schoolName: 'ASIAN INSTITUTE OF COMPUTER STUDIES',
+    campusName: 'Montalban Campus',
+    campusAddress: 'Rodriguez, Rizal',
+  };
   const signer = f.signer || config.signatories?.guidanceAssociate || 'Maurice Enriquez';
   let title = FORM_TITLES[f.kind][0];
   const head = `<header>
     <div class="header-left">
       <img src="${esc(origin)}/aics-logo.jpg" alt="AICS Seal" onerror="this.style.display='none'">
       <div>
-        <div class="school-title">ASIAN INSTITUTE OF COMPUTER STUDIES</div>
-        <div class="school-sub">Montalban Campus · Rodriguez, Rizal</div>
+        <div class="school-title">${esc(campus.schoolName || 'ASIAN INSTITUTE OF COMPUTER STUDIES')}</div>
+        <div class="school-sub">${esc(campus.campusName || 'Montalban Campus')} · ${esc(campus.campusAddress || 'Rodriguez, Rizal')}</div>
         <div class="office-tag">Guidance &amp; Student Affairs Office</div>
       </div>
     </div>
@@ -168,7 +173,93 @@ export function printHtml(html: string): boolean {
   setTimeout(() => {
     frame.contentWindow?.focus();
     frame.contentWindow?.print();
-    setTimeout(() => frame.remove(), 2000);
-  }, 400);
+    setTimeout(() => frame.remove(), 1000);
+  }, 350);
   return true;
+}
+
+/** 4-in-1 Compact Call Slip Batch Sheet (Morning Routine Optimizer) */
+export function buildBatchCallSlipsHtml(
+  items: Array<{ caseCode: string; studentName: string; gradeSection: string; offenseTitle: string; when?: string }>,
+  origin = ''
+): string {
+  const config = getAppConfig();
+  const campus = config.campus || {
+    schoolName: 'ASIAN INSTITUTE OF COMPUTER STUDIES',
+    campusName: 'Montalban Campus',
+    campusAddress: 'Rodriguez, Rizal',
+  };
+  const signer = config.signatories?.guidanceAssociate || 'Maurice Enriquez';
+
+  const slipsHtml = items.slice(0, 4).map((it) => `
+    <div class="slip">
+      <div class="slip-header">
+        <img src="${esc(origin)}/aics-logo.jpg" alt="AICS Seal" onerror="this.style.display='none'">
+        <div class="slip-title-box">
+          <div class="school-name">${esc(campus.schoolName)}</div>
+          <div class="campus-sub">${esc(campus.campusName)} · ${esc(campus.campusAddress)}</div>
+          <div class="office-sub">Guidance Office · Official Call Slip</div>
+        </div>
+        <div class="slip-badge">CALL SLIP</div>
+      </div>
+
+      <div class="slip-meta">
+        <div><strong>Student:</strong> ${esc(it.studentName)}</div>
+        <div><strong>Section:</strong> ${esc(it.gradeSection)}</div>
+        <div><strong>Case Code:</strong> <span style="font-family:monospace;font-weight:bold;">${esc(it.caseCode)}</span></div>
+        <div><strong>Reason:</strong> ${esc(it.offenseTitle)}</div>
+        <div style="grid-column: span 2; margin-top: 2px;">
+          <strong>Reporting Time:</strong> ${esc(it.when || 'Immediate / Next Guidance Period')}
+        </div>
+      </div>
+
+      <div class="slip-instr">
+        Adviser / Subject Teacher: Please excuse the student for an intake interview. Return to class after the meeting.
+      </div>
+
+      <div class="slip-footer">
+        <div class="sig-area">
+          <div class="sig-line"></div>
+          <div>${esc(signer)}</div>
+          <div style="font-size: 8px; color: #64748B;">Guidance Associate</div>
+        </div>
+        <div class="sig-area">
+          <div class="sig-line"></div>
+          <div>Time In / Time Out</div>
+          <div style="font-size: 8px; color: #64748B;">Guidance Room Log</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Batch Call Slips (4-in-1)</title>
+  <style>
+    @page { size: portrait; margin: 8mm; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #0B1F4D; margin: 0; padding: 0; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 8mm; height: 96vh; }
+    .slip { border: 1.5px dashed #64748B; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; background: #FFF; }
+    .slip-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1.5px solid #0B1F4D; padding-bottom: 6px; margin-bottom: 6px; }
+    .slip-header img { width: 36px; height: 36px; object-fit: contain; }
+    .slip-title-box { text-align: center; flex: 1; margin: 0 4px; }
+    .school-name { font-size: 9px; font-weight: 900; }
+    .campus-sub { font-size: 8px; color: #475569; }
+    .office-sub { font-size: 8.5px; font-weight: 800; color: #1E469B; text-transform: uppercase; }
+    .slip-badge { font-size: 8px; font-weight: 900; background: #0B1F4D; color: #FFF; padding: 2px 6px; border-radius: 3px; }
+    .slip-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 9.5px; margin-bottom: 6px; }
+    .slip-instr { font-size: 8px; color: #475569; font-style: italic; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 4px 6px; border-radius: 4px; margin-bottom: 8px; }
+    .slip-footer { display: flex; justify-content: space-between; gap: 12px; margin-top: auto; }
+    .sig-area { text-align: center; flex: 1; font-size: 8.5px; font-weight: bold; }
+    .sig-line { border-bottom: 1px solid #0B1F4D; height: 22px; margin-bottom: 2px; }
+  </style>
+</head>
+<body>
+  <div class="grid">
+    ${slipsHtml}
+  </div>
+</body>
+</html>`;
 }

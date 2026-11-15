@@ -392,6 +392,50 @@ const PeopleSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
   useEffect(() => setDays(cfg.counselorDays), [cfg.counselorDays]);
   const [edit, setEdit] = useState<PersonSchedule | 'new' | null>(null);
 
+  // Dedicated Campus & School Header State (Customizable for any AICS branch or school year)
+  const [schoolName, setSchoolName] = useState(cfg.campus?.schoolName || 'ASIAN INSTITUTE OF COMPUTER STUDIES');
+  const [campusName, setCampusName] = useState(cfg.campus?.campusName || 'Montalban Campus');
+  const [campusAddress, setCampusAddress] = useState(cfg.campus?.campusAddress || 'Rodriguez, Rizal');
+  const [schoolYear, setSchoolYear] = useState(cfg.campus?.schoolYear || 'S.Y. 2026 - 2027');
+  const [campusPhone, setCampusPhone] = useState(cfg.campus?.contactNumber || '(02) 8997-2026 / 0917-800-0839');
+  const [campusEmail, setCampusEmail] = useState(cfg.campus?.officialEmail || 'aicsmontalbansafeguard@gmail.com');
+  const [savingCampus, setSavingCampus] = useState(false);
+
+  useEffect(() => {
+    setSchoolName(cfg.campus?.schoolName || 'ASIAN INSTITUTE OF COMPUTER STUDIES');
+    setCampusName(cfg.campus?.campusName || 'Montalban Campus');
+    setCampusAddress(cfg.campus?.campusAddress || 'Rodriguez, Rizal');
+    setSchoolYear(cfg.campus?.schoolYear || 'S.Y. 2026 - 2027');
+    setCampusPhone(cfg.campus?.contactNumber || '(02) 8997-2026 / 0917-800-0839');
+    setCampusEmail(cfg.campus?.officialEmail || 'aicsmontalbansafeguard@gmail.com');
+  }, [cfg.campus]);
+
+  const campusChanged =
+    schoolName !== (cfg.campus?.schoolName || 'ASIAN INSTITUTE OF COMPUTER STUDIES') ||
+    campusName !== (cfg.campus?.campusName || 'Montalban Campus') ||
+    campusAddress !== (cfg.campus?.campusAddress || 'Rodriguez, Rizal') ||
+    schoolYear !== (cfg.campus?.schoolYear || 'S.Y. 2026 - 2027') ||
+    campusPhone !== (cfg.campus?.contactNumber || '(02) 8997-2026 / 0917-800-0839') ||
+    campusEmail !== (cfg.campus?.officialEmail || 'aicsmontalbansafeguard@gmail.com');
+
+  const saveCampus = async () => {
+    setSavingCampus(true);
+    const newCampus = {
+      schoolName: schoolName.trim() || 'ASIAN INSTITUTE OF COMPUTER STUDIES',
+      campusName: campusName.trim() || 'Montalban Campus',
+      campusAddress: campusAddress.trim() || 'Rodriguez, Rizal',
+      schoolYear: schoolYear.trim() || 'S.Y. 2026 - 2027',
+      contactNumber: campusPhone.trim() || '(02) 8997-2026 / 0917-800-0839',
+      officialEmail: campusEmail.trim() || 'aicsmontalbansafeguard@gmail.com',
+    };
+    const prev = cfg.campus;
+    const ok = await saveConfig('campus', newCampus);
+    setSavingCampus(false);
+    if (!ok) return toast(NOT_SAVED(isTl));
+    soundFX.playSuccessCheck();
+    toast(isTl ? ' Na-save ang Campus at Header configuration.' : ' Campus header settings saved successfully.', () => void saveConfig('campus', prev));
+  };
+
   // Dedicated Official Signatories State (Customizable for letters, call slips, & DepEd reports)
   const [sigGuidance, setSigGuidance] = useState(cfg.signatories?.guidanceAssociate || 'Maurice Enriquez');
   const [sigCounselor, setSigCounselor] = useState(cfg.signatories?.guidanceCounselor || 'Registered Guidance Counselor (RGC)');
@@ -518,6 +562,96 @@ const PeopleSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
             className={`${primary} active:scale-[0.97] transition-all`}
           >
             {savingSignatories ? (isTl ? 'Sine-save…' : 'Saving…') : isTl ? 'I-save ang mga Pipirma' : 'Save Signatories'}
+          </button>
+        </div>
+      </section>
+
+      {/* CARD 2: CAMPUS & OFFICIAL LETTERHEAD SETTINGS */}
+      <section className={`${card} p-5 space-y-4`} data-section="campus">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#DCE5F2] dark:border-[#1E3158] pb-3">
+          <div>
+            <h2 className={h2}>{isTl ? 'Impormasyon ng Campus at Liham (Letterhead)' : 'Campus & Letterhead Header Configuration'}</h2>
+            <p className={sub}>
+              {isTl
+                ? 'Nako-customize ang pangalan ng paaralan, branch, address, at school year para sa lahat ng official forms.'
+                : 'Customizable school institution, branch, address, and academic school year for all printed forms.'}
+            </p>
+          </div>
+          <span className="px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+            {isTl ? 'Multi-Campus Ready' : 'Multi-Campus Ready'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <label className="block">
+            <span className={label}>{isTl ? 'Pangalan ng Institusyon' : 'Institution / School Name'}</span>
+            <input
+              type="text"
+              value={schoolName}
+              onChange={(e) => setSchoolName(e.target.value)}
+              className={input}
+            />
+          </label>
+
+          <label className="block">
+            <span className={label}>{isTl ? 'Campus / Branch' : 'Campus / Branch'}</span>
+            <input
+              type="text"
+              value={campusName}
+              onChange={(e) => setCampusName(e.target.value)}
+              className={input}
+            />
+          </label>
+
+          <label className="block">
+            <span className={label}>{isTl ? 'Lugar / Address' : 'Municipality / Address'}</span>
+            <input
+              type="text"
+              value={campusAddress}
+              onChange={(e) => setCampusAddress(e.target.value)}
+              className={input}
+            />
+          </label>
+
+          <label className="block">
+            <span className={label}>{isTl ? 'Taong Panuruan (School Year)' : 'Academic School Year'}</span>
+            <input
+              type="text"
+              value={schoolYear}
+              onChange={(e) => setSchoolYear(e.target.value)}
+              className={input}
+            />
+          </label>
+
+          <label className="block">
+            <span className={label}>{isTl ? 'Opisyal na Telepono / Mobile' : 'Office Phone / Mobile'}</span>
+            <input
+              type="text"
+              value={campusPhone}
+              onChange={(e) => setCampusPhone(e.target.value)}
+              className={input}
+            />
+          </label>
+
+          <label className="block">
+            <span className={label}>{isTl ? 'Opisyal na Email' : 'Official Guidance Email'}</span>
+            <input
+              type="email"
+              value={campusEmail}
+              onChange={(e) => setCampusEmail(e.target.value)}
+              className={input}
+            />
+          </label>
+        </div>
+
+        <div className="flex justify-end pt-1">
+          <button
+            type="button"
+            disabled={!campusChanged || savingCampus}
+            onClick={() => void saveCampus()}
+            className={`${primary} active:scale-[0.97] transition-all`}
+          >
+            {savingCampus ? (isTl ? 'Sine-save…' : 'Saving…') : isTl ? 'I-save ang Campus Info' : 'Save Campus Info'}
           </button>
         </div>
       </section>

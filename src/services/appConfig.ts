@@ -89,6 +89,15 @@ export interface OffenseRow extends OffenseHandbookRule {
   sortOrder: number;
 }
 
+export interface CampusConfig {
+  schoolName: string;
+  campusName: string;
+  campusAddress: string;
+  contactNumber: string;
+  officialEmail: string;
+  schoolYear: string;
+}
+
 export interface SignatoriesConfig {
   guidanceAssociate: string;
   guidanceAssociateTitle: string;
@@ -113,6 +122,7 @@ export interface AppConfig {
   pin: { salt: string; hash: string } | null;
   studentFields: StudentFields;
   signatories: SignatoriesConfig;
+  campus: CampusConfig;
 }
 
 export const DEFAULTS: AppConfig = {
@@ -128,6 +138,14 @@ export const DEFAULTS: AppConfig = {
   retention: { idImageDays: 30 },
   counselorDays: ['Tue', 'Thu'],
   closedDays: [],
+  campus: {
+    schoolName: 'ASIAN INSTITUTE OF COMPUTER STUDIES',
+    campusName: 'Montalban Campus',
+    campusAddress: 'Rodriguez, Rizal',
+    contactNumber: '(02) 8997-2026 / 0917-800-0839',
+    officialEmail: 'aicsmontalbansafeguard@gmail.com',
+    schoolYear: 'S.Y. 2026 - 2027',
+  },
   signatories: {
     guidanceAssociate: 'Maurice Enriquez',
     guidanceAssociateTitle: 'Guidance Associate & Student Affairs',
@@ -259,6 +277,7 @@ export async function loadAppConfig(): Promise<boolean> {
     pin: (kv.get('app_pin') as { salt: string; hash: string } | undefined) ?? null,
     studentFields: merge(DEFAULTS.studentFields, kv.get('student_fields')),
     signatories: merge(DEFAULTS.signatories, kv.get('signatories')),
+    campus: merge(DEFAULTS.campus, kv.get('campus')),
     closedDays: (closed ?? []).map((r) => ({ id: Number(r.id), day: s(r.day).slice(0, 10), reason: s(r.reason) })),
     people: (people ?? []).map((r) => ({ id: Number(r.id), role: s(r.role), name: s(r.name), days: (r.days as string[]) ?? [], start: s(r.start_time), end: s(r.end_time), note: s(r.note) })),
     offenses: offenses && offenses.length ? offenses.map(toOffense) : DEFAULTS.offenses,
@@ -269,7 +288,7 @@ export async function loadAppConfig(): Promise<boolean> {
 
 /** Save one settings key (JSON). Updates the screen only when the database said OK. */
 export async function saveConfig(
-  key: 'office_hours' | 'case_rules' | 'security' | 'sms_templates' | 'retention' | 'counselor_days' | 'app_pin' | 'student_fields' | 'signatories',
+  key: 'office_hours' | 'case_rules' | 'security' | 'sms_templates' | 'retention' | 'counselor_days' | 'app_pin' | 'student_fields' | 'signatories' | 'campus',
   value: unknown
 ): Promise<boolean> {
   try {
@@ -291,6 +310,8 @@ export async function saveConfig(
     counselor_days: 'counselorDays',
     app_pin: 'pin',
     student_fields: 'studentFields',
+    signatories: 'signatories',
+    campus: 'campus',
   };
   set({ [map[key]]: value } as Partial<AppConfig>);
   return true;
