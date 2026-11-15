@@ -374,13 +374,14 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     return { type: 'correct', label: 'Matched ✓' };
   }, [regConfirmPassword, regPassword]);
 
-  // 9. 5-Digit Quick Unlock PIN (for mobile & daily login convenience)
+  // 9. 5-Digit Quick Unlock PIN (Required strictly for Mobile App)
   const quickPinStatus = useMemo(() => {
+    if (!isMobileDevice) return { type: 'correct', label: 'Web Mode (Not Required)' };
     const cleaned = regQuickPin.trim();
     if (!cleaned) return { type: 'not_input', label: 'Not Input' };
     if (!/^\d{5}$/.test(cleaned)) return { type: 'wrong', label: 'Must be 5 digits' };
     return { type: 'correct', label: '5-Digit PIN Set ✓' };
-  }, [regQuickPin]);
+  }, [regQuickPin, isMobileDevice]);
 
   // Check if form is ready to submit (Student ID card is no longer required as face selfie is captured)
   const isRegisterFormValid =
@@ -478,7 +479,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       if (personalPhotoStatus.type !== 'correct') missingFields.push(isTl ? 'Live Photo Selfie / Face Verification' : 'Live Face Selfie / Photo Verification');
       if (passwordStatus.type !== 'correct') missingFields.push(isTl ? 'Password (6+ karakter, may 1+ numero, malaking titik at simbolo)' : 'Password (6+ chars with number, uppercase & symbol)');
       if (confirmPasswordStatus.type !== 'correct') missingFields.push(isTl ? 'Confirm Password (dapat tugma sa nilagay mong password)' : 'Confirm Password (must match your password)');
-      if (quickPinStatus.type !== 'correct') missingFields.push(isTl ? '5-Digit PIN para sa mabilisang login' : '5-Digit Quick Unlock PIN');
+      if (isMobileDevice && quickPinStatus.type !== 'correct') missingFields.push(isTl ? '5-Digit PIN para sa mabilisang login ng mobile app' : '5-Digit Quick Unlock PIN (Mobile App)');
 
       const msg = isTl
         ? 'May mga kulang o maling impormasyon pa sa iyong form. Pakisuyong kumpletuhin ang mga ito:'
@@ -1538,32 +1539,37 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     </div>
                   </div>
 
-                  {/* 5-Digit PIN for Login */}
-                  <div className="pt-3 border-t border-slate-200 dark:border-white/10 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-bold register-label flex items-center gap-1.5">
-                        <Lock className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span>ENTER PIN FOR LOGIN</span>
-                      </label>
-                      {renderBadge(quickPinStatus)}
+                  {/* 5-Digit PIN for Quick Mobile App Unlock (Visible strictly on Mobile App / Mobile Devices) */}
+                  {isMobileDevice && (
+                    <div className="pt-3 border-t border-slate-200 dark:border-white/10 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-bold register-label flex items-center gap-1.5">
+                          <Lock className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span>ENTER 5-DIGIT PIN (MOBILE APP QUICK UNLOCK)</span>
+                        </label>
+                        {renderBadge(quickPinStatus)}
+                      </div>
+                      <div className="relative w-full max-w-xs">
+                        <input
+                          type="password"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={5}
+                          required={isMobileDevice}
+                          placeholder="••••• (5 digits)"
+                          value={regQuickPin}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '').slice(0, 5);
+                            setRegQuickPin(val);
+                          }}
+                          className="w-full px-4 py-3 rounded-xl cosmic-input text-base font-mono font-bold tracking-[0.35em] text-center focus:outline-none"
+                        />
+                      </div>
+                      <p className="text-[11px] font-bold text-sky-700 dark:text-sky-300">
+                        {isTl ? 'Gagamitin upang ma-unlock agad ang app nang hindi kailangang mag-login ulit.' : 'Used for quick app unlock without re-entering your full password.'}
+                      </p>
                     </div>
-                    <div className="relative w-full max-w-xs">
-                      <input
-                        type="password"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        maxLength={5}
-                        required
-                        placeholder="••••• (5 digits)"
-                        value={regQuickPin}
-                        onChange={(e) => {
-                          const val = e.target.value.replace(/\D/g, '').slice(0, 5);
-                          setRegQuickPin(val);
-                        }}
-                        className="w-full px-4 py-3 rounded-xl cosmic-input text-base font-mono font-bold tracking-[0.35em] text-center focus:outline-none"
-                      />
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Bottom Inline Status Notification (Instantly visible above submit button) */}
@@ -1956,11 +1962,19 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               data-reg-success-go
               onClick={() => {
                 soundFX.playSuccessCheck();
-                setPostRegPinStep(true);
+                if (isMobileDevice && regQuickPin.trim()) {
+                  setPostRegPinStep(true);
+                } else {
+                  onLoginSuccess(successData.account);
+                }
               }}
               className="btn-press w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:opacity-95 text-white font-extrabold text-sm shadow-xl flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>{isTl ? 'I-verify ang 5-Digit PIN Bago Mag-Dashboard →' : 'Verify 5-Digit PIN Before Dashboard →'}</span>
+              <span>
+                {isMobileDevice && regQuickPin.trim()
+                  ? (isTl ? 'I-verify ang 5-Digit PIN (Mobile App) →' : 'Verify 5-Digit PIN (Mobile App) →')
+                  : (isTl ? 'Naintindihan ko — Pumasok sa Dashboard →' : 'Got it — Enter Student Dashboard →')}
+              </span>
             </button>
           </div>
         </div>
