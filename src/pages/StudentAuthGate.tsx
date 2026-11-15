@@ -371,14 +371,13 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     return { type: 'correct', label: '5-Digit PIN Set ✓' };
   }, [regQuickPin]);
 
-  // Check if form is ready to submit
+  // Check if form is ready to submit (Student ID card is no longer required as face selfie is captured)
   const isRegisterFormValid =
     lastNameStatus.type === 'correct' &&
     firstNameStatus.type === 'correct' &&
     phoneStatus.type === 'correct' &&
     emailStatus.type === 'correct' &&
     studentNumberStatus.type === 'correct' &&
-    studentIdStatus.type === 'correct' &&
     personalPhotoStatus.type === 'correct' &&
     passwordStatus.type === 'correct' &&
     confirmPasswordStatus.type === 'correct' &&
@@ -1488,22 +1487,24 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   </div>
 
                   {/* 5-Digit Mobile Quick Unlock PIN Section */}
-                  <div className="pt-2 border-t border-slate-200 dark:border-white/10 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div>
+                  <div className="pt-3 border-t border-slate-200 dark:border-white/10 space-y-2.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex-1">
                         <label className="text-sm font-bold register-label flex items-center gap-1.5">
-                          <Lock className="w-4 h-4 text-emerald-500" />
+                          <Lock className="w-4 h-4 text-emerald-500 shrink-0" />
                           <span>{isTl ? '5-Digit Quick Unlock PIN (Para sa Araw-araw na Login)' : '5-Digit Quick Unlock PIN (For Daily Mobile Login)'}</span>
                         </label>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium leading-relaxed">
                           {isTl
                             ? '5 numerong PIN para hindi mo na kailangang mag-login ng mahabang password araw-araw sa cellphone.'
                             : '5-digit PIN so you never have to re-enter your long password on your phone everyday.'}
                         </p>
                       </div>
-                      {renderBadge(quickPinStatus)}
+                      <div className="self-start sm:self-center shrink-0">
+                        {renderBadge(quickPinStatus)}
+                      </div>
                     </div>
-                    <div className="relative max-w-xs">
+                    <div className="relative w-full max-w-xs">
                       <input
                         type="password"
                         inputMode="numeric"
@@ -1523,20 +1524,30 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 </div>
 
                 {/* Big Submit Button */}
-                <button
-                  type="submit"
-                  disabled={regLoading || !isRegisterFormValid}
-                  className="btn-press w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:opacity-95 text-white text-base font-extrabold shadow-xl shadow-emerald-950/60 border border-white/20 disabled:opacity-45 transition-all flex items-center justify-center gap-2.5"
-                >
-                  {regLoading ? (
-                    <span>{isTl ? 'Inaapruba at Ginagawa ang Account...' : 'Creating & Approving Account...'}</span>
-                  ) : (
-                    <>
-                      <span>{isTl ? '✓ Gumawa ng Account (Awtomatikong Aprubado)' : '✓ Create Account (Automatic Approved)'}</span>
-                      <span>→</span>
-                    </>
+                <div className="space-y-2">
+                  <button
+                    type="submit"
+                    disabled={regLoading || !isRegisterFormValid}
+                    className="btn-press w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:opacity-95 text-white text-base font-extrabold shadow-xl shadow-emerald-950/60 border border-white/20 disabled:opacity-45 transition-all flex items-center justify-center gap-2.5"
+                  >
+                    {regLoading ? (
+                      <span>{isTl ? 'Inaapruba at Ginagawa ang Account...' : 'Creating & Approving Account...'}</span>
+                    ) : (
+                      <>
+                        <span>{isTl ? '✓ Gumawa ng Account (Awtomatikong Aprubado)' : '✓ Create Account (Automatic Approved)'}</span>
+                        <span>→</span>
+                      </>
+                    )}
+                  </button>
+
+                  {!isRegisterFormValid && (
+                    <p className="text-center text-[11px] font-semibold text-rose-500 dark:text-rose-400">
+                      {isTl
+                        ? 'Pakisuyong tiyaking may green checkmark (✓) ang bawat field sa itaas bago mag-submit.'
+                        : 'Please ensure all required fields above have a green checkmark (✓) before submitting.'}
+                    </p>
                   )}
-                </button>
+                </div>
               </form>
             </div>
           )}
