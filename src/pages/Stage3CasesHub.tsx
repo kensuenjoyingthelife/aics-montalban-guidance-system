@@ -379,10 +379,10 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     const severityLabel = pol.dbCategory === 'Major'
       ? `${pol.classification} Offense`
       : consecutive
-      ? 'Consecutive Minor → Serious Offense'
-      : stu.minorOffenseCount === 0
-      ? '1st Minor Offense'
-      : 'Minor Offense';
+      ? '2nd Minor (Consecutive) → Serious Offense'
+      : stu.minorOffenseCount >= 1
+      ? `${stu.minorOffenseCount + 1}nd Minor → Serious Offense`
+      : '1st Minor Offense';
     return { nextMinor, escalated, consecutive, word, severityLabel };
   };
   const isGroup = selectedStudentNumbers.length > 1;

@@ -22,14 +22,22 @@ export type FlowAction =
 
 export function isMinorCase(c: DisciplineCaseRecord): boolean {
   const sev = (c.severity || '').toLowerCase();
+  // If it's explicitly 1st minor offense and not escalated / serious, it's a 5-step minor flow.
+  // 2nd minor and up, consecutive, escalated, major, serious, grave offenses strictly REQUIRE parent conference (8 steps).
+  if (sev.includes('1st minor') && !sev.includes('serious') && !sev.includes('escalat') && !sev.includes('2nd') && !sev.includes('major')) {
+    return true;
+  }
   return (
     sev.includes('minor') &&
     !sev.includes('2nd') &&
+    !sev.includes('3rd') &&
+    !sev.includes('4th') &&
     !sev.includes('consecutive') &&
     !sev.includes('escalat') &&
     !sev.includes('serious') &&
     !sev.includes('major') &&
-    !sev.includes('grave')
+    !sev.includes('grave') &&
+    !sev.includes('conference')
   );
 }
 
