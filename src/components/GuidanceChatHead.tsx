@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { askGuidanceCopilot, CopilotMessage } from '../services/guidanceCopilotService';
 import { AicyTermsModal, isAicyTermsAccepted } from './help/AicyTermsModal';
+import { soundFX } from '../services/soundEngine';
 
 const CHAT_BALL_POS_KEY = 'aics_aicy_chat_head_pos';
 const CHAT_WINDOW_POS_KEY = 'aics_aicy_window_pos';
@@ -454,19 +455,20 @@ export const GuidanceChatHead: React.FC = () => {
 
   return (
     <>
-      {/* Expanded Draggable & Browser-Style Resizable Floating Messenger Window */}
+      {/* Docked Messenger Chat Window (Anchored cleanly at bottom-right corner) */}
       {isOpen && !isMinimized && (
         <div
           ref={windowRef}
           style={{
             position: 'fixed',
-            top: 0,
-            left: 0,
-            width: `calc(${customSize.w}px * var(--aicy-inv-zoom, 1))`,
-            height: `calc(${customSize.h}px * var(--aicy-inv-zoom, 1))`,
+            bottom: '16px',
+            right: '16px',
+            width: `${customSize.w}px`,
+            height: `${customSize.h}px`,
+            maxWidth: 'calc(100vw - 32px)',
+            maxHeight: 'calc(100vh - 32px)',
             zIndex: 9990,
             touchAction: 'none',
-            willChange: 'transform, width, height',
           }}
           role="dialog"
           aria-label="Guidance Assistant Chat Window"
@@ -474,12 +476,7 @@ export const GuidanceChatHead: React.FC = () => {
         >
           {/* Messenger Style Clean Header */}
           <div
-            onPointerDown={handleWindowPointerDown}
-            onPointerMove={handleWindowPointerMove}
-            onPointerUp={handleWindowPointerUp}
-            onPointerCancel={handleWindowPointerUp}
-            className="bg-white dark:bg-[#242526] text-slate-800 dark:text-white flex items-center justify-between border-b border-slate-200 dark:border-white/10 px-3 py-2 cursor-grab active:cursor-grabbing select-none shrink-0"
-            title="I-drag ang header upang ilipat ang screen kahit saan"
+            className="bg-white dark:bg-[#242526] text-slate-800 dark:text-white flex items-center justify-between border-b border-slate-200 dark:border-white/10 px-3 py-2 select-none shrink-0"
           >
             <div className="flex items-center gap-2 min-w-0 pointer-events-none">
               {/* EVE Visor Mascot Avatar */}
@@ -712,25 +709,31 @@ export const GuidanceChatHead: React.FC = () => {
         </div>
       )}
 
-      {/* Floating Messenger-Style Bubble / Chat Head (Draggable 60-120fps) */}
+      {/* Docked Messenger-Style Chat Head Bubble (Anchored bottom-right) */}
       <div
         ref={ballRef}
-        onPointerDown={handleBallPointerDown}
-        onPointerMove={handleBallPointerMove}
-        onPointerUp={handleBallPointerUp}
-        onPointerCancel={handleBallPointerUp}
+        onClick={() => {
+          if (!ballDragRef.current.hasMoved) {
+            soundFX.playToggleSwitch(true);
+            if (!termsAccepted) {
+              setShowTermsModal(true);
+            } else {
+              setIsOpen((prev) => !prev);
+              setIsMinimized(false);
+            }
+          }
+        }}
         style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
+          bottom: '20px',
+          right: '20px',
           zIndex: 9995,
           touchAction: 'none',
           userSelect: 'none',
           WebkitUserSelect: 'none',
-          cursor: 'grab',
-          willChange: 'transform',
+          cursor: 'pointer',
         }}
-        className="flex items-center gap-2 select-none active:cursor-grabbing"
+        className="flex items-center gap-2 select-none active:scale-95 transition-transform"
       >
         {/* Minimized Pill Bar when minimized */}
         {isOpen && isMinimized && (
