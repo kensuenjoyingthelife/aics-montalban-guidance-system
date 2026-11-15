@@ -248,6 +248,33 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
   const [regLoading, setRegLoading] = useState(false);
   const [regError, setRegError] = useState<string | null>(null);
+
+  // Friendly human-readable database error parser (strips Postgres / JSON raw syntax)
+  const formatFriendlyRegError = (rawErr: string): string => {
+    if (!rawErr) return isTl ? 'Hindi nagawa ang account. Subukan ulit.' : 'Account registration failed. Please try again.';
+    const lower = rawErr.toLowerCase();
+    if (lower.includes('unique') || lower.includes('duplicate') || lower.includes('already exists') || lower.includes('student_number')) {
+      return isTl
+        ? 'May nakarehistro nang account gamit ang Student ID na ito. Kung sa iyo ito, subukang mag-login o gamitin ang Forgot Password.'
+        : 'An account is already registered with this Student ID. If this is yours, please sign in or use Forgot Password.';
+    }
+    if (lower.includes('email') && (lower.includes('unique') || lower.includes('already exists'))) {
+      return isTl
+        ? 'Nagamit na ang Gmail address na ito sa ibang account. Pakisuyong gumamit ng ibang personal Gmail.'
+        : 'This Gmail address is already registered to another account. Please use a different Gmail.';
+    }
+    if (lower.includes('network') || lower.includes('fetch') || lower.includes('failed to fetch')) {
+      return isTl
+        ? 'Nawalan ng koneksyon sa server. I-check ang internet connection at subukan muli.'
+        : 'Network connection failed. Please check your internet connection and try again.';
+    }
+    if (lower.includes('quick_pin_hash') || lower.includes('column')) {
+      return isTl
+        ? 'Nagkaroon ng pag-update sa server database. Naisulong na ang fallback, pakisubukang i-click muli ang Create Account.'
+        : 'Server database schema updated. Fallback engaged, please click Create Account once more.';
+    }
+    return rawErr.replace(/\{[^}]*\}/g, '').replace(/Database insert failed:\s*/i, '').trim() || (isTl ? 'May naganap na error sa pagrehistro. Pakisubukang muli.' : 'A registration error occurred. Please try again.');
+  };
   const [regStatusModal, setRegStatusModal] = useState<{
     type: 'error' | 'success';
     title: string;
@@ -518,9 +545,13 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
       if (!res.success || !res.account) {
         soundFX.playError();
-        const errText = res.error || (isTl ? 'Hindi nagawa ang account. Subukan ulit.' : 'The account was not created. Please try again.');
-        setRegError(errText);
-        setRegStatusModal({ type: 'error', title: isTl ? 'Hindi Naaprubahan / Error' : 'Registration Failed', message: errText });
+        const friendlyMsg = formatFriendlyRegError(res.error || '');
+        setRegError(friendlyMsg);
+        setRegStatusModal({
+          type: 'error',
+          title: isTl ? 'Hindi Naaprubahan ang Pag-create' : 'Registration Failed',
+          message: friendlyMsg,
+        });
       } else {
         studentRegisterRateLimiter.reset();
         soundFX.playSuccessCheck();
@@ -1164,9 +1195,16 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               </div>
 
               {regError && (
-                <div className="p-4 rounded-2xl bg-rose-500/25 border border-rose-500/50 text-rose-200 text-sm font-semibold flex items-center gap-3">
-                  <AlertTriangle className="w-5 h-5 text-rose-300 shrink-0" />
-                  <span>{regError}</span>
+                <div className="p-4 sm:p-5 rounded-2xl bg-rose-50 dark:bg-rose-950/80 border-2 border-rose-600 dark:border-rose-400 text-rose-950 dark:text-rose-100 text-sm font-bold flex items-start gap-3.5 shadow-lg">
+                  <div className="w-6 h-6 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                    <AlertTriangle className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-black uppercase tracking-wider text-rose-700 dark:text-rose-300">
+                      {isTl ? 'Abiso sa Pagpaparehistro' : 'Registration Notice'}
+                    </p>
+                    <p className="mt-0.5 leading-snug">{regError}</p>
+                  </div>
                 </div>
               )}
 
@@ -1572,11 +1610,18 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   )}
                 </div>
 
-                {/* Bottom Inline Status Notification (Instantly visible above submit button) */}
+                {/* Bottom Inline Status Notification (High Contrast & Visible in Light/Dark Mode) */}
                 {regError && (
-                  <div className="p-4 rounded-2xl bg-rose-500/20 border-2 border-rose-500/50 text-rose-200 text-sm font-semibold flex items-center gap-3 shadow-lg">
-                    <AlertTriangle className="w-5 h-5 text-rose-300 shrink-0" />
-                    <span>{regError}</span>
+                  <div className="p-4 sm:p-5 rounded-2xl bg-rose-50 dark:bg-rose-950/80 border-2 border-rose-600 dark:border-rose-400 text-rose-950 dark:text-rose-100 text-sm font-bold flex items-start gap-3.5 shadow-lg">
+                    <div className="w-6 h-6 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                      <AlertTriangle className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-black uppercase tracking-wider text-rose-700 dark:text-rose-300">
+                        {isTl ? 'Kailangan Ayusin Bago Mag-Submit' : 'Action Required Before Submitting'}
+                      </p>
+                      <p className="mt-0.5 leading-snug">{regError}</p>
+                    </div>
                   </div>
                 )}
 
