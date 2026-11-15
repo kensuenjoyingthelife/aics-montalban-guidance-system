@@ -350,10 +350,10 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
     if (!files || files.length === 0) return;
     setPhotoError(null);
 
-    const maxPhotos = 3;
+    const maxPhotos = 10;
     const remainingSlots = maxPhotos - evidencePhotos.length;
     if (remainingSlots <= 0) {
-      setPhotoError(isTl ? 'Hanggang 3 litrato lamang ang maaaring i-upload.' : 'Maximum 3 photos allowed.');
+      setPhotoError(isTl ? 'Hanggang 10 litrato ang maaaring i-attach bawat report.' : 'Maximum 10 photos allowed per report.');
       return;
     }
 
@@ -392,7 +392,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
           if (ctx) {
             ctx.drawImage(img, 0, 0, w, h);
             const compressed = canvas.toDataURL('image/jpeg', 0.65);
-            setEvidencePhotos((prev) => [...prev, compressed].slice(0, 3));
+            setEvidencePhotos((prev) => [...prev, compressed].slice(0, 10));
             soundFX.playToggleSwitch(true);
           }
         };
@@ -1368,7 +1368,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                         </div>
                       </div>
                       <span className="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-400/20">
-                        {evidencePhotos.length} / 3 {isTl ? 'Litrato' : 'Photos'}
+                        {evidencePhotos.length} {isTl ? 'Litrato na-attach' : 'Photos attached'}
                       </span>
                     </div>
 
@@ -1398,25 +1398,52 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                         </div>
                       ))}
 
-                      {evidencePhotos.length < 3 && (
-                        <label className="rounded-xl border-2 border-dashed border-sky-400/60 dark:border-sky-700 hover:border-[#1E469B] dark:hover:border-sky-400 bg-white/60 dark:bg-white/5 hover:bg-sky-50 dark:hover:bg-white/10 aspect-video flex flex-col items-center justify-center gap-1 cursor-pointer transition-all p-2 text-center">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            onChange={handleEvidenceUpload}
-                            className="hidden"
-                          />
-                          <div className="w-7 h-7 rounded-full bg-sky-500/20 text-sky-600 dark:text-sky-300 flex items-center justify-center">
-                            <Camera className="w-4 h-4" />
-                          </div>
-                          <span className="text-[11px] font-bold text-[#1E469B] dark:text-[#9BCBFF]">
-                            {isTl ? 'Kumuha o Mag-upload' : 'Take or Upload Photo'}
-                          </span>
-                          <span className="text-[9.5px] text-[#4A608A] dark:text-[#94A8D0]">
-                            Max 8MB · PNG, JPG
-                          </span>
-                        </label>
+                      {evidencePhotos.length < 10 && (
+                        <div className="col-span-2 sm:col-span-2 flex flex-col sm:flex-row gap-2">
+                          {/* Option 1: Direct Camera Shutter */}
+                          <label className="flex-1 rounded-xl border-2 border-dashed border-sky-400/70 dark:border-sky-700 hover:border-[#1E469B] bg-white/70 dark:bg-white/5 hover:bg-sky-50/80 p-3 flex items-center gap-2.5 cursor-pointer transition-all shadow-xs">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              capture="environment"
+                              onChange={handleEvidenceUpload}
+                              className="hidden"
+                            />
+                            <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-600 dark:text-sky-300 flex items-center justify-center shrink-0">
+                              <Camera className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0 text-left">
+                              <p className="text-[11px] font-extrabold text-[#0B1F4D] dark:text-white leading-tight">
+                                {isTl ? 'Picturan Agad (Camera)' : 'Take Photo (Camera)'}
+                              </p>
+                              <p className="text-[9.5px] text-[#4A608A] dark:text-[#94A8D0]">
+                                {isTl ? 'Kumuha ng live photo' : 'Live photo snap'}
+                              </p>
+                            </div>
+                          </label>
+
+                          {/* Option 2: Upload Multiple from Gallery / Files */}
+                          <label className="flex-1 rounded-xl border-2 border-dashed border-blue-400/70 dark:border-blue-700 hover:border-[#1E469B] bg-white/70 dark:bg-white/5 hover:bg-blue-50/80 p-3 flex items-center gap-2.5 cursor-pointer transition-all shadow-xs">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              onChange={handleEvidenceUpload}
+                              className="hidden"
+                            />
+                            <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-[#1E469B] dark:text-sky-300 flex items-center justify-center shrink-0">
+                              <ImageIcon className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0 text-left">
+                              <p className="text-[11px] font-extrabold text-[#0B1F4D] dark:text-white leading-tight">
+                                {isTl ? 'Pumili sa Gallery / Files' : 'Select Photos / Gallery'}
+                              </p>
+                              <p className="text-[9.5px] text-[#4A608A] dark:text-[#94A8D0]">
+                                {isTl ? 'Kahit maramihang litrato' : 'Multiple photos'}
+                              </p>
+                            </div>
+                          </label>
+                        </div>
                       )}
                     </div>
                   </div>
