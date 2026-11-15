@@ -31,7 +31,7 @@ import { CelestialBackground } from '../components/auth/CelestialBackground';
 import { WavyBackground } from '../components/auth/WavyBackground';
 import { useStudentEncouragementWings, StudentPairInteractiveWing } from '../components/auth/StudentEncouragementWing';
 import { SoundTogglePill, soundFX } from '../services/soundEngine';
-import { SkyThemePill } from '../context/ThemeContext';
+import { SkyThemePill, useTheme } from '../context/ThemeContext';
 import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
 import { SafezoneMascot } from '../components/auth/SafezoneMascot';
 import { CloudflareTurnstile } from '../components/auth/CloudflareTurnstile';
@@ -120,6 +120,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 }) => {
   const { locale } = useLanguage();
   const isTl = locale === 'tl';
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const { boyWing, girlWing } = useStudentEncouragementWings();
 
   const [mode, setMode] = useState<PortalAuthMode>('login');
@@ -657,34 +659,68 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
   
   return (
-    <div className="min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none bg-[#030B18] dark:bg-[#020710] text-slate-100">
+    <div className={`min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none transition-colors duration-300 ${
+      isDark ? 'bg-[#030B18] text-slate-100' : 'bg-[#EEF4FC] text-[#0F172A]'
+    }`}>
       
       {/* Dynamic Institutional Ambient Background with Desaturated Campus Photo */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         <div
-          className="absolute inset-0 bg-no-repeat bg-cover bg-center opacity-[0.22] dark:opacity-[0.14] filter saturate-[0.7] mix-blend-luminosity scale-105 transition-opacity"
+          className={`absolute inset-0 bg-no-repeat bg-cover bg-center filter saturate-[0.7] mix-blend-luminosity scale-105 transition-opacity duration-300 ${
+            isDark ? 'opacity-[0.14]' : 'opacity-[0.25]'
+          }`}
           style={{ backgroundImage: `url('/aics-campus-header.jpg')` }}
         />
         {/* Multi-Stop Directional Institutional Navy & Teal Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#030B18] via-[#071E3D]/92 to-[#030B18]/78" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#030B18]/95 via-transparent to-[#030B18]" />
+        <div className={`absolute inset-0 transition-all duration-300 ${
+          isDark
+            ? 'bg-gradient-to-r from-[#030B18] via-[#071E3D]/92 to-[#030B18]/78'
+            : 'bg-gradient-to-r from-[#EEF4FC] via-[#DBEAFE]/85 to-[#EEF4FC]/70'
+        }`} />
+        <div className={`absolute inset-0 transition-all duration-300 ${
+          isDark
+            ? 'bg-gradient-to-b from-[#030B18]/95 via-transparent to-[#030B18]'
+            : 'bg-gradient-to-b from-[#EEF4FC]/95 via-transparent to-[#EEF4FC]'
+        }`} />
         
         {/* Subtle Concentric Orbital Rings (CDM-style academic geometry) */}
-        <div className="absolute -top-32 -right-32 w-[680px] h-[680px] rounded-full border border-sky-400/10 pointer-events-none" />
-        <div className="absolute -top-16 -right-16 w-[520px] h-[520px] rounded-full border border-amber-400/10 pointer-events-none" />
-        <div className="absolute top-1/2 -left-48 w-[600px] h-[600px] rounded-full border border-teal-400/10 pointer-events-none" />
+        <div className={`absolute -top-32 -right-32 w-[680px] h-[680px] rounded-full border pointer-events-none ${
+          isDark ? 'border-sky-400/10' : 'border-sky-600/15'
+        }`} />
+        <div className={`absolute -top-16 -right-16 w-[520px] h-[520px] rounded-full border pointer-events-none ${
+          isDark ? 'border-amber-400/10' : 'border-amber-600/15'
+        }`} />
+        <div className={`absolute top-1/2 -left-48 w-[600px] h-[600px] rounded-full border pointer-events-none ${
+          isDark ? 'border-teal-400/10' : 'border-teal-600/15'
+        }`} />
+      </div>
+
+      {/* Twinkling Star Drops, Meteors, Floating Computers & Ringed Planets (Desktop Website) */}
+      <div className="hidden lg:block pointer-events-none">
+        <CelestialBackground />
+      </div>
+
+      {/* Gentle Floating Atmospheric Waves at Bottom */}
+      <div className="hidden lg:block pointer-events-none">
+        <WavyBackground />
       </div>
 
       {/* ====================================================
           1. STICKY INSTITUTIONAL HEADER & BRAND CLUSTER
           ==================================================== */}
-      <header className="sticky top-0 z-40 w-full px-4 sm:px-8 py-3.5 border-b border-white/10 dark:border-white/5 bg-[#030B18]/90 dark:bg-[#020710]/90 backdrop-blur-xl">
+      <header className={`sticky top-0 z-40 w-full px-4 sm:px-8 py-3.5 border-b backdrop-blur-xl transition-colors duration-300 ${
+        isDark
+          ? 'border-white/10 bg-[#030B18]/90 text-white'
+          : 'border-slate-300/80 bg-white/90 text-slate-900 shadow-sm'
+      }`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           
           {/* Left: Official AICS Crest & Institution Typography */}
           <div className="flex items-center gap-3.5 min-w-0">
             <div className="relative shrink-0">
-              <div className="w-12 h-12 rounded-full p-0.5 bg-white/20 ring-2 ring-white/60 shadow-xl overflow-hidden flex items-center justify-center">
+              <div className={`w-12 h-12 rounded-full p-0.5 overflow-hidden flex items-center justify-center transition-all ${
+                isDark ? 'bg-white/20 ring-2 ring-white/60 shadow-xl' : 'bg-white ring-2 ring-slate-300 shadow-md'
+              }`}>
                 <img
                   src="/aics-logo.jpg"
                   alt="AICS Logo"
@@ -692,21 +728,29 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 />
               </div>
               <span
-                className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-400 ring-2 ring-[#030B18] shadow-sm"
+                className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#030B18] shadow-sm"
                 title="100% Confidential & RA 10173 Protected"
               />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-black tracking-wide text-white uppercase truncate">
+                <span className={`text-sm font-black tracking-wide uppercase truncate transition-colors ${
+                  isDark ? 'text-white' : 'text-[#0B1F4D]'
+                }`}>
                   Asian Institute of Computer Studies
                 </span>
-                <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-400/30 text-[10px] font-extrabold text-amber-300">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                <span className={`hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-[10px] font-extrabold ${
+                  isDark
+                    ? 'bg-amber-500/15 border-amber-400/30 text-amber-300'
+                    : 'bg-amber-500/10 border-amber-600/30 text-amber-800'
+                }`}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                   MONTALBAN CAMPUS
                 </span>
               </div>
-              <p className="text-xs text-[#9BCBFF] font-medium tracking-wide">
+              <p className={`text-xs font-semibold tracking-wide transition-colors ${
+                isDark ? 'text-[#9BCBFF]' : 'text-[#1E469B]'
+              }`}>
                 GUIDANCE & COUNSELING SERVICES · SAFEZONE PORTAL
               </p>
             </div>
@@ -717,17 +761,25 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
             <button
               type="button"
               onClick={handleInstallApp}
-              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/20 text-xs font-bold text-sky-200 transition-colors"
+              className={`hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold transition-colors ${
+                isDark
+                  ? 'bg-white/10 hover:bg-white/15 border-white/20 text-sky-200'
+                  : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
+              }`}
             >
-              <Download className="w-3.5 h-3.5 text-sky-400" />
+              <Download className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
               <span>{isTl ? 'I-install ang App' : 'Install App'}</span>
             </button>
 
-            <div className="flex items-center p-1 rounded-full bg-white/10 dark:bg-white/5 border border-white/15 dark:border-white/10 shadow-inner">
+            <div className={`flex items-center p-1 rounded-full border shadow-inner transition-colors ${
+              isDark
+                ? 'bg-white/10 border-white/15'
+                : 'bg-slate-100 border-slate-300'
+            }`}>
               <SoundTogglePill />
-              <div className="h-4 w-[1px] bg-white/20 mx-1" />
+              <div className={`h-4 w-[1px] mx-1 ${isDark ? 'bg-white/20' : 'bg-slate-300'}`} />
               <LocaleSwitchPill />
-              <div className="h-4 w-[1px] bg-white/20 mx-1" />
+              <div className={`h-4 w-[1px] mx-1 ${isDark ? 'bg-white/20' : 'bg-slate-300'}`} />
               <SkyThemePill />
             </div>
 
@@ -738,7 +790,11 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 window.location.reload();
               }}
               title={isTl ? 'I-refresh ang pahina' : 'Refresh page'}
-              className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-sky-200 border border-white/15 transition-colors"
+              className={`p-2 rounded-full border transition-colors ${
+                isDark
+                  ? 'bg-white/10 hover:bg-white/20 text-sky-200 border-white/15'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
+              }`}
             >
               <RefreshCw className="w-4 h-4" />
             </button>
@@ -777,9 +833,11 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
                   {/* Headline */}
                   <div className="space-y-1">
-                    <h1 className="text-3xl sm:text-5xl xl:text-6xl font-serif font-black tracking-tight text-white leading-[1.02]">
+                    <h1 className={`text-3xl sm:text-5xl xl:text-6xl font-serif font-black tracking-tight leading-[1.02] transition-colors ${
+                      isDark ? 'text-white' : 'text-[#0B1F4D]'
+                    }`}>
                       Your Safe Space. Your Voice. <br />
-                      <span className="text-amber-400 italic">One SafeZone.</span>
+                      <span className="text-amber-500 italic">One SafeZone.</span>
                     </h1>
                   </div>
 
@@ -790,32 +848,44 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
                   {/* 3 Pillar Reassurance Badges */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 w-full max-w-2xl">
-                    <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-1">
-                      <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold">
+                    <div className={`p-3.5 rounded-2xl border backdrop-blur-sm space-y-1 transition-colors ${
+                      isDark
+                        ? 'bg-white/5 border-white/10 text-slate-300'
+                        : 'bg-white/90 border-slate-300 shadow-sm text-slate-700'
+                    }`}>
+                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
                         <ShieldCheck className="w-4 h-4" />
                         <span>{isTl ? '100% Kumpidensyal' : '100% Confidential'}</span>
                       </div>
-                      <p className="text-[11px] text-slate-300">
+                      <p className="text-[11px] leading-relaxed">
                         {isTl ? 'Guidance Office lamang ang nakakakita ng iyong report.' : 'Strictly restricted to licensed Guidance staff.'}
                       </p>
                     </div>
 
-                    <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-1">
-                      <div className="flex items-center gap-2 text-sky-400 text-xs font-bold">
+                    <div className={`p-3.5 rounded-2xl border backdrop-blur-sm space-y-1 transition-colors ${
+                      isDark
+                        ? 'bg-white/5 border-white/10 text-slate-300'
+                        : 'bg-white/90 border-slate-300 shadow-sm text-slate-700'
+                    }`}>
+                      <div className="flex items-center gap-2 text-sky-600 dark:text-sky-400 text-xs font-bold">
                         <HeartHandshake className="w-4 h-4" />
                         <span>{isTl ? 'Walang Balikan' : 'Zero Retaliation'}</span>
                       </div>
-                      <p className="text-[11px] text-slate-300">
+                      <p className="text-[11px] leading-relaxed">
                         {isTl ? 'Protektado laban sa anumang pambu-bully o ganti.' : 'Guaranteed safety and institutional peer protection.'}
                       </p>
                     </div>
 
-                    <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-1">
-                      <div className="flex items-center gap-2 text-amber-400 text-xs font-bold">
+                    <div className={`p-3.5 rounded-2xl border backdrop-blur-sm space-y-1 transition-colors ${
+                      isDark
+                        ? 'bg-white/5 border-white/10 text-slate-300'
+                        : 'bg-white/90 border-slate-300 shadow-sm text-slate-700'
+                    }`}>
+                      <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-xs font-bold">
                         <CheckCircle2 className="w-4 h-4" />
                         <span>{isTl ? 'Gumaan ang Loob' : 'Peace of Mind'}</span>
                       </div>
-                      <p className="text-[11px] text-slate-300">
+                      <p className="text-[11px] leading-relaxed">
                         {isTl ? 'Mababawasan ang iyong dinadalang bigat sa eskwela.' : 'Compassionate guidance to resolve problems early.'}
                       </p>
                     </div>
@@ -824,25 +894,33 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
                 {/* Right Column: CDM-Inspired Sleek Floating Login Card */}
                 <div className="lg:col-span-5 w-full max-w-md mx-auto">
-                  <div className="relative rounded-3xl bg-[#081832]/95 dark:bg-[#061326]/95 border border-white/15 dark:border-white/10 p-6 sm:p-8 shadow-2xl backdrop-blur-xl space-y-5 text-left">
+                  <div className={`relative rounded-3xl border p-6 sm:p-8 shadow-2xl backdrop-blur-xl space-y-5 text-left transition-colors duration-300 ${
+                    isDark
+                      ? 'bg-[#081832]/95 border-white/15 text-white'
+                      : 'bg-white border-slate-300 text-slate-900 shadow-slate-300/60'
+                  }`}>
                     
                     {/* Top Golden Accent Indicator Bar */}
-                    <div className="w-12 h-1 rounded-full bg-amber-400" />
+                    <div className="w-12 h-1 rounded-full bg-amber-500" />
 
                     {/* Card Header */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-extrabold tracking-widest uppercase text-emerald-400">
+                        <span className="text-[11px] font-extrabold tracking-widest uppercase text-emerald-600 dark:text-emerald-400">
                           {isTl ? 'PORTAL LOGIN' : 'STUDENT PORTAL ACCESS'}
                         </span>
-                        <span className="text-[10px] font-bold text-slate-400">
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
                           RA 10173 SECURE
                         </span>
                       </div>
-                      <h2 className="text-2xl sm:text-3xl font-serif font-black text-white tracking-tight">
+                      <h2 className={`text-2xl sm:text-3xl font-serif font-black tracking-tight ${
+                        isDark ? 'text-white' : 'text-[#0B1F4D]'
+                      }`}>
                         {isTl ? 'Maligayang Pagbabalik' : 'Welcome back'}
                       </h2>
-                      <p className="text-xs sm:text-sm text-slate-300 font-medium">
+                      <p className={`text-xs sm:text-sm font-medium ${
+                        isDark ? 'text-slate-300' : 'text-slate-600'
+                      }`}>
                         {isTl ? 'Mag-sign in gamit ang iyong Student ID at Password.' : 'Sign in with your student credentials.'}
                       </p>
                     </div>
@@ -887,11 +965,15 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
                       {/* Student Number Input */}
                       <div className="space-y-1.5">
-                        <label className="text-xs font-extrabold uppercase tracking-wide text-slate-300">
+                        <label className={`text-xs font-extrabold uppercase tracking-wide transition-colors ${
+                          isDark ? 'text-slate-300' : 'text-slate-700'
+                        }`}>
                           {isTl ? 'Student ID Number' : 'Student ID Number'}
                         </label>
                         <div className="relative">
-                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                          <span className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${
+                            isDark ? 'text-slate-400' : 'text-slate-500'
+                          }`}>
                             <User className="w-4 h-4" />
                           </span>
                           <input
@@ -900,7 +982,11 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                             value={loginStudentNumber}
                             onChange={(e) => setLoginStudentNumber(e.target.value)}
                             placeholder="Hal. 2024-12345"
-                            className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#040F22] border border-white/20 text-white placeholder-slate-400 text-sm font-semibold focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20 transition-all"
+                            className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm font-semibold focus:outline-none transition-all ${
+                              isDark
+                                ? 'bg-[#040F22] border-white/20 text-white placeholder-slate-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20'
+                                : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-[#1E469B] focus:ring-2 focus:ring-[#1E469B]/20 shadow-inner'
+                            }`}
                           />
                         </div>
                       </div>
@@ -908,7 +994,9 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       {/* Password Input */}
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between">
-                          <label className="text-xs font-extrabold uppercase tracking-wide text-slate-300">
+                          <label className={`text-xs font-extrabold uppercase tracking-wide transition-colors ${
+                            isDark ? 'text-slate-300' : 'text-slate-700'
+                          }`}>
                             Password
                           </label>
                           <button
@@ -918,13 +1006,15 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                               setMode('forgot');
                               setForgotIdentifier(loginStudentNumber);
                             }}
-                            className="text-xs text-sky-400 hover:text-sky-300 hover:underline font-bold"
+                            className="text-xs text-sky-500 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-300 hover:underline font-bold"
                           >
                             {isTl ? 'Nakalimutan?' : 'Forgot?'}
                           </button>
                         </div>
                         <div className="relative">
-                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                          <span className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${
+                            isDark ? 'text-slate-400' : 'text-slate-500'
+                          }`}>
                             <Lock className="w-4 h-4" />
                           </span>
                           <input
@@ -933,7 +1023,11 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                             value={loginPassword}
                             onChange={(e) => setLoginPassword(e.target.value)}
                             placeholder="••••••••"
-                            className="w-full pl-10 pr-10 py-3 rounded-xl bg-[#040F22] border border-white/20 text-white placeholder-slate-400 text-sm font-semibold focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20 transition-all"
+                            className={`w-full pl-10 pr-10 py-3 rounded-xl border text-sm font-semibold focus:outline-none transition-all ${
+                              isDark
+                                ? 'bg-[#040F22] border-white/20 text-white placeholder-slate-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20'
+                                : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-[#1E469B] focus:ring-2 focus:ring-[#1E469B]/20 shadow-inner'
+                            }`}
                           />
                           <button
                             type="button"
@@ -941,7 +1035,9 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                               soundFX.playToggleSwitch(true);
                               setShowLoginPassword((prev) => !prev);
                             }}
-                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                            className={`absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors ${
+                              isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'
+                            }`}
                             title={showLoginPassword ? 'Hide password' : 'Show password'}
                           >
                             {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -953,7 +1049,11 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       <button
                         type="submit"
                         disabled={loginLoading || loginCooldownSeconds > 0}
-                        className="btn-human-primary w-full py-3.5 rounded-xl bg-[#0F3A78] hover:bg-[#15468E] active:scale-[0.975] text-white text-sm font-extrabold shadow-md border border-sky-400/30 disabled:opacity-50 transition-all flex items-center justify-center gap-2 mt-2"
+                        className={`btn-human-primary w-full py-3.5 rounded-xl active:scale-[0.975] text-white text-sm font-extrabold shadow-md border disabled:opacity-50 transition-all flex items-center justify-center gap-2 mt-2 ${
+                          isDark
+                            ? 'bg-[#0F3A78] hover:bg-[#15468E] border-sky-400/30 shadow-sky-950/50'
+                            : 'bg-[#1E469B] hover:bg-[#15387B] border-[#2557BE] shadow-blue-900/25'
+                        }`}
                       >
                         {loginLoading ? (
                           <div className="flex items-center gap-2">
@@ -983,9 +1083,9 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     </form>
 
                     {/* Divider: New Student Registration */}
-                    <div className="pt-2 border-t border-white/10 space-y-2.5">
+                    <div className={`pt-2 border-t space-y-2.5 ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
                       <div className="text-center">
-                        <span className="text-xs text-slate-300 font-medium">
+                        <span className={`text-xs font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                           {isTl ? 'Bago ka pa lang sa AICS Guidance Portal?' : 'New to AICS SafeZone Portal?'}
                         </span>
                       </div>
@@ -1000,7 +1100,11 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                             setMode('register');
                           }
                         }}
-                        className="btn-press w-full py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white text-xs sm:text-sm font-extrabold transition-all flex items-center justify-center gap-2"
+                        className={`btn-press w-full py-3 rounded-xl border text-xs sm:text-sm font-extrabold transition-all flex items-center justify-center gap-2 ${
+                          isDark
+                            ? 'bg-white/10 hover:bg-white/15 border-white/20 text-white'
+                            : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
+                        }`}
                       >
                         <span>+ {isTl ? 'Gumawa ng Bagong Student Account' : 'Create New Student Account'}</span>
                       </button>
@@ -1026,18 +1130,22 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   SECTION 3: INSTITUTIONAL GUIDANCE WORKSPACES (6-CARD GRID)
                   Inspired by CDM Portal Academic Services Architecture
                   ==================================================== */}
-              <div className="pt-10 border-t border-white/10 space-y-8 text-left">
+              <div className={`pt-10 border-t space-y-8 text-left ${isDark ? 'border-white/10' : 'border-slate-300'}`}>
                 <div className="space-y-2">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-[2px] bg-sky-400" />
-                    <span className="text-xs font-extrabold tracking-[0.18em] uppercase text-sky-400">
+                    <div className="w-8 h-[2px] bg-sky-500" />
+                    <span className="text-xs font-extrabold tracking-[0.18em] uppercase text-sky-600 dark:text-sky-400">
                       GUIDANCE WORKSPACES & SERVICES
                     </span>
                   </div>
-                  <h2 className="text-2xl sm:text-4xl font-serif font-black text-white tracking-tight">
+                  <h2 className={`text-2xl sm:text-4xl font-serif font-black tracking-tight ${
+                    isDark ? 'text-white' : 'text-[#0B1F4D]'
+                  }`}>
                     {isTl ? 'Ligtas na suporta sa bawat hakbang mo sa AICS.' : 'Compassionate support in one secure place.'}
                   </h2>
-                  <p className="text-xs sm:text-sm text-slate-300 max-w-2xl font-normal leading-relaxed">
+                  <p className={`text-xs sm:text-sm max-w-2xl font-normal leading-relaxed ${
+                    isDark ? 'text-slate-300' : 'text-slate-600'
+                  }`}>
                     {isTl
                       ? 'Mag-sign in para ma-access ang iyong kumpidensyal na dashboard at mga serbisyo ng Guidance and Counseling Office.'
                       : 'Sign in to access authorized guidance services, monitor filed concerns, and connect with school counselors.'}
@@ -1048,20 +1156,24 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                   
                   {/* Card 1: Confidential Concern Filing */}
-                  <div className="p-5 rounded-2xl bg-[#081832]/80 border border-white/10 hover:border-sky-400/40 transition-colors space-y-3">
+                  <div className={`p-5 rounded-2xl border transition-all space-y-3 ${
+                    isDark
+                      ? 'bg-[#081832]/80 border-white/10 hover:border-sky-400/40 text-white'
+                      : 'bg-white border-slate-300 hover:border-sky-500 shadow-sm text-slate-800'
+                  }`}>
                     <div className="flex items-center justify-between">
-                      <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-400/30 flex items-center justify-center text-sky-400">
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-400/30 flex items-center justify-center text-sky-600 dark:text-sky-400">
                         <MessageSquare className="w-5 h-5" />
                       </div>
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
                         {isTl ? 'Kumpidensyal' : 'Confidential'}
                       </span>
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-white">
+                      <h3 className={`text-base font-bold ${isDark ? 'text-white' : 'text-[#0B1F4D]'}`}>
                         {isTl ? '1. Pag-uulat ng Hinaing o Bullying' : '1. Safe Concern & Peer Reporting'}
                       </h3>
-                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                      <p className={`text-xs mt-1 leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                         {isTl
                           ? 'Isumite ang mga isyu sa panunukso, cyberbullying, o harassment nang walang takot sa paghihiganti.'
                           : 'Privately submit bullying, academic distress, or peer conflicts directly to Guidance Associates.'}
@@ -1070,20 +1182,24 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   </div>
 
                   {/* Card 2: 1-on-1 Guidance Counseling */}
-                  <div className="p-5 rounded-2xl bg-[#081832]/80 border border-white/10 hover:border-teal-400/40 transition-colors space-y-3">
+                  <div className={`p-5 rounded-2xl border transition-all space-y-3 ${
+                    isDark
+                      ? 'bg-[#081832]/80 border-white/10 hover:border-teal-400/40 text-white'
+                      : 'bg-white border-slate-300 hover:border-teal-500 shadow-sm text-slate-800'
+                  }`}>
                     <div className="flex items-center justify-between">
-                      <div className="w-10 h-10 rounded-xl bg-teal-500/15 border border-teal-400/30 flex items-center justify-center text-teal-400">
+                      <div className="w-10 h-10 rounded-xl bg-teal-500/15 border border-teal-400/30 flex items-center justify-center text-teal-600 dark:text-teal-400">
                         <HeartHandshake className="w-5 h-5" />
                       </div>
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-teal-500/15 text-teal-300 border border-teal-500/30">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-teal-500/15 text-teal-700 dark:text-teal-300 border border-teal-500/30">
                         {isTl ? 'Kalinga at Suporta' : '1-on-1 Counseling'}
                       </span>
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-white">
+                      <h3 className={`text-base font-bold ${isDark ? 'text-white' : 'text-[#0B1F4D]'}`}>
                         {isTl ? '2. Direktang Guidance Consultation' : '2. Direct Guidance Counseling'}
                       </h3>
-                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                      <p className={`text-xs mt-1 leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                         {isTl
                           ? 'Makisalamuha at humingi ng payo sa Guidance Associate para gumaan ang loob at mabigyan ng solusyon.'
                           : 'Connect one-on-one with school counselors for emotional and academic well-being support.'}
@@ -1092,20 +1208,24 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   </div>
 
                   {/* Card 3: Real-Time Chat & Follow-ups */}
-                  <div className="p-5 rounded-2xl bg-[#081832]/80 border border-white/10 hover:border-emerald-400/40 transition-colors space-y-3">
+                  <div className={`p-5 rounded-2xl border transition-all space-y-3 ${
+                    isDark
+                      ? 'bg-[#081832]/80 border-white/10 hover:border-emerald-400/40 text-white'
+                      : 'bg-white border-slate-300 hover:border-emerald-500 shadow-sm text-slate-800'
+                  }`}>
                     <div className="flex items-center justify-between">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                         <CheckCircle2 className="w-5 h-5" />
                       </div>
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
                         {isTl ? 'Subaybay' : 'Real-Time'}
                       </span>
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-white">
+                      <h3 className={`text-base font-bold ${isDark ? 'text-white' : 'text-[#0B1F4D]'}`}>
                         {isTl ? '3. Live Case Status & Guidance Chat' : '3. Case Status Tracking & Chat'}
                       </h3>
-                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                      <p className={`text-xs mt-1 leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                         {isTl
                           ? 'Malaman agad kung inaksyunan na ng eskwelahan ang iyong report at mag-chat nang ligtas.'
                           : 'Real-time updates as your report moves from investigation to gentle resolution.'}
@@ -1114,20 +1234,24 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   </div>
 
                   {/* Card 4: Quick Emergency SOS Discretion */}
-                  <div className="p-5 rounded-2xl bg-[#081832]/80 border border-white/10 hover:border-rose-400/40 transition-colors space-y-3">
+                  <div className={`p-5 rounded-2xl border transition-all space-y-3 ${
+                    isDark
+                      ? 'bg-[#081832]/80 border-white/10 hover:border-rose-400/40 text-white'
+                      : 'bg-white border-slate-300 hover:border-rose-500 shadow-sm text-slate-800'
+                  }`}>
                     <div className="flex items-center justify-between">
-                      <div className="w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-400/30 flex items-center justify-center text-rose-400">
+                      <div className="w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-400/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
                         <Shield className="w-5 h-5" />
                       </div>
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30">
                         {isTl ? 'Discretion' : 'SOS Protection'}
                       </span>
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-white">
+                      <h3 className={`text-base font-bold ${isDark ? 'text-white' : 'text-[#0B1F4D]'}`}>
                         {isTl ? '4. Emergency SOS & Instant Exit' : '4. Emergency SOS & Instant Exit'}
                       </h3>
-                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                      <p className={`text-xs mt-1 leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                         {isTl
                           ? 'Isang pindot lang sa SOS mascot, agad magsasara ang app o mag-clear ng history para walang makakitang iba.'
                           : 'Immediate window close and session purge with 5-digit PIN quick lock protection on mobile.'}
@@ -1136,20 +1260,24 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   </div>
 
                   {/* Card 5: Mental Health Affirmations & Articles */}
-                  <div className="p-5 rounded-2xl bg-[#081832]/80 border border-white/10 hover:border-amber-400/40 transition-colors space-y-3">
+                  <div className={`p-5 rounded-2xl border transition-all space-y-3 ${
+                    isDark
+                      ? 'bg-[#081832]/80 border-white/10 hover:border-amber-400/40 text-white'
+                      : 'bg-white border-slate-300 hover:border-amber-500 shadow-sm text-slate-800'
+                  }`}>
                     <div className="flex items-center justify-between">
-                      <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-amber-400">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
                         <FileHeart className="w-5 h-5" />
                       </div>
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
                         {isTl ? 'Kalusugang Pangkaisipan' : 'Self-Help'}
                       </span>
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-white">
+                      <h3 className={`text-base font-bold ${isDark ? 'text-white' : 'text-[#0B1F4D]'}`}>
                         {isTl ? '5. Karapatan at Gabay sa Kapayapaan' : '5. Student Rights & Wellness Guides'}
                       </h3>
-                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                      <p className={`text-xs mt-1 leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                         {isTl
                           ? 'Mga gabay alinsunod sa Anti-Bullying Act (RA 10627) upang malaman mo ang iyong proteksyon sa campus.'
                           : 'Institutional policies, mental wellness affirmations, and peer intervention guidelines.'}
@@ -1158,20 +1286,24 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   </div>
 
                   {/* Card 6: Official Peer Referral Protocol */}
-                  <div className="p-5 rounded-2xl bg-[#081832]/80 border border-white/10 hover:border-purple-400/40 transition-colors space-y-3">
+                  <div className={`p-5 rounded-2xl border transition-all space-y-3 ${
+                    isDark
+                      ? 'bg-[#081832]/80 border-white/10 hover:border-purple-400/40 text-white'
+                      : 'bg-white border-slate-300 hover:border-purple-500 shadow-sm text-slate-800'
+                  }`}>
                     <div className="flex items-center justify-between">
-                      <div className="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-400/30 flex items-center justify-center text-purple-400">
+                      <div className="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-400/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
                         <Users className="w-5 h-5" />
                       </div>
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30">
                         {isTl ? 'Kaibigan / Kaklase' : 'Peer Referral'}
                       </span>
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-white">
+                      <h3 className={`text-base font-bold ${isDark ? 'text-white' : 'text-[#0B1F4D]'}`}>
                         {isTl ? '6. Tulong para sa Nangangailangang Kaklase' : '6. Helping a Distressed Peer'}
                       </h3>
-                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                      <p className={`text-xs mt-1 leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                         {isTl
                           ? 'Maaari mong ipaalam sa Guidance Office kung may kaklaseng labis na nalulungkot o nanganganib.'
                           : 'Confidentially refer fellow classmates who may be struggling in silence.'}
@@ -1181,16 +1313,20 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 </div>
 
                 {/* Institutional Privacy & Confidentiality Guarantee Banner */}
-                <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-900/40 via-sky-900/30 to-teal-900/40 border border-sky-400/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className={`p-5 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors ${
+                  isDark
+                    ? 'bg-gradient-to-r from-blue-900/40 via-sky-900/30 to-teal-900/40 border-sky-400/30'
+                    : 'bg-gradient-to-r from-blue-100/90 via-sky-100/80 to-teal-100/90 border-blue-300 shadow-sm'
+                }`}>
                   <div className="flex items-center gap-3.5">
-                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
                       <ShieldCheck className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-white">
+                      <h4 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-[#0B1F4D]'}`}>
                         {isTl ? 'Garantisadong Ligtas sa Ilalim ng RA 10173 at RA 10627' : 'Strict Institutional Confidentiality Guarantee'}
                       </h4>
-                      <p className="text-xs text-slate-300">
+                      <p className={`text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                         {isTl
                           ? 'Hindi kailanman ibinubunyag sa publiko ang anumang report o pagkakakilanlan.'
                           : 'Student records and reports never appear on public screens and remain protected.'}
@@ -1203,7 +1339,11 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       soundFX.playToggleSwitch(true);
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-xs font-bold text-white transition-colors shrink-0"
+                    className={`px-4 py-2 rounded-xl border text-xs font-bold transition-colors shrink-0 ${
+                      isDark
+                        ? 'bg-white/10 hover:bg-white/15 border-white/20 text-white'
+                        : 'bg-white hover:bg-slate-50 border-slate-300 text-slate-800 shadow-xs'
+                    }`}
                   >
                     {isTl ? 'Mag-sign In para Mag-report →' : 'Sign In to File a Report →'}
                   </button>
@@ -1213,10 +1353,10 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               {/* ====================================================
                   SECTION 4: ROLE-BASED ENTRY POINTS ("GETTING STARTED")
                   ==================================================== */}
-              <div className="pt-6 border-t border-white/10 space-y-4 text-left">
+              <div className={`pt-6 border-t space-y-4 text-left ${isDark ? 'border-white/10' : 'border-slate-300'}`}>
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-[2px] bg-amber-400" />
-                  <span className="text-xs font-extrabold tracking-[0.18em] uppercase text-amber-400">
+                  <div className="w-8 h-[2px] bg-amber-500" />
+                  <span className="text-xs font-extrabold tracking-[0.18em] uppercase text-amber-600 dark:text-amber-400">
                     GETTING STARTED BY ROLE
                   </span>
                 </div>
@@ -1224,13 +1364,17 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   
                   {/* Role 01: Students */}
-                  <div className="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-400/30 transition-colors flex flex-col justify-between gap-4">
+                  <div className={`p-5 rounded-2xl border flex flex-col justify-between gap-4 transition-all ${
+                    isDark
+                      ? 'bg-white/5 border-white/10 hover:border-amber-400/30 text-white'
+                      : 'bg-white border-slate-300 hover:border-amber-500 shadow-sm text-slate-800'
+                  }`}>
                     <div className="space-y-2">
-                      <span className="text-xs font-mono font-black text-amber-400 tracking-wider">01 · STUDENTS</span>
-                      <h4 className="text-base font-bold text-white">
+                      <span className="text-xs font-mono font-black text-amber-600 dark:text-amber-400 tracking-wider">01 · STUDENTS</span>
+                      <h4 className={`text-base font-bold ${isDark ? 'text-white' : 'text-[#0B1F4D]'}`}>
                         {isTl ? 'Mag-ulat o Humingi ng Tulong' : 'Report Concerns & Seek Help'}
                       </h4>
-                      <p className="text-xs text-slate-300 leading-relaxed">
+                      <p className={`text-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                         {isTl
                           ? 'Gumawa ng account gamit ang iyong Student Number upang makapagsumite ng concern at mag-chat sa Guidance.'
                           : 'Create or unlock your student account to file concerns and track resolution in private.'}
@@ -1246,20 +1390,24 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                           setMode('register');
                         }
                       }}
-                      className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-300 hover:text-amber-200"
+                      className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-600 dark:text-amber-300 hover:text-amber-500"
                     >
                       <span>{isTl ? 'Gumawa ng Account →' : 'Create Account →'}</span>
                     </button>
                   </div>
 
                   {/* Role 02: Guidance Associates */}
-                  <div className="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400/30 transition-colors flex flex-col justify-between gap-4">
+                  <div className={`p-5 rounded-2xl border flex flex-col justify-between gap-4 transition-all ${
+                    isDark
+                      ? 'bg-white/5 border-white/10 hover:border-sky-400/30 text-white'
+                      : 'bg-white border-slate-300 hover:border-sky-500 shadow-sm text-slate-800'
+                  }`}>
                     <div className="space-y-2">
-                      <span className="text-xs font-mono font-black text-sky-400 tracking-wider">02 · GUIDANCE ASSOCIATES</span>
-                      <h4 className="text-base font-bold text-white">
+                      <span className="text-xs font-mono font-black text-sky-600 dark:text-sky-400 tracking-wider">02 · GUIDANCE ASSOCIATES</span>
+                      <h4 className={`text-base font-bold ${isDark ? 'text-white' : 'text-[#0B1F4D]'}`}>
                         {isTl ? 'Opisyal na Guidance Terminal' : 'Official Guidance Terminal'}
                       </h4>
-                      <p className="text-xs text-slate-300 leading-relaxed">
+                      <p className={`text-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                         {isTl
                           ? 'Nakalaan para sa awtorisadong kawani ng Guidance Office sa pamamahala ng mga kaso at interbensyon.'
                           : 'Desktop terminal for licensed Guidance personnel to review cases and schedule sessions.'}
@@ -1268,20 +1416,24 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     <a
                       href="?mode=staff#staff"
                       onClick={() => soundFX.playToggleSwitch(true)}
-                      className="inline-flex items-center gap-1.5 text-xs font-extrabold text-sky-300 hover:text-sky-200"
+                      className="inline-flex items-center gap-1.5 text-xs font-extrabold text-sky-600 dark:text-sky-300 hover:text-sky-500"
                     >
                       <span>{isTl ? 'Staff Desktop Terminal →' : 'Staff Terminal Login →'}</span>
                     </a>
                   </div>
 
                   {/* Role 03: Teachers & Campus Officers */}
-                  <div className="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-emerald-400/30 transition-colors flex flex-col justify-between gap-4">
+                  <div className={`p-5 rounded-2xl border flex flex-col justify-between gap-4 transition-all ${
+                    isDark
+                      ? 'bg-white/5 border-white/10 hover:border-emerald-400/30 text-white'
+                      : 'bg-white border-slate-300 hover:border-emerald-500 shadow-sm text-slate-800'
+                  }`}>
                     <div className="space-y-2">
-                      <span className="text-xs font-mono font-black text-emerald-400 tracking-wider">03 · FACULTY & STAFF</span>
-                      <h4 className="text-base font-bold text-white">
+                      <span className="text-xs font-mono font-black text-emerald-600 dark:text-emerald-400 tracking-wider">03 · FACULTY & STAFF</span>
+                      <h4 className={`text-base font-bold ${isDark ? 'text-white' : 'text-[#0B1F4D]'}`}>
                         {isTl ? 'Student Endorsement & Referral' : 'Student Endorsement & Care'}
                       </h4>
-                      <p className="text-xs text-slate-300 leading-relaxed">
+                      <p className={`text-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                         {isTl
                           ? 'I-endorse ang mga estudyanteng nangangailangan ng agarang gabay sa silid-aralan.'
                           : 'Endorse students exhibiting signs of distress or behavioral changes for early guidance.'}
@@ -1290,7 +1442,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     <a
                       href="?mode=staff#staff"
                       onClick={() => soundFX.playToggleSwitch(true)}
-                      className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-300 hover:text-emerald-200"
+                      className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-600 dark:text-emerald-300 hover:text-emerald-500"
                     >
                       <span>{isTl ? 'Staff Referral →' : 'Staff Referral Access →'}</span>
                     </a>
@@ -1937,10 +2089,14 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       {/* ====================================================
           INSTITUTIONAL FOOTER & LEGAL CLUSTER
           ==================================================== */}
-      <footer className="relative z-20 py-8 px-4 sm:px-8 border-t border-white/10 bg-[#020814]/90 text-left">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+      <footer className={`relative z-20 py-8 px-4 sm:px-8 border-t text-left transition-colors duration-300 ${
+        isDark
+          ? 'border-white/10 bg-[#020814]/90 text-slate-400'
+          : 'border-slate-300 bg-white/90 text-slate-600 shadow-sm'
+      }`}>
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
           <div className="flex items-center gap-2">
-            <span className="font-extrabold text-white">Asian Institute of Computer Studies – Montalban</span>
+            <span className={`font-extrabold ${isDark ? 'text-white' : 'text-[#0B1F4D]'}`}>Asian Institute of Computer Studies – Montalban</span>
             <span>•</span>
             <span>Guidance & Counseling Services</span>
           </div>
@@ -1997,7 +2153,10 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
             </section>
 
             <section className="rounded-2xl bg-white/5 border border-white/15 p-3.5 space-y-1">
-              <p className="text-xs font-extrabold text-white">📝 {isTl ? 'Paano gamitin' : 'How to use it'}</p>
+              <p className="text-xs font-extrabold text-white flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-amber-400" />
+                <span>{isTl ? 'Paano gamitin' : 'How to use it'}</span>
+              </p>
               <ol className="text-xs text-white/85 leading-relaxed list-decimal pl-4 space-y-0.5">
                 <li>{isTl ? '"Report Concern": piliin ang uri, isulat ang nangyari, tapos i-submit.' : '"Report Concern": pick the type, write what happened, then submit.'}</li>
                 <li>{isTl ? '"My Reports": dito mo makikita kung na-review na ng Guidance Office.' : '"My Reports": see whether the Guidance Office has reviewed it.'}</li>
