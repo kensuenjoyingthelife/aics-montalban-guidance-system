@@ -11,6 +11,8 @@ import {
   Check,
   RefreshCw,
   Download,
+  XCircle,
+  CheckCircle2,
 } from 'lucide-react';
 import { CelestialBackground } from '../components/auth/CelestialBackground';
 import { WavyBackground } from '../components/auth/WavyBackground';
@@ -246,6 +248,11 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
   const [regLoading, setRegLoading] = useState(false);
   const [regError, setRegError] = useState<string | null>(null);
+  const [regStatusModal, setRegStatusModal] = useState<{
+    type: 'error' | 'success';
+    title: string;
+    message: string;
+  } | null>(null);
   const [show20sScanner, setShow20sScanner] = useState(false);
   const [scanPendingAccount, setScanPendingAccount] = useState<any>(null);
   const [scanForcedError, setScanForcedError] = useState<string | null>(null);
@@ -290,9 +297,9 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
   // 2. Middle Initial
   const miStatus = useMemo(() => {
-    if (!regMiddleInitial.trim()) return { type: 'not_input', label: 'OPTIONAL (N/A)' };
-    if (regMiddleInitial.trim().length > 2) return { type: 'wrong', label: '1 letter' };
-    return { type: 'correct', label: 'Correct' };
+    if (!regMiddleInitial.trim()) return { type: 'not_input', label: 'Optional' };
+    if (regMiddleInitial.trim().length > 2) return { type: 'wrong', label: 'Max 2 chars' };
+    return { type: 'correct', label: 'Provided ✓' };
   }, [regMiddleInitial]);
 
   // 3. Contact Number: Must start with 09 and be exactly 11 digits
@@ -450,18 +457,23 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     // 1. Invisible Honeypot Bot Trap: Reject bot if filled
     if (regHoneypot.trim()) {
       soundFX.playError();
-      setRegError('Security verification failed. Please try again.');
+      const msg = 'Security verification failed. Please try again.';
+      setRegError(msg);
+      setRegStatusModal({ type: 'error', title: isTl ? 'Hindi Matagumpay' : 'Verification Error', message: msg });
       return;
     }
 
     if (!isRegisterFormValid) {
       soundFX.playError();
-      setRegError(isTl ? 'Pakisuyong ayusin ang mga may maling input bago mag-submit.' : 'Please fix the highlighted inputs before proceeding.');
+      const msg = isTl ? 'Pakisuyong kumpletuhin at ayusin ang bawat field na may markang pula (✕) bago mag-submit.' : 'Please complete all required fields with green checkmarks (✓) before submitting.';
+      setRegError(msg);
+      setRegStatusModal({ type: 'error', title: isTl ? 'May Kulang sa Form' : 'Incomplete Registration', message: msg });
       return;
     }
 
     setRegLoading(true);
     setRegError(null);
+    setRegStatusModal(null);
 
     try {
       const res = await registerStudentPortalAccount({
@@ -482,7 +494,9 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
       if (!res.success || !res.account) {
         soundFX.playError();
-        setRegError(res.error || (isTl ? 'Hindi nagawa ang account. Subukan ulit.' : 'The account was not created. Please try again.'));
+        const errText = res.error || (isTl ? 'Hindi nagawa ang account. Subukan ulit.' : 'The account was not created. Please try again.');
+        setRegError(errText);
+        setRegStatusModal({ type: 'error', title: isTl ? 'Hindi Naaprubahan / Error' : 'Registration Failed', message: errText });
       } else {
         studentRegisterRateLimiter.reset();
         soundFX.playSuccessCheck();
@@ -491,7 +505,9 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     } catch (err: any) {
       setRegLoading(false);
       soundFX.playError();
-      setRegError(isTl ? 'Walang koneksyon. I-check ang internet, tapos subukan ulit.' : 'No connection. Check the internet, then try again.');
+      const errText = isTl ? 'Walang koneksyon sa server. I-check ang iyong internet connection, tapos subukan ulit.' : 'No server connection. Please check your internet connection and try again.';
+      setRegError(errText);
+      setRegStatusModal({ type: 'error', title: isTl ? 'Connection Error' : 'Connection Error', message: errText });
     }
   };
 
@@ -642,7 +658,9 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   };
 
   return (
-    <div className="min-h-screen lg:h-screen w-full relative flex flex-col justify-between overflow-x-hidden lg:overflow-hidden font-sans select-none student-portal-canvas bg-[#05112B] text-white">
+    <div className={`min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none student-portal-canvas bg-[#05112B] text-white ${
+      mode === 'login' ? 'lg:h-screen lg:overflow-hidden' : 'overflow-y-auto'
+    }`}>
       {/* Celestial Background: Active on Desktop, hidden/static on mobile */}
       <div className="hidden lg:block">
         <CelestialBackground />
@@ -788,7 +806,9 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       </header>
 
       {/* Main Glassmorphic Container: Left Student Pair & Right Form Card */}
-      <main className="relative z-20 flex-1 flex flex-col justify-center items-center p-3 sm:p-6 lg:px-8 lg:py-2 my-1 sm:my-4 lg:my-0">
+      <main className={`relative z-20 flex-1 flex flex-col justify-center items-center p-3 sm:p-6 lg:px-8 ${
+  mode === 'login' ? 'my-1 sm:my-4 lg:my-0 lg:py-2' : 'my-4 sm:my-8 py-4 sm:py-6'
+}`}>
         <div className="w-full max-w-7xl flex flex-col lg:flex-row items-center justify-center gap-6 xl:gap-16">
           {/* Left Wing: Boy and Girl Students Together with 1 Message Bubble (Desktop Only) */}
           {mode === 'login' && (
@@ -808,8 +828,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35 }}
             className={`w-full ${
-              mode === 'register' ? 'max-w-4xl' : 'max-w-[430px]'
-            } cosmic-glass-card p-4 sm:p-6 sm:py-7 space-y-4 sm:space-y-5 relative z-10 order-2 lg:order-none`}
+              mode === 'register' ? 'max-w-5xl xl:max-w-6xl' : 'max-w-[430px]'
+            } cosmic-glass-card p-4 sm:p-7 sm:py-8 space-y-5 sm:space-y-6 relative z-10 order-2 lg:order-none`}
           >
           {/* ====================================================
               MODE: LOGIN SCREEN
@@ -1144,8 +1164,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase">
                     {isTl ? '1. Pagkakakilanlan ng Estudyante (Buong Pangalan)' : '1. Student Identity (Full Name)'}
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
-                    <div className="sm:col-span-5 space-y-1.5">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    <div className="md:col-span-5 space-y-1.5">
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-bold register-label">{isTl ? 'Apelyido (Last Name)' : 'Last Name'}</label>
                         {renderBadge(lastNameStatus)}
@@ -1160,7 +1180,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       />
                     </div>
 
-                    <div className="sm:col-span-5 space-y-1.5">
+                    <div className="md:col-span-5 space-y-1.5">
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-bold register-label">{isTl ? 'Pangalan (First Name)' : 'First Name'}</label>
                         {renderBadge(firstNameStatus)}
@@ -1175,10 +1195,10 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       />
                     </div>
 
-                    <div className="sm:col-span-2 space-y-1.5 min-w-[130px]">
-                      <div className="flex items-center justify-between gap-1 whitespace-nowrap">
-                        <label className="text-xs sm:text-sm font-bold register-label uppercase whitespace-nowrap">M.I.</label>
-                        <span className="shrink-0">{renderBadge(miStatus)}</span>
+                    <div className="md:col-span-2 space-y-1.5">
+                      <div className="flex items-center justify-between gap-1">
+                        <label className="text-xs sm:text-sm font-bold register-label uppercase">M.I.</label>
+                        {renderBadge(miStatus)}
                       </div>
                       <input
                         type="text"
@@ -1197,7 +1217,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase">
                     {isTl ? '2. Detalye ng Pakikipag-ugnayan at Opisyal na Student Number' : '2. Contact Details & Official Student Number'}
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-bold register-label">{isTl ? 'Contact No.' : 'Contact No.'}</label>
@@ -1214,7 +1234,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       />
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 md:col-span-1 lg:col-span-2">
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-bold register-label">
                           {isTl ? 'Personal Gmail Account' : 'Personal Gmail Account'}
@@ -1521,6 +1541,14 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   </div>
                 </div>
 
+                {/* Bottom Inline Status Notification (Instantly visible above submit button) */}
+                {regError && (
+                  <div className="p-4 rounded-2xl bg-rose-500/20 border-2 border-rose-500/50 text-rose-200 text-sm font-semibold flex items-center gap-3 shadow-lg">
+                    <AlertTriangle className="w-5 h-5 text-rose-300 shrink-0" />
+                    <span>{regError}</span>
+                  </div>
+                )}
+
                 {/* Big Submit Button */}
                 <div className="space-y-2">
                   <button
@@ -1732,6 +1760,62 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       <footer className="relative z-20 py-4 text-center text-xs text-[#9BCBFF]/75 border-t border-white/10 bg-[#0B1E48]/50 student-footer hidden sm:block">
         Official Student Concern & Peer Referral Portal · Asian Institute of Computer Studies – Montalban (RA 10173 Protected)
       </footer>
+
+      {/* ====================================================
+          REGISTRATION STATUS MODAL (Approve / Error Popup in Center of Screen)
+          ==================================================== */}
+      {regStatusModal && (
+        <div className="fixed inset-0 z-50 bg-[#06122B]/85 backdrop-blur-sm flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+            className={`w-full max-w-md rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border-2 ${
+              regStatusModal.type === 'error'
+                ? 'bg-[#150A14] border-rose-500/60 text-white'
+                : 'bg-[#0B1E48] border-emerald-400/70 text-white'
+            }`}
+          >
+            <div className="flex items-center gap-3.5">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${
+                regStatusModal.type === 'error'
+                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+                  : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+              }`}>
+                {regStatusModal.type === 'error' ? (
+                  <AlertTriangle className="w-6 h-6 text-rose-400" />
+                ) : (
+                  <Check className="w-6 h-6 text-emerald-400" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-lg font-black tracking-tight">{regStatusModal.title}</h3>
+                <p className="text-xs text-slate-300 font-medium">AICS SafeZone Registration</p>
+              </div>
+            </div>
+
+            <p className="text-sm font-semibold leading-relaxed text-slate-200 bg-white/5 border border-white/10 p-4 rounded-2xl">
+              {regStatusModal.message}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playBackspace();
+                setRegStatusModal(null);
+              }}
+              className={`btn-press w-full py-3.5 rounded-xl font-extrabold text-sm transition-all cursor-pointer shadow-md ${
+                regStatusModal.type === 'error'
+                  ? 'bg-rose-600 hover:bg-rose-700 text-white active:scale-[0.98]'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[0.98]'
+              }`}
+            >
+              {isTl ? 'Naiintindihan Ko (Isara)' : 'Got It (Dismiss)'}
+            </button>
+          </motion.div>
+        </div>
+      )}
 
       {/* ====================================================
           ACCOUNT CREATED: success mini-card (privacy, safety, how to use) — no animation
