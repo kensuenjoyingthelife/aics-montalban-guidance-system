@@ -937,8 +937,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
         offenseTitleEn: pol.titleEn,
         offenseTitleTl: pol.titleTl,
         severity: severityLabel,
-        status:
-          escalatedToMajor ? 'Conference Scheduled' : 'Open',
+        step: 'Reported',
+        status: 'Open',
         reportedBy: nextReportedBy,
         incidentDate,
         notes: nextNotes,
@@ -1010,40 +1010,18 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       return;
     }
 
-    const firstStu = selectedStudentsList[0];
+    // Golden Rule of Due Process:
+    // Never jump to "Text parent" right upon filing! The case must follow sequential Due Process:
+    // Step 1: Reported -> Step 2: Student Called -> Step 3: Explanation -> Step 4: Schedule Conference (only if serious/escalated).
     onTriggerToast(
       isTl
-        ? ` Naitala na ang Case Report (${createdCases
+        ? `Naitala na ang Case Report (${createdCases
             .map((c) => c.caseCode)
-            .join(', ')}) para kay ${createdCases.map((c) => c.studentName).join(', ')}!`
-        : ` Case Report (${createdCases
+            .join(', ')}) para kay ${createdCases.map((c) => c.studentName).join(', ')}! Naka-queue na sa Step 2: Tawagin ang Estudyante.`
+        : `Case Report (${createdCases
             .map((c) => c.caseCode)
-            .join(', ')}) saved for ${createdCases.map((c) => c.studentName).join(', ')}!`,
-      undefined, // no undo for a saved case
-      // Golden Rule 6: the obvious next step — summon the parent
-      autoNotifyParent && firstStu
-        ? {
-            label: isGroupSave
-              ? isTl ? `I-text ang magulang ni ${firstStu.fullName.split(' ')[0]}` : `Text ${firstStu.fullName.split(' ')[0]}'s parent`
-              : isTl ? 'I-text ang magulang' : 'Text the parent',
-            hint: isGroupSave
-              ? isTl
-                ? 'Ang ibang magulang: buksan ang bawat case → "Text parent".'
-                : 'For the other parents: open each case → "Text parent".'
-              : isTl
-              ? `Susunod: ipatawag si ${firstStu.parentName} para sa conference.`
-              : `Next: invite ${firstStu.parentName} to a conference.`,
-            run: () =>
-              onOpenParentComposer({
-                studentName: firstStu.fullName,
-                gradeSection: firstStu.gradeSection,
-                parentName: firstStu.parentName,
-                parentPhone: firstStu.parentPhone,
-                parentEmail: firstStu.parentEmail,
-                scheduleText: '',
-              }),
-          }
-        : undefined
+            .join(', ')}) saved for ${createdCases.map((c) => c.studentName).join(', ')}! Proceed to Step 2: Call Student.`,
+      undefined // no premature action
     );
 
     setSelectedStudentNumbers([]);
