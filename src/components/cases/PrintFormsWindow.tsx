@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Printer, Copy, Check, Download, FileText } from 'lucide-react';
 import type { DisciplineCaseRecord, StudentRecord } from '../../data/stage3MockData';
-import { FormKind, FORM_TITLES, buildFormHtml, printHtml } from '../../services/printForms';
+import { FormKind, FORM_TITLES, buildFormHtml, printHtml, downloadFormDocument } from '../../services/printForms';
 import { isOfficeDay, todayISO, addDays } from '../../services/scheduling';
 import { getAppConfig } from '../../services/appConfig';
 
@@ -75,6 +75,16 @@ export const PrintFormsWindow: React.FC<{
     );
     if (printHtml(html)) onPrinted(kind);
     else onFailed();
+  };
+
+  const downloadDirectFile = () => {
+    const html = buildFormHtml(
+      { kind, c, stu, when, promises, suspensionDays: days, suspensionStart: start, returnDate: back, signer },
+      window.location.origin
+    );
+    const filename = `${c.caseCode}_${FORM_TITLES[kind][0].replace(/\s+/g, '_')}`;
+    downloadFormDocument(html, filename);
+    onPrinted(kind);
   };
   const fmt = (iso: string) => new Intl.DateTimeFormat(isTl ? 'fil-PH' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date(iso + 'T00:00:00'));
 
@@ -161,6 +171,15 @@ export const PrintFormsWindow: React.FC<{
               <Copy className="w-3.5 h-3.5" />
               <span>SOFTCOPY - SEND IN ADVISER</span>
             </button>
+            <button
+              type="button"
+              onClick={downloadDirectFile}
+              className="px-3.5 py-2.5 rounded-lg border border-emerald-600/40 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-xs font-bold transition-all active:scale-[0.97] inline-flex items-center gap-1.5 shadow-xs"
+              title="Save document directly to your Downloads folder so you can open or view anytime"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>{isTl ? 'I-SAVE ANG FILE (DIRECT)' : 'SAVE FILE (DIRECT)'}</span>
+            </button>
           </div>
 
           <div className="flex items-center gap-2">
@@ -174,8 +193,8 @@ export const PrintFormsWindow: React.FC<{
               onClick={print}
               className="px-5 py-2.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-bold disabled:opacity-50 active:scale-[0.97] transition-all shadow-sm inline-flex items-center gap-1.5"
             >
-              <Download className="w-3.5 h-3.5" />
-              <span>{isTl ? `I-DOWNLOAD ANG SOFTCOPY (PDF)` : `DOWNLOAD THE SOFTCOPY (PDF)`}</span>
+              <Printer className="w-3.5 h-3.5" />
+              <span>{isTl ? `PRINT / DOWNLOAD PDF FORM` : `PRINT / DOWNLOAD PDF FORM`}</span>
             </button>
           </div>
         </div>

@@ -157,9 +157,14 @@ export function buildFormHtml(f: FormInput, origin = ''): string {
 
 /** Print a page made only of the form (hidden frame). Returns false when printing is not possible. */
 export function printHtml(html: string): boolean {
+  // If a previous print frame exists, clean it up first
+  const old = document.getElementById('aics-print-isolated-frame');
+  if (old) old.remove();
+
   const frame = document.createElement('iframe');
+  frame.id = 'aics-print-isolated-frame';
   frame.setAttribute('aria-hidden', 'true');
-  frame.style.cssText = 'position:fixed;width:0;height:0;border:0;right:0;bottom:0';
+  frame.style.cssText = 'position:fixed;width:0;height:0;border:0;right:0;bottom:0;opacity:0;pointer-events:none;z-index:-9999;';
   document.body.appendChild(frame);
   const doc = frame.contentDocument;
   if (!doc || !frame.contentWindow) {
@@ -169,13 +174,40 @@ export function printHtml(html: string): boolean {
   doc.open();
   doc.write(html);
   doc.close();
-  // wait for the logo, then print
+
+  // Explicitly focus and print ONLY the isolated iframe window, never the main app window
   setTimeout(() => {
-    frame.contentWindow?.focus();
-    frame.contentWindow?.print();
-    setTimeout(() => frame.remove(), 1000);
+    try {
+      frame.contentWindow?.focus();
+      frame.contentWindow?.print();
+    } catch {
+      /* ignore */
+    }
+    // Cleanly remove after print dialog interaction
+    setTimeout(() => {
+      try {
+        frame.remove();
+      } catch {
+        /* ignore */
+      }
+    }, 2000);
   }, 350);
   return true;
+}
+
+/** Downloads the form directly as an HTML/PDF document file so the user can open or save directly */
+export function downloadFormDocument(html: string, filename: string): void {
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename.endsWith('.html') ? filename : `${filename}.html`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, 1000);
 }
 
 /** 4-in-1 Compact Call Slip Batch Sheet (Morning Routine Optimizer) */
