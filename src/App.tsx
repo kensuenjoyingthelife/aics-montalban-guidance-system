@@ -9,6 +9,7 @@ import { ConfirmChangeProvider } from './components/ui/ConfirmChange';
 import { DashboardPage } from './pages/DashboardPage';
 import { StaffDirectoryAccount } from './services/authSecurityService';
 import { StudentAuthGate } from './pages/StudentAuthGate';
+import { GuidanceChatHead } from './components/GuidanceChatHead';
 import { StudentDashboard } from './pages/StudentDashboard';
 import { StudentPortalUser } from './services/studentAuthService';
 import { applyAdaptivePerformanceClass, isCapacitorNativeApp } from './services/devicePerformance';
@@ -97,11 +98,14 @@ export const App: React.FC = () => {
                  GUIDANCE OFFICE STAFF DESKTOP APP
                  ==================================================== */
               activeStaffSession ? (
-                <DashboardPage
-                  staffEmail={activeStaffSession.email}
-                  staffRole={activeStaffSession.role}
-                  onLockTerminal={() => setActiveStaffSession(null)}
-                />
+                <>
+                  <DashboardPage
+                    staffEmail={activeStaffSession.email}
+                    staffRole={activeStaffSession.role}
+                    onLockTerminal={() => setActiveStaffSession(null)}
+                  />
+                  <GuidanceChatHead />
+                </>
               ) : (
                 <LoginGate
                   onReplaySplash={() => setShowSplash(true)}
