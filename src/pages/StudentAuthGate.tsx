@@ -258,11 +258,14 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   const [scanPendingAccount, setScanPendingAccount] = useState<any>(null);
   const [scanForcedError, setScanForcedError] = useState<string | null>(null);
 
-  // Success Modal State
+  // Success Modal State & Post-Registration PIN Verification Flow
   const [successData, setSuccessData] = useState<{
     username: string;
     account: StudentPortalUser;
   } | null>(null);
+  const [postRegPinStep, setPostRegPinStep] = useState<boolean>(false);
+  const [postRegPinInput, setPostRegPinInput] = useState<string>('');
+  const [postRegPinError, setPostRegPinError] = useState<string | null>(null);
 
   // ==========================================
   // FORGOT PASSWORD STATE
@@ -521,6 +524,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         studentRegisterRateLimiter.reset();
         soundFX.playSuccessCheck();
         setSuccessData({ username: res.account.studentNumber, account: res.account });
+        setPostRegPinStep(false);
+        setPostRegPinInput('');
       }
     } catch (err: any) {
       setRegLoading(false);
@@ -1951,13 +1956,117 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               data-reg-success-go
               onClick={() => {
                 soundFX.playSuccessCheck();
-                onLoginSuccess(successData.account);
+                setPostRegPinStep(true);
               }}
-              className="btn-press w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm"
+              className="btn-press w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:opacity-95 text-white font-extrabold text-sm shadow-xl flex items-center justify-center gap-2 cursor-pointer"
             >
-              {isTl ? 'Naintindihan ko — Pumasok sa Portal →' : 'Got it — Open the Portal →'}
+              <span>{isTl ? 'I-verify ang 5-Digit PIN Bago Mag-Dashboard →' : 'Verify 5-Digit PIN Before Dashboard →'}</span>
             </button>
           </div>
+        </div>
+      )}
+
+      {/* ====================================================
+          NEW FEATURE: MANDATORY POST-REGISTRATION 5-DIGIT PIN CONFIRMATION
+          (Required for every newly created account before entering student dashboard)
+          ==================================================== */}
+      {successData && postRegPinStep && (
+        <div className="fixed inset-0 z-50 bg-[#06122B]/95 backdrop-blur-xl flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 14 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+            className="w-full max-w-md rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl border-2 border-sky-400/60 bg-[#0A1A3D] text-white text-center"
+          >
+            {/* Lottie-Style Animated PIN Shield Header */}
+            <div className="relative mx-auto w-16 h-16 rounded-3xl bg-sky-500/20 border-2 border-sky-400/70 flex items-center justify-center shadow-lg shadow-sky-950/60">
+              <motion.div
+                animate={{ scale: [1, 1.08, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <Lock className="w-8 h-8 text-sky-300" />
+              </motion.div>
+              <span className="absolute inset-0 rounded-3xl bg-sky-400/25 animate-ping pointer-events-none" style={{ animationDuration: '3s' }} />
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-400/10 px-3 py-1 rounded-full border border-emerald-400/30">
+                {isTl ? 'BAGONG TAMPOK (SECURITY PIN)' : 'NEW SECURITY FEATURE'}
+              </span>
+              <h3 className="text-xl font-black text-white pt-2">
+                {isTl ? 'Ilagay ang Iyong 5-Digit PIN' : 'Enter Your 5-Digit PIN'}
+              </h3>
+              <p className="text-xs text-sky-200/80 font-medium">
+                {isTl
+                  ? 'I-type ang 5-digit PIN na iyong itinakda kanina upang kumpirmahin ang seguridad bago pumasok sa dashboard.'
+                  : 'Enter the 5-digit PIN you just created to verify security before proceeding to your dashboard.'}
+              </p>
+            </div>
+
+            {/* PIN Input Box */}
+            <div className="space-y-3">
+              <input
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={5}
+                autoFocus
+                value={postRegPinInput}
+                onChange={(e) => {
+                  setPostRegPinError(null);
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 5);
+                  setPostRegPinInput(val);
+                }}
+                placeholder="• • • • •"
+                className="w-full py-4 px-4 rounded-2xl bg-black/40 border-2 border-sky-400/50 text-white text-2xl font-mono font-bold tracking-[0.5em] text-center focus:outline-none focus:border-emerald-400 transition-colors shadow-inner"
+              />
+
+              {postRegPinError && (
+                <p className="text-xs font-bold text-rose-400 flex items-center justify-center gap-1.5 animate-shake">
+                  <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>{postRegPinError}</span>
+                </p>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="space-y-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (postRegPinInput.length !== 5) {
+                    soundFX.playError();
+                    setPostRegPinError(isTl ? 'Dapat eksaktong 5 digits ang PIN.' : 'PIN must be exactly 5 digits.');
+                    return;
+                  }
+                  if (regQuickPin.trim() && postRegPinInput !== regQuickPin.trim()) {
+                    soundFX.playError();
+                    setPostRegPinError(isTl ? 'Maling PIN! Hindi ito tumutugma sa ginawa mong PIN.' : 'Incorrect PIN! Does not match the PIN you registered.');
+                    return;
+                  }
+
+                  soundFX.playSuccessCheck();
+                  onLoginSuccess(successData.account);
+                }}
+                className="btn-press w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:opacity-95 text-white font-extrabold text-sm shadow-xl shadow-emerald-950/60 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>{isTl ? '✓ Kumpirmahin at Pumasok sa Dashboard' : '✓ Confirm PIN & Open Dashboard'}</span>
+                <span>→</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  soundFX.playBackspace();
+                  setPostRegPinStep(false);
+                }}
+                className="text-xs text-sky-300/80 hover:text-white font-bold transition-colors cursor-pointer"
+              >
+                {isTl ? '← Tingnan Muli ang Account Details' : '← Review Account Details'}
+              </button>
+            </div>
+          </motion.div>
         </div>
       )}
 

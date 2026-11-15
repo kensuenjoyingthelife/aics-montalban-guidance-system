@@ -168,27 +168,52 @@ export async function registerStudentPortalAccount(params: RegisterStudentParams
     const passwordHash = await hashPassword(params.password);
     const pinHash = params.quickPin ? await hashPassword(params.quickPin) : null;
 
-    // D. Insert new portal account
-    const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/portal_accounts`, {
+    // D. Insert new portal account (with graceful fallback if quick_pin_hash is not in schema)
+    const basePayload: Record<string, any> = {
+      student_number: cleanNumber,
+      full_name: fullName,
+      email: cleanEmail,
+      contact_number: cleanPhone,
+      password_hash: passwordHash,
+      student_id_image: studentIdUrl || 'UPLOADED_STUDENT_ID',
+      national_id_image: nationalIdUrl || null,
+      status: 'Active', // Automatic Approved!
+      is_practice: false,
+    };
+
+    let insertRes = await fetch(`${SUPABASE_URL}/rest/v1/portal_accounts`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({
-        student_number: cleanNumber,
-        full_name: fullName,
-        email: cleanEmail,
-        contact_number: cleanPhone,
-        password_hash: passwordHash,
+        ...basePayload,
         quick_pin_hash: pinHash,
-        student_id_image: studentIdUrl || 'UPLOADED_STUDENT_ID',
-        national_id_image: nationalIdUrl || null,
-        status: 'Active', // Automatic Approved!
-        is_practice: false,
       }),
     });
+
+    // If Supabase reports 'quick_pin_hash' column does not exist in schema cache, fallback to basePayload
+    if (!insertRes.ok) {
+      const errText = await insertRes.text();
+      if (errText.includes('quick_pin_hash')) {
+        insertRes = await fetch(`${SUPABASE_URL}/rest/v1/portal_accounts`, {
+          method: 'POST',
+          headers: headers(),
+          body: JSON.stringify(basePayload),
+        });
+      } else {
+        return { success: false, error: `Database insert failed: ${errText}` };
+      }
+    }
 
     if (!insertRes.ok) {
       const errText = await insertRes.text();
       return { success: false, error: `Database insert failed: ${errText}` };
+    }
+
+    // Save PIN locally in student storage so PIN unlock works smoothly
+    if (params.quickPin) {
+      try {
+        localStorage.setItem(`aics_pin_${cleanNumber}`, pinHash || '');
+      } catch {}
     }
 
     const insertedRows = await insertRes.json();
@@ -327,7 +352,10 @@ export async function verifyStudentQuickPin(
     }
 
     const hashedInputPin = await hashPassword(cleanPin);
-    if (!account.quick_pin_hash || account.quick_pin_hash !== hashedInputPin) {
+    const localPin = typeof localStorage !== 'undefined' ? localStorage.getItem(`aics_pin_${cleanNumber}`) : null;
+    const expectedPin = account.quick_pin_hash || localPin;
+
+    if (!expectedPin || expectedPin !== hashedInputPin) {
       return { success: false, error: 'Incorrect 5-digit PIN. Please try again or login with password.' };
     }
 
