@@ -1142,27 +1142,32 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
         action: onScheduleConference ? 'schedule' : 'text',
       };
     }
-    // otherwise: the next step of the 7-step flow (opens in the case details)
+    // otherwise: the next step of the 8-step flow (opens in the case details)
     const nx = flowState(c).next;
     const words: Record<string, [string, string]> = {
       'Student Called': ['Next: call the student', 'Susunod: tawagin ang estudyante'],
       Explanation: ['Next: write the student’s explanation', 'Susunod: isulat ang paliwanag ng estudyante'],
+      'Schedule Conference': ['Next: schedule conference with parent', 'Susunod: mag-isyu ng patawag sa magulang'],
+      'Parent Conference Attendance': ['Next: parent conference hearing', 'Susunod: pagharap ng magulang sa conference'],
       'Parent Notified': ['Next: let the parent know', 'Susunod: ipaalam sa magulang'],
       Decision: ['Next: record the decision and sanction', 'Susunod: itala ang desisyon at sanction'],
       'Follow-Up': ['Next: start the follow-up', 'Susunod: simulan ang follow-up'],
       Closed: ['Next: close the case when the sanction is done', 'Susunod: isara kapag tapos na ang sanction'],
     };
-    const w = nx ? words[nx] : null;
+    const w = nx && words[nx] ? words[nx] : null;
     const buttons: Record<string, [string, string]> = {
       'Student Called': ['Call student', 'Tawagin'],
       Explanation: ['Write explanation', 'Isulat ang paliwanag'],
+      'Schedule Conference': ['Schedule conference', 'Iskedyul conference'],
+      'Parent Conference Attendance': ['Conference hearing', 'Pagharap ng magulang'],
       'Parent Notified': ['Parent notified?', 'Alam na ng magulang?'],
       Decision: ['Record decision', 'Itala ang desisyon'],
       'Follow-Up': ['Start follow-up', 'Simulan ang follow-up'],
       Closed: ['Close case', 'Isara ang kaso'],
     };
+    const btnTuple = nx && buttons[nx] ? buttons[nx] : undefined;
     // one main button on the card: it opens the case at its next step
-    return { hint: w ? w[isTl ? 1 : 0] : '', action: nx ? 'flow' : null, button: nx ? buttons[nx][isTl ? 1 : 0] : undefined };
+    return { hint: w ? w[isTl ? 1 : 0] : '', action: nx ? 'flow' : null, button: btnTuple ? btnTuple[isTl ? 1 : 0] : undefined };
   };
   /** Colour of the bar on the card's left edge: how serious the case is */
   const stripeFor = (c: DisciplineCaseRecord): string => {
