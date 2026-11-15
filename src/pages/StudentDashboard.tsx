@@ -1106,27 +1106,56 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                       onChange={(e) => setReportType(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl cosmic-input text-xs sm:text-sm font-semibold focus:outline-none"
                     >
-                      <option value="Vaping / Smoking Infraction">
-                        {isTl ? 'Vaping / Paninigarilyo sa Loob ng Campus' : 'Vaping / Smoking on Campus'}
-                      </option>
-                      <option value="Physical Bullying & Fighting">
-                        {isTl ? 'Physical Bullying, Away, o Pananakit' : 'Physical Bullying, Fighting, or Assault'}
-                      </option>
-                      <option value="Weapons & Dangerous Contraband">
-                        {isTl ? 'Matatalim na Bagay o Delikadong Gamit' : 'Weapons & Dangerous Contraband'}
-                      </option>
-                      <option value="Extortion & Coercion">
-                        {isTl ? 'Panghihingi ng Pera (Extortion) o Pamimilit' : 'Extortion, Coercion, or Threat'}
-                      </option>
-                      <option value="Cyberbullying & Online Harassment">
-                        {isTl ? 'Cyberbullying, Paninirang-Puri sa Social Media' : 'Cyberbullying & Online Harassment'}
-                      </option>
-                      <option value="Vandalism & Campus Property Damage">
-                        {isTl ? 'Pagsira sa Gamit ng Paaralan (Vandalism)' : 'Vandalism & Property Damage'}
-                      </option>
-                      <option value="Other Disciplinary Infraction">
-                        {isTl ? 'Iba Pang Paglabag sa School Discipline Handbook' : 'Other Disciplinary Handbook Infraction'}
-                      </option>
+                      <optgroup label={isTl ? '── MAJOR / SERIOUS OFFENSES (Mabibigat na Paglabag) ──' : '── MAJOR & SERIOUS OFFENSES ──'}>
+                        <option value="Physical Bullying & Fighting">
+                          {isTl ? 'Physical Bullying, Away, o Pananakit (RA 10627)' : 'Physical Bullying, Assault, or Fighting'}
+                        </option>
+                        <option value="Cyberbullying & Online Harassment">
+                          {isTl ? 'Cyberbullying o Paninirang-Puri sa Social Media' : 'Cyberbullying & Online Harassment'}
+                        </option>
+                        <option value="Vaping / Smoking Infraction">
+                          {isTl ? 'Vaping o Paninigarilyo sa Loob ng Campus' : 'Vaping / Smoking on Campus'}
+                        </option>
+                        <option value="Extortion & Coercion">
+                          {isTl ? 'Panghihingi ng Pera (Extortion) o Pananakot' : 'Extortion, Blackmail, or Threat'}
+                        </option>
+                        <option value="Weapons & Dangerous Contraband">
+                          {isTl ? 'Matatalim na Bagay o Delikadong Gamit' : 'Weapons & Dangerous Contraband'}
+                        </option>
+                        <option value="Vandalism & Campus Property Damage">
+                          {isTl ? 'Pagsira sa Gamit ng Paaralan (Vandalism)' : 'Vandalism & Campus Property Damage'}
+                        </option>
+                        <option value="Cutting Classes & Truancy">
+                          {isTl ? 'Pagtakas sa Gate o Pag-cutting Classes' : 'Cutting Classes & Gate Truancy'}
+                        </option>
+                        <option value="Forgery & Tampering of Records">
+                          {isTl ? 'Pamemeke ng Pirma ng Magulang o Records' : 'Forgery of Parent Signature or Records'}
+                        </option>
+                      </optgroup>
+
+                      <optgroup label={isTl ? '── MINOR OFFENSES (Magaan na Paglabag) ──' : '── MINOR OFFENSES ──'}>
+                        <option value="Habitual Tardiness">
+                          {isTl ? 'Madalas na Pagkahuli sa Klase / Gate (Tardiness)' : 'Habitual Tardiness & Late Arrival'}
+                        </option>
+                        <option value="Improper Uniform & Dress Code">
+                          {isTl ? 'Paglabag sa Tamang Uniporme o Gupit (Dress Code)' : 'Improper Uniform & Dress Code Violation'}
+                        </option>
+                        <option value="Improper Use of School ID">
+                          {isTl ? 'Hindi Pagsusuot o Maling Paggamit ng School ID' : 'Non-Wearing or Improper Use of School ID'}
+                        </option>
+                        <option value="Classroom Disruption">
+                          {isTl ? 'Kakulitan o Kaingayan sa Klase (Disruption)' : 'Classroom Disruption & Noise'}
+                        </option>
+                        <option value="Littering on Campus">
+                          {isTl ? 'Pagtatapon ng Kalat sa Campus (Littering)' : 'Campus Littering Infraction'}
+                        </option>
+                        <option value="Unauthorized Device Use">
+                          {isTl ? 'Paggamit ng Cellphone Habang Nagkaklase' : 'Unauthorized Mobile Phone Use in Class'}
+                        </option>
+                        <option value="Other Disciplinary Infraction">
+                          {isTl ? 'Iba Pang Paglabag sa Student Handbook' : 'Other Disciplinary Handbook Infraction'}
+                        </option>
+                      </optgroup>
                     </select>
                   </div>
 

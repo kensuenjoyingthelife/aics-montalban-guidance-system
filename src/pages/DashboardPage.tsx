@@ -1485,8 +1485,29 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             onChanged={refreshBadges}
             onCreateCase={(p) => openCasesTab('add-report', null, p)}
             onOpenCase={(code) => {
-              setQuickSearch(code);
-              openCasesTab('case-board');
+              // Direct Case Opener: Check if the case actually exists in memory
+              const found = cases.find((c) => c.caseCode.toLowerCase() === code.toLowerCase());
+              if (found) {
+                setQuickSearch('');
+                openCasesTab('case-board');
+                // Open the found case drawer directly
+                setTimeout(() => {
+                  const cardEl = document.querySelector(`[data-case-card="${found.caseCode}"]`) as HTMLElement;
+                  if (cardEl) cardEl.click();
+                }, 150);
+              } else {
+                // If the case doesn't exist yet, prompt to create it directly with prefill
+                triggerToast(
+                  isTl
+                    ? `Walang nahanap na case file para sa ${code}. Gusto mo bang gawan ito ng pormal na kaso?`
+                    : `No active case file found for ${code}. Would you like to create it now?`,
+                  undefined,
+                  {
+                    label: isTl ? 'Gumawa ng Kaso' : 'Create Case Now',
+                    run: () => openCasesTab('add-report'),
+                  }
+                );
+              }
             }}
           />
         ) : activeCategory.id === 'referrals-hub' ? (
@@ -1497,8 +1518,29 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             onTriggerToast={triggerToast}
             onRowsChanged={setReferralRows}
             onOpenCase={(code) => {
-              setQuickSearch(code);
-              openCasesTab('case-board');
+              // Direct Case Opener: Check if the case actually exists in memory
+              const found = cases.find((c) => c.caseCode.toLowerCase() === code.toLowerCase());
+              if (found) {
+                setQuickSearch('');
+                openCasesTab('case-board');
+                // Open the found case drawer directly
+                setTimeout(() => {
+                  const cardEl = document.querySelector(`[data-case-card="${found.caseCode}"]`) as HTMLElement;
+                  if (cardEl) cardEl.click();
+                }, 150);
+              } else {
+                // If the case doesn't exist yet, prompt to create it directly with prefill
+                triggerToast(
+                  isTl
+                    ? `Walang nahanap na case file para sa ${code}. Gusto mo bang gawan ito ng pormal na kaso?`
+                    : `No active case file found for ${code}. Would you like to create it now?`,
+                  undefined,
+                  {
+                    label: isTl ? 'Gumawa ng Kaso' : 'Create Case Now',
+                    run: () => openCasesTab('add-report'),
+                  }
+                );
+              }
             }}
           />
         ) : activeCategory.id === 'records-hub' ? (
@@ -1509,8 +1551,29 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             staffEmail={staffEmail}
             onTriggerToast={triggerToast}
             onOpenCase={(code) => {
-              setQuickSearch(code);
-              openCasesTab('case-board');
+              // Direct Case Opener: Check if the case actually exists in memory
+              const found = cases.find((c) => c.caseCode.toLowerCase() === code.toLowerCase());
+              if (found) {
+                setQuickSearch('');
+                openCasesTab('case-board');
+                // Open the found case drawer directly
+                setTimeout(() => {
+                  const cardEl = document.querySelector(`[data-case-card="${found.caseCode}"]`) as HTMLElement;
+                  if (cardEl) cardEl.click();
+                }, 150);
+              } else {
+                // If the case doesn't exist yet, prompt to create it directly with prefill
+                triggerToast(
+                  isTl
+                    ? `Walang nahanap na case file para sa ${code}. Gusto mo bang gawan ito ng pormal na kaso?`
+                    : `No active case file found for ${code}. Would you like to create it now?`,
+                  undefined,
+                  {
+                    label: isTl ? 'Gumawa ng Kaso' : 'Create Case Now',
+                    run: () => openCasesTab('add-report'),
+                  }
+                );
+              }
             }}
           />
         ) : activeCategory.id === 'settings-hub' ? (
