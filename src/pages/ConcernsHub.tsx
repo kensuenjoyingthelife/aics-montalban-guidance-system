@@ -28,6 +28,27 @@ import {
 } from '../services/concernsDb';
 import { isOfficeDay, todayISO } from '../services/scheduling';
 import { Legend } from '../components/ui/Charts';
+import {
+  Lock,
+  CheckCircle,
+  CheckCircle2,
+  XCircle,
+  HelpCircle,
+  Clock,
+  MapPin,
+  Users,
+  Eye,
+  Maximize2,
+  Phone,
+  FileText,
+  Send,
+  Ban,
+  Image as ImageIcon,
+  User,
+  AlertTriangle,
+  Target,
+  Camera,
+} from 'lucide-react';
 
 export type ConcernsTab = 'reports' | 'chats' | 'accounts';
 
@@ -184,7 +205,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
     const saved = await updateConcern(c.id, patch, 'approveConcern');
     if (!saved) {
       setBusy(false);
-      onTriggerToast(isTl ? '⚠️ Hindi na-save. I-check ang internet, tapos subukan ulit.' : '⚠️ Not saved. Check the internet, then try again.');
+      onTriggerToast(isTl ? 'Hindi na-save. I-check ang internet, tapos subukan ulit.' : 'Not saved. Check the internet, then try again.');
       return;
     }
     patchLocal(c.id, { status: 'Approved', reviewedAt: patch.reviewed_at, linkedCaseCode: caseCode, chatStatus: 'Open', rejectReason: '' });
@@ -205,7 +226,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
     setApproveFor(null);
     onChanged?.();
     soundFX.playSuccessCheck();
-    onTriggerToast(isTl ? `✓ Na-approve. Bukas na ang chat kay ${c.studentName}.` : `✓ Approved. The chat with ${c.studentName} is open.`, undefined, {
+    onTriggerToast(isTl ? `Na-approve. Bukas na ang chat kay ${c.studentName}.` : `Approved. The chat with ${c.studentName} is open.`, undefined, {
       label: isTl ? 'Buksan ang chat' : 'Open the chat',
       run: () => {
         setTab('chats');
@@ -231,7 +252,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
     const saved = await updateConcern(c.id, { status: 'Rejected', reject_reason: reason, reviewed_at: at, chat_status: 'None' }, 'rejectConcern');
     setBusy(false);
     if (!saved) {
-      onTriggerToast(isTl ? '⚠️ Hindi na-save. I-check ang internet, tapos subukan ulit.' : '⚠️ Not saved. Check the internet, then try again.');
+      onTriggerToast(isTl ? 'Hindi na-save. I-check ang internet, tapos subukan ulit.' : 'Not saved. Check the internet, then try again.');
       return;
     }
     patchLocal(c.id, { status: 'Rejected', rejectReason: reason, reviewedAt: at });
@@ -267,7 +288,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
     if (!ok) return;
     const reason = matchOf(c) ? 'Blocked by the office' : 'Not in the masterlist (fake account)';
     if (!(await setAccountStatus(acc.id, false, reason))) {
-      onTriggerToast(isTl ? '⚠️ Hindi na-save. I-check ang internet, tapos subukan ulit.' : '⚠️ Not saved. Check the internet, then try again.');
+      onTriggerToast(isTl ? 'Hindi na-save. I-check ang internet, tapos subukan ulit.' : 'Not saved. Check the internet, then try again.');
       return;
     }
     setAccounts((l) => l.map((a) => (a.id === acc.id ? { ...a, status: 'Deactivated', deactivatedReason: reason } : a)));
@@ -285,7 +306,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
 
   const doUnblock = async (a: PortalAccount) => {
     if (!(await setAccountStatus(a.id, true))) {
-      onTriggerToast(isTl ? '⚠️ Hindi na-save. I-check ang internet, tapos subukan ulit.' : '⚠️ Not saved. Check the internet, then try again.');
+      onTriggerToast(isTl ? 'Hindi na-save. I-check ang internet, tapos subukan ulit.' : 'Not saved. Check the internet, then try again.');
       return;
     }
     setAccounts((l) => l.map((x) => (x.id === a.id ? { ...x, status: 'Active', deactivatedReason: '' } : x)));
@@ -319,11 +340,11 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
   const matchPill = (c: ConcernItem) =>
     matchOf(c) ? (
       <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200" title={isTl ? 'Tugma sa masterlist ng mga naka-enroll' : 'Matches the enrollment masterlist'}>
-        ✓ {isTl ? 'Nasa masterlist' : 'In masterlist'}
+        {isTl ? 'Nasa masterlist' : 'In masterlist'}
       </span>
     ) : (
       <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200" title={isTl ? 'Walang ganitong estudyante sa masterlist — baka fake account' : 'No such student in the masterlist — may be a fake account'}>
-        ⚠ {isTl ? 'Wala sa masterlist' : 'Not in masterlist'}
+        {isTl ? 'Wala sa masterlist' : 'Not in masterlist'}
       </span>
     );
 
@@ -362,7 +383,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
             students={students}
             onDone={async (ok) => {
               if (ok) await reload();
-              onTriggerToast(ok ? 'Practice concern added (dev only).' : '⚠️ Practice concern not saved.');
+              onTriggerToast(ok ? 'Practice concern added (dev only).' : ' Practice concern not saved.');
               onChanged?.();
             }}
           />
@@ -436,7 +457,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
                 { color: '#E11D48', label: isTl ? 'Urgent' : 'Urgent', shape: 'box' },
                 { color: '#F59E0B', label: isTl ? 'Naghihintay' : 'Waiting', shape: 'box' },
                 { color: '#10B981', label: isTl ? 'Approved / nasa masterlist' : 'Approved / in masterlist', shape: 'box' },
-                { color: '#8B5CF6', label: isTl ? '🔒 Confidential' : '🔒 Confidential', shape: 'box' },
+                { color: '#8B5CF6', label: isTl ? 'Confidential' : 'Confidential', shape: 'box' },
               ]}
             />
             <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1.5 bg-[#F4F7FC] dark:bg-[#0B1527]">
@@ -444,7 +465,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
               {concerns !== null && shown.length === 0 && (
                 <div className="p-6 text-center space-y-1">
                   <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
-                    {filter === 'waiting' ? (isTl ? '✓ Walang naghihintay na concern.' : '✓ No concerns waiting.') : isTl ? 'Wala pang laman dito.' : 'Nothing here yet.'}
+                    {filter === 'waiting' ? (isTl ? ' Walang naghihintay na concern.' : ' No concerns waiting.') : isTl ? 'Wala pang laman dito.' : 'Nothing here yet.'}
                   </p>
                   <p className={sub}>
                     {isTl
@@ -469,7 +490,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
                 >
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white truncate">
-                      {c.confidential ? '🔒 ' : ''}
+                      
                       {c.studentName}
                     </p>
                     <span className="text-[11px] text-[#4A608A] dark:text-[#94A8D0] whitespace-nowrap">{when(c.createdAt)}</span>
@@ -573,14 +594,14 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
             if (!ok) return;
             const at = new Date().toISOString();
             if (!(await updateConcern(c.id, { chat_status: 'Closed', chat_closed_at: at }, 'closeChat'))) {
-              onTriggerToast(isTl ? '⚠️ Hindi na-save. I-check ang internet, tapos subukan ulit.' : '⚠️ Not saved. Check the internet, then try again.');
+              onTriggerToast(isTl ? 'Hindi na-save. I-check ang internet, tapos subukan ulit.' : 'Not saved. Check the internet, then try again.');
               return;
             }
             patchLocal(c.id, { chatStatus: 'Closed', chatClosedAt: at });
             void insertActivityLogInDb({ actor: 'Guidance Associate', actionEn: `Closed the chat for concern ${c.code} (${c.studentName})`, actionTl: `Isinara ang chat ng concern ${c.code} (${c.studentName})`, tag: 'Concern', tone: 'blue' });
             onTriggerToast(isTl ? 'Sarado na ang chat. Nakatago pa rin ang mga mensahe.' : 'Chat closed. The messages are kept.');
           }}
-          onFailed={() => onTriggerToast(isTl ? '⚠️ Hindi naipadala. I-check ang internet, tapos subukan ulit.' : '⚠️ Not sent. Check the internet, then try again.')}
+          onFailed={() => onTriggerToast(isTl ? ' Hindi naipadala. I-check ang internet, tapos subukan ulit.' : ' Not sent. Check the internet, then try again.')}
         />
       )}
 
@@ -594,7 +615,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
           <div className="p-4 space-y-2 bg-[#F4F7FC] dark:bg-[#0B1527]">
             {blocked.length === 0 && (
               <p className="py-8 text-center text-sm font-bold text-emerald-700 dark:text-emerald-400">
-                ✓ {isTl ? 'Walang naka-block na account.' : 'No blocked accounts.'}
+                {isTl ? 'Walang naka-block na account.' : 'No blocked accounts.'}
               </p>
             )}
             {blocked.slice(0, limit).map((a) => (
@@ -756,7 +777,7 @@ const ConcernDetail: React.FC<{
       </button>
     ) : (
       <div data-concern-photo-missing={p.testId} className={`${p.w} ${p.h} shrink-0 rounded-xl border-2 border-dashed border-[#C9D6EC] dark:border-[#253B66] bg-[#F4F7FC] dark:bg-[#0B1527] flex flex-col items-center justify-center text-center px-2`}>
-        <span className="text-xl" aria-hidden>🖼️</span>
+        <ImageIcon className="w-5 h-5 text-sky-400" />
         <span className="text-[10.5px] font-bold text-[#4A608A] dark:text-[#94A8D0] leading-tight">{isTl ? `Walang ${p.label.toLowerCase()}` : `No ${p.label.toLowerCase()}`}</span>
       </div>
     );
@@ -773,7 +794,7 @@ const ConcernDetail: React.FC<{
           {matchPill}
           {c.confidential && (
             <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200" title={isTl ? 'Gustong ilihim ng estudyante ang concern na ito' : 'The student asked to keep this private'}>
-              🔒 {isTl ? 'Confidential' : 'Confidential'}
+              {isTl ? 'Confidential' : 'Confidential'}
             </span>
           )}
         </div>
@@ -788,7 +809,7 @@ const ConcernDetail: React.FC<{
         <section className={cardBox} data-concern-student>
           <div className="px-4 py-2.5 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-center justify-between bg-slate-50/60 dark:bg-[#0B1527]/60">
             <span className="text-[11px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7] flex items-center gap-1.5">
-              <span>👤</span>
+              <User className="w-3.5 h-3.5 text-slate-400" />
               <span>{isTl ? 'Complainant / Nagsumbong na Estudyante' : 'Complainant (Reporting Student)'}</span>
             </span>
             <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
@@ -825,12 +846,12 @@ const ConcernDetail: React.FC<{
             {/* Masterlist Verification Mini-Card */}
             <div className="p-3 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs space-y-1.5">
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0] flex items-center gap-1">
-                <span>📋</span>
+                <FileText className="w-3.5 h-3.5 text-slate-400" />
                 <span>{isTl ? 'Pagtutugma sa Registrar Masterlist' : 'Registrar Masterlist Status'}</span>
               </p>
               {match ? (
                 <div className="p-2.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-black shrink-0">✓</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold text-emerald-900 dark:text-emerald-200 truncate">
                       {match.fullName}
@@ -842,7 +863,7 @@ const ConcernDetail: React.FC<{
                 </div>
               ) : (
                 <div className="p-2.5 rounded-lg bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 flex items-center gap-2">
-                  <span className="text-rose-600 font-bold">⚠️</span>
+                  <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
                   <p className="text-xs font-bold text-rose-800 dark:text-rose-200 leading-tight">
                     {isTl ? 'Wala sa masterlist. Kumpirmahin muna ang account ng mag-aaral.' : 'Not verified in the official masterlist.'}
                   </p>
@@ -853,7 +874,7 @@ const ConcernDetail: React.FC<{
             {/* Contact Details Mini-Card */}
             <div className="p-3 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs space-y-2">
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0] flex items-center gap-1">
-                <span>📞</span>
+                <Phone className="w-3.5 h-3.5 text-slate-400" />
                 <span>{isTl ? 'Impormasyon sa Pakikipag-ugnayan' : 'Contact Information'}</span>
               </p>
 
@@ -887,7 +908,7 @@ const ConcernDetail: React.FC<{
 
             {account?.status === 'Deactivated' && (
               <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-700">
-                🚫 {isTl ? 'Naka-block na ang account na ito.' : 'This account is blocked.'}
+                {isTl ? 'Naka-block na ang account na ito.' : 'This account is blocked.'}
               </div>
             )}
           </div>
@@ -901,7 +922,7 @@ const ConcernDetail: React.FC<{
                 className={`${btn} px-4 py-2.5 saas-card-subtle text-rose-700 dark:text-rose-300 w-full sm:w-auto`}
                 title={isTl ? 'Para sa account na hindi totoong estudyante' : 'For accounts that are not real students'}
               >
-                🚫 {isTl ? 'I-block ang fake account' : 'Block fake account'}
+                {isTl ? 'I-block ang fake account' : 'Block fake account'}
               </button>
             </div>
           )}
@@ -911,7 +932,7 @@ const ConcernDetail: React.FC<{
         <section className={cardBox} data-concern-report>
           <div className="px-4 py-2.5 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-center justify-between bg-slate-50/60 dark:bg-[#0B1527]/60">
             <span className="text-[11px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7] flex items-center gap-1.5">
-              <span>📋</span>
+              <FileText className="w-3.5 h-3.5 text-slate-400" />
               <span>{isTl ? 'Mga Tala ng Insidente (Incident Record)' : 'Incident Breakdown & Record'}</span>
             </span>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-400/20">
@@ -929,7 +950,7 @@ const ConcernDetail: React.FC<{
                     <div className="flex items-center justify-between border-b border-sky-100 dark:border-sky-800/40 pb-1.5">
                       <div className="flex items-center gap-1.5">
                         <span className="w-5 h-5 rounded-md bg-[#1E469B] text-white flex items-center justify-center text-[10px] font-black">
-                          🎯
+                          <Target className="w-3.5 h-3.5 text-indigo-500" />
                         </span>
                         <span className="text-[10.5px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
                           {isTl ? 'Inirereklamong Estudyante (Respondent)' : 'Reported Student (Respondent)'}
@@ -974,7 +995,7 @@ const ConcernDetail: React.FC<{
                   <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-3 shadow-xs space-y-2">
                     <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-1.5">
                       <span className="text-[10.5px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                        <span>📝</span>
+                        <FileText className="w-3.5 h-3.5 text-sky-500" />
                         <span>{isTl ? 'Buong Salaysay ng Pangyayari (Narrative)' : 'Official Narrative of What Happened'}</span>
                       </span>
                       {parsed.reporterType && (
@@ -993,7 +1014,7 @@ const ConcernDetail: React.FC<{
                     <div className="rounded-xl border border-rose-200 dark:border-rose-900/60 bg-gradient-to-br from-rose-50/40 via-white to-orange-50/20 dark:from-[#2A1018] dark:to-[#0B1527] p-3 shadow-xs space-y-2">
                       <div className="flex items-center justify-between border-b border-rose-100 dark:border-rose-900/40 pb-1.5">
                         <span className="text-[10.5px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
-                          <span>📷</span>
+                          <Camera className="w-3.5 h-3.5 text-sky-500" />
                           <span>{isTl ? 'Kalakip na Litrato / Pisikal na Ebidensya' : 'Attached Photo & Physical Evidence'}</span>
                         </span>
                         <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-400/30">
@@ -1016,7 +1037,7 @@ const ConcernDetail: React.FC<{
                           >
                             <img src={imgSrc} alt={`Evidence ${pIdx + 1}`} className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
-                              🔍 {isTl ? 'Palakihin' : 'Zoom'}
+                              <span className='flex items-center gap-1'><Maximize2 className='w-3 h-3' /><span>{isTl ? 'Palakihin' : 'Zoom'}</span></span>
                             </div>
                             <span className="absolute bottom-1 left-1 px-1.5 py-0.2 rounded text-[9px] font-black bg-black/70 text-white">
                               Ebidensya {pIdx + 1}
@@ -1044,7 +1065,7 @@ const ConcernDetail: React.FC<{
                   {/* CARD 4: WHERE (SAAN) */}
                   <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-3 shadow-xs space-y-1">
                     <div className="flex items-center gap-1.5 text-[10.5px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                      <span>📍</span>
+                      <MapPin className="w-3.5 h-3.5 text-sky-500" />
                       <span>{isTl ? 'Saan Nangyari (Where)' : 'Location of Incident (Where)'}</span>
                     </div>
                     <div className="p-2.5 rounded-lg bg-slate-50/70 dark:bg-[#0B1527]/70 border border-slate-200/60 dark:border-white/5">
@@ -1057,7 +1078,7 @@ const ConcernDetail: React.FC<{
                   {/* CARD 5: WITNESSES (MGA SAKSI) */}
                   <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-3 shadow-xs space-y-1">
                     <div className="flex items-center gap-1.5 text-[10.5px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                      <span>👥</span>
+                      <Users className="w-3.5 h-3.5 text-sky-500" />
                       <span>{isTl ? 'Mga Saksi sa Pangyayari (Witnesses)' : 'Witnesses Present'}</span>
                     </div>
                     <div className="p-2.5 rounded-lg bg-slate-50/70 dark:bg-[#0B1527]/70 border border-slate-200/60 dark:border-white/5">
@@ -1070,7 +1091,7 @@ const ConcernDetail: React.FC<{
                   {/* TRUTHFULNESS & DATA PRIVACY BANNER */}
                   <div className="flex items-center justify-between p-2.5 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20">
                     <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                      <span>✓</span>
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                       <span>
                         {c.truthful
                           ? (isTl ? 'Nangako ang estudyante na totoo ang buong salaysay (RA 10173 Protected).' : 'Student certified this report truthful under RA 10173.')
@@ -1126,12 +1147,12 @@ const ConcernDetail: React.FC<{
                     {isTl ? 'I-reject' : 'Reject'}
                   </button>
                   <button type="button" disabled={busy} data-action="approve" onClick={onApprove} className={`${btn} px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50`}>
-                    ✓ {isTl ? 'I-approve' : 'Approve'}
+                    {isTl ? 'I-approve' : 'Approve'}
                   </button>
                 </>
               ) : (
                 <button type="button" onClick={onOpenChat} className={`${btn} px-5 py-2.5 bg-[#1E469B] text-white`}>
-                  💬 {c.chatStatus === 'Open' ? (isTl ? 'Buksan ang chat' : 'Open the chat') : isTl ? 'Tingnan ang chat (sarado)' : 'View chat (closed)'}
+                  {c.chatStatus === 'Open' ? (isTl ? 'Buksan ang chat' : 'Open the chat') : isTl ? 'Tingnan ang chat (sarado)' : 'View chat (closed)'}
                 </button>
               )}
             </div>
@@ -1171,7 +1192,7 @@ const Modal: React.FC<{ title: string; onClose: () => void; children: React.Reac
         <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-center justify-between">
           <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">{title}</h3>
           <button type="button" onClick={onClose} aria-label="Close" className="w-8 h-8 rounded-lg text-[#4A608A] hover:bg-slate-100 dark:hover:bg-slate-800">
-            ✕
+            
           </button>
         </div>
         {children}
@@ -1217,7 +1238,7 @@ const ApproveWindow: React.FC<{
           </p>
         </div>
         <p className="text-xs text-[#0B1F4D] dark:text-white rounded-xl saas-card-subtle p-3">
-          💬 {isTl ? 'Magbubukas ng chat at magpapadala ng unang mensahe: "Natanggap na po ng Guidance Office ang iyong concern…"' : 'A chat opens with a first message: "The Guidance Office has received your concern…"'}
+          {isTl ? 'Magbubukas ng chat at magpapadala ng unang mensahe: "Natanggap na po ng Guidance Office ang iyong concern…"' : 'A chat opens with a first message: "The Guidance Office has received your concern…"'}
         </p>
       </div>
       <div className="px-6 py-4 border-t border-[#DCE5F2] dark:border-[#1E3158] flex justify-end gap-2">
@@ -1428,7 +1449,7 @@ const ChatsView: React.FC<{
             )}
           </div>
           <p className={`px-5 py-2 text-xs font-bold ${open ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300' : 'bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200'}`}>
-            🕗{' '}
+            
             {open
               ? isTl ? 'Bukas ang office ngayon (Lunes–Biyernes, 8:00 AM–5:00 PM). Makikita ng estudyante ang mensahe mo bilang "Guidance Office".' : 'The office is open now (Mon–Fri, 8:00 AM–5:00 PM). The student sees your messages as "Guidance Office".'
               : isTl ? 'Sarado ang office ngayon. Makikita ng estudyante na sasagot kayo sa susunod na oras ng opisina.' : 'The office is closed now. The student is told you will reply during office hours.'}
@@ -1466,7 +1487,7 @@ const ChatsView: React.FC<{
             </div>
           ) : (
             <p className="px-5 py-3 border-t border-[#DCE5F2] dark:border-[#1E3158] text-xs font-bold text-[#4A608A] dark:text-[#94A8D0]">
-              🔒 {isTl ? 'Sarado na ang chat na ito' : 'This chat is closed'}
+              {isTl ? 'Sarado na ang chat na ito' : 'This chat is closed'}
               {active.chatClosedAt ? ` (${when(active.chatClosedAt)})` : ''}. {isTl ? 'Nakatago pa rin ang lahat ng mensahe.' : 'All messages are kept.'}
             </p>
           )}

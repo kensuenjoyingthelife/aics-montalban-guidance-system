@@ -429,58 +429,61 @@ body.low-tier-device .cosmic-glass-card {
 /* 5. INPUT FIELDS (Dark in Dark Mode vs Solid White in Light Mode) */
 /* Dark Mode Inputs */
 :root.dark .cosmic-input {
-  background: rgba(3, 11, 30, 0.8) !important;
-  border: 1.5px solid rgba(147, 197, 253, 0.3) !important;
+  background: rgba(8, 17, 36, 0.9) !important;
+  border: 1px solid rgba(147, 197, 253, 0.22) !important;
   color: #FFFFFF !important;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+  transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out) !important;
 }
 :root.dark .cosmic-input::placeholder {
-  color: rgba(147, 197, 253, 0.45) !important;
+  color: #64748B !important;
 }
 :root.dark .cosmic-input:focus {
-  background: rgba(4, 15, 42, 0.95) !important;
-  border-color: #60A5FA !important;
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.32) !important;
+  background: rgba(11, 23, 48, 0.98) !important;
+  border-color: #38BDF8 !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25) !important;
 }
 
-/* Light Mode Inputs */
+/* Light Mode Inputs (Impeccable Taste: crisp off-white background, delicate slate border, zero harsh blue borders) */
 :root:not(.dark) .cosmic-input {
   background: #FFFFFF !important;
-  border: 2px solid #BAD2F7 !important;
-  color: #0B1F4D !important;
-  box-shadow: 0 1.5px 3px rgba(11, 31, 77, 0.05) !important;
+  border: 1px solid #CBD5E1 !important;
+  color: #0F172A !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out) !important;
 }
 :root:not(.dark) .cosmic-input::placeholder {
   color: #94A3B8 !important;
-  font-weight: 500 !important;
+  font-weight: 450 !important;
 }
 :root:not(.dark) .cosmic-input:focus {
   background: #FFFFFF !important;
   border-color: #1E469B !important;
-  box-shadow: 0 0 0 3px rgba(30, 70, 155, 0.22) !important;
+  box-shadow: 0 0 0 3px rgba(30, 70, 155, 0.15) !important;
 }
 
 /* 6. FORM SECTION CARDS (Dark in Dark Mode vs Soft Pearl in Light Mode) */
 /* Dark Mode Section Cards */
 :root.dark .register-section-card {
-  background: rgba(3, 11, 28, 0.5) !important;
-  border: 1.5px solid rgba(147, 197, 253, 0.25) !important;
+  background: rgba(11, 21, 40, 0.75) !important;
+  border: 1px solid rgba(147, 197, 253, 0.15) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
 }
 :root.dark .register-inner-card {
-  background: rgba(2, 8, 22, 0.6) !important;
-  border: 1.5px solid rgba(147, 197, 253, 0.25) !important;
+  background: rgba(14, 28, 54, 0.85) !important;
+  border: 1px solid rgba(147, 197, 253, 0.2) !important;
 }
 
-/* Light Mode Section Cards */
+/* Light Mode Section Cards (Impeccable Taste: soft slate contrast, 1px hairline border, zero muddy blue tint) */
 :root:not(.dark) .register-section-card {
-  background: #F7FAFF !important;
-  border: 2px solid #C4DAFC !important;
-  box-shadow: 0 3px 10px rgba(11, 31, 77, 0.04) !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 6px 16px -2px rgba(15, 23, 42, 0.03) !important;
 }
 :root:not(.dark) .register-inner-card {
-  background: #FFFFFF !important;
-  border: 2px solid #C4DAFC !important;
-  box-shadow: 0 2px 6px rgba(11, 31, 77, 0.03) !important;
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;
 }
 
 /* 7. UPLOAD DROPZONES */

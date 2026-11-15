@@ -19,6 +19,13 @@ import {
   Camera,
   Image as ImageIcon,
   Trash2,
+  Compass,
+  Lock as LockIcon,
+  User,
+  Users,
+  Clock,
+  Send,
+  FileText,
 } from 'lucide-react';
 import { WavyBackground } from '../components/auth/WavyBackground';
 import { SoundTogglePill, soundFX } from '../services/soundEngine';
@@ -613,7 +620,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
               {/* Drawer Header */}
               <div className="flex items-center justify-between pb-4 border-b border-white/10">
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">🧭</span>
+                  <div className="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0"><Compass className="w-4 h-4" /></div>
                   <div>
                     <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">
                       AICS KALANG BA
@@ -860,8 +867,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
             exit={{ opacity: 0, y: -10 }}
             className="relative z-30 w-full bg-amber-500/20 border-b border-amber-400/40 px-4 py-2 text-center text-xs text-amber-200 font-semibold flex items-center justify-center gap-2"
           >
-            <span>🔒</span>
             <span>
+              <LockIcon className="w-3.5 h-3.5 text-amber-300 inline shrink-0 mr-1.5" />
               {isTl
                 ? `Para sa iyong kaligtasan, magla-logout ang portal sa loob ng ${secondsRemaining}s dahil walang galaw. Pindutin ang kahit saan upang manatiling naka-login.`
                 : `For your safety and privacy, you will be logged out in ${secondsRemaining}s due to inactivity. Click anywhere to stay signed in.`}
@@ -887,7 +894,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   : 'card-subtitle-text hover:opacity-100 opacity-80'
               }`}
             >
-              📝 {isTl ? 'Mag-report ng Concern' : 'Report Concern'}
+              <span className="flex items-center gap-1.5"><FileEdit className="w-4 h-4" /><span>{isTl ? 'Mag-report ng Concern' : 'Report Concern'}</span></span>
             </button>
 
             <button
@@ -903,7 +910,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   : 'card-subtitle-text hover:opacity-100 opacity-80'
               }`}
             >
-              📁 {isTl ? 'Aking mga Reports' : 'My Reports'}
+              <span className="flex items-center gap-1.5"><FolderArchive className="w-4 h-4" /><span>{isTl ? 'Aking mga Reports' : 'My Reports'}</span></span>
             </button>
 
             <button
@@ -918,7 +925,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   : 'card-subtitle-text hover:opacity-100 opacity-80'
               }`}
             >
-              <span>💬 {isTl ? 'Kausapin ang Guidance' : 'Guidance Chat'}</span>
+              <span className="flex items-center gap-1.5"><MessageSquare className="w-4 h-4" /><span>{isTl ? 'Kausapin ang Guidance' : 'Guidance Chat'}</span></span>
               {history.some((c) => c.chatStatus === 'Open') && (
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               )}
@@ -926,7 +933,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
           </div>
 
           <span className="text-[11px] font-semibold card-subtitle-text">
-            🔒 RA 10173 Data Privacy Protected
+            RA 10173 Data Privacy Protected
           </span>
         </div>
 
@@ -1029,25 +1036,25 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                       className="w-full px-4 py-3 rounded-xl cosmic-input text-xs sm:text-sm font-semibold focus:outline-none"
                     >
                       <option value="Vaping / Smoking Infraction">
-                        {isTl ? '🚭 Vaping / Paninigarilyo sa Loob ng Campus' : '🚭 Vaping / Smoking on Campus'}
+                        {isTl ? 'Vaping / Paninigarilyo sa Loob ng Campus' : 'Vaping / Smoking on Campus'}
                       </option>
                       <option value="Physical Bullying & Fighting">
-                        {isTl ? '👊 Physical Bullying, Away, o Pananakit' : '👊 Physical Bullying, Fighting, or Assault'}
+                        {isTl ? 'Physical Bullying, Away, o Pananakit' : 'Physical Bullying, Fighting, or Assault'}
                       </option>
                       <option value="Weapons & Dangerous Contraband">
-                        {isTl ? '⚠️ Matatalim na Bagay o Delikadong Gamit' : '⚠️ Weapons & Dangerous Contraband'}
+                        {isTl ? 'Matatalim na Bagay o Delikadong Gamit' : 'Weapons & Dangerous Contraband'}
                       </option>
                       <option value="Extortion & Coercion">
-                        {isTl ? '💸 Panghihingi ng Pera (Extortion) o Pamimilit' : '💸 Extortion, Coercion, or Threat'}
+                        {isTl ? 'Panghihingi ng Pera (Extortion) o Pamimilit' : 'Extortion, Coercion, or Threat'}
                       </option>
                       <option value="Cyberbullying & Online Harassment">
-                        {isTl ? '📱 Cyberbullying, Paninirang-Puri sa Social Media' : '📱 Cyberbullying & Online Harassment'}
+                        {isTl ? 'Cyberbullying, Paninirang-Puri sa Social Media' : 'Cyberbullying & Online Harassment'}
                       </option>
                       <option value="Vandalism & Campus Property Damage">
-                        {isTl ? '🔨 Pagsira sa Gamit ng Paaralan (Vandalism)' : '🔨 Vandalism & Property Damage'}
+                        {isTl ? 'Pagsira sa Gamit ng Paaralan (Vandalism)' : 'Vandalism & Property Damage'}
                       </option>
                       <option value="Other Disciplinary Infraction">
-                        {isTl ? '📋 Iba Pang Paglabag sa School Discipline Handbook' : '📋 Other Disciplinary Handbook Infraction'}
+                        {isTl ? 'Iba Pang Paglabag sa School Discipline Handbook' : 'Other Disciplinary Handbook Infraction'}
                       </option>
                     </select>
                   </div>
@@ -1071,7 +1078,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                             : 'bg-white dark:bg-white/5 border-slate-300 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'
                         }`}
                       >
-                        <span className="text-xl">🙋</span>
+                        <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-600 dark:text-sky-300 flex items-center justify-center shrink-0"><User className="w-4 h-4" /></div>
                         <div>
                           <p className="text-xs font-extrabold text-[#0B1F4D] dark:text-white">
                             {isTl ? 'Para sa Sarili Ko' : 'For Myself (Self-Report)'}
@@ -1094,7 +1101,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                             : 'bg-white dark:bg-white/5 border-slate-300 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'
                         }`}
                       >
-                        <span className="text-xl">🤝</span>
+                        <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 flex items-center justify-center shrink-0"><Users className="w-4 h-4" /></div>
                         <div>
                           <p className="text-xs font-extrabold text-[#0B1F4D] dark:text-white">
                             {isTl ? 'Para sa Aking Kaibigan / Kaklase' : 'For a Friend / Classmate'}
@@ -1200,7 +1207,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                                         {knowsSuspect !== 'yes' && (
                       <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-400/30 space-y-2">
                         <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-bold text-xs">
-                          <span>🔍</span>
+                          <HelpCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                           <span>{isTl ? 'Mga Palatandaan (Physical Identifiers / Hangout Spot)' : 'Physical Identifiers & Description'}</span>
                         </div>
                         <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
@@ -1358,9 +1365,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   <div className="p-4 rounded-2xl register-section-card space-y-3 border border-sky-300/40 dark:border-sky-800/40 bg-sky-50/40 dark:bg-[#0B1527]/60">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="w-7 h-7 rounded-lg bg-[#1E469B] text-white flex items-center justify-center text-xs font-black shadow-xs">
-                          📷
-                        </span>
+                        <div className="w-7 h-7 rounded-lg bg-[#1E469B] text-white flex items-center justify-center shrink-0 shadow-xs">
+                          <Camera className="w-3.5 h-3.5" />
+                        </div>
                         <div>
                           <label className="text-xs font-black uppercase tracking-wider text-[#0B1F4D] dark:text-white block">
                             {isTl ? 'Mag-attach ng Litrato o Ebidensya (Opsyonal)' : 'Attach Photo Evidence (Optional)'}
@@ -1403,7 +1410,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                             <p className="text-xs font-black text-[#0B1F4D] dark:text-white leading-tight">
                               {evidencePhotos.length === 0
                                 ? (isTl ? 'Picturan Agad (Camera)' : 'Take Photo (Camera)')
-                                : (isTl ? '📷 Kumuha Pa ng Litrato (Camera)' : '📷 Take Another Photo (Camera)')}
+                                : (isTl ? 'Kumuha Pa ng Litrato (Camera)' : 'Take Another Photo (Camera)')}
                             </p>
                             <p className="text-[10px] text-[#4A608A] dark:text-[#94A8D0]">
                               {isTl ? 'Live camera capture' : 'Live camera snapshot'}
@@ -1427,7 +1434,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                             <p className="text-xs font-black text-[#0B1F4D] dark:text-white leading-tight">
                               {evidencePhotos.length === 0
                                 ? (isTl ? 'Pumili sa Gallery / Files' : 'Select Photos / Gallery')
-                                : (isTl ? '🖼️ Magdagdag Pa mula Gallery' : '🖼️ Add More from Gallery')}
+                                : (isTl ? 'Magdagdag Pa mula Gallery' : 'Add More from Gallery')}
                             </p>
                             <p className="text-[10px] text-[#4A608A] dark:text-[#94A8D0]">
                               {isTl ? 'Kahit ilan (hanggang 10)' : 'Upload more photos (up to 10)'}
@@ -1481,8 +1488,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                       />
                       <span className="font-bold text-rose-500 dark:text-rose-300">
                         {isTl
-                          ? '⚠️ Mark as URGENT (Kailangan ng mabilisang aksyon o may banta sa kaligtasan)'
-                          : '⚠️ Mark as URGENT (Immediate intervention needed / Safety threat)'}
+                          ? 'Mark as URGENT (Kailangan ng mabilisang aksyon o may banta sa kaligtasan)'
+                          : 'Mark as URGENT (Immediate intervention needed / Safety threat)'}
                       </span>
                     </label>
 
@@ -1567,7 +1574,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 onClick={() => void fetchMyHistory()}
                 className="btn-press px-3 py-1.5 rounded-lg card-back-button text-xs font-bold"
               >
-                🔄 {isTl ? 'I-refresh' : 'Refresh'}
+                <span className="flex items-center gap-1.5"><RefreshCw className="w-3.5 h-3.5" /><span>{isTl ? 'I-refresh' : 'Refresh'}</span></span>
               </button>
             </div>
 
@@ -1577,7 +1584,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
               </div>
             ) : history.length === 0 ? (
               <div className="p-10 rounded-2xl register-section-card text-center space-y-2">
-                <span className="text-3xl">🕊️</span>
+                <div className="w-12 h-12 mx-auto rounded-2xl bg-sky-500/10 text-sky-500 flex items-center justify-center"><FileText className="w-6 h-6" /></div>
                 <p className="text-sm font-extrabold register-label">
                   {isTl ? 'Wala ka pang naisusumiteng concern report.' : 'You have not submitted any concern reports yet.'}
                 </p>
@@ -1632,7 +1639,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                           onClick={() => openConcernChat(item)}
                           className="btn-press px-3 py-1 rounded-full bg-[#1E469B] hover:bg-[#2557BE] text-white text-xs font-bold shadow flex items-center gap-1"
                         >
-                          <span>💬 Chat</span>
+                          <span className="flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5" /><span>Chat</span></span>
                         </button>
                       )}
                     </div>
@@ -1654,7 +1661,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-white/10 dark:border-white/10 gap-3">
               <div>
                 <h2 className="text-lg sm:text-xl font-extrabold card-title-text flex items-center gap-2">
-                  <span>💬</span>
+                  <MessageSquare className="w-3.5 h-3.5" />
                   <span>{isTl ? 'Kumpidensyal na Chat sa Guidance Office' : 'Confidential Guidance Office Chat'}</span>
                 </h2>
                 <p className="text-xs card-subtitle-text">
@@ -1689,7 +1696,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
             {/* Chat Body */}
             {!selectedChatConcern ? (
               <div className="p-10 rounded-2xl register-section-card text-center space-y-2">
-                <span className="text-3xl">🕊️</span>
+                <div className="w-12 h-12 mx-auto rounded-2xl bg-sky-500/10 text-sky-500 flex items-center justify-center"><MessageSquare className="w-6 h-6" /></div>
                 <p className="text-sm font-extrabold register-label">
                   {isTl ? 'Walang aktibong chat session.' : 'No active chat session.'}
                 </p>
@@ -1732,7 +1739,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                     </div>
                   ) : chatMessages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-2">
-                      <span className="text-3xl">🤝</span>
+                      <div className="w-12 h-12 mx-auto rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center"><Users className="w-6 h-6" /></div>
                       <p className="text-sm font-bold register-label">
                         {isTl ? 'Magsimula ng pag-uusap sa Guidance Office' : 'Start the conversation with Guidance'}
                       </p>
@@ -1758,7 +1765,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                             }`}
                           >
                             <div className="flex items-center justify-between gap-3 text-[10px] font-extrabold pb-1 opacity-80 border-b border-white/10 dark:border-white/10 mb-1">
-                              <span>{isStudent ? 'Ikaw (Student)' : '🏛️ AICS Guidance Office'}</span>
+                              <span>{isStudent ? 'Ikaw (Student)' : 'AICS Guidance Office'}</span>
                               <span className="font-mono">
                                 {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
@@ -1775,7 +1782,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 {/* Chat Input Field */}
                 {selectedChatConcern.chatStatus === 'Closed' ? (
                   <div className="p-3.5 rounded-xl bg-slate-500/10 border border-slate-500/20 text-center text-xs font-semibold card-subtitle-text">
-                    🔒 {isTl ? 'Isinara na ng Guidance Office ang chat session na ito. Nananatiling nakatago ang mga mensahe.' : 'This chat session has been closed by the Guidance Office. Messages are securely archived.'}
+                    {isTl ? 'Isinara na ng Guidance Office ang chat session na ito. Nananatiling nakatago ang mga mensahe.' : 'This chat session has been closed by the Guidance Office. Messages are securely archived.'}
                   </div>
                 ) : (
                   <form onSubmit={handleSendMessage} className="flex gap-2">
