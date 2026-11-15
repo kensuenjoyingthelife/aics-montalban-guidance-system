@@ -678,7 +678,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       {/* ====================================================
           1. STICKY INSTITUTIONAL HEADER & BRAND CLUSTER
           ==================================================== */}
-      <header className="relative z-30 w-full px-4 sm:px-8 py-3.5 border-b border-white/10 dark:border-white/5 bg-[#030B18]/85 dark:bg-[#020710]/85 backdrop-blur-md">
+      <header className="sticky top-0 z-40 w-full px-4 sm:px-8 py-3.5 border-b border-white/10 dark:border-white/5 bg-[#030B18]/90 dark:bg-[#020710]/90 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           
           {/* Left: Official AICS Crest & Institution Typography */}
