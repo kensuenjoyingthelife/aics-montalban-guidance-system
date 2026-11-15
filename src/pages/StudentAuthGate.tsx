@@ -252,6 +252,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     type: 'error' | 'success';
     title: string;
     message: string;
+    details?: string[];
   } | null>(null);
   const [show20sScanner, setShow20sScanner] = useState(false);
   const [scanPendingAccount, setScanPendingAccount] = useState<any>(null);
@@ -465,9 +466,28 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
     if (!isRegisterFormValid) {
       soundFX.playError();
-      const msg = isTl ? 'Pakisuyong kumpletuhin at ayusin ang bawat field na may markang pula (✕) bago mag-submit.' : 'Please complete all required fields with green checkmarks (✓) before submitting.';
+      const missingFields: string[] = [];
+      if (lastNameStatus.type !== 'correct') missingFields.push(isTl ? 'Apelyido (Last Name - hindi bababa sa 2 letra)' : 'Last Name (at least 2 letters)');
+      if (firstNameStatus.type !== 'correct') missingFields.push(isTl ? 'Pangalan (First Name - hindi bababa sa 2 letra)' : 'First Name (at least 2 letters)');
+      if (phoneStatus.type !== 'correct') missingFields.push(isTl ? 'Contact No. (dapat 11 digits at nagsisimula sa 09)' : 'Contact No. (must start with 09 and be 11 digits)');
+      if (emailStatus.type !== 'correct') missingFields.push(isTl ? 'Personal Gmail Account (dapat nagtatapos sa @gmail.com)' : 'Personal Gmail (must end with @gmail.com)');
+      if (studentNumberStatus.type !== 'correct') missingFields.push(isTl ? 'Student Number (opisyal na AICS ID number)' : 'Student Number (valid official ID)');
+      if (personalPhotoStatus.type !== 'correct') missingFields.push(isTl ? 'Live Photo Selfie / Face Verification' : 'Live Face Selfie / Photo Verification');
+      if (passwordStatus.type !== 'correct') missingFields.push(isTl ? 'Password (6+ karakter, may 1+ numero, malaking titik at simbolo)' : 'Password (6+ chars with number, uppercase & symbol)');
+      if (confirmPasswordStatus.type !== 'correct') missingFields.push(isTl ? 'Confirm Password (dapat tugma sa nilagay mong password)' : 'Confirm Password (must match your password)');
+      if (quickPinStatus.type !== 'correct') missingFields.push(isTl ? '5-Digit PIN para sa mabilisang login' : '5-Digit Quick Unlock PIN');
+
+      const msg = isTl
+        ? 'May mga kulang o maling impormasyon pa sa iyong form. Pakisuyong kumpletuhin ang mga ito:'
+        : 'There are missing or incomplete fields in your registration form. Please complete the following:';
+
       setRegError(msg);
-      setRegStatusModal({ type: 'error', title: isTl ? 'May Kulang sa Form' : 'Incomplete Registration', message: msg });
+      setRegStatusModal({
+        type: 'error',
+        title: isTl ? 'May Kulang sa Form (Invalid Input)' : 'Registration Incomplete',
+        message: msg,
+        details: missingFields,
+      });
       return;
     }
 
@@ -1249,7 +1269,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                         onChange={(e) => setRegEmail(e.target.value)}
                         className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-semibold focus:outline-none"
                       />
-                      <p className="text-[10px] text-sky-200/80 font-medium">
+                      <p className="text-[11px] font-bold text-blue-700 dark:text-sky-300">
                         {isTl ? 'Gagamitin para sa contact at recovery ng Forgot Password' : 'Used for official contact & Forgot Password OTP recovery'}
                       </p>
                     </div>
@@ -1396,32 +1416,32 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                             soundFX.playToggleSwitch(true);
                             setActiveCameraModal('personal');
                           }}
-                          className="h-32 rounded-2xl border-2 border-dashed border-cyan-500/50 hover:border-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 flex flex-col items-center justify-center text-center p-3 transition-all"
+                          className="h-32 rounded-2xl border-2 border-dashed border-sky-500/70 dark:border-sky-400/60 hover:border-sky-500 bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 dark:hover:bg-sky-500/20 flex flex-col items-center justify-center text-center p-3 transition-all cursor-pointer shadow-sm"
                         >
-                          <div className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center mx-auto mb-1 border border-cyan-500/30">
-    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="3" />
-      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-    </svg>
-  </div>
-                          <span className="text-xs font-extrabold text-cyan-300 mt-1.5">
+                          <div className="w-9 h-9 rounded-full bg-sky-600/15 dark:bg-sky-400/20 text-sky-700 dark:text-sky-300 flex items-center justify-center mx-auto mb-1 border border-sky-500/40">
+                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="3" />
+                              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                            </svg>
+                          </div>
+                          <span className="text-xs font-black text-sky-900 dark:text-sky-200 mt-1">
                             {isTl ? 'Kumuha ng Selfie sa Webcam' : 'Take Webcam Selfie'}
                           </span>
-                          <span className="text-[10px] opacity-75 mt-0.5">{isTl ? 'Live facial verification' : 'Live front snap'}</span>
+                          <span className="text-[11px] font-bold text-sky-700 dark:text-sky-300/80 mt-0.5">{isTl ? 'Live facial verification' : 'Live front snap'}</span>
                         </button>
 
-                        <label className="btn-press h-32 rounded-2xl border-2 border-dashed upload-dropzone cursor-pointer flex flex-col items-center justify-center text-center p-3 transition-colors">
-                          <div className="w-8 h-8 rounded-full bg-white/10 text-slate-300 flex items-center justify-center mx-auto mb-1 border border-white/15">
-    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="17 8 12 3 7 8" />
-      <line x1="12" y1="3" x2="12" y2="15" />
-    </svg>
-  </div>
-                          <span className="text-xs font-extrabold register-label mt-1.5">
+                        <label className="btn-press h-32 rounded-2xl border-2 border-dashed border-slate-400 dark:border-blue-400/50 bg-slate-50 dark:bg-blue-950/40 hover:bg-slate-100 dark:hover:bg-blue-900/40 cursor-pointer flex flex-col items-center justify-center text-center p-3 transition-colors shadow-sm">
+                          <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center mx-auto mb-1 border border-slate-300 dark:border-white/15">
+                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                              <polyline points="17 8 12 3 7 8" />
+                              <line x1="12" y1="3" x2="12" y2="15" />
+                            </svg>
+                          </div>
+                          <span className="text-xs font-black text-slate-900 dark:text-white mt-1">
                             {isTl ? 'Mag-upload ng Litrato (PC/Laptop)' : 'Upload Face Photo (PC Mode)'}
                           </span>
-                          <span className="text-[10px] opacity-75 mt-0.5">JPG, PNG</span>
+                          <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 mt-0.5">JPG, PNG</span>
                           <input
                             type="file"
                             accept="image/jpeg,image/png,image/webp,image/jpg"
@@ -1553,8 +1573,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 <div className="space-y-2">
                   <button
                     type="submit"
-                    disabled={regLoading || !isRegisterFormValid}
-                    className="btn-press w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:opacity-95 text-white text-base font-extrabold shadow-xl shadow-emerald-950/60 border border-white/20 disabled:opacity-45 transition-all flex items-center justify-center gap-2.5"
+                    disabled={regLoading}
+                    className="btn-press w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:opacity-95 text-white text-base font-extrabold shadow-xl shadow-emerald-950/60 border border-white/20 disabled:opacity-45 transition-all flex items-center justify-center gap-2.5 cursor-pointer"
                   >
                     {regLoading ? (
                       <span>{isTl ? 'Inaapruba at Ginagawa ang Account...' : 'Creating & Approving Account...'}</span>
@@ -1762,42 +1782,100 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       </footer>
 
       {/* ====================================================
-          REGISTRATION STATUS MODAL (Approve / Error Popup in Center of Screen)
+          REGISTRATION STATUS MODAL (Lottie-Grade Animated Dialog - 0% Lag)
           ==================================================== */}
       {regStatusModal && (
-        <div className="fixed inset-0 z-50 bg-[#06122B]/85 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-[#06122B]/90 backdrop-blur-md flex items-center justify-center p-4">
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            initial={{ opacity: 0, scale: 0.94, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96 }}
-            transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-            className={`w-full max-w-md rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border-2 ${
+            exit={{ opacity: 0, scale: 0.94 }}
+            transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
+            className={`w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border-2 ${
               regStatusModal.type === 'error'
-                ? 'bg-[#150A14] border-rose-500/60 text-white'
-                : 'bg-[#0B1E48] border-emerald-400/70 text-white'
+                ? 'bg-[#0E1528] border-rose-500/70 text-white'
+                : 'bg-[#0B1E48] border-emerald-400/80 text-white'
             }`}
           >
-            <div className="flex items-center gap-3.5">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${
-                regStatusModal.type === 'error'
-                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
-                  : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-              }`}>
-                {regStatusModal.type === 'error' ? (
-                  <AlertTriangle className="w-6 h-6 text-rose-400" />
-                ) : (
-                  <Check className="w-6 h-6 text-emerald-400" />
-                )}
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-lg font-black tracking-tight">{regStatusModal.title}</h3>
-                <p className="text-xs text-slate-300 font-medium">AICS SafeZone Registration</p>
+            {/* Animated Lottie-Style Pure SVG Badge Header */}
+            <div className="flex flex-col items-center text-center space-y-3 pt-1">
+              {regStatusModal.type === 'error' ? (
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-3xl bg-rose-500/20 border-2 border-rose-500/60 flex items-center justify-center shadow-lg shadow-rose-950/60">
+                    <motion.svg
+                      viewBox="0 0 24 24"
+                      className="w-9 h-9 text-rose-400"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      animate={{
+                        rotate: [0, -8, 8, -6, 6, 0],
+                        scale: [1, 1.08, 1],
+                      }}
+                      transition={{ duration: 0.6, ease: 'easeOut' }}
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </motion.svg>
+                  </div>
+                  {/* Subtle Radar Ripple */}
+                  <span className="absolute inset-0 rounded-3xl bg-rose-500/30 animate-ping pointer-events-none" style={{ animationDuration: '2.5s' }} />
+                </div>
+              ) : (
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-3xl bg-emerald-500/20 border-2 border-emerald-400/70 flex items-center justify-center shadow-lg shadow-emerald-950/60">
+                    <motion.svg
+                      viewBox="0 0 24 24"
+                      className="w-9 h-9 text-emerald-400"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1, scale: [0.9, 1.1, 1] }}
+                      transition={{ duration: 0.5, ease: 'easeOut' }}
+                    >
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </motion.svg>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <h3 className="text-xl font-black tracking-tight text-white">{regStatusModal.title}</h3>
+                <p className="text-xs text-sky-200/80 font-medium mt-0.5">AICS Guidance Student Registration</p>
               </div>
             </div>
 
-            <p className="text-sm font-semibold leading-relaxed text-slate-200 bg-white/5 border border-white/10 p-4 rounded-2xl">
-              {regStatusModal.message}
-            </p>
+            <div className="bg-white/5 border border-white/10 p-4 rounded-2xl space-y-3">
+              <p className="text-sm font-semibold leading-relaxed text-slate-100">
+                {regStatusModal.message}
+              </p>
+
+              {/* Step-by-Step Student Guidance List */}
+              {regStatusModal.details && regStatusModal.details.length > 0 && (
+                <div className="space-y-2 pt-2 border-t border-white/10">
+                  <p className="text-xs font-black uppercase tracking-wider text-rose-300">
+                    {isTl ? 'Mga Dapat Ayusin:' : 'Items to Fix:'}
+                  </p>
+                  <ul className="space-y-1.5">
+                    {regStatusModal.details.map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-2 text-xs font-semibold text-slate-200">
+                        <span className="w-4 h-4 rounded-full bg-rose-500/30 text-rose-300 flex items-center justify-center text-[10px] shrink-0 font-bold mt-0.5">
+                          ✕
+                        </span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
 
             <button
               type="button"
@@ -1807,11 +1885,11 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               }}
               className={`btn-press w-full py-3.5 rounded-xl font-extrabold text-sm transition-all cursor-pointer shadow-md ${
                 regStatusModal.type === 'error'
-                  ? 'bg-rose-600 hover:bg-rose-700 text-white active:scale-[0.98]'
-                  : 'bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[0.98]'
+                  ? 'bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white active:scale-[0.98]'
+                  : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white active:scale-[0.98]'
               }`}
             >
-              {isTl ? 'Naiintindihan Ko (Isara)' : 'Got It (Dismiss)'}
+              {isTl ? 'Naiintindihan Ko (Ayusin ang Form)' : 'Got It (Review & Fix)'}
             </button>
           </motion.div>
         </div>
