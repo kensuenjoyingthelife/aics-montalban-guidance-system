@@ -324,7 +324,7 @@ export const CaseFlowPanel: React.FC<{
                     onClick={onOpenPrint}
                     className={`${btn} rounded-lg border border-[#CBD5E1] dark:border-[#253B66] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#F8FAFC] dark:hover:bg-[#13203B] flex items-center gap-1.5`}
                   >
-                    <span>Print Official Call Slip</span>
+                    <span>READY TO PRINT CALL SLIP</span>
                   </button>
                 )}
                 <button

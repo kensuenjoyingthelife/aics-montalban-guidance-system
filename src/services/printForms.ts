@@ -49,7 +49,7 @@ export function buildFormHtml(f: FormInput, origin = ''): string {
   const { c, stu } = f;
   const today = long(new Date().toISOString());
   const parent = stu?.parentName || '';
-  const signer = f.signer || 'Guidance Office';
+  const signer = f.signer || 'Maurice Enriquez';
   let title = FORM_TITLES[f.kind][0];
   const head = `<header>
     <div class="header-left">
@@ -75,7 +75,7 @@ export function buildFormHtml(f: FormInput, origin = ''): string {
     body = `${who}
       <p>Please allow the student named above to report to the <b>Guidance Office</b>${f.when ? ` on <b>${esc(f.when)}</b>` : ' as soon as possible'}.</p>
       <p>Thank you.</p>
-      ${sign([signer, 'Received by (teacher / adviser)'])}
+      ${sign([signer, 'Received by (Teacher / Class Adviser)'])}
       <p class="small">Time left class: ________ &nbsp;&nbsp; Time returned: ________</p>`;
   } else if (f.kind === 'conference') {
     body = `${who}

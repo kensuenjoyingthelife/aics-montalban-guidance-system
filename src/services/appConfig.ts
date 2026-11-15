@@ -118,9 +118,36 @@ export const DEFAULTS: AppConfig = {
   retention: { idImageDays: 30 },
   counselorDays: ['Tue', 'Thu'],
   closedDays: [],
-  people: [],
+  people: [
+    {
+      id: 1,
+      role: 'Guidance Associate',
+      name: 'Maurice Enriquez',
+      days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+      start: '08:00',
+      end: '17:00',
+      note: 'Official Signatory for Call Slips and Summons Notices',
+    },
+    {
+      id: 2,
+      role: 'Guidance Counselor',
+      name: 'Registered Guidance Counselor (RGC)',
+      days: ['Tue', 'Thu'],
+      start: '08:00',
+      end: '16:00',
+      note: 'Counseling & Formal Case Hearing Evaluations',
+    },
+  ],
   offenses: OFFENSE_HANDBOOK_RULES.map((r, i) => ({ ...r, id: -1 - i, active: true, sortOrder: i + 1 })),
-  staff: [],
+  staff: [
+    {
+      id: 1,
+      email: 'aicsmontalbansafeguard@gmail.com',
+      fullName: 'Maurice Enriquez',
+      role: 'Guidance Associate',
+      active: true,
+    },
+  ],
   pin: null,
   studentFields: { labels: {}, showEmail: true, showRelationship: true, custom: [] },
 };

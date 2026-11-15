@@ -148,18 +148,18 @@ export const PrintFormsWindow: React.FC<{
               onClick={() => {
                 const text = `*ASIAN INSTITUTE OF COMPUTER STUDIES — GUIDANCE OFFICE*\n*${FORM_TITLES[kind][0]}*\n\nStudent: ${c.studentName} (${c.gradeSection})\nCase No: ${c.caseCode}\nOffense: ${c.offenseTitleEn}\n${when ? `Schedule: ${when}\n` : ''}\nOfficial Notice: Please coordinate with the Guidance Office. Thank you!`;
                 navigator.clipboard.writeText(text);
-                alert(isTl ? 'Na-kopya na ang softcopy text! Maaari mo na itong i-paste sa Messenger o chat sa Adviser.' : 'Softcopy text copied to clipboard! You can now paste it into Messenger or send it to the Adviser.');
+                alert(isTl ? 'Na-kopya na ang softcopy text! Maaari mo na itong i-send sa adviser via Messenger o chat.' : 'Softcopy text copied to clipboard! You can now send it to the adviser via Messenger or chat.');
               }}
               className="px-3.5 py-2 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#F8FAFC] dark:hover:bg-[#13203B] text-xs font-bold transition-all"
-              title="Copy text format for Messenger / Chat"
+              title="Copy text format to send to Adviser via Messenger"
             >
-              Copy for Messenger / Chat
+              SOFTCOPY - SEND IN ADVISER
             </button>
             <button
               type="button"
               onClick={() => {
                 const subject = encodeURIComponent(`[AICS Guidance] ${FORM_TITLES[kind][0]} — ${c.studentName} (${c.caseCode})`);
-                const body = encodeURIComponent(`Good day,\n\nPlease find the official guidance notice below:\n\nStudent: ${c.studentName}\nGrade & Section: ${c.gradeSection}\nCase Code: ${c.caseCode}\nNotice Type: ${FORM_TITLES[kind][0]}\n${when ? `Schedule / Date: ${when}\n` : ''}\nDetails / Offense: ${c.offenseTitleEn}\n\nRespectfully,\nAICS Guidance & Student Affairs Office\nMontalban Campus`);
+                const body = encodeURIComponent(`Good day,\n\nPlease find the official guidance notice below:\n\nStudent: ${c.studentName}\nGrade & Section: ${c.gradeSection}\nCase Code: ${c.caseCode}\nNotice Type: ${FORM_TITLES[kind][0]}\n${when ? `Schedule / Date: ${when}\n` : ''}\nDetails / Offense: ${c.offenseTitleEn}\n\nRespectfully,\nMaurice Enriquez\nGuidance Associate & Student Affairs\nAICS Montalban Campus`);
                 window.open(`mailto:${stu?.parentEmail || ''}?subject=${subject}&body=${body}`, '_blank');
               }}
               className="px-3.5 py-2 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#F8FAFC] dark:hover:bg-[#13203B] text-xs font-bold transition-all"
@@ -174,7 +174,7 @@ export const PrintFormsWindow: React.FC<{
               {isTl ? 'Kanselahin' : 'Cancel'}
             </button>
             <button type="button" data-action="print-form" disabled={!!bad} onClick={print} className="px-5 py-2.5 rounded-lg bg-[#1E469B] text-white text-xs font-bold disabled:opacity-50 active:scale-[0.97] transition-all">
-              {isTl ? `I-print / Save as PDF (${FORM_TITLES[kind][1]})` : `Print / Save as PDF (${FORM_TITLES[kind][0]})`}
+              {isTl ? `I-download ang Softcopy / Print (${FORM_TITLES[kind][1]})` : `Download the Softcopy / Print (${FORM_TITLES[kind][0]})`}
             </button>
           </div>
         </div>
