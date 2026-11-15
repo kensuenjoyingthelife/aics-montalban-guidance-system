@@ -956,18 +956,23 @@ const ConcernDetail: React.FC<{
                           {isTl ? 'Inirereklamong Estudyante (Respondent)' : 'Reported Student (Respondent)'}
                         </span>
                       </div>
-                      {onCreateCase && !c.linkedCaseCode && (
-                        <button
-                          type="button"
-                          data-action="case-from-concern"
-                          onClick={onCreateCase}
-                          className="px-2.5 py-1 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-[10.5px] font-extrabold shadow-xs transition-all flex items-center gap-1 cursor-pointer"
-                          title={isTl ? 'Gumawa ng opisyal na disciplinary case para kay ' + parsed.respondentName : 'File formal case'}
-                        >
-                          <span>＋</span>
-                          <span>{isTl ? 'Gumawa ng Kaso' : 'File Case'}</span>
-                        </button>
-                      )}
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
+              {isTl ? 'Disciplinary Case Connection:' : 'Disciplinary Case Connection:'}
+            </span>
+            {onCreateCase && (
+              <button
+                type="button"
+                data-action="create-case-always"
+                onClick={onCreateCase}
+                className="px-2.5 py-1 rounded-lg bg-[#1E469B] hover:bg-[#16377E] active:scale-95 text-white text-[10.5px] font-black shadow-xs transition-all flex items-center gap-1 cursor-pointer"
+                title={isTl ? 'Pumunta sa Cases para gawan ng pormal na kaso ang inirereklamo' : 'Open Cases form for the reported student'}
+              >
+                <span>＋</span>
+                <span>{isTl ? 'Gumawa ng Kaso para sa Inirereklamo' : 'Create Case for Respondent'}</span>
+              </button>
+            )}
+          </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
