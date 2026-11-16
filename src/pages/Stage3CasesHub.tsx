@@ -3275,12 +3275,27 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                         <div className="flex flex-wrap items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={async () => {
+                              const ok = await confirmChange({
+                                title: isTl ? 'I-download ang Executive Summary (PDF)?' : 'Download Executive Summary (PDF)?',
+                                description: isTl
+                                  ? `I-eexport at idodownload ang opisyal na 1-page Resolution Summary PDF para sa kaso ni ${c.studentName} (${c.caseCode}).`
+                                  : `Export and download the official 1-page Resolution Summary PDF for ${c.studentName} (${c.caseCode}).`,
+                                rows: [
+                                  { label: isTl ? 'Kaso' : 'Case Code', after: c.caseCode },
+                                  { label: isTl ? 'Estudyante' : 'Student', after: c.studentName },
+                                  { label: isTl ? 'Format' : 'Format', after: 'Pure 1-Page PDF (.pdf)' },
+                                ],
+                                confirmLabel: isTl ? 'I-download Na' : 'Download Now',
+                                tone: 'primary',
+                              });
+                              if (!ok) return;
+
                               const html = buildFormHtml(
                                 { kind: 'caseResolutionSummary', c, stu },
                                 window.location.origin
                               );
-                              downloadFormDocument(html, `${c.caseCode}_Executive_Case_Resolution_Summary`);
+                              await downloadFormDocument(html, `${c.caseCode}_Executive_Case_Resolution_Summary`);
                               onTriggerToast(
                                 isTl
                                   ? `Na-download ang Executive Summary ng ${c.caseCode}.`
@@ -3289,11 +3304,25 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                             }}
                             className="btn-press px-3 py-1.5 rounded-lg saas-card-subtle text-xs font-semibold text-[#0F172A] dark:text-white hover:border-[#1E469B]"
                           >
-                            {isTl ? 'I-download ang buod (PDF/HTML)' : 'Download summary'}
+                            {isTl ? 'I-download ang buod (PDF)' : 'Download summary (PDF)'}
                           </button>
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={async () => {
+                              const ok = await confirmChange({
+                                title: isTl ? 'I-print ang Executive Summary?' : 'Print Executive Summary?',
+                                description: isTl
+                                  ? `Bubuksan ang print preview dialog para kay ${c.studentName} (${c.caseCode}).`
+                                  : `Open print dialog for ${c.studentName} (${c.caseCode}).`,
+                                rows: [
+                                  { label: isTl ? 'Kaso' : 'Case Code', after: c.caseCode },
+                                  { label: isTl ? 'Dokumento' : 'Document', after: 'Executive Case Resolution Summary' },
+                                ],
+                                confirmLabel: isTl ? 'Mag-print' : 'Print',
+                                tone: 'primary',
+                              });
+                              if (!ok) return;
+
                               const html = buildFormHtml(
                                 { kind: 'caseResolutionSummary', c, stu },
                                 window.location.origin

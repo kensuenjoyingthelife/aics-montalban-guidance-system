@@ -30,6 +30,7 @@ import { fetchHandoverNotes, fetchHandoverCounts, addHandoverNote, HandoverNote 
 import { todayISO } from '../services/scheduling';
 import { LineChart, GroupedBars, Legend } from '../components/ui/Charts';
 import { useAppConfig } from '../services/appConfig';
+import { useConfirmChange } from '../components/ui/ConfirmChange';
 import { printIncidentSlip, printMonthlyExecutivePdf, printDepEdCompliancePdf } from '../services/documentPrintEngine';
 import { Download, Printer, FileText, BarChart3, TrendingUp, Calendar, Award, ShieldCheck } from 'lucide-react';
 
@@ -98,6 +99,7 @@ function trendSentence(now: number, before: number | null, solved: number, unit:
 const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmail, onTriggerToast, onOpenCase }) => {
   const { locale } = useLanguage();
   const isTl = locale === 'tl';
+  const confirm = useConfirmChange();
   const today = todayISO();
   const config = useAppConfig();
   // "overdue" = open longer than Settings › Offenses › overdue days
@@ -573,7 +575,22 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
               <button
                 type="button"
                 data-action="print-executive-pdf"
-                onClick={() => {
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: isTl ? 'I-download ang Buwanang Ulat (PDF)?' : 'Download Monthly Executive Report (PDF)?',
+                    description: isTl
+                      ? `I-eexport ang kumpletong ulat para sa ${monthName} kasama ang mga tsart at istatistika.`
+                      : `Export and download the executive monthly summary for ${monthName} with graphs and metrics.`,
+                    rows: [
+                      { label: isTl ? 'Buwan' : 'Month', after: monthName },
+                      { label: isTl ? 'Bagong Kaso' : 'New Cases', after: String(report.newCases) },
+                      { label: isTl ? 'Attendance Rate' : 'Attendance Rate', after: report.attendanceRate !== null ? `${report.attendanceRate}%` : 'N/A' },
+                    ],
+                    confirmLabel: isTl ? 'I-download Na' : 'Download Now',
+                    tone: 'primary',
+                  });
+                  if (!ok) return;
+
                   soundFX.playStepUnlock();
                   printMonthlyExecutivePdf({
                     monthName,
@@ -596,14 +613,30 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
               <button
                 type="button"
                 data-action="print-deped-compliance"
-                onClick={() => {
-                  soundFX.playStepUnlock();
+                onClick={async () => {
                   const curYear = new Date().getFullYear();
                   const curMonth = new Date().getMonth(); // 0-11
                   const qNum = Math.floor(curMonth / 3) + 1;
                   const quarterNames = ['Q1 (Jan - Mar)', 'Q2 (Apr - Jun)', 'Q3 (Jul - Sep)', 'Q4 (Oct - Dec)'];
                   const qLabel = `${quarterNames[qNum - 1]} ${curYear}`;
                   const sYear = `S.Y. ${curYear} - ${curYear + 1}`;
+
+                  const ok = await confirm({
+                    title: isTl ? 'I-generate ang DepEd DO 40 Compliance PDF?' : 'Generate DepEd DO 40 Compliance PDF?',
+                    description: isTl
+                      ? `I-eexport ang opisyal na quarterly child protection report para sa DepEd audit.`
+                      : `Export official quarterly child protection compliance document for DepEd audit.`,
+                    rows: [
+                      { label: isTl ? 'Quarter' : 'Quarter', after: qLabel },
+                      { label: isTl ? 'School Year' : 'School Year', after: sYear },
+                      { label: isTl ? 'Kabuuang Kaso' : 'Total Cases Evaluated', after: String(cases.length) },
+                    ],
+                    confirmLabel: isTl ? 'I-export ang DepEd Report' : 'Export DepEd Report',
+                    tone: 'success',
+                  });
+                  if (!ok) return;
+
+                  soundFX.playStepUnlock();
 
                   // Filter child protection relevant cases
                   const cpCases = cases.map((c) => ({
@@ -644,11 +677,41 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 <span>{isTl ? 'DepEd DO 40 Report (PDF)' : 'DepEd DO 40 Compliance (PDF)'}</span>
               </button>
-              <button type="button" data-action="print-report" onClick={printReport} className={`${btn} px-4 py-2 saas-card-subtle active:scale-[0.97] inline-flex items-center gap-1.5`}>
+              <button
+                type="button"
+                data-action="print-report"
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: isTl ? 'I-print ang Talaan ng Report?' : 'Print Report Table?',
+                    description: isTl ? 'Bubuksan ang printable summary table ng buwanang talaan.' : 'Open quick print summary for the monthly report table.',
+                    rows: [{ label: isTl ? 'Buwan' : 'Month', after: monthName }],
+                    confirmLabel: isTl ? 'I-print' : 'Print',
+                    tone: 'primary',
+                  });
+                  if (!ok) return;
+                  printReport();
+                }}
+                className={`${btn} px-4 py-2 saas-card-subtle active:scale-[0.97] inline-flex items-center gap-1.5`}
+              >
                 <Printer className="w-3.5 h-3.5" />
                 {isTl ? 'Quick Table Print' : 'Quick Table Print'}
               </button>
-              <button type="button" data-action="csv-report" onClick={downloadCsv} className={`${btn} px-4 py-2 saas-card-subtle active:scale-[0.97] inline-flex items-center gap-1.5`}>
+              <button
+                type="button"
+                data-action="csv-report"
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: isTl ? 'I-download bilang CSV / Excel?' : 'Download as CSV / Excel?',
+                    description: isTl ? 'I-eexport ang file bilang spreadsheet (.csv) para sa offline analysis.' : 'Export data to a spreadsheet file (.csv) for offline analysis.',
+                    rows: [{ label: isTl ? 'Buwan' : 'Month', after: monthName }],
+                    confirmLabel: isTl ? 'I-export ang CSV' : 'Export CSV',
+                    tone: 'primary',
+                  });
+                  if (!ok) return;
+                  downloadCsv();
+                }}
+                className={`${btn} px-4 py-2 saas-card-subtle active:scale-[0.97] inline-flex items-center gap-1.5`}
+              >
                 <FileText className="w-3.5 h-3.5" />
                 {isTl ? 'Excel / CSV' : 'Excel / CSV'}
               </button>
@@ -774,7 +837,22 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={async () => {
+                        const ok = await confirm({
+                          title: isTl ? 'I-print ang Incident Slip (PDF)?' : 'Print Incident Slip (PDF)?',
+                          description: isTl
+                            ? `Bubuksan ang opisyal na AICS Guidance Incident Slip para kay ${sel.studentName} (${sel.caseCode}).`
+                            : `Open printable official AICS Guidance Incident Slip for ${sel.studentName} (${sel.caseCode}).`,
+                          rows: [
+                            { label: isTl ? 'Kaso' : 'Case Code', after: sel.caseCode },
+                            { label: isTl ? 'Estudyante' : 'Student', after: sel.studentName },
+                            { label: isTl ? 'Offense' : 'Offense', after: sel.offenseTitleEn },
+                          ],
+                          confirmLabel: isTl ? 'I-print Na' : 'Print Now',
+                          tone: 'primary',
+                        });
+                        if (!ok) return;
+
                         soundFX.playStepUnlock();
                         printIncidentSlip({
                           caseCode: sel.caseCode,
