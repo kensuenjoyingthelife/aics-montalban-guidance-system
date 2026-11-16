@@ -1309,7 +1309,7 @@ export const CaseFlowPanel: React.FC<{
       )}
 
       {/* Summons & Reschedule History Tracker (For Case Documentation & Closure PDF) */}
-      {(c.summonsCount || 0) > 0 && (
+      {(c.summonsCount || 0) > 0 || c.parentConferenceStatus === 'No-Show' ? (
         <div className="rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/40 dark:bg-amber-950/20 overflow-hidden shadow-xs mt-3">
           <div className="px-4 py-2 bg-amber-100/60 dark:bg-amber-900/40 border-b border-amber-200 dark:border-amber-900/60 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -1343,7 +1343,7 @@ export const CaseFlowPanel: React.FC<{
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };
