@@ -62,15 +62,12 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
 
   const getBadgeStyle = (count: number) => {
     if (count >= 5) {
-      // High count: Alert red / crimson
-      return 'bg-rose-600 text-white shadow-xs animate-pulse';
+      return 'bg-rose-600 text-white shadow-xs';
     }
     if (count >= 3) {
-      // Medium count: Orange alert
-      return 'bg-amber-500 text-[#0B1F4D] font-black shadow-xs';
+      return 'bg-amber-500 text-[#0B1F4D] font-bold shadow-xs';
     }
-    // 1-2 items: Warm energetic amber/yellow as requested ("siguro yellow tapos pag marami na red")
-    return 'bg-amber-400 text-[#0B1F4D] font-black shadow-xs';
+    return 'bg-amber-400 text-[#0B1F4D] font-bold shadow-xs';
   };
 
   const getBadgeCount = (item: MainCategoryNavItem): number | undefined => {
@@ -163,9 +160,8 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
         {/* GROUP 1: DAILY CORE OPERATIONS */}
         <div>
           {!collapsed && (
-            <div className="px-3 pt-1 pb-1.5 text-[10px] font-black tracking-[0.14em] text-[#7CB8F7] uppercase flex items-center justify-between">
-              <span>{isTl ? 'Araw-araw na Gawain' : 'Daily Operations'}</span>
-              <span className="text-[9px] px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 font-extrabold">CORE</span>
+            <div className="px-3 pt-1 pb-1.5 text-xs font-semibold text-[#9BCBFF] flex items-center justify-between">
+              <span>{isTl ? 'Araw-araw na gawain' : 'Daily operations'}</span>
             </div>
           )}
 
@@ -188,9 +184,9 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                   title={label}
                   className={`w-full flex items-center ${
                     collapsed ? 'justify-center p-2.5' : 'justify-between px-3 py-2'
-                  } rounded-[8px] text-left transition-all duration-150 ${
+                  } rounded-[8px] text-left transition-[transform,background-color,color] duration-150 active:scale-[0.98] ${
                     isActive
-                      ? 'bg-white/15 text-white font-bold border-l-[3.5px] border-[#7CB8F7] shadow-sm'
+                      ? 'bg-white/15 text-white font-semibold border-l-[3px] border-[#7CB8F7] shadow-xs'
                       : 'text-[#DCE8FF]/85 hover:bg-white/8 hover:text-white font-medium'
                   }`}
                 >
@@ -212,7 +208,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
 
                   {!collapsed && badgeVal !== undefined && badgeVal > 0 && (
                     <span
-                      className={`ml-2 px-2 py-0.5 rounded-full text-[11px] font-black shrink-0 transition-colors ${getBadgeStyle(
+                      className={`ml-2 px-2 py-0.5 rounded-md text-xs font-semibold shrink-0 transition-colors ${getBadgeStyle(
                         badgeVal
                       )}`}
                     >
@@ -228,8 +224,8 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
         {/* GROUP 2: RECORDS & SETTINGS */}
         <div className="pt-2 border-t border-white/10">
           {!collapsed && (
-            <div className="px-3 pt-1 pb-1.5 text-[10px] font-black tracking-[0.14em] text-slate-400 dark:text-slate-400 uppercase">
-              {isTl ? 'Rekord at Pamamahala' : 'Management & Records'}
+            <div className="px-3 pt-1 pb-1.5 text-xs font-semibold text-slate-400">
+              {isTl ? 'Rekord at pamamahala' : 'Management & records'}
             </div>
           )}
 

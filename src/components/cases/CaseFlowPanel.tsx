@@ -299,12 +299,12 @@ export const CaseFlowPanel: React.FC<{
 
       {/* Sanction status badge */}
       {c.sanction && (
-        <p className={`text-xs font-bold px-3 py-2 rounded-xl ${c.sanctionStatus === 'Pending parent notice' ? 'bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200' : c.sanctionStatus === 'Done' ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-[#EEF3FC] text-[#1E469B] dark:bg-[#13203B] dark:text-[#7CB8F7]'}`} data-sanction-status>
-          {isTl ? 'Sanction' : 'Sanction'}: {c.sanction} ·{' '}
+        <p className={`text-xs font-semibold px-3 py-2 rounded-xl border ${c.sanctionStatus === 'Pending parent notice' ? 'bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-200' : c.sanctionStatus === 'Done' ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300' : 'bg-[#EEF3FC] border-[#CBD5E1] text-[#1E469B] dark:bg-[#13203B] dark:border-[#223555] dark:text-[#7CB8F7]'}`} data-sanction-status>
+          {isTl ? 'Sanction' : 'Sanction'}: <span className="font-bold">{c.sanction}</span> ·{' '}
           {c.sanctionStatus === 'Pending parent notice'
-            ? isTl ? '⏳ Naghihintay — magsisimula matapos ang conference ng magulang' : '⏳ Waiting — starts after parent conference'
+            ? isTl ? 'Naghihintay — magsisimula matapos ang conference ng magulang' : 'Waiting — starts after parent conference'
             : c.sanctionStatus === 'Done'
-            ? isTl ? '✓ Tapos na' : '✓ Done'
+            ? isTl ? 'Tapos na' : 'Completed'
             : isTl ? 'Ginagawa na' : 'In progress'}
         </p>
       )}
@@ -313,11 +313,11 @@ export const CaseFlowPanel: React.FC<{
       {next && (
         <div className="rounded-xl bg-white dark:bg-[#0B1527] border border-[#CBD5E1] dark:border-[#1E2E4E] p-4 space-y-3 shadow-xs" data-next-step={next}>
           <div className="flex items-center justify-between border-b border-[#F1F5F9] dark:border-[#1E2E4E] pb-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
-              {isTl ? 'Kasalukuyang Hakbang (Current Action)' : 'Current Action Required'}
+            <span className="text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7]">
+              {isTl ? 'Kasalukuyang hakbang' : 'Current step'}
             </span>
-            <span className="px-2 py-0.5 rounded-[6px] text-[10px] font-extrabold bg-[#F1F5F9] dark:bg-[#13203B] text-[#475569] dark:text-[#94A3B8] border border-[#CBD5E1] dark:border-[#334155]">
-              STEP {stepIndex} OF {totalSteps}
+            <span className="px-2 py-0.5 rounded-[6px] text-xs font-semibold bg-[#F1F5F9] dark:bg-[#13203B] text-[#475569] dark:text-[#94A3B8] border border-[#CBD5E1] dark:border-[#334155]">
+              {isTl ? `Hakbang ${stepIndex} ng ${totalSteps}` : `Step ${stepIndex} of ${totalSteps}`}
             </span>
           </div>
 
@@ -325,12 +325,12 @@ export const CaseFlowPanel: React.FC<{
             <div className="space-y-3">
               <div>
                 <p className="text-xs font-bold text-[#0F172A] dark:text-white">
-                  {isTl ? 'Hakbang 2: Pagpapatawag sa Estudyante (Student Summon)' : 'Step 2: Summon Student to Guidance'}
+                  {isTl ? 'Pagpapatawag sa estudyante' : 'Summon student to Guidance'}
                 </p>
-                <p className="text-[11px] text-[#64748B] dark:text-[#94A8D0] mt-0.5">
+                <p className="text-xs text-[#64748B] dark:text-[#94A8D0] mt-0.5">
                   {isTl
-                    ? 'Maaaring mag-print ng opisyal na Call Slip para sa Subject Teacher / Adviser, o tawagan nang direkta ang adviser.'
-                    : 'Print an official Guidance Call Slip for the classroom teacher/adviser, or coordinate directly.'}
+                    ? 'Mag-print ng opisyal na Call Slip para sa adviser o tawagan nang direkta.'
+                    : 'Print an official Call Slip for the classroom adviser or coordinate directly.'}
                 </p>
               </div>
 
@@ -341,7 +341,7 @@ export const CaseFlowPanel: React.FC<{
                     onClick={onOpenPrint}
                     className={`${btn} rounded-lg border border-[#CBD5E1] dark:border-[#253B66] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#F8FAFC] dark:hover:bg-[#13203B] flex items-center gap-1.5`}
                   >
-                    <span>READY TO PRINT CALL SLIP</span>
+                    <span>{isTl ? 'Mag-print ng Call Slip' : 'Print Call Slip'}</span>
                   </button>
                 )}
                 <button
@@ -351,7 +351,7 @@ export const CaseFlowPanel: React.FC<{
                   onClick={() => onAction({ kind: 'call' })}
                   className={`${primary} rounded-lg`}
                 >
-                  {isTl ? '✓ Nakarating na sa Opisina' : '✓ Mark Student Summoned'}
+                  {isTl ? 'Nakarating na sa opisina' : 'Mark student summoned'}
                 </button>
               </div>
             </div>
@@ -361,10 +361,10 @@ export const CaseFlowPanel: React.FC<{
             <div className="space-y-3">
               <div>
                 <p className="text-xs font-bold text-[#0F172A] dark:text-white">
-                  {isTl ? 'Salaysay ng Pagpapaliwanag ng Naisumbong (Student’s Explanation):' : 'Official Written Explanation of the Student:'}
+                  {isTl ? 'Salaysay ng estudyante' : 'Student official explanation'}
                 </p>
-                <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] mt-0.5">
-                  {isTl ? 'I-type ang sinabi ng estudyante, o ipa-type nang direkta sa kanya gamit ang Statement Station.' : 'Type what the student explained, or let them type it personally via Statement Station.'}
+                <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5">
+                  {isTl ? 'I-type ang sinabi ng estudyante, o ipa-type nang direkta sa Statement Station.' : 'Type what the student explained, or let them type it via Statement Station.'}
                 </p>
               </div>
 
@@ -416,22 +416,22 @@ export const CaseFlowPanel: React.FC<{
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div>
                   <p className="text-xs font-bold text-[#0F172A] dark:text-white">
-                    {isTl ? 'Hakbang 4: Pormal na Patawag sa Magulang at Iskedyul ng Kumperensya' : 'Step 4: Formal Parent Summons & Conference Scheduling'}
+                    {isTl ? 'Patawag at iskedyul sa magulang' : 'Parent summons & conference scheduling'}
                   </p>
-                  <p className="text-[11px] text-[#64748B] dark:text-[#94A8D0] mt-0.5">
+                  <p className="text-xs text-[#64748B] dark:text-[#94A8D0] mt-0.5">
                     {isTl
-                      ? 'Kailangang mai-schedule ang conference sa Parents Hub at ma-isyu ang summons bago magpataw ng desisyon.'
-                      : 'Due process requires summoning the parent via Parents Hub before rendering a sanction decision.'}
+                      ? 'I-schedule ang conference sa Parents Hub bago magpataw ng desisyon.'
+                      : 'Schedule the parent conference via Parents Hub before rendering a ruling.'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   {(c.summonsCount || 0) > 0 && (
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-400/40">
-                      {isTl ? `Ika-${(c.summonsCount || 0) + 1} Patawag (Summons #${(c.summonsCount || 0) + 1})` : `Summons #${(c.summonsCount || 0) + 1}`}
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-400/40">
+                      {isTl ? `Ika-${(c.summonsCount || 0) + 1} patawag` : `Summons #${(c.summonsCount || 0) + 1}`}
                     </span>
                   )}
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-500/15 text-[#1E469B] dark:text-[#7CB8F7] border border-blue-400/30">
-                    {isTl ? 'Kailangan ang Magulang' : 'Parent Summons Required'}
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-blue-500/15 text-[#1E469B] dark:text-[#7CB8F7] border border-blue-400/30">
+                    {isTl ? 'Kailangan ang magulang' : 'Parent summons required'}
                   </span>
                 </div>
               </div>
@@ -540,10 +540,10 @@ export const CaseFlowPanel: React.FC<{
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <p className="text-xs font-bold text-[#0F172A] dark:text-white">
-                  {isTl ? 'Hakbang 5: Resulta ng Pagharap ng Magulang (Conference Hearing Outcome)' : 'Step 5: Parent Conference Hearing Outcome'}
+                  {isTl ? 'Pagharap ng magulang' : 'Parent conference attendance'}
                 </p>
-                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-400/30">
-                  {isTl ? 'Pagpapatotoo ng Attendance' : 'Attendance Verification'}
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-400/30">
+                  {isTl ? 'Pagpapatotoo' : 'Verification'}
                 </span>
               </div>
 
@@ -650,23 +650,23 @@ export const CaseFlowPanel: React.FC<{
             <div className="space-y-3" data-decision-box>
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <p className="text-xs font-bold text-[#0F172A] dark:text-white">
-                  {isTl ? 'Kinalabasan ng Pagdinig at Desisyon (Case Findings & Resolution)' : 'Case Resolution & Hearing Findings'}
+                  {isTl ? 'Hatol at desisyon' : 'Case decision & ruling'}
                 </p>
-                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-400/30">
-                  {isTl ? `Hakbang ${stepIndex}: Pormal na Hatol` : `Step ${stepIndex}: Official Ruling`}
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-400/30">
+                  {isTl ? 'Pormal na hatol' : 'Official ruling'}
                 </span>
               </div>
 
               {/* 1-Click Quick Decision Chips */}
               <div className="space-y-1.5">
-                <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-[#4A608A] dark:text-[#94A8D0] block">
-                  {isTl ? 'Mabilisang Pagpili (Quick Resolution Presets):' : 'Quick Resolution Presets:'}
+                <span className="text-xs font-semibold text-[#475569] dark:text-[#94A8D0] block">
+                  {isTl ? 'Mabilisang pagpili:' : 'Quick resolution presets:'}
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                   {[
                     {
-                      labelEn: 'Confirmed Violation (Guilty)',
-                      labelTl: 'Napatunayang Lumabag sa Polisiya',
+                      labelEn: 'Confirmed violation',
+                      labelTl: 'Napatunayang lumabag',
                       descEn: isMinor
                         ? `Confirmed minor infraction of ${c.offenseTitleEn}. Issued official verbal reminder and guidance counseling.`
                         : `Found responsible for ${c.offenseTitleEn} after conference with student and parent.`,
@@ -675,20 +675,20 @@ export const CaseFlowPanel: React.FC<{
                         : `Napatunayang may pananagutan sa ${c.offenseTitleTl} matapos dinggin ang panig kasama ang magulang.`
                     },
                     {
-                      labelEn: 'Amicable Settlement (Reconciled)',
-                      labelTl: 'Nagkasundo / Amicable Settlement',
+                      labelEn: 'Amicable settlement',
+                      labelTl: 'Nagkasundo',
                       descEn: 'Parties reached mutual understanding and signed an amicable agreement with restitution.',
                       descTl: 'Nagkasundo ang magkabilang panig at pumirma ng kasunduan ng pagbabati at paumanhin.'
                     },
                     {
-                      labelEn: 'First Warning with Undertaking',
-                      labelTl: 'Unang Babala at Kasunduan',
+                      labelEn: 'First warning with undertaking',
+                      labelTl: 'Unang babala at kasunduan',
                       descEn: 'First offense with remorse: issued official warning and signed behavioral pledge.',
                       descTl: 'Unang paglabag na may pagsisisi: binigyan ng pormal na babala at lumagda sa behavioral pledge.'
                     },
                     {
-                      labelEn: 'Exonerated / Misunderstanding',
-                      labelTl: 'Naipaliwanag / Walang Pananagutan',
+                      labelEn: 'Cleared / misunderstanding',
+                      labelTl: 'Naipaliwanag / walang pananagutan',
                       descEn: 'Case clarified as misunderstanding; student acted in defense or cleared of wrongdoing.',
                       descTl: 'Naipaliwanag na walang malisyosong intensyon o napagkamalan lamang; abswelto ang estudyante.'
                     }
@@ -697,13 +697,13 @@ export const CaseFlowPanel: React.FC<{
                       key={idx}
                       type="button"
                       onClick={() => setDecision(isTl ? preset.descTl : preset.descEn)}
-                      className={`text-left p-2 rounded-lg border text-xs transition-all active:scale-[0.98] ${
+                      className={`text-left p-2 rounded-lg border text-xs transition-[border-color,background-color] active:scale-[0.98] ${
                         decision === (isTl ? preset.descTl : preset.descEn)
                           ? 'border-[#1E469B] bg-sky-50 dark:bg-sky-950/40 text-[#1E469B] dark:text-[#7CB8F7] font-bold shadow-xs'
                           : 'border-slate-200 dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-slate-700 dark:text-slate-300 hover:border-slate-400'
                       }`}
                     >
-                      <div className="font-bold text-[11.5px] leading-snug">
+                      <div className="font-semibold text-xs leading-snug">
                         {isTl ? preset.labelTl : preset.labelEn}
                       </div>
                     </button>
@@ -712,8 +712,8 @@ export const CaseFlowPanel: React.FC<{
               </div>
 
               <label className="block">
-                <span className="block text-[11px] font-extrabold text-[#4A608A] dark:text-[#94A8D0] mb-1">
-                  {isTl ? 'Opisyal na Hatol / Desisyon (Ruling)' : 'Official Decision / Ruling'}
+                <span className="block text-xs font-semibold text-[#475569] dark:text-[#94A8D0] mb-1">
+                  {isTl ? 'Opisyal na hatol' : 'Official decision'}
                 </span>
                 <input
                   data-flow-decision
@@ -733,8 +733,8 @@ export const CaseFlowPanel: React.FC<{
               </label>
 
               <label className="block">
-                <span className="block text-[11px] font-extrabold text-[#4A608A] dark:text-[#94A8D0] mb-1">
-                  {isTl ? 'Sanction / Disciplinary Action (Mula sa Handbook — puwedeng baguhin)' : 'Sanction / Disciplinary Action (Handbook Standard — editable)'}
+                <span className="block text-xs font-semibold text-[#475569] dark:text-[#94A8D0] mb-1">
+                  {isTl ? 'Sanction (mula sa Handbook — puwedeng baguhin)' : 'Sanction (Handbook standard — editable)'}
                 </span>
                 <input
                   data-flow-sanction
@@ -752,7 +752,7 @@ export const CaseFlowPanel: React.FC<{
                   onClick={() => onAction({ kind: 'decision', decision: decision.trim(), sanction: sanction.trim() })}
                   className={`${primary} active:scale-[0.97]`}
                 >
-                  {isTl ? '✓ I-save ang Desisyon' : '✓ Save Decision & Sanction'}
+                  {isTl ? 'I-save ang desisyon' : 'Save decision & sanction'}
                 </button>
               </div>
             </div>
@@ -763,20 +763,20 @@ export const CaseFlowPanel: React.FC<{
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div>
                   <p className="text-xs font-bold text-[#0F172A] dark:text-white">
-                    {isTl ? 'Hakbang 7: Pagsubaybay sa Sanction (Sanction Monitoring)' : 'Step 7: Sanction Compliance Monitoring'}
+                    {isTl ? 'Pagsubaybay sa sanction' : 'Sanction monitoring'}
                   </p>
-                  <p className="text-[11px] text-[#64748B] dark:text-[#94A8D0]">
-                    {isTl ? `Ipinataw na Sanction: ${c.sanction || 'Formative Intervention'}` : `Imposed Sanction: ${c.sanction || 'Formative Intervention'}`}
+                  <p className="text-xs text-[#64748B] dark:text-[#94A8D0]">
+                    {isTl ? `Sanction: ${c.sanction || 'Formative Intervention'}` : `Sanction: ${c.sanction || 'Formative Intervention'}`}
                   </p>
                 </div>
-                <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${c.sanctionStatus === 'Done' ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300'}`}>
-                  {c.sanctionStatus === 'Done' ? (isTl ? 'Natapos Na' : 'Fully Served') : (isTl ? 'Kasalukuyang Ginagawa' : 'In Progress')}
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${c.sanctionStatus === 'Done' ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300'}`}>
+                  {c.sanctionStatus === 'Done' ? (isTl ? 'Natapos na' : 'Completed') : (isTl ? 'Ginagawa pa' : 'In progress')}
                 </span>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#13203B] border border-slate-200 dark:border-white/10 space-y-2">
-                <span className="text-[11px] font-extrabold uppercase text-[#4A608A] dark:text-[#94A8D0] block">
-                  {isTl ? 'Katayuan ng Sanction / Rehabilitasyon:' : 'Sanction Fulfillment Status:'}
+                <span className="text-xs font-semibold text-[#475569] dark:text-[#94A8D0] block">
+                  {isTl ? 'Katayuan ng sanction:' : 'Sanction status:'}
                 </span>
                 <div className="flex flex-wrap items-center gap-2">
                   <button
@@ -784,20 +784,19 @@ export const CaseFlowPanel: React.FC<{
                     data-flow="followup-start"
                     disabled={busy || c.sanctionStatus === 'Pending parent notice'}
                     onClick={() => onAction({ kind: 'followup', sanctionDone: false })}
-                    className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0B1527] text-xs font-bold text-slate-800 dark:text-slate-200 hover:border-[#1E469B] active:scale-[0.97] transition-all"
+                    className="btn-press px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0B1527] text-xs font-semibold text-slate-800 dark:text-slate-200 hover:border-[#1E469B]"
                   >
-                    <Clock className="w-3.5 h-3.5 inline mr-1 text-[#1E469B]" />
-                    {isTl ? 'Nagsimula / Ginagawa Pa' : 'Serving / In Progress'}
+                    {isTl ? 'Nagsimula / ginagawa pa' : 'Serving / in progress'}
                   </button>
                   <button
                     type="button"
                     data-flow="followup-done"
                     disabled={busy || c.sanctionStatus === 'Pending parent notice'}
                     onClick={() => onAction({ kind: 'followup', sanctionDone: true })}
-                    className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold active:scale-[0.97] transition-all flex items-center gap-1.5 shadow-xs"
+                    className="btn-press px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs"
                   >
                     <Check className="w-3.5 h-3.5" />
-                    {isTl ? '✓ Nakumpleto Na ang Sanction' : '✓ Sanction Fully Completed'}
+                    {isTl ? 'Nakumpleto na ang sanction' : 'Sanction completed'}
                   </button>
                 </div>
               </div>
@@ -811,47 +810,44 @@ export const CaseFlowPanel: React.FC<{
                 <div className="flex items-center justify-between border-b border-emerald-200 dark:border-emerald-900/40 pb-2">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span className="text-xs font-black uppercase tracking-wider text-emerald-900 dark:text-emerald-200">
-                      {isTl ? 'Buod ng Pagsunod sa Due Process (Ready for Closure)' : 'Due Process & Compliance Audit Summary'}
+                    <span className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                      {isTl ? 'Buod ng pagsunod sa due process' : 'Due process & compliance summary'}
                     </span>
                   </div>
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-600 text-white">
-                    {isTl ? 'Kumpleto ang mga Hakbang' : 'All Pre-Conditions Satisfied'}
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-600 text-white">
+                    {isTl ? 'Kumpleto ang mga hakbang' : 'Ready for closure'}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-                  <div className="p-2 rounded-lg bg-white/80 dark:bg-[#0B1527] border border-emerald-200/80 dark:border-emerald-950">
-                    <span className="text-[10px] font-black uppercase text-[#64748B] dark:text-[#94A8D0] block">
-                      {isTl ? '1. Salaysay ng Estudyante' : '1. Student Statement'}
+                  <div className="p-2.5 rounded-lg bg-white/90 dark:bg-[#0B1527] border border-emerald-200/80 dark:border-emerald-950">
+                    <span className="text-xs font-semibold text-[#64748B] dark:text-[#94A8D0] block">
+                      {isTl ? '1. Salaysay ng estudyante' : '1. Student statement'}
                     </span>
-                    <span className="font-bold text-[#0F172A] dark:text-white flex items-center gap-1 mt-0.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      {c.explanation ? (isTl ? 'Nakasulat & Naitala' : 'Filed & Verified') : (isTl ? 'Walang Sumpa' : 'Acknowledged')}
+                    <span className="font-bold text-[#0F172A] dark:text-white block mt-0.5">
+                      {c.explanation ? (isTl ? 'Nakasulat at naitala' : 'Filed & verified') : (isTl ? 'Naitala' : 'Acknowledged')}
                     </span>
                   </div>
 
                   {!isMinor && (
-                    <div className="p-2 rounded-lg bg-white/80 dark:bg-[#0B1527] border border-emerald-200/80 dark:border-emerald-950">
-                      <span className="text-[10px] font-black uppercase text-[#64748B] dark:text-[#94A8D0] block">
-                        {isTl ? '2. Pagharap ng Magulang' : '2. Parent Hearing'}
+                    <div className="p-2.5 rounded-lg bg-white/90 dark:bg-[#0B1527] border border-emerald-200/80 dark:border-emerald-950">
+                      <span className="text-xs font-semibold text-[#64748B] dark:text-[#94A8D0] block">
+                        {isTl ? '2. Pagharap ng magulang' : '2. Parent hearing'}
                       </span>
-                      <span className="font-bold text-[#0F172A] dark:text-white flex items-center gap-1 mt-0.5">
-                        <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span className="font-bold text-[#0F172A] dark:text-white block mt-0.5">
                         {c.parentConferenceStatus === 'Attended'
-                          ? (isTl ? `Dumalo (${c.summonsCount || 1} Summons)` : `Attended (${c.summonsCount || 1} Summons)`)
-                          : (isTl ? 'Naabisuhan' : 'Hearing Held')}
+                          ? (isTl ? `Dumalo (${c.summonsCount || 1} patawag)` : `Attended (${c.summonsCount || 1} summons)`)
+                          : (isTl ? 'Naabisuhan' : 'Hearing held')}
                       </span>
                     </div>
                   )}
 
-                  <div className="p-2 rounded-lg bg-white/80 dark:bg-[#0B1527] border border-emerald-200/80 dark:border-emerald-950">
-                    <span className="text-[10px] font-black uppercase text-[#64748B] dark:text-[#94A8D0] block">
-                      {isMinor ? '2. Sanction Imposed' : '3. Sanction Served'}
+                  <div className="p-2.5 rounded-lg bg-white/90 dark:bg-[#0B1527] border border-emerald-200/80 dark:border-emerald-950">
+                    <span className="text-xs font-semibold text-[#64748B] dark:text-[#94A8D0] block">
+                      {isMinor ? (isTl ? '2. Sanction' : '2. Sanction') : (isTl ? '3. Sanction' : '3. Sanction')}
                     </span>
-                    <span className="font-bold text-[#0F172A] dark:text-white flex items-center gap-1 mt-0.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span className="truncate">{c.sanction || (isTl ? 'Babala & Counseling' : 'Warning & Counseling')}</span>
+                    <span className="font-bold text-[#0F172A] dark:text-white block truncate mt-0.5">
+                      {c.sanction || (isTl ? 'Babala at counseling' : 'Warning & counseling')}
                     </span>
                   </div>
                 </div>
@@ -859,9 +855,9 @@ export const CaseFlowPanel: React.FC<{
 
               <div>
                 <p className="text-xs font-bold text-[#0F172A] dark:text-white">
-                  {isTl ? 'Intervention & Counseling Anecdotal Notes (Bago Isara ang Kaso):' : 'Counseling Anecdotal & Behavioral Notes (Before Closure):'}
+                  {isTl ? 'Tala ng counseling bago isara ang kaso:' : 'Counseling notes before closure:'}
                 </p>
-                <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] mt-0.5">
+                <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5">
                   {isTl
                     ? 'Itala ang naging pagbabago sa asal ng estudyante, kasunduan sa guidance, at patunay na natapos ang sanction.'
                     : 'Record student behavioral progress, counseling agreements, and verified sanction completion.'}
@@ -880,16 +876,16 @@ export const CaseFlowPanel: React.FC<{
                     <button
                       type="button"
                       onClick={onOpenPrint}
-                      className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0B1527] text-xs font-bold text-[#0B1F4D] dark:text-white hover:border-[#1E469B] flex items-center gap-1.5 active:scale-[0.97]"
+                      className="btn-press px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0B1527] text-xs font-semibold text-[#0F172A] dark:text-white hover:border-[#1E469B] flex items-center gap-1.5"
                     >
                       <Printer className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
-                      <span>{isTl ? 'I-print ang Buod ng Kaso' : 'Print Resolution Summary'}</span>
+                      <span>{isTl ? 'I-print ang buod ng kaso' : 'Print resolution summary'}</span>
                     </button>
                   )}
-                  <span className="text-[10.5px] font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                  <span className="text-xs font-medium text-[#64748B] dark:text-[#94A3B8]">
                     {counselingNotes.trim().length < 5
                       ? (isTl ? 'Maglagay ng maikling tala ng counseling bago isara.' : 'Enter brief counseling notes before closing.')
-                      : (isTl ? '✓ Handa nang isara nang opisyal' : '✓ Ready for formal case resolution')}
+                      : (isTl ? 'Handa nang isara nang opisyal' : 'Ready for formal case resolution')}
                   </span>
                 </div>
                 <button
@@ -897,10 +893,10 @@ export const CaseFlowPanel: React.FC<{
                   data-flow="close"
                   disabled={busy}
                   onClick={() => onAction({ kind: 'close', counselingNotes: counselingNotes.trim() })}
-                  className={`${btn} bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 active:scale-[0.97] flex items-center gap-1.5`}
+                  className={`${btn} bg-emerald-600 text-white shadow-xs hover:bg-emerald-700 active:scale-[0.97] flex items-center gap-1.5`}
                 >
                   <Check className="w-3.5 h-3.5" />
-                  <span>{isTl ? 'Pormal na Isara ang Kaso (Resolved)' : 'Officially Close Case (Resolved)'}</span>
+                  <span>{isTl ? 'Isara ang kaso (Resolved)' : 'Close case (Resolved)'}</span>
                 </button>
               </div>
             </div>
@@ -912,29 +908,29 @@ export const CaseFlowPanel: React.FC<{
       {c.explanation && done.Explanation && (
         <div className="rounded-xl border border-[#CBD5E1] dark:border-[#1E2E4E] bg-white dark:bg-[#0C1527] overflow-hidden shadow-xs mt-3">
           <div className="px-4 py-2 bg-[#F8FAFC] dark:bg-[#0E1A33] border-b border-[#E2E8F0] dark:border-[#1E2E4E] flex items-center justify-between">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
-              {isTl ? 'Opisyal na Paliwanag ng Naisumbong (Student’s Explanation)' : 'Student Respondent’s Official Explanation'}
+            <span className="text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7]">
+              {isTl ? 'Opisyal na paliwanag ng estudyante' : 'Student official explanation'}
             </span>
-            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-              {isTl ? 'Naitala sa Due Process' : 'Verified & Recorded'}
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+              {isTl ? 'Naitala' : 'Verified'}
             </span>
           </div>
 
           <div className="p-3.5 space-y-2 text-xs">
             <div className="space-y-0.5">
-              <span className="block text-[11px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
-                {isTl ? 'PANGALAN NG ESTUDYANTE' : 'STUDENT NAME'}
+              <span className="block text-xs font-semibold text-[#64748B] dark:text-[#94A8D0]">
+                {isTl ? 'Pangalan ng estudyante' : 'Student name'}
               </span>
-              <p className="text-[12.5px] font-bold text-[#0F172A] dark:text-white">
+              <p className="text-xs font-bold text-[#0F172A] dark:text-white">
                 {c.studentName} {c.studentNumber ? `· ID #${c.studentNumber}` : ''} ({c.gradeSection})
               </p>
             </div>
 
             <div className="space-y-0.5 pt-1.5 border-t border-[#F1F5F9] dark:border-[#1E2E4E]">
-              <span className="block text-[11px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
-                {isTl ? 'SALAYSAY / PALIWANAG' : 'STATEMENT / EXPLANATION'}
+              <span className="block text-xs font-semibold text-[#64748B] dark:text-[#94A8D0]">
+                {isTl ? 'Salaysay / paliwanag' : 'Statement'}
               </span>
-              <div className="p-3 rounded-lg bg-[#F8FAFC] dark:bg-[#0A1224] border border-[#E2E8F0] dark:border-[#1E2E4E] text-[12.5px] leading-relaxed text-[#0F172A] dark:text-slate-100 whitespace-pre-line font-medium">
+              <div className="p-3 rounded-lg bg-[#F8FAFC] dark:bg-[#0A1224] border border-[#E2E8F0] dark:border-[#1E2E4E] text-xs leading-relaxed text-[#0F172A] dark:text-slate-100 whitespace-pre-line font-medium">
                 {c.explanation}
               </div>
             </div>

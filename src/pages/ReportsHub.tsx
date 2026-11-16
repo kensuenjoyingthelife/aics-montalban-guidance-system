@@ -271,16 +271,13 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
 
   return (
     <main className="p-5 lg:p-6 max-w-[1440px] w-full mx-auto space-y-5 flex-1">
-      {/* CDM-INSPIRED REPORTS HUB BREADCRUMB HEADER */}
+      {/* CLEAN EXECUTIVE REPORTS HUB HEADER (NO ALL-CAPS EYEBROW) */}
       <div className="cdm-panel px-6 py-4 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="text-[11px] font-extrabold tracking-wider uppercase text-[#1E469B] dark:text-[#7CB8F7]">
-            STATISTICS & COMPLIANCE / INCIDENT REPORTS & SUMMARY
-          </div>
-          <h1 className="text-xl font-extrabold text-[#0B1F4D] dark:text-white mt-0.5">
+          <h1 className="text-lg font-bold text-[#0F172A] dark:text-white">
             {isTl ? 'Mga Ulat at Estadistika ng Guidance Office' : 'Guidance Incident Reports & Statistical Analytics'}
           </h1>
-          <p className="text-xs text-[#4A608A] dark:text-[#94A8D0] mt-1">
+          <p className="text-xs text-[#475569] dark:text-[#94A8D0] mt-0.5">
             {isTl
               ? 'Buwanang tala ng mga kaso, rate ng pagdalo ng magulang, at mga ulat para sa pamunuan ng paaralan.'
               : 'Official incident summaries, monthly offense breakdowns, and parent conference analytics.'}
@@ -300,8 +297,8 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                 soundFX.playToggleSwitch(true);
                 setTab(id);
               }}
-              className={`px-4 py-2 rounded-lg text-xs sm:text-[13px] font-bold whitespace-nowrap transition-colors ${
-                tab === id ? 'bg-[#1E469B] text-white shadow-sm' : 'text-[#4A608A] dark:text-[#94A8D0] hover:text-[#0B1F4D] dark:hover:text-white'
+              className={`px-4 py-2 rounded-lg text-xs sm:text-[13px] font-semibold whitespace-nowrap transition-colors ${
+                tab === id ? 'bg-[#1E469B] text-white shadow-xs' : 'text-[#475569] dark:text-[#94A8D0] hover:text-[#0F172A] dark:hover:text-white'
               }`}
             >
               {label}

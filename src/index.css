@@ -31,10 +31,32 @@
 
   --cdm-bg-canvas: #F8FAFC;
   --cdm-bg-sidebar: #0B1F4D;
-  --cdm-border: #E2E8F0;
+  --cdm-border: #CBD5E1;
   --cdm-text-main: #0F172A;
-  --cdm-text-muted: #64748B;
+  --cdm-text-muted: #475569;
   --cdm-text-kicker: #1E469B;
+
+  /* P0 Impeccable / Anti-Slop Design Tokens */
+  --ink: #0F172A;
+  --muted: #475569;
+  --line: #CBD5E1;
+  --line-strong: #94A3B8;
+  --navy: #0B1F4D;
+  --accent: #1E469B;
+  --amber: #F59E0B;
+  --emerald: #10B981;
+  --danger: #E11D48;
+  --surface: #FFFFFF;
+  --surface-subtle: #F8FAFC;
+}
+
+.dark {
+  --ink: #F8FAFC;
+  --muted: #94A3B8;
+  --line: rgba(147, 197, 253, 0.22);
+  --line-strong: rgba(147, 197, 253, 0.35);
+  --surface: #0B1528;
+  --surface-subtle: #0F1D36;
 }
 
 @layer base {
@@ -688,31 +710,31 @@ body.low-tier-device [style*="animation: twinkleGlow"] {
 
 .saas-card {
   background-color: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  border: 1.5px solid #CBD5E1;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
   color: #0F172A;
 }
 
 .dark .saas-card {
   background-color: #0B1528;
-  border: 1px solid #1E2E4E;
-  border-radius: 0.75rem;
+  border: 1px solid rgba(147, 197, 253, 0.22);
+  border-radius: 12px;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25);
   color: #F8FAFC;
 }
 
 .saas-card-subtle {
   background-color: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  border-radius: 0.5rem;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
   color: #0F172A;
 }
 
 .dark .saas-card-subtle {
   background-color: #0F1D36;
-  border: 1px solid #1E2E4E;
-  border-radius: 0.5rem;
+  border: 1px solid rgba(147, 197, 253, 0.18);
+  border-radius: 8px;
   color: #F8FAFC;
 }
 
@@ -1340,15 +1362,57 @@ body.low-tier-device .cosmic-glass-card {
 
 .cdm-panel {
   background-color: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  border: 1.5px solid #CBD5E1;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
 }
 
 .dark .cdm-panel {
-  background-color: #0F1D36;
-  border: 1px solid #1E2E4E;
+  background-color: #0B1528;
+  border: 1px solid rgba(147, 197, 253, 0.22);
+  border-radius: 12px;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* ==========================================================================
+   P0 TYPE SCALE, FLAT SURFACES & ANTI-SLOP ENFORCEMENT
+   - Minimum 12px font size across all elements for executive readability
+   - Tamed weights: 400 body, 600 labels, 700 titles (eliminate excessive 900)
+   - Hardware-accelerated Emil Kowalski transitions (<300ms ease-out)
+   ========================================================================== */
+.text-\[9px\],
+.text-\[9\.5px\],
+.text-\[10px\],
+.text-\[10\.5px\],
+.text-\[11px\],
+.text-\[11\.5px\] {
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+}
+
+.font-black {
+  font-weight: 700 !important;
+}
+
+.font-extrabold {
+  font-weight: 600 !important;
+}
+
+h1.font-extrabold,
+h2.font-extrabold,
+h3.font-extrabold,
+h4.font-extrabold,
+.text-2xl.font-extrabold,
+.text-xl.font-extrabold,
+.text-lg.font-extrabold,
+.text-base.font-extrabold {
+  font-weight: 700 !important;
+}
+
+.transition-all {
+  transition-property: transform, opacity, background-color, border-color, color, box-shadow !important;
+  transition-duration: 180ms !important;
+  transition-timing-function: var(--ease-out) !important;
 }
 
 .cdm-badge-ready {

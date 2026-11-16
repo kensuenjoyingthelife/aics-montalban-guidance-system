@@ -33,7 +33,9 @@ export function applyTextSize(size: TextSize = getTextSize()) {
   root.dataset.textSize = size;
   if (inTauri()) {
     root.style.removeProperty('zoom');
-    root.style.setProperty('--app-zoom', String(z));
+    // WebView2 setZoom scales 100vh natively, so --app-zoom must be 1 to prevent h-screen from shrinking to 80vh!
+    root.style.setProperty('--app-zoom', '1');
+    root.style.setProperty('--aicy-inv-zoom', String(1 / z));
     import('@tauri-apps/api/webview')
       .then(({ getCurrentWebview }) => getCurrentWebview().setZoom(z))
       .catch(() => {

@@ -116,16 +116,13 @@ const AuditTrail: React.FC = () => {
 
   return (
     <main className="p-5 lg:p-6 max-w-[1440px] w-full mx-auto space-y-5 flex-1">
-      {/* CDM-INSPIRED AUDIT TRAIL BREADCRUMB HEADER */}
+      {/* CLEAN EXECUTIVE AUDIT TRAIL HEADER (NO ALL-CAPS EYEBROW) */}
       <div className="cdm-panel px-6 py-4 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="text-[11px] font-extrabold tracking-wider uppercase text-[#1E469B] dark:text-[#7CB8F7]">
-            SYSTEM SECURITY / FORENSIC AUDIT TRAIL & LOGS
-          </div>
-          <h1 className="text-xl font-extrabold text-[#0B1F4D] dark:text-white mt-0.5">
+          <h1 className="text-lg font-bold text-[#0F172A] dark:text-white">
             {isTl ? 'Kasaysayan ng mga Pagbabago at Tala ng Aksyon' : 'System Audit Trail & Forensic Activity Log'}
           </h1>
-          <p className="text-xs text-[#4A608A] dark:text-[#94A8D0] mt-1">
+          <p className="text-xs text-[#475569] dark:text-[#94A8D0] mt-0.5">
             {isTl
               ? 'Kusang itinatala ng database ang bawat pagbabago (dati at bagong value). Hindi ito maaaring i-edit o burahin (R.A. 10173).'
               : 'Permanent append-only record of all case modifications, status updates, and user access trails.'}
@@ -137,13 +134,13 @@ const AuditTrail: React.FC = () => {
             type="button"
             disabled={!rows || rows.length === 0}
             onClick={handleDownloadPdf}
-            className={`${btn} bg-[#1E469B] hover:bg-[#16377E] text-white active:scale-[0.97] transition-all inline-flex items-center gap-1.5 shadow-sm disabled:opacity-50`}
+            className={`${btn} bg-[#1E469B] hover:bg-[#16377E] text-white active:scale-[0.97] transition-[transform,background-color] inline-flex items-center gap-1.5 shadow-xs disabled:opacity-50`}
           >
             <Download className="w-3.5 h-3.5" />
             {isTl ? 'I-download ang PDF (Audit Log)' : 'Export Audit Trail (PDF)'}
           </button>
           <span className="cdm-badge-ready">
-            ✓ IMMUTABLE LOGS
+            {isTl ? 'Opisyal na tala' : 'Immutable log'}
           </span>
         </div>
       </div>

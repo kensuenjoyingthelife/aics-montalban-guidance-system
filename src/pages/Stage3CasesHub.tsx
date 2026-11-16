@@ -14,7 +14,7 @@ import { CaseFlowPanel, FlowAction, flowState } from '../components/cases/CaseFl
 import { StatementStation } from '../components/cases/StatementStation';
 import { PrintFormsWindow } from '../components/cases/PrintFormsWindow';
 import { EvidencePanel } from '../components/cases/EvidencePanel';
-import { FORM_TITLES, buildBatchCallSlipsHtml, printHtml } from '../services/printForms';
+import { FORM_TITLES, buildBatchCallSlipsHtml, buildFormHtml, printHtml, downloadFormDocument } from '../services/printForms';
 import { useConfirmChange } from '../components/ui/ConfirmChange';
 import { soundFX } from '../services/soundEngine';
 import { checkEmail } from '../services/validators';
@@ -2783,7 +2783,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') openCaseDetails(c);
                       }}
-                      className={`relative rounded-xl bg-white dark:bg-[#0F1A30] border border-[#D3DDEE] dark:border-[#253B66] pl-5 pr-4 py-3.5 cursor-pointer shadow-sm hover:shadow-md hover:border-[#9DB4DC] dark:hover:border-[#3A5794] transition-[box-shadow,border-color] duration-150 ${
+                      className={`relative rounded-xl bg-white dark:bg-[#0B1528] border border-[#CBD5E1] dark:border-[#223555] pl-5 pr-4 py-3.5 cursor-pointer hover:border-[#1E469B] dark:hover:border-[#3A5794] transition-[border-color,transform] duration-150 ${
                         isResolved && !menuOpen ? 'opacity-75' : ''
                       } ${menuOpen ? 'z-30' : ''}`}
                     >
@@ -2795,29 +2795,29 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       {/* line 1: who + how serious + how long */}
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex flex-wrap items-center gap-2 min-w-0">
-                          <span className="text-[15px] font-extrabold text-[#0B1F4D] dark:text-white">
+                          <span className="text-[15px] font-bold text-[#0F172A] dark:text-white">
                             {c.studentName}
                           </span>
-                          <span title={c.severity} className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${sev.cls}`}>
-                            {sev.word}
+                          <span title={c.severity} className="text-xs font-medium text-[#475569] dark:text-[#94A8D0]">
+                            · {sev.word}
                           </span>
                           {groupSize > 1 && (
                             <span
                               title={isTl ? 'Kasama sa iisang insidente' : 'Part of one group incident'}
-                              className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300"
+                              className="px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
                             >
-                               {isTl ? 'May kasama' : 'Group'} · {groupSize}
+                              {isTl ? 'May kasama' : 'Group'} · {groupSize}
                             </span>
                           )}
                         </div>
                         <span
                           title={prettyDate(c.incidentDate)}
-                          className={`shrink-0 text-[11px] font-bold whitespace-nowrap ${
+                          className={`shrink-0 text-xs font-semibold whitespace-nowrap ${
                             !isResolved && age.days >= 7
                               ? 'text-rose-600 dark:text-rose-400'
                               : !isResolved && age.days >= 3
                               ? 'text-amber-700 dark:text-amber-400'
-                              : 'text-[#687FA8] dark:text-[#89A7DF]'
+                              : 'text-[#64748B] dark:text-[#94A8D0]'
                           }`}
                         >
                           {age.text}
@@ -2825,12 +2825,12 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       </div>
 
                       {/* line 2: what + where */}
-                      <p className="mt-0.5 text-xs text-[#4A608A] dark:text-[#94A8D0] truncate">
-                        <span className="font-bold text-[#0B1F4D] dark:text-[#DCE8FF]">
+                      <p className="mt-0.5 text-xs text-[#475569] dark:text-[#94A8D0] truncate">
+                        <span className="font-semibold text-[#0F172A] dark:text-[#DCE8FF]">
                           {isTl ? c.offenseTitleTl : c.offenseTitleEn}
                         </span>{' '}
                         · {c.gradeSection} ·{' '}
-                        <span className="font-mono text-[10.5px]" title={isTl ? 'Case number' : 'Case number'}>
+                        <span className="font-mono text-xs" title={isTl ? 'Case number' : 'Case number'}>
                           {c.caseCode}
                         </span>
                         {c.createdAt ? <span data-added> · {addedLabel(c.createdAt, isTl)}</span> : null}
@@ -2846,7 +2846,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <span
-                            className={`px-2.5 py-0.5 rounded-[6px] text-[11px] font-bold shrink-0 ${
+                            className={`px-2.5 py-0.5 rounded-[6px] text-xs font-semibold shrink-0 ${
                               isResolved
                                 ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300'
                                 : 'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300'
@@ -2857,8 +2857,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               : statusWord(c.status)}
                           </span>
                           {step.hint && (
-                            <span className="text-xs font-semibold text-[#1E469B] dark:text-[#7CB8F7] truncate">
-                              → {step.hint}
+                            <span className="text-xs font-medium text-[#1E469B] dark:text-[#7CB8F7] truncate">
+                              · {step.hint}
                             </span>
                           )}
                         </div>
@@ -2868,18 +2868,18 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               type="button"
                               onClick={() => openComposerForCase(c)}
                               title={isTl ? 'Hindi kasama ang offense sa text' : 'The message never includes the offense'}
-                              className="px-3.5 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-extrabold whitespace-nowrap"
+                              className="btn-press px-3.5 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap"
                             >
-                               {isTl ? 'I-text ang magulang' : 'Text parent'}
+                              {isTl ? 'I-text ang magulang' : 'Text parent'}
                             </button>
                           )}
                           {step.action === 'schedule' && (
                             <button
                               type="button"
                               onClick={() => onScheduleConference?.(c.caseCode)}
-                              className="px-3.5 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-extrabold whitespace-nowrap"
+                              className="btn-press px-3.5 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap"
                             >
-                               {isTl ? 'Mag-schedule' : 'Schedule conference'}
+                              {isTl ? 'Mag-schedule' : 'Schedule conference'}
                             </button>
                           )}
                           {step.action === 'flow' && (
@@ -2887,18 +2887,18 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               type="button"
                               data-card-flow={c.caseCode}
                               onClick={() => openCaseDetails(c)}
-                              className="px-3.5 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-extrabold whitespace-nowrap"
+                              className="btn-press px-3.5 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap"
                             >
-                              {step.button} →
+                              {step.button}
                             </button>
                           )}
                           {step.action === 'done' && (
                             <button
                               type="button"
                               onClick={() => handleUpdateCaseStatus(c, 'Resolved')}
-                              className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold whitespace-nowrap"
+                              className="btn-press px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold whitespace-nowrap"
                             >
-                               {isTl ? 'Tapos na' : 'Mark as done'}
+                              {isTl ? 'Tapos na' : 'Mark as done'}
                             </button>
                           )}
                           <div className="relative">
@@ -2909,7 +2909,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               aria-label={isTl ? 'Iba pang gagawin' : 'More actions'}
                               title={isTl ? 'Iba pang gagawin' : 'More actions'}
                               onClick={() => setCaseMenuOpen(menuOpen ? null : c.caseCode)}
-                              className="w-8 h-8 rounded-lg saas-card-subtle hover:border-[#1E469B] text-sm font-extrabold text-[#4A608A] dark:text-[#94A8D0]"
+                              className="w-8 h-8 rounded-lg saas-card-subtle hover:border-[#1E469B] text-sm font-bold text-[#475569] dark:text-[#94A8D0]"
                             >
                               ⋯
                             </button>
@@ -2917,22 +2917,22 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               <>
                                 <div
                                   role="menu"
-                                  className="absolute right-0 top-9 z-40 w-52 py-1 rounded-xl bg-white dark:bg-[#14223E] border border-[#D3DDEE] dark:border-[#253B66] shadow-xl"
+                                  className="absolute right-0 top-9 z-40 w-52 py-1 rounded-xl bg-white dark:bg-[#14223E] border border-[#CBD5E1] dark:border-[#253B66] shadow-xl"
                                 >
                                   {[
                                     {
                                       show: true,
-                                      label: isTl ? ' Buksan ang buong kaso' : ' Open full case',
+                                      label: isTl ? 'Buksan ang buong kaso' : 'Open full case',
                                       run: () => openCaseDetails(c),
                                     },
                                     {
                                       show: step.action !== 'text',
-                                      label: isTl ? ' I-text ang magulang' : ' Text parent',
+                                      label: isTl ? 'I-text ang magulang' : 'Text parent',
                                       run: () => openComposerForCase(c),
                                     },
                                     {
                                       show: true,
-                                      label: isTl ? '️ Mag-print ng form…' : '️ Print a form…',
+                                      label: isTl ? 'Mag-print ng form…' : 'Print a form…',
                                       run: () => {
                                         soundFX.playKeyClick(2);
                                         setCallSlipCase(c);
@@ -2940,12 +2940,12 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                                     },
                                     {
                                       show: !isResolved && step.action !== 'done',
-                                      label: isTl ? ' Tapos na' : ' Mark as done',
+                                      label: isTl ? 'Tapos na' : 'Mark as done',
                                       run: () => handleUpdateCaseStatus(c, 'Resolved'),
                                     },
                                     {
                                       show: isResolved,
-                                      label: isTl ? '↺ Buksan ulit' : '↺ Reopen case',
+                                      label: isTl ? 'Buksan ulit' : 'Reopen case',
                                       run: () => handleUpdateCaseStatus(c, 'Open'),
                                     },
                                   ]
@@ -2959,7 +2959,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                                           setCaseMenuOpen(null);
                                           m.run();
                                         }}
-                                        className="w-full text-left px-3.5 py-2 text-xs font-bold text-[#0B1F4D] dark:text-white hover:bg-[#F4F7FC] dark:hover:bg-[#1B2C4F]"
+                                        className="w-full text-left px-3.5 py-2 text-xs font-semibold text-[#0F172A] dark:text-white hover:bg-[#F4F7FC] dark:hover:bg-[#1B2C4F]"
                                       >
                                         {m.label}
                                       </button>
@@ -3038,25 +3038,25 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
         )}
 
         {/* ==================================================================
-            SUB-TAB: CLOSED CASES ARCHIVE
+            SUB-TAB: CLOSED CASES ARCHIVE (EXECUTIVE SUMMARY & 1-CLICK PDF/PRINT)
             ================================================================== */}
         {subTab === 'closed-cases' && (
           <section className="rounded-2xl saas-card overflow-hidden">
             <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
-                  {isTl ? 'Mga Saradong Kaso' : 'Closed Cases'}
+                <h2 className="text-base font-bold text-[#0F172A] dark:text-white">
+                  {isTl ? 'Mga saradong kaso at buod ng due process' : 'Closed cases & due process archive'}
                 </h2>
-                <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                <p className="text-xs text-[#475569] dark:text-[#94A8D0]">
                   {isTl
-                    ? 'Opisyal na talaan ng mga naresolbang kaso at tapos na sanctions sa AICS.'
-                    : 'Official record of resolved and closed student disciplinary cases.'}
+                    ? 'Opisyal na rekord ng naresolbang kaso, bilang ng patawag sa magulang, hatol, at patunay ng counseling.'
+                    : 'Official executive record of resolved cases, parent summons count, ruling, sanction, and counseling notes.'}
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300">
-                  {summaryStats.closedCases} {isTl ? 'Naresolba' : 'Resolved'}
+                <span className="px-3 py-1 rounded-md text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300">
+                  {summaryStats.closedCases} {isTl ? 'naresolba' : 'resolved'}
                 </span>
               </div>
             </div>
@@ -3067,63 +3067,142 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 if (closed.length === 0) {
                   return (
                     <div className="py-12 text-center space-y-2">
-                      <p className="text-sm font-bold text-[#4A608A] dark:text-[#94A8D0]">
+                      <p className="text-sm font-bold text-[#475569] dark:text-[#94A8D0]">
                         {isTl ? 'Walang saradong kaso sa kasalukuyan.' : 'No closed cases found.'}
                       </p>
-                      <p className="text-xs text-[#687FA8] dark:text-[#89A7DF]">
+                      <p className="text-xs text-[#64748B] dark:text-[#89A7DF]">
                         {isTl ? 'Kapag minarkahang Resolved ang kaso, lalabas ito rito.' : 'Cases marked as Resolved will be stored here.'}
                       </p>
                     </div>
                   );
                 }
 
-                return closed.map((c) => (
-                  <div
-                    key={c.caseCode}
-                    onClick={() => {
-                      soundFX.playStepUnlock();
-                      setOpenCaseCode(c.caseCode);
-                    }}
-                    className="rounded-xl bg-white dark:bg-[#0F1A30] border border-[#D3DDEE] dark:border-[#253B66] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer hover:border-[#1E469B] hover:shadow-md transition-all active:scale-[0.99]"
-                  >
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <StudentGenderAvatar fullName={c.studentName} size="md" />
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
-                            {c.studentName}
+                return closed.map((c) => {
+                  const stu = students.find((s) => s.studentNumber === c.studentNumber);
+                  const summonsTotal = c.summonsCount || (c.conferenceScheduledAt ? 1 : 0);
+
+                  return (
+                    <div
+                      key={c.caseCode}
+                      onClick={() => {
+                        soundFX.playStepUnlock();
+                        setOpenCaseCode(c.caseCode);
+                      }}
+                      className="rounded-xl bg-white dark:bg-[#0B1528] border border-[#CBD5E1] dark:border-[#223555] border-l-[3px] border-l-emerald-500 p-4 space-y-3 cursor-pointer hover:border-[#1E469B] transition-[border-color] duration-150"
+                    >
+                      {/* Top row: Student, Case Code, Actions */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-[15px] font-bold text-[#0F172A] dark:text-white">
+                              {c.studentName}
+                            </span>
+                            <span className="font-mono text-xs font-semibold text-[#1E469B] dark:text-[#7CB8F7]">
+                              {c.caseCode}
+                            </span>
+                            <span className="text-xs text-[#475569] dark:text-[#94A8D0]">
+                              · {c.gradeSection}
+                            </span>
+                            <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300">
+                              {isTl ? 'Naresolba' : 'Resolved'}
+                            </span>
+                          </div>
+                          <p className="text-xs font-medium text-[#475569] dark:text-[#94A8D0] mt-0.5">
+                            <span className="font-semibold text-[#0F172A] dark:text-white">
+                              {isTl ? c.offenseTitleTl : c.offenseTitleEn}
+                            </span>{' '}
+                            · {c.severity} · {isTl ? 'Petsa ng insidente:' : 'Incident:'} {prettyDate(c.incidentDate)}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const html = buildFormHtml(
+                                { kind: 'caseResolutionSummary', c, stu },
+                                window.location.origin
+                              );
+                              downloadFormDocument(html, `${c.caseCode}_Executive_Case_Resolution_Summary`);
+                              onTriggerToast(
+                                isTl
+                                  ? `Na-download ang Executive Summary ng ${c.caseCode}.`
+                                  : `Downloaded Executive Resolution Summary for ${c.caseCode}.`
+                              );
+                            }}
+                            className="btn-press px-3 py-1.5 rounded-lg saas-card-subtle text-xs font-semibold text-[#0F172A] dark:text-white hover:border-[#1E469B]"
+                          >
+                            {isTl ? 'I-download ang buod (PDF/HTML)' : 'Download summary'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const html = buildFormHtml(
+                                { kind: 'caseResolutionSummary', c, stu },
+                                window.location.origin
+                              );
+                              if (printHtml(html)) {
+                                onTriggerToast(
+                                  isTl
+                                    ? 'Binuksan ang print window (piliin ang Save as PDF o Printer).'
+                                    : 'Print window opened (choose Save as PDF or your printer).'
+                                );
+                              }
+                            }}
+                            className="btn-press px-3.5 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold"
+                          >
+                            {isTl ? 'I-print / Save as PDF' : 'Print / Save PDF'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Structured Executive Summary Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-2 border-t border-[#F1F5F9] dark:border-[#1E2E4E] text-xs">
+                        <div className="p-2.5 rounded-lg bg-[#F8FAFC] dark:bg-[#0F1D36] border border-[#E2E8F0] dark:border-[#1E2E4E]">
+                          <span className="block font-semibold text-[#64748B] dark:text-[#94A8D0]">
+                            {isTl ? 'Patawag at pagharap ng magulang' : 'Parent summons & hearing'}
                           </span>
-                          <span className="font-mono text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7]">
-                            {c.caseCode}
-                          </span>
-                          <span className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
-                            · {c.gradeSection}
+                          <span className="font-semibold text-[#0F172A] dark:text-white block mt-0.5">
+                            {summonsTotal > 0
+                              ? isTl
+                                ? `${summonsTotal}x patawag · ${c.parentConferenceStatus === 'Attended' ? 'Dumalo' : 'Naitala'}`
+                                : `${summonsTotal} summons · ${c.parentConferenceStatus === 'Attended' ? 'Attended' : 'Documented'}`
+                              : isTl
+                              ? '1st minor (hindi kailangan)'
+                              : '1st minor (not required)'}
                           </span>
                         </div>
-                        <p className="text-xs font-semibold text-[#4A608A] dark:text-[#94A8D0] truncate mt-0.5">
-                          {isTl ? c.offenseTitleTl : c.offenseTitleEn} ({c.severity})
-                        </p>
+
+                        <div className="p-2.5 rounded-lg bg-[#F8FAFC] dark:bg-[#0F1D36] border border-[#E2E8F0] dark:border-[#1E2E4E]">
+                          <span className="block font-semibold text-[#64748B] dark:text-[#94A8D0]">
+                            {isTl ? 'Opisyal na hatol' : 'Administrative ruling'}
+                          </span>
+                          <span className="font-semibold text-[#0F172A] dark:text-white block mt-0.5 truncate" title={c.decision}>
+                            {c.decision || (isTl ? 'Naresolba ayon sa Handbook' : 'Resolved per Student Handbook')}
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 rounded-lg bg-[#F8FAFC] dark:bg-[#0F1D36] border border-[#E2E8F0] dark:border-[#1E2E4E]">
+                          <span className="block font-semibold text-[#64748B] dark:text-[#94A8D0]">
+                            {isTl ? 'Sanction at katayuan' : 'Sanction & compliance'}
+                          </span>
+                          <span className="font-semibold text-emerald-700 dark:text-emerald-300 block mt-0.5 truncate" title={c.sanction}>
+                            {c.sanction ? `${c.sanction} (${isTl ? 'Tapos na' : 'Completed'})` : (isTl ? 'Paalala at counseling (Tapos na)' : 'Warning & counseling (Completed)')}
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 rounded-lg bg-[#F8FAFC] dark:bg-[#0F1D36] border border-[#E2E8F0] dark:border-[#1E2E4E]">
+                          <span className="block font-semibold text-[#64748B] dark:text-[#94A8D0]">
+                            {isTl ? 'Tala ng counseling' : 'Counseling notes'}
+                          </span>
+                          <span className="font-medium text-[#0F172A] dark:text-white block mt-0.5 truncate" title={c.counselingNotes}>
+                            {c.counselingNotes || (isTl ? 'May restorative counseling na isinagawa' : 'Restorative counseling completed')}
+                          </span>
+                        </div>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span className="px-2.5 py-1 rounded-md text-[11px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300">
-                        {isTl ? 'Naresolba / Tapos na' : 'Resolved & Closed'}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          soundFX.playStepUnlock();
-                          setOpenCaseCode(c.caseCode);
-                        }}
-                        className="px-3 py-1.5 rounded-lg saas-card-subtle text-xs font-extrabold text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#1E469B] hover:text-white transition-colors"
-                      >
-                        {isTl ? 'Tingnan ang Rekord' : 'View Record'}
-                      </button>
-                    </div>
-                  </div>
-                ));
+                  );
+                });
               })()}
             </div>
           </section>
@@ -4005,9 +4084,9 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   disabled={caseEditing}
                   title={isTl ? 'Isara' : 'Close'}
                   aria-label={isTl ? 'Isara' : 'Close'}
-                  className="w-8 h-8 rounded-lg saas-card-subtle text-sm font-bold text-[#4A608A] disabled:opacity-40 shrink-0"
+                  className="w-8 h-8 rounded-lg saas-card-subtle flex items-center justify-center text-sm font-bold text-[#475569] hover:text-[#0F172A] dark:text-[#94A8D0] dark:hover:text-white disabled:opacity-40 shrink-0"
                 >
-                  
+                  ✕
                 </button>
               </div>
 
@@ -4045,35 +4124,35 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   {/* Incident Information Card */}
                   <div className="rounded-xl border border-[#CBD5E1] dark:border-[#1E2E4E] bg-white dark:bg-[#0C1527] overflow-hidden shadow-xs">
                     <div className="px-4 py-2.5 bg-[#F8FAFC] dark:bg-[#0E1A33] border-b border-[#E2E8F0] dark:border-[#1E2E4E] flex items-center justify-between">
-                      <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
-                        {isTl ? 'Detalye ng Paglabag (Incident Record)' : 'Incident & Offense Record'}
+                      <span className="text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7]">
+                        {isTl ? 'Detalye ng insidente' : 'Incident record'}
                       </span>
-                      <span className="text-[10.5px] font-mono font-bold text-[#64748B] dark:text-[#94A3B8]">
+                      <span className="text-xs font-mono font-semibold text-[#64748B] dark:text-[#94A3B8]">
                         {openCase.caseCode}
                       </span>
                     </div>
 
                     <div className="p-4 space-y-3 text-xs">
                       <div>
-                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8]">
-                          {isTl ? 'Opisyal na Paglabag' : 'Violation / Offense Title'}
+                        <p className="text-xs font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                          {isTl ? 'Paglabag' : 'Offense title'}
                         </p>
-                        <p className="text-[14px] font-extrabold text-[#0F172A] dark:text-white mt-0.5">
+                        <p className="text-sm font-bold text-[#0F172A] dark:text-white mt-0.5">
                           {isTl ? openCase.offenseTitleTl : openCase.offenseTitleEn}
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3 pt-1 border-t border-[#F1F5F9] dark:border-[#1E2E4E]">
+                      <div className="grid grid-cols-2 gap-3 pt-2 border-t border-[#F1F5F9] dark:border-[#1E2E4E]">
                         <div>
-                          <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] mb-1">
-                            {isTl ? 'Petsa ng Insidente' : 'Incident Date'}
+                          <p className="text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1">
+                            {isTl ? 'Petsa ng insidente' : 'Incident date'}
                           </p>
                           {caseEditing ? (
                             <input
                               type="date"
                               value={editDate}
                               onChange={(e) => setEditDate(e.target.value)}
-                              className="w-full px-3 py-1.5 rounded-lg border border-[#CBD5E1] font-bold text-[#0F172A] dark:text-white"
+                              className="w-full px-3 py-1.5 rounded-lg border border-[#CBD5E1] font-semibold text-[#0F172A] dark:text-white"
                             />
                           ) : (
                             <p className="text-xs font-bold text-[#0F172A] dark:text-white">{prettyDate(openCase.incidentDate)}</p>
@@ -4081,15 +4160,15 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                         </div>
 
                         <div>
-                          <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] mb-1">
-                            {isTl ? 'Nag-ulat (Complainant / Reporter)' : 'Reported By'}
+                          <p className="text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1">
+                            {isTl ? 'Nag-ulat' : 'Reported by'}
                           </p>
                           {caseEditing ? (
                             <input
                               type="text"
                               value={editReportedBy}
                               onChange={(e) => setEditReportedBy(e.target.value)}
-                              className="w-full px-3 py-1.5 rounded-lg border border-[#CBD5E1] font-bold text-[#0F172A] dark:text-white"
+                              className="w-full px-3 py-1.5 rounded-lg border border-[#CBD5E1] font-semibold text-[#0F172A] dark:text-white"
                             />
                           ) : (
                             <p className="text-xs font-bold text-[#0F172A] dark:text-white">{openCase.reportedBy}</p>
@@ -4097,9 +4176,9 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                         </div>
                       </div>
 
-                      <div className="pt-1 border-t border-[#F1F5F9] dark:border-[#1E2E4E]">
-                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] mb-1">
-                          {isTl ? 'Salaysay ng Insidente (Incident Narrative / Notes)' : 'Incident Narrative / Notes'}
+                      <div className="pt-2 border-t border-[#F1F5F9] dark:border-[#1E2E4E]">
+                        <p className="text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1">
+                          {isTl ? 'Salaysay ng insidente' : 'Incident narrative'}
                         </p>
                         {caseEditing ? (
                           <textarea
@@ -4109,7 +4188,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                             className="w-full p-2.5 rounded-lg border border-[#CBD5E1] font-medium text-xs text-[#0F172A] dark:text-white"
                           />
                         ) : (
-                          <div className="p-3 rounded-lg bg-[#F8FAFC] dark:bg-[#0A1224] border border-[#E2E8F0] dark:border-[#1E2E4E] text-[12.5px] leading-relaxed text-[#0F172A] dark:text-white whitespace-pre-line font-medium">
+                          <div className="p-3 rounded-lg bg-[#F8FAFC] dark:bg-[#0A1224] border border-[#E2E8F0] dark:border-[#1E2E4E] text-xs leading-relaxed text-[#0F172A] dark:text-white whitespace-pre-line font-medium">
                             {hideIncidentMarker(openCase.notes)}
                           </div>
                         )}
@@ -4117,11 +4196,11 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
 
                       {openCaseStudent && (
                         <div className="pt-2 border-t border-[#F1F5F9] dark:border-[#1E2E4E] flex items-center justify-between text-xs">
-                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8]">
-                            Parent Contact:
+                          <span className="text-xs font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                            {isTl ? 'Magulang:' : 'Parent contact:'}
                           </span>
                           <span className="font-bold text-[#0F172A] dark:text-white">
-                            {openCaseStudent.parentName} · <span className="font-mono text-[#1E469B] dark:text-[#7CB8F7]">{openCaseStudent.parentPhone || 'No Phone'}</span>
+                            {openCaseStudent.parentName} · <span className="font-mono text-[#1E469B] dark:text-[#7CB8F7]">{openCaseStudent.parentPhone || 'No phone'}</span>
                           </span>
                         </div>
                       )}
@@ -4256,12 +4335,13 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       </AnimatePresence>
       ,document.body)}
 
-      {/* Print forms: call slip, conference form, behavioral contract, kasunduan, suspension letter */}
+      {/* Print forms: call slip, conference form, behavioral contract, kasunduan, suspension letter, resolution summary */}
       {callSlipCase && (
         <PrintFormsWindow
           c={callSlipCase}
           stu={students.find((x) => x.studentNumber === callSlipCase.studentNumber)}
           isTl={isTl}
+          initial={callSlipCase.status === 'Resolved' ? 'caseResolutionSummary' : 'callSlip'}
           conferenceWhen={nextConfByCase.has(callSlipCase.caseCode) ? confText(nextConfByCase.get(callSlipCase.caseCode)!) : ''}
           onClose={() => setCallSlipCase(null)}
           onPrinted={(kind) => {
@@ -4318,9 +4398,9 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   onClick={() => setSelectedStudentProfile(null)}
                   title={isTl ? 'Isara' : 'Close'}
                   aria-label={isTl ? 'Isara' : 'Close'}
-                  className="w-8 h-8 rounded-lg saas-card-subtle text-sm font-bold text-[#4A608A]"
+                  className="w-8 h-8 rounded-lg saas-card-subtle flex items-center justify-center text-sm font-bold text-[#475569] hover:text-[#0F172A] dark:text-[#94A8D0] dark:hover:text-white"
                 >
-                  
+                  ✕
                 </button>
               </div>
 

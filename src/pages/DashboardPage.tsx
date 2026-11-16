@@ -1469,10 +1469,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
         {idleWarnSecs !== null && (
           <div role="alert" className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[90] !m-0 px-5 py-3 rounded-2xl bg-[#0B1F4D] text-white shadow-2xl flex items-center gap-4" data-idle-warning>
-            <p className="text-sm font-bold">
-              🔒 {isTl ? `Magla-lock ang app sa loob ng ${idleWarnSecs} segundo dahil walang galaw.` : `The app will lock in ${idleWarnSecs} seconds because nothing was done.`}
+            <p className="text-sm font-semibold">
+              {isTl ? `Magla-lock ang app sa loob ng ${idleWarnSecs} segundo dahil walang galaw.` : `The app will lock in ${idleWarnSecs} seconds because nothing was done.`}
             </p>
-            <button type="button" onClick={() => setIdleWarnSecs(null)} className="px-4 py-2 rounded-xl bg-white text-[#0B1F4D] text-xs font-extrabold whitespace-nowrap">
+            <button type="button" onClick={() => setIdleWarnSecs(null)} className="btn-press px-4 py-2 rounded-xl bg-white text-[#0B1F4D] text-xs font-bold whitespace-nowrap">
               {isTl ? 'Manatiling naka-sign in' : 'Stay signed in'}
             </button>
           </div>
@@ -1679,26 +1679,26 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 ================================================================ */}
             {/* Needs attention first (Golden Rule 4) — every alert opens the list behind it (Rule 5) */}
             {(alerts.overdue.length > 0 || alerts.waiting.length > 0) && (
-              <section aria-label={isTl ? 'Kailangang aksyunan' : 'Needs attention'} className="shrink-0 rounded-2xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/20 px-4 py-3 space-y-2" data-alerts>
-                <p className="text-[13px] font-extrabold text-rose-900 dark:text-rose-200">⚠ {isTl ? 'Kailangang aksyunan' : 'Needs attention'}</p>
+              <section aria-label={isTl ? 'Kailangang aksyunan' : 'Needs attention'} className="shrink-0 rounded-xl border border-rose-300 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/20 px-4 py-3 space-y-2" data-alerts>
+                <p className="text-xs font-bold text-rose-900 dark:text-rose-200">{isTl ? 'Kailangang aksyunan' : 'Needs attention'}</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {alerts.overdue.length > 0 && (
-                    <button type="button" data-alert="overdue" onClick={() => openCasesTab('case-board', 'overdue')} className="btn-press text-left rounded-xl bg-white dark:bg-[#0F1A30] border border-rose-200 dark:border-rose-900/60 px-3 py-2 hover:border-rose-400">
-                      <span className="block text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                    <button type="button" data-alert="overdue" onClick={() => openCasesTab('case-board', 'overdue')} className="btn-press text-left rounded-lg bg-white dark:bg-[#0F1A30] border border-rose-200 dark:border-rose-900/60 px-3 py-2 hover:border-rose-400">
+                      <span className="block text-sm font-bold text-[#0F172A] dark:text-white">
                         {isTl ? `${alerts.overdue.length} overdue na kaso` : `${alerts.overdue.length} overdue case${alerts.overdue.length === 1 ? '' : 's'}`}
                       </span>
-                      <span className="block text-xs text-[#4A608A] dark:text-[#94A8D0]">
-                        {isTl ? `Bukas nang higit ${appConfig.caseRules.overdueDays} araw · Tingnan →` : `Open more than ${appConfig.caseRules.overdueDays} day${appConfig.caseRules.overdueDays === 1 ? '' : 's'} · Show →`}
+                      <span className="block text-xs text-[#475569] dark:text-[#94A8D0]">
+                        {isTl ? `Bukas nang higit ${appConfig.caseRules.overdueDays} araw · Tingnan` : `Open more than ${appConfig.caseRules.overdueDays} day${appConfig.caseRules.overdueDays === 1 ? '' : 's'} · Show`}
                       </span>
                     </button>
                   )}
                   {alerts.waiting.length > 0 && (
-                    <button type="button" data-alert="waiting" onClick={() => openCasesTab('case-board', 'waiting')} className="btn-press text-left rounded-xl bg-white dark:bg-[#0F1A30] border border-rose-200 dark:border-rose-900/60 px-3 py-2 hover:border-rose-400">
-                      <span className="block text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                    <button type="button" data-alert="waiting" onClick={() => openCasesTab('case-board', 'waiting')} className="btn-press text-left rounded-lg bg-white dark:bg-[#0F1A30] border border-rose-200 dark:border-rose-900/60 px-3 py-2 hover:border-rose-400">
+                      <span className="block text-sm font-bold text-[#0F172A] dark:text-white">
                         {isTl ? `${alerts.waiting.length} sanction na naghihintay` : `${alerts.waiting.length} sanction${alerts.waiting.length === 1 ? '' : 's'} waiting`}
                       </span>
-                      <span className="block text-xs text-[#4A608A] dark:text-[#94A8D0]">
-                        {isTl ? `Hindi pa alam ng magulang nang higit ${appConfig.caseRules.pendingSanctionDays} araw · Tingnan →` : `Parent not notified for over ${appConfig.caseRules.pendingSanctionDays} day${appConfig.caseRules.pendingSanctionDays === 1 ? '' : 's'} · Show →`}
+                      <span className="block text-xs text-[#475569] dark:text-[#94A8D0]">
+                        {isTl ? `Hindi pa alam ng magulang nang higit ${appConfig.caseRules.pendingSanctionDays} araw · Tingnan` : `Parent not notified for over ${appConfig.caseRules.pendingSanctionDays} day${appConfig.caseRules.pendingSanctionDays === 1 ? '' : 's'} · Show`}
                       </span>
                     </button>
                   )}
@@ -1770,7 +1770,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             )}
 
             {/* ================================================================
-                2. 4 COLOR-GRADIENT SaaS KPI SUMMARY CARDS (LOCKED HEIGHT: h-[106px])
+                2. 4 FLAT EXECUTIVE KPI SUMMARY CARDS (ZERO SMALL-CARD ICONS)
                 ================================================================ */}
             <section className="shrink-0 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
               {/* KPI 1: Active Cases */}
@@ -1778,21 +1778,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 type="button"
                 onClick={() => openCasesTab('case-board')}
                 title={isTl ? 'Buksan ang listahan ng bukas na kaso' : 'Open the list of open cases'}
-                className="group h-[84px] px-4 py-3 rounded-2xl text-left transition-all duration-150 active:scale-[0.98] border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs flex flex-col justify-between hover:border-[#1E469B]/60"
+                className="group h-[84px] px-4 py-3 rounded-xl text-left transition-[transform,border-color] duration-150 active:scale-[0.98] saas-card border-l-[3px] border-l-[#1E469B] flex flex-col justify-between hover:border-[#1E469B]"
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
-                    {isTl ? 'Mga Aktibong Kaso' : 'Open Guidance Cases'}
-                  </span>
-                  <span className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-[#1E3158] text-[#1E469B] dark:text-[#7CB8F7] flex items-center justify-center">
-                    <DuotoneIcon name="folderOpen" size={16} />
-                  </span>
-                </div>
+                <span className="text-xs font-semibold text-[#475569] dark:text-[#94A8D0]">
+                  {isTl ? 'Mga aktibong kaso' : 'Open guidance cases'}
+                </span>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-2xl font-black text-[#0B1F4D] dark:text-white font-mono">
+                  <span className="text-2xl font-bold text-[#0F172A] dark:text-white font-mono">
                     {cases.filter((c) => c.status !== 'Resolved').length}
                   </span>
-                  <span className="text-[11px] font-bold text-[#64748B] dark:text-[#94A8D0]">
+                  <span className="text-xs font-medium text-[#64748B] dark:text-[#94A8D0]">
                     {cases.length} {isTl ? 'kabuuang kaso' : 'total'}
                   </span>
                 </div>
@@ -1803,21 +1798,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 type="button"
                 onClick={() => (() => { soundFX.playToggleSwitch(true); setActiveTab('analytics'); })()}
                 title={isTl ? 'Tingnan ang statistics' : 'See the statistics'}
-                className="group h-[84px] px-4 py-3 rounded-2xl text-left transition-all duration-150 active:scale-[0.98] border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs flex flex-col justify-between hover:border-[#1E469B]/60"
+                className="group h-[84px] px-4 py-3 rounded-xl text-left transition-[transform,border-color] duration-150 active:scale-[0.98] saas-card border-l-[3px] border-l-[#2557BE] flex flex-col justify-between hover:border-[#1E469B]"
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
-                    {isTl ? 'Kaso Ngayong Buwan' : 'Offenses This Month'}
-                  </span>
-                  <span className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-[#1E3158] text-[#1E469B] dark:text-[#7CB8F7] flex items-center justify-center">
-                    <DuotoneIcon name="chartBar" size={16} />
-                  </span>
-                </div>
+                <span className="text-xs font-semibold text-[#475569] dark:text-[#94A8D0]">
+                  {isTl ? 'Kaso ngayong buwan' : 'Offenses this month'}
+                </span>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-2xl font-black text-[#0B1F4D] dark:text-white font-mono">
+                  <span className="text-2xl font-bold text-[#0F172A] dark:text-white font-mono">
                     {offensesThisMonth}
                   </span>
-                  <span className="text-[11px] font-bold text-[#64748B] dark:text-[#94A8D0]">
+                  <span className="text-xs font-medium text-[#64748B] dark:text-[#94A8D0]">
                     {isTl ? 'ngayong buwan' : 'this month'}
                   </span>
                 </div>
@@ -1828,21 +1818,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 type="button"
                 onClick={() => goToQueue('dash-conferences')}
                 title={isTl ? 'Tingnan ang mga conference ngayong araw' : 'See today’s conferences'}
-                className="group h-[84px] px-4 py-3 rounded-2xl text-left transition-all duration-150 active:scale-[0.98] border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs flex flex-col justify-between hover:border-[#1E469B]/60"
+                className="group h-[84px] px-4 py-3 rounded-xl text-left transition-[transform,border-color] duration-150 active:scale-[0.98] saas-card border-l-[3px] border-l-emerald-500 flex flex-col justify-between hover:border-[#1E469B]"
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
-                    {isTl ? 'Pagdalo ng Magulang' : 'Parent Attendance'}
-                  </span>
-                  <span className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-[#1E3158] text-[#1E469B] dark:text-[#7CB8F7] flex items-center justify-center">
-                    <DuotoneIcon name="calendarCheck" size={16} />
-                  </span>
-                </div>
+                <span className="text-xs font-semibold text-[#475569] dark:text-[#94A8D0]">
+                  {isTl ? 'Pagdalo ng magulang' : 'Parent attendance'}
+                </span>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-2xl font-black text-[#0B1F4D] dark:text-white font-mono">
+                  <span className="text-2xl font-bold text-[#0F172A] dark:text-white font-mono">
                     {attendanceStats.ratePercent === null ? '—' : `${attendanceStats.ratePercent}%`}
                   </span>
-                  <span className="text-[11px] font-bold text-[#64748B] dark:text-[#94A8D0]">
+                  <span className="text-xs font-medium text-[#64748B] dark:text-[#94A8D0]">
                     {attendanceStats.attended}/{attendanceStats.total} {isTl ? 'dumalo' : 'attended'}
                   </span>
                 </div>
@@ -1853,21 +1838,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 type="button"
                 onClick={() => goToQueue('dash-followups')}
                 title={isTl ? 'Tingnan ang mga follow-up' : 'See the follow-ups'}
-                className="group h-[84px] px-4 py-3 rounded-2xl text-left transition-all duration-150 active:scale-[0.98] border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs flex flex-col justify-between hover:border-[#1E469B]/60"
+                className="group h-[84px] px-4 py-3 rounded-xl text-left transition-[transform,border-color] duration-150 active:scale-[0.98] saas-card border-l-[3px] border-l-amber-500 flex flex-col justify-between hover:border-[#1E469B]"
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
-                    {isTl ? 'Follow-Up Ngayong Araw' : 'Follow-Ups Due'}
-                  </span>
-                  <span className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-[#1E3158] text-[#1E469B] dark:text-[#7CB8F7] flex items-center justify-center">
-                    <DuotoneIcon name="phoneCall" size={16} />
-                  </span>
-                </div>
+                <span className="text-xs font-semibold text-[#475569] dark:text-[#94A8D0]">
+                  {isTl ? 'Follow-up ngayong araw' : 'Follow-ups due'}
+                </span>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-2xl font-black text-[#0B1F4D] dark:text-white font-mono">
+                  <span className="text-2xl font-bold text-[#0F172A] dark:text-white font-mono">
                     {activeFollowUpCount}
                   </span>
-                  <span className="text-[11px] font-bold text-[#64748B] dark:text-[#94A8D0]">
+                  <span className="text-xs font-medium text-[#64748B] dark:text-[#94A8D0]">
                     {isTl ? 'kailangang tawagan' : 'pending outreach'}
                   </span>
                 </div>
@@ -1980,92 +1960,49 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                       return (
                         <div
                           key={apt.id}
-                          className={`px-5 py-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-200 ${
+                          className={`px-5 py-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-[transform,border-color] duration-150 ${
                             isAttended
-                              ? 'bg-gradient-to-r from-[#059669] via-[#10B981] to-[#047857] text-white border-emerald-400/50 shadow-md'
+                              ? 'border-l-[3px] border-l-emerald-500 border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/40 dark:bg-emerald-950/20'
                               : isNoShow
-                              ? 'bg-rose-50/85 dark:bg-rose-950/35 border-rose-300 dark:border-rose-800/70'
+                              ? 'border-l-[3px] border-l-rose-500 bg-rose-50/50 dark:bg-rose-950/25 border-rose-200 dark:border-rose-800/70'
                               : apt.severityTone === 'rose'
-                              ? 'border-l-4 border-l-rose-500 border-rose-200 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/25 hover:border-rose-400'
+                              ? 'border-l-[3px] border-l-rose-500 border-[#CBD5E1] dark:border-[#1E3158] bg-white dark:bg-[#0B1528] hover:border-[#1E469B]'
                               : apt.severityTone === 'amber'
-                              ? 'border-l-4 border-l-amber-500 border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/20 hover:border-amber-400'
-                              : 'border-l-4 border-l-[#2557BE] border-[#CFD9F2] dark:border-[#243B6B] bg-[#F1F5FD] dark:bg-[#12203F] hover:border-[#2557BE]'
+                              ? 'border-l-[3px] border-l-amber-500 border-[#CBD5E1] dark:border-[#1E3158] bg-white dark:bg-[#0B1528] hover:border-[#1E469B]'
+                              : 'border-l-[3px] border-l-[#1E469B] border-[#CBD5E1] dark:border-[#1E3158] bg-white dark:bg-[#0B1528] hover:border-[#1E469B]'
                           }`}
                         >
                           <div className="flex items-start gap-3.5 min-w-0">
                             <div
-                              className={`w-10 h-10 rounded-full font-extrabold text-xs flex items-center justify-center shrink-0 mt-0.5 ${
+                              className={`w-9 h-9 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 ${
                                 isAttended
-                                  ? 'bg-white text-emerald-700 shadow-xs'
+                                  ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200'
                                   : isNoShow
-                                  ? 'bg-rose-600 text-white'
-                                  : 'bg-[#E4ECFC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7]'
+                                  ? 'bg-rose-100 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200'
+                                  : 'bg-[#EEF3FC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7]'
                               }`}
                             >
-                              {isAttended ? '✓' : apt.initials}
+                              {apt.initials}
                             </div>
 
                             <div className="min-w-0 space-y-1">
                               <div className="flex flex-wrap items-center gap-2">
-                                <span
-                                  className={`text-sm font-extrabold ${
-                                    isAttended
-                                      ? 'text-white'
-                                      : 'text-[#0B1F4D] dark:text-white'
-                                  }`}
-                                >
+                                <span className="text-sm font-bold text-[#0F172A] dark:text-white">
                                   {apt.studentName}
                                 </span>
-                                <span
-                                  className={`text-xs font-semibold ${
-                                    isAttended
-                                      ? 'text-white/90'
-                                      : 'text-[#4A608A] dark:text-[#94A8D0]'
-                                  }`}
-                                >
+                                <span className="text-xs font-medium text-[#475569] dark:text-[#94A8D0]">
                                   · {apt.gradeSection}
                                 </span>
-                                <span
-                                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold ${
-                                    isAttended
-                                      ? 'bg-white/20 text-white border border-white/25'
-                                      : apt.severityTone === 'rose'
-                                      ? 'bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-200 border border-rose-300 dark:border-rose-800'
-                                      : apt.severityTone === 'amber'
-                                      ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800'
-                                      : 'bg-[#E4ECFC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#AFCBFA] border border-[#CFD9F2] dark:border-[#2A4580]'
-                                  }`}
-                                >
-                                  <span
-                                    className={`w-1.5 h-1.5 rounded-full ${
-                                      isAttended
-                                        ? 'bg-white'
-                                        : apt.severityTone === 'rose'
-                                        ? 'bg-rose-500'
-                                        : apt.severityTone === 'amber'
-                                        ? 'bg-amber-500'
-                                        : 'bg-[#1E469B]'
-                                    }`}
-                                  />
-                                  {isTl ? apt.severityTagTl : apt.severityTagEn}
-                                </span>
+                                {isAttended && (
+                                  <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                    {isTl ? 'Dumalo' : 'Attended'}
+                                  </span>
+                                )}
                               </div>
 
-                              <p
-                                className={`text-xs ${
-                                  isAttended
-                                    ? 'text-white/90'
-                                    : 'text-[#4A608A] dark:text-[#94A8D0]'
-                                }`}
-                              >
+                              <p className="text-xs text-[#475569] dark:text-[#94A8D0]">
                                 {apt.parentName} ({apt.relationship}) ·{' '}
-                                <span
-                                  className={`font-bold ${
-                                    isAttended
-                                      ? 'text-white'
-                                      : 'text-[#0B1F4D] dark:text-white'
-                                  }`}
-                                >
+                                <span className="font-semibold text-[#0F172A] dark:text-white">
                                   {apt.timeSlot}
                                 </span>
                               </p>
@@ -2076,16 +2013,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                             <div className="flex flex-wrap items-center gap-2 shrink-0">
                               <span
                                 title={apt.noShowReason || undefined}
-                                className="px-2.5 py-1 rounded-[6px] bg-rose-600 text-white text-[11px] font-extrabold whitespace-nowrap"
+                                className="px-2.5 py-1 rounded-md bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-200 text-xs font-semibold whitespace-nowrap"
                               >
-                                ✕ {isTl ? 'Hindi dumalo' : 'Did not attend'}
+                                {isTl ? 'Hindi dumalo' : 'Did not attend'}
                               </span>
                               <button
                                 type="button"
                                 onClick={() => openParents('schedule', apt.caseId || undefined)}
-                                className="px-3.5 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-extrabold whitespace-nowrap"
+                                className="btn-press px-3.5 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap"
                               >
-                                📅 {isTl ? 'Mag-schedule ulit' : 'Schedule again'}
+                                {isTl ? 'Mag-schedule ulit' : 'Schedule again'}
                               </button>
                               <button
                                 type="button"
@@ -2101,25 +2038,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                   setAppointments((prev) => prev.map((item) => (item.id === apt.id ? { ...item, status: 'Scheduled', noShowReason: undefined } : item)));
                                   void updateAppointmentStatusInDb(apt.id, 'Scheduled');
                                 }}
-                                className="px-3 py-1.5 rounded-lg text-xs font-bold saas-card-subtle text-[#4A608A] dark:text-[#94A8D0]"
+                                className="btn-press px-3 py-1.5 rounded-lg text-xs font-semibold saas-card-subtle text-[#475569] dark:text-[#94A8D0]"
                               >
                                 {isTl ? 'I-undo' : 'Undo'}
                               </button>
                             </div>
                           ) : (
                           <div className="flex items-center gap-2 shrink-0">
-                            <button
-                              type="button"
-                              disabled={isAttended}
-                              onClick={() => handleMarkAttended(apt)}
-                              className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-colors ${
-                                isAttended
-                                  ? 'bg-white text-emerald-700 shadow-xs cursor-default'
-                                  : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
-                              }`}
-                            >
-                              {isAttended ? (isTl ? '✓ Dumalo' : '✓ Attended') : isTl ? 'Dumalo' : 'Attended'}
-                            </button>
+                            {!isAttended && (
+                              <button
+                                type="button"
+                                onClick={() => handleMarkAttended(apt)}
+                                className="btn-press px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                              >
+                                {isTl ? 'Dumalo' : 'Attended'}
+                              </button>
+                            )}
 
                             {isAttended ? (
                               <button
@@ -2149,7 +2083,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                   );
                                   void updateAppointmentStatusInDb(apt.id, 'Scheduled');
                                 }}
-                                className="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors bg-white/15 hover:bg-white/25 text-white border border-white/25"
+                                className="btn-press px-3 py-1.5 rounded-lg text-xs font-semibold saas-card-subtle text-[#475569] dark:text-[#94A8D0]"
                               >
                                 {isTl ? 'I-undo' : 'Undo'}
                               </button>
@@ -2161,15 +2095,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                 soundFX.playKeyClick(2);
                                 setNoShowTarget(apt);
                               }}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                                isNoShow
-                                  ? 'bg-rose-600 text-white cursor-default'
-                                  : isAttended
-                                  ? 'bg-white/15 hover:bg-white/25 text-white border border-white/25'
-                                  : 'saas-card-subtle hover:border-rose-500 text-[#4A608A] dark:text-[#94A8D0] hover:text-rose-600'
-                              }`}
+                              className="btn-press px-3 py-1.5 rounded-lg text-xs font-semibold saas-card-subtle hover:border-rose-500 text-[#475569] dark:text-[#94A8D0] hover:text-rose-600"
                             >
-                              {isNoShow ? (isTl ? '✕ Hindi dumalo' : '✕ Did not attend') : isTl ? 'Hindi dumalo' : 'Did not attend'}
+                              {isTl ? 'Hindi dumalo' : 'Did not attend'}
                             </button>
                             )}
 
@@ -2187,13 +2115,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                   caseCode: apt.caseId || undefined,
                                 })
                               }
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors ${
-                                isAttended
-                                  ? 'bg-white/15 hover:bg-white/25 text-white border border-white/25'
-                                  : 'saas-card-subtle hover:border-[#1E469B] text-[#1E469B] dark:text-[#7CB8F7]'
-                              }`}
+                              className="btn-press px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap saas-card-subtle hover:border-[#1E469B] text-[#1E469B] dark:text-[#7CB8F7]"
                             >
-                              <DuotoneIcon name="paperPlaneTilt" size={14} />
                               {isTl ? 'I-text' : 'Text'}
                             </button>
                           </div>
@@ -2205,10 +2128,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                       <button
                         type="button"
                         onClick={() => setShowAttended(true)}
-                        className="btn-press w-full px-5 py-3 rounded-xl border border-dashed border-emerald-300 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/20 text-left text-[13px] font-bold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                        className="btn-press w-full px-5 py-3 rounded-xl border border-dashed border-emerald-300 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-950/20 text-left text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                       >
-                        ✓ {attendedHiddenCount} {isTl ? 'ang dumalo na' : (attendedHiddenCount === 1 ? 'parent already attended' : 'parents already attended')}
-                        <span className="ml-2 font-semibold text-emerald-700/80 dark:text-emerald-400/80">{isTl ? '· ipakita' : '· show'}</span>
+                        {attendedHiddenCount} {isTl ? 'ang dumalo na' : (attendedHiddenCount === 1 ? 'parent already attended' : 'parents already attended')}
+                        <span className="ml-2 font-medium text-emerald-700/80 dark:text-emerald-400/80">{isTl ? '· ipakita' : '· show'}</span>
                       </button>
                     )}
                     {showAttended && aptFilter === 'ALL' && (
@@ -2314,8 +2237,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         </div>
 
                         <div className="flex items-center justify-between pt-0.5 gap-2">
-                          <span className="text-[11px] font-semibold text-[#4A608A] dark:text-[#94A8D0] truncate">
-                            {task.parentName} · <a href={`tel:${task.parentPhone.replace(/\D/g, '')}`} className="font-mono text-[#0B1F4D] dark:text-white hover:underline">{task.parentPhone}</a>
+                          <span className="text-xs font-medium text-[#475569] dark:text-[#94A8D0] truncate">
+                            {task.parentName} · <a href={`tel:${task.parentPhone.replace(/\D/g, '')}`} className="font-mono font-semibold text-[#0F172A] dark:text-white hover:underline">{task.parentPhone}</a>
                           </span>
 
                           <div className="flex items-center gap-1.5 shrink-0">
@@ -2325,9 +2248,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                 soundFX.playKeyClick(1);
                                 setCallLogTarget(task);
                               }}
-                              className="px-2.5 py-1 rounded-lg saas-card-subtle hover:border-[#1E469B] text-[11px] font-bold whitespace-nowrap active:scale-[0.97]"
+                              className="btn-press px-2.5 py-1 rounded-lg saas-card-subtle hover:border-[#1E469B] text-xs font-semibold whitespace-nowrap"
                             >
-                              {isTl ? 'Log Call' : 'Log Call'}
+                              {isTl ? 'Itala ang tawag' : 'Log call'}
                             </button>
                             <button
                               type="button"
@@ -2343,10 +2266,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                 })
                               }
                               title={isTl ? `I-text si ${task.parentName}` : `Text ${task.parentName}`}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-[11px] font-bold whitespace-nowrap active:scale-[0.97]"
+                              className="btn-press px-3 py-1 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap"
                             >
-                              <DuotoneIcon name="paperPlaneTilt" size={12} />
-                              <span>{isTl ? 'Text' : 'Text'}</span>
+                              <span>{isTl ? 'I-text' : 'Text'}</span>
                             </button>
                           </div>
                         </div>
@@ -2591,7 +2513,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
                   <div className="divide-y divide-[#E2E9F5] dark:divide-[#1E3158]">
                     {earlyInterventionList.length === 0 && (
-                      <p className="py-4 text-sm font-semibold text-[#4A608A] dark:text-[#94A8D0]">{isTl ? '✓ Walang estudyante sa listahan ngayon.' : '✓ No students on the list right now.'}</p>
+                      <p className="py-4 text-sm font-medium text-[#475569] dark:text-[#94A8D0]">{isTl ? 'Walang estudyante sa listahan ngayon.' : 'No students on the list right now.'}</p>
                     )}
                     {earlyInterventionList.map((item) => (
                       <div
@@ -2601,14 +2523,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-amber-500" />
-                            <span className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                            <span className="text-sm font-bold text-[#0F172A] dark:text-white">
                               {item.fullName}
                             </span>
-                            <span className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                            <span className="text-xs text-[#475569] dark:text-[#94A8D0]">
                               · {item.gradeSection}
                             </span>
                           </div>
-                          <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                          <p className="text-xs text-[#475569] dark:text-[#94A8D0]">
                             {isTl ? item.priorOffensesTl : item.priorOffensesEn}
                           </p>
                         </div>
@@ -2626,9 +2548,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                             })
                           }
                           title={isTl ? 'Hindi isasama ang offense sa mensahe' : 'The message never includes the offense'}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#1E469B] text-white text-xs font-bold shrink-0 whitespace-nowrap"
+                          className="btn-press inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#1E469B] text-white text-xs font-semibold shrink-0 whitespace-nowrap"
                         >
-                          <DuotoneIcon name="paperPlaneTilt" size={13} />
                           {isTl ? 'I-text ang magulang' : 'Text parent'}
                         </button>
                       </div>
@@ -3538,16 +3459,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#DCE5F2] dark:border-[#1E3158]">
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#4A608A] dark:text-[#94A8D0]" data-guide-colors aria-label={isTl ? 'Ibig sabihin ng mga kulay' : 'What the colours mean'}>
-                        <span>🔴 {isTl ? 'Serious o major / naghihintay 7+ araw' : 'Serious or major / waiting 7+ days'}</span>
-                        <span>🟡 {isTl ? 'Ika-2 minor (bantayan) / 3–6 araw' : '2nd minor (watch) / 3–6 days'}</span>
-                        <span>🟢 {isTl ? 'Tapos na / Dumalo' : 'Done / Attended'}</span>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#475569] dark:text-[#94A8D0]" data-guide-colors aria-label={isTl ? 'Ibig sabihin ng mga kulay' : 'What the colours mean'}>
+                        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" /> {isTl ? 'Serious o major / naghihintay 7+ araw' : 'Serious or major / waiting 7+ days'}</span>
+                        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" /> {isTl ? 'Ika-2 minor (bantayan) / 3–6 araw' : '2nd minor (watch) / 3–6 days'}</span>
+                        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> {isTl ? 'Tapos na / Dumalo' : 'Done / Attended'}</span>
                       </div>
                       <button
                         type="button"
                         data-guide-close
                         onClick={() => setShowQuickGuideModal(false)}
-                        className="btn-press px-5 py-2 rounded-lg bg-[#1E469B] text-white text-xs font-extrabold whitespace-nowrap"
+                        className="btn-press px-5 py-2 rounded-lg bg-[#1E469B] text-white text-xs font-semibold whitespace-nowrap"
                       >
                         {isTl ? 'OK, naintindihan ko' : 'Got it'}
                       </button>

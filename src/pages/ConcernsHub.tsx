@@ -427,7 +427,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
 
       {/* ================= SUBMITTED REPORTS ================= */}
       {tab === 'reports' && (
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-3 items-stretch h-[calc(100vh-245px)] min-h-[520px]" data-concern-grid>
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-3 items-stretch h-[calc(100dvh/var(--app-zoom,1)-245px)] min-h-[520px]" data-concern-grid>
           <section className={`${card} flex flex-col min-h-0`}>
             <div className="p-2 border-b border-[#DCE5F2] dark:border-[#1E3158] grid grid-cols-4 gap-1">
               {(
@@ -1201,9 +1201,9 @@ const Modal: React.FC<{ title: string; onClose: () => void; children: React.Reac
     <div className="fixed inset-0 z-[80] !m-0 bg-black/50 flex items-center justify-center p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div role="dialog" aria-modal="true" aria-label={title} className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#0F1A30] border border-[#D3DDEE] dark:border-[#253B66] shadow-2xl">
         <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-center justify-between">
-          <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">{title}</h3>
-          <button type="button" onClick={onClose} aria-label="Close" className="w-8 h-8 rounded-lg text-[#4A608A] hover:bg-slate-100 dark:hover:bg-slate-800">
-            
+          <h3 className="text-base font-bold text-[#0F172A] dark:text-white">{title}</h3>
+          <button type="button" onClick={onClose} aria-label="Close" className="w-8 h-8 rounded-lg flex items-center justify-center text-[#475569] hover:bg-slate-100 dark:hover:bg-slate-800">
+            ✕
           </button>
         </div>
         {children}
@@ -1465,7 +1465,7 @@ const ChatsView: React.FC<{
               ? isTl ? 'Bukas ang office ngayon (Lunes–Biyernes, 8:00 AM–5:00 PM). Makikita ng estudyante ang mensahe mo bilang "Guidance Office".' : 'The office is open now (Mon–Fri, 8:00 AM–5:00 PM). The student sees your messages as "Guidance Office".'
               : isTl ? 'Sarado ang office ngayon. Makikita ng estudyante na sasagot kayo sa susunod na oras ng opisina.' : 'The office is closed now. The student is told you will reply during office hours.'}
           </p>
-          <div className="h-[calc(100vh-430px)] min-h-[260px] overflow-y-auto px-5 py-4 space-y-2 bg-[#F4F7FC] dark:bg-[#0B1527]">
+          <div className="h-[calc(100dvh/var(--app-zoom,1)-430px)] min-h-[260px] overflow-y-auto px-5 py-4 space-y-2 bg-[#F4F7FC] dark:bg-[#0B1527]">
             {msgs === null && <p className={`${sub} text-center`}>{isTl ? 'Kinukuha ang mga mensahe…' : 'Loading messages…'}</p>}
             {msgs && msgs.length > SHOW_MSGS && !showAll && (
               <button type="button" onClick={() => setShowAll(true)} className={`${btn} mx-auto block saas-card-subtle`}>

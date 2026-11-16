@@ -487,16 +487,13 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
   // ======================================================================
   return (
     <main className="p-5 lg:p-6 max-w-[1440px] w-full mx-auto space-y-5 flex-1">
-      {/* CDM-INSPIRED BREADCRUMB & CONTEXT HEADER */}
+      {/* CLEAN EXECUTIVE CONTEXT HEADER (NO ALL-CAPS EYEBROW) */}
       <div className="cdm-panel px-6 py-4 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="text-[11px] font-extrabold tracking-wider uppercase text-[#1E469B] dark:text-[#7CB8F7]">
-            GUIDANCE OFFICE / PARENT RELATIONS & CONFERENCES
-          </div>
-          <h1 className="text-xl font-extrabold text-[#0B1F4D] dark:text-white mt-0.5">
+          <h1 className="text-lg font-bold text-[#0F172A] dark:text-white">
             {isTl ? 'Pamamahala ng mga Conference at Paalala sa Magulang' : 'Parent Conferences & Summons Management'}
           </h1>
-          <p className="text-xs text-[#4A608A] dark:text-[#94A8D0] mt-1">
+          <p className="text-xs text-[#475569] dark:text-[#94A8D0] mt-0.5">
             {isTl
               ? 'Organisadong pagsubaybay sa bawat abiso, pagdalo ng magulang, at tala ng mga tawag.'
               : 'Structured tracking of parent conference schedules, attendance records, and call attempts.'}
@@ -509,7 +506,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
               ['schedule', isTl ? `Kailangang i-schedule · ${toSchedule.length}` : `To schedule · ${toSchedule.length}`, isTl ? 'Mga kasong wala pang schedule ng conference' : 'Cases that still need a conference date'],
               ['conferences', isTl ? `Mga conference · ${upcoming.length}` : `Conferences · ${upcoming.length}`, isTl ? 'Mga darating na conference' : 'Upcoming conferences'],
               ['followups', isTl ? `Follow-ups · ${openTasks.length}` : `Follow-ups · ${openTasks.length}`, isTl ? 'Mga magulang na kailangang tawagan' : 'Parents to call or text'],
-              ['messages', isTl ? `Mga mensahe${problemMsgs.length ? ` ·  ${problemMsgs.length}` : ''}` : `Messages${problemMsgs.length ? ` ·  ${problemMsgs.length}` : ''}`, isTl ? 'Lahat ng SMS at email sa magulang' : 'Every SMS and email to parents'],
+              ['messages', isTl ? `Mga mensahe${problemMsgs.length ? ` · ${problemMsgs.length}` : ''}` : `Messages${problemMsgs.length ? ` · ${problemMsgs.length}` : ''}`, isTl ? 'Lahat ng SMS at email sa magulang' : 'Every SMS and email to parents'],
             ] as const
           ).map(([id, label, tip]) => (
             <button
@@ -520,8 +517,8 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                 soundFX.playToggleSwitch(true);
                 setTab(id);
               }}
-              className={`px-4 py-2 rounded-lg text-xs sm:text-[13px] font-bold whitespace-nowrap transition-colors ${
-                tab === id ? 'bg-[#1E469B] text-white shadow-sm' : 'text-[#4A608A] dark:text-[#94A8D0] hover:text-[#0B1F4D] dark:hover:text-white'
+              className={`px-4 py-2 rounded-lg text-xs sm:text-[13px] font-semibold whitespace-nowrap transition-colors ${
+                tab === id ? 'bg-[#1E469B] text-white shadow-xs' : 'text-[#475569] dark:text-[#94A8D0] hover:text-[#0F172A] dark:hover:text-white'
               }`}
             >
               {label}
