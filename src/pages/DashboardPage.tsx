@@ -1553,6 +1553,19 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             initialScheduleCase={parentsScheduleCase}
             initialTab={parentsTab}
             onConferenceAttended={markParentNotified}
+            onOpenCaseDueProcess={(caseCode) => {
+              const found = cases.find((c) => c.caseCode.toLowerCase() === caseCode.toLowerCase());
+              if (found) {
+                setQuickSearch('');
+                openCasesTab('case-board');
+                setTimeout(() => {
+                  const cardEl = document.querySelector(`[data-case-card="${found.caseCode}"]`) as HTMLElement;
+                  if (cardEl) cardEl.click();
+                }, 150);
+              } else {
+                openParents('schedule', caseCode);
+              }
+            }}
           />
         ) : activeCategory.id === 'support-hub' ? (
           <ConcernsHub
@@ -2049,10 +2062,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                               </span>
                               <button
                                 type="button"
-                                onClick={() => openParents('schedule', apt.caseId || undefined)}
+                                onClick={() => {
+                                  const found = cases.find((c) => c.caseCode.toLowerCase() === (apt.caseId || '').toLowerCase());
+                                  if (found) {
+                                    setQuickSearch('');
+                                    openCasesTab('case-board');
+                                    setTimeout(() => {
+                                      const cardEl = document.querySelector(`[data-case-card="${found.caseCode}"]`) as HTMLElement;
+                                      if (cardEl) cardEl.click();
+                                    }, 150);
+                                  } else {
+                                    openParents('schedule', apt.caseId || undefined);
+                                  }
+                                }}
                                 className="btn-press px-3.5 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap"
                               >
-                                {isTl ? 'Mag-schedule ulit' : 'Schedule again'}
+                                {isTl ? 'Mag-schedule ulit sa Step 4' : 'Reschedule in Due Process (Step 4)'}
                               </button>
                               <button
                                 type="button"

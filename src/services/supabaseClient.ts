@@ -942,6 +942,19 @@ export async function updateCaseFlowInDb(caseCode: string, patch: Record<string,
   }
 }
 
+/** Delete a student from the active registry with an audit trail */
+export async function deleteStudentInDb(studentNumber: string): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/students?student_number=eq.${encodeURIComponent(studentNumber)}`,
+      { method: 'DELETE', headers: getHeaders() }
+    );
+    return reportWrite(res, 'deleteStudentInDb');
+  } catch {
+    return reportWrite(null, 'deleteStudentInDb');
+  }
+}
+
 /** Permanently delete an errantly filed case with an audit log reason */
 export async function deleteDisciplineCaseInDb(caseCode: string): Promise<boolean> {
   try {

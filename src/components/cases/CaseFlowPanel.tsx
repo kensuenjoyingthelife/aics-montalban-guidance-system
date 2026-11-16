@@ -139,7 +139,9 @@ export const CaseFlowPanel: React.FC<{
   appointments?: ParentAppointmentItem[];
   /** open the real Parent Conference scheduling modal in ParentsHub */
   onScheduleConference?: (caseCode: string) => void;
-}> = ({ c, student, isTl, busy, suggestedSanction, onAction, onOpenStation, onOpenPrint, appointments = [] }) => {
+  /** update student's parent contact info directly from this card */
+  onUpdateStudentContact?: (studentNumber: string, phone: string, email: string) => Promise<boolean>;
+}> = ({ c, student, isTl, busy, suggestedSanction, onAction, onOpenStation, onOpenPrint, appointments = [], onUpdateStudentContact }) => {
   const { done, next, activeSteps, isMinor } = useMemo(() => flowState(c), [c]);
   const cfg = useAppConfig();
 
@@ -187,6 +189,19 @@ export const CaseFlowPanel: React.FC<{
   const [schedSendNow, setSchedSendNow] = useState<boolean>(true);
   const [schedMsgLang, setSchedMsgLang] = useState<'taglish' | 'english'>('taglish');
   const [schedMsgEdited, setSchedMsgEdited] = useState<boolean>(false);
+
+  // Editable Parent Contact State
+  const [editingContact, setEditingContact] = useState<boolean>(false);
+  const [parentPhoneInput, setParentPhoneInput] = useState<string>(student?.parentPhone ?? '');
+  const [parentEmailInput, setParentEmailInput] = useState<string>(student?.parentEmail ?? '');
+  const [savingContact, setSavingContact] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (student) {
+      setParentPhoneInput(student.parentPhone ?? '');
+      setParentEmailInput(student.parentEmail ?? '');
+    }
+  }, [student]);
 
   const freeSlots = useMemo(() => freeSlotsOn(appointments, schedDate), [appointments, schedDate]);
 
@@ -619,27 +634,108 @@ export const CaseFlowPanel: React.FC<{
               ) : (
                 /* FULL EMBEDDED PARENT CONFERENCE SCHEDULER INSIDE STEP 4 */
                 <div className="rounded-xl border border-[#CBD5E1] dark:border-[#223555] bg-white dark:bg-[#0B1527] shadow-xs overflow-hidden divide-y divide-[#E2E8F0] dark:divide-[#1E2E4E]">
-                  {/* 1. Parent contact strip */}
+                  {/* 1. Parent contact strip (Now Editable with instant phone / email update) */}
                   {student && (
-                    <div className="p-3 bg-[#F8FAFC] dark:bg-[#0F182C] flex flex-wrap items-center justify-between gap-2 text-xs">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-semibold text-[#64748B] dark:text-[#94A3B8]">{isTl ? 'Magulang:' : 'Parent:'}</span>
-                        <span className="font-bold text-[#0F172A] dark:text-white">{student.parentName || '—'}</span>
-                        {student.parentPhone && (
-                          <span className="font-mono font-semibold text-[#1E469B] dark:text-[#7CB8F7]">· {student.parentPhone}</span>
-                        )}
-                        {student.parentEmail && (
-                          <span className="text-[#64748B] dark:text-[#94A3B8]">· {student.parentEmail}</span>
-                        )}
+                    <div className="p-3 bg-[#F8FAFC] dark:bg-[#0F182C] space-y-2 text-xs">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-semibold text-[#64748B] dark:text-[#94A3B8]">{isTl ? 'Magulang:' : 'Parent:'}</span>
+                          <span className="font-bold text-[#0F172A] dark:text-white">{student.parentName || '—'}</span>
+                          {!editingContact ? (
+                            <>
+                              {student.parentPhone && (
+                                <span className="font-mono font-semibold text-[#1E469B] dark:text-[#7CB8F7]">· {student.parentPhone}</span>
+                              )}
+                              {student.parentEmail && (
+                                <span className="text-[#64748B] dark:text-[#94A3B8]">· {student.parentEmail}</span>
+                              )}
+                            </>
+                          ) : null}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {!editingContact ? (
+                            <button
+                              type="button"
+                              onClick={() => setEditingContact(true)}
+                              className="text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7] hover:underline flex items-center gap-1"
+                            >
+                              <span>{isTl ? 'Palitan ang Contact' : 'Edit Contact'}</span>
+                            </button>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                disabled={savingContact}
+                                onClick={async () => {
+                                  if (!onUpdateStudentContact) {
+                                    setEditingContact(false);
+                                    return;
+                                  }
+                                  setSavingContact(true);
+                                  await onUpdateStudentContact(student.studentNumber, parentPhoneInput.trim(), parentEmailInput.trim());
+                                  setSavingContact(false);
+                                  setEditingContact(false);
+                                }}
+                                className="btn-press px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-xs"
+                              >
+                                {savingContact ? (isTl ? 'Inililigtas...' : 'Saving...') : (isTl ? 'I-save' : 'Save')}
+                              </button>
+                              <button
+                                type="button"
+                                disabled={savingContact}
+                                onClick={() => {
+                                  setParentPhoneInput(student.parentPhone ?? '');
+                                  setParentEmailInput(student.parentEmail ?? '');
+                                  setEditingContact(false);
+                                }}
+                                className="btn-press px-2 py-1 rounded-md border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-[11px]"
+                              >
+                                {isTl ? 'Kansela' : 'Cancel'}
+                              </button>
+                            </div>
+                          )}
+
+                          {liveAppointment && changeScheduleMode && !isReschedule && !editingContact && (
+                            <button
+                              type="button"
+                              onClick={() => setChangeScheduleMode(false)}
+                              className="text-xs font-semibold text-[#1E469B] dark:text-[#7CB8F7] hover:underline ml-2"
+                            >
+                              {isTl ? 'Kanselahin ang pagpapalit' : 'Keep current schedule'}
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      {liveAppointment && changeScheduleMode && !isReschedule && (
-                        <button
-                          type="button"
-                          onClick={() => setChangeScheduleMode(false)}
-                          className="text-xs font-semibold text-[#1E469B] dark:text-[#7CB8F7] hover:underline"
-                        >
-                          {isTl ? 'Kanselahin ang pagpapalit' : 'Keep current schedule'}
-                        </button>
+
+                      {/* Inline Contact Editor Inputs */}
+                      {editingContact && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-200 dark:border-slate-800">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-500 mb-0.5">
+                              {isTl ? 'Mobile No. ng Magulang (09XX-XXX-XXXX)' : 'Parent Mobile Number'}
+                            </label>
+                            <input
+                              type="text"
+                              value={parentPhoneInput}
+                              onChange={(e) => setParentPhoneInput(e.target.value)}
+                              placeholder="0917-000-0000"
+                              className="w-full px-2.5 py-1.5 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-mono font-semibold"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-500 mb-0.5">
+                              {isTl ? 'Email ng Magulang (opsyonal)' : 'Parent Email (optional)'}
+                            </label>
+                            <input
+                              type="email"
+                              value={parentEmailInput}
+                              onChange={(e) => setParentEmailInput(e.target.value)}
+                              placeholder="parent@example.com"
+                              className="w-full px-2.5 py-1.5 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-semibold"
+                            />
+                          </div>
+                        </div>
                       )}
                     </div>
                   )}

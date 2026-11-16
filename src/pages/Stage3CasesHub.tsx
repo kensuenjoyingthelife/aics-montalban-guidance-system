@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { UserPlus, Printer, Layers, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { UserPlus, Printer, Layers, Upload, X, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
@@ -54,6 +54,7 @@ import {
   insertStudentInDb,
   updateStudentDetailsInDb,
   updateCaseFlowInDb,
+  deleteDisciplineCaseInDb,
   setStudentEnrollmentInDb,
   moveUpSchoolYearInDb,
   undoSchoolYearMoveInDb,
@@ -1561,6 +1562,12 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     if (!saved) return onTriggerToast(isTl ? ' Hindi na-save. I-check ang internet, tapos subukan ulit.' : ' Not saved. Check the internet, then try again.');
     setCases((prev) => prev.map((x) => (x.caseCode === c.caseCode ? { ...x, ...local } : x)));
     soundFX.playSuccessCheck();
+
+    // Auto-Out from Due Process modal upon closing case, with clear success feedback
+    if (a.kind === 'close') {
+      setOpenCaseCode(null);
+      setSubTab('closed-cases');
+    }
     const stepWords: Record<FlowAction['kind'], [string, string]> = {
       call: ['Student called to the Guidance Office', 'Tinawag ang estudyante sa Guidance Office'],
       explanation: ['Student explanation written', 'Naisulat ang paliwanag ng estudyante'],
@@ -4293,6 +4300,31 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     setCallSlipCase(openCase);
                   }}
                   appointments={appointments}
+                  onUpdateStudentContact={async (studentNumber, phone, email) => {
+                    const saved = await updateStudentDetailsInDb(studentNumber, {
+                      parent_phone: phone,
+                      parent_email: email,
+                    });
+                    if (saved) {
+                      setStudents((prev) =>
+                        prev.map((s) =>
+                          s.studentNumber === studentNumber
+                            ? { ...s, parentPhone: phone, parentEmail: email }
+                            : s
+                        )
+                      );
+                      onTriggerToast(
+                        isTl
+                          ? 'Na-save ang bagong contact info ng magulang.'
+                          : 'Parent contact details updated successfully.'
+                      );
+                      return true;
+                    }
+                    onTriggerToast(
+                      isTl ? 'Hindi na-save ang contact. I-check ang internet.' : 'Failed to save contact info.'
+                    );
+                    return false;
+                  }}
                 />
                 
                 {stationCase && (
@@ -4494,24 +4526,92 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                         </button>
                       )}
                     </div>
-                    {openCase.status === 'Resolved' ? (
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => handleUpdateCaseStatus(openCase, 'Open')}
-                        className="px-4 py-2 rounded-lg saas-card-subtle text-xs font-bold text-[#0B1F4D] dark:text-white active:scale-[0.97] transition-all"
+                        onClick={async () => {
+                          const reason = window.prompt(
+                            isTl
+                              ? `Pakilagay ang dahilan ng pag-delete sa kasong ${openCase.caseCode} (hal. maling pag-file, duplicate entry):`
+                              : `Please provide a mandatory reason for deleting case ${openCase.caseCode} (e.g. filed by mistake, duplicate entry):`
+                          );
+                          if (!reason || !reason.trim()) {
+                            if (reason !== null) onTriggerToast(isTl ? 'Kailangan ng dahilan upang mai-delete ang kaso.' : 'A reason is required to delete a case.');
+                            return;
+                          }
+
+                          const ok = await confirmChange({
+                            title: isTl ? `Permanenteng I-delete ang Kasong ${openCase.caseCode}?` : `Permanently Delete Case ${openCase.caseCode}?`,
+                            description: isTl
+                              ? `Mabubura ang kasong ito sa database. Dahilan: "${reason.trim()}".`
+                              : `This will remove the case from the database. Reason: "${reason.trim()}".`,
+                            rows: [
+                              { label: isTl ? 'Kaso' : 'Case Code', after: openCase.caseCode },
+                              { label: isTl ? 'Estudyante' : 'Student', after: openCase.studentName },
+                              { label: isTl ? 'Dahilan ng Deletion' : 'Deletion Reason', after: reason.trim() },
+                            ],
+                            confirmLabel: isTl ? 'Oo, I-delete ang Kaso' : 'Yes, Delete Case',
+                            tone: 'danger',
+                          });
+                          if (!ok) return;
+
+                          const taskId = startLoading({
+                            titleEn: 'Deleting case...',
+                            titleTl: 'Binubura ang kaso...',
+                            messageEn: 'Updating database and audit logs...',
+                            messageTl: 'Inia-update ang database at audit logs...',
+                          });
+                          const deleted = await deleteDisciplineCaseInDb(openCase.caseCode);
+                          stopLoading(taskId);
+
+                          if (deleted) {
+                            setCases((prev) => prev.filter((x) => x.caseCode !== openCase.caseCode));
+                            setOpenCaseCode(null);
+                            soundFX.playStepUnlock();
+                            void insertActivityLogInDb({
+                              actor: 'Guidance Associate',
+                              actionEn: `Deleted case ${openCase.caseCode} for ${openCase.studentName} · Reason: ${reason.trim()}`,
+                              actionTl: `Binura ang kasong ${openCase.caseCode} para kay ${openCase.studentName} · Dahilan: ${reason.trim()}`,
+                              tag: openCase.caseCode,
+                              tone: 'rose',
+                            });
+                            onTriggerToast(
+                              isTl
+                                ? `Nai-delete na ang kasong ${openCase.caseCode}.`
+                                : `Case ${openCase.caseCode} was deleted.`
+                            );
+                          } else {
+                            onTriggerToast(
+                              isTl ? 'Hindi nai-delete. I-check ang internet.' : 'Failed to delete case.'
+                            );
+                          }
+                        }}
+                        className="btn-press px-3 py-2 rounded-lg border border-rose-300 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 text-xs font-bold hover:bg-rose-100 flex items-center gap-1.5 shadow-2xs"
+                        title={isTl ? 'I-delete ang kaso na may dahilan' : 'Delete case with reason'}
                       >
-                        {isTl ? 'Buksan ulit' : 'Reopen case'}
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>{isTl ? 'I-delete ang Kaso' : 'Delete Case'}</span>
                       </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateCaseStatus(openCase, 'Resolved')}
-                        title={isTl ? 'Isara agad nang hindi dumadaan sa lahat ng hakbang (hal. simpleng paalala sa 1st minor)' : 'Close right away without all the steps (e.g. a simple reminder for a 1st minor)'}
-                        className="px-4 py-2 rounded-lg saas-card-subtle text-xs font-bold text-[#0B1F4D] dark:text-white"
-                      >
-                        {isTl ? 'Isara agad' : 'Close right away'}
-                      </button>
-                    )}
+
+                      {openCase.status === 'Resolved' ? (
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateCaseStatus(openCase, 'Open')}
+                          className="px-4 py-2 rounded-lg saas-card-subtle text-xs font-bold text-[#0B1F4D] dark:text-white active:scale-[0.97] transition-all"
+                        >
+                          {isTl ? 'Buksan ulit' : 'Reopen case'}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateCaseStatus(openCase, 'Resolved')}
+                          title={isTl ? 'Isara agad nang hindi dumadaan sa lahat ng hakbang (hal. simpleng paalala sa 1st minor)' : 'Close right away without all the steps (e.g. a simple reminder for a 1st minor)'}
+                          className="px-4 py-2 rounded-lg saas-card-subtle text-xs font-bold text-[#0B1F4D] dark:text-white"
+                        >
+                          {isTl ? 'Isara agad' : 'Close right away'}
+                        </button>
+                      )}
+                    </div>
                   </>
                 )}
               </div>

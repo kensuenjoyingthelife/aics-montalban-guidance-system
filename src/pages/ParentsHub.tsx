@@ -65,6 +65,8 @@ interface ParentsHubProps {
   onContactLogged?: () => void;
   /** the parent came → the case's "Parent Notified" step is done (7-step flow) */
   onConferenceAttended?: (caseCode: string) => void;
+  /** redirect straight into the case due process flow in Cases */
+  onOpenCaseDueProcess?: (caseCode: string) => void;
 }
 
 const uid = (prefix: string) => `${prefix}-${Date.now().toString(36).toUpperCase()}${Math.floor(Math.random() * 90 + 10)}`;
@@ -100,6 +102,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
   initialScheduleCase,
   initialTab,
   onConferenceAttended,
+  onOpenCaseDueProcess,
 }) => {
   const { locale } = useLanguage();
   const isTl = locale === 'tl';
@@ -428,7 +431,17 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                 {isTl ? 'Tawagan' : 'Call parent'}
               </button>
             )}
-            <button type="button" onClick={() => setSchedule({ mode: 'reschedule', caseCode: a.caseId, from: a })} className={`${subtleBtn} active:scale-[0.97] transition-transform inline-flex items-center gap-1.5`}>
+            <button
+              type="button"
+              onClick={() => {
+                if (onOpenCaseDueProcess && a.caseId) {
+                  onOpenCaseDueProcess(a.caseId);
+                } else {
+                  setSchedule({ mode: 'reschedule', caseCode: a.caseId, from: a });
+                }
+              }}
+              className={`${subtleBtn} active:scale-[0.97] transition-transform inline-flex items-center gap-1.5`}
+            >
               <RefreshCw className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
               {isTl ? 'Ilipat' : 'Reschedule'}
             </button>
@@ -442,11 +455,17 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
             </span>
             <button
               type="button"
-              onClick={() => setSchedule({ mode: 'reschedule', caseCode: a.caseId, from: a })}
+              onClick={() => {
+                if (onOpenCaseDueProcess && a.caseId) {
+                  onOpenCaseDueProcess(a.caseId);
+                } else {
+                  setSchedule({ mode: 'reschedule', caseCode: a.caseId, from: a });
+                }
+              }}
               className={`${btn} bg-[#1E469B] hover:bg-[#16377E] text-white active:scale-[0.97] transition-transform inline-flex items-center gap-1.5 shadow-sm`}
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              {isTl ? 'Ilipat ang Petsa (Reschedule)' : 'Reschedule Conference'}
+              {isTl ? 'Ilipat ang Petsa (Reschedule sa Step 4)' : 'Reschedule in Due Process (Step 4)'}
             </button>
             <button
               type="button"
