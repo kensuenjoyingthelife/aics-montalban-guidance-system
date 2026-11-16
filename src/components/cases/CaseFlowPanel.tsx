@@ -2,6 +2,8 @@
 // For 1st Minor: 5 steps: Reported → Student Called → Explanation → Decision → Closed
 // For Major / 2nd Minor / Serious: 8 steps: Reported → Student Called → Explanation → Schedule Conference → Parent Conference Attendance → Decision → Follow-Up → Closed
 import React, { useMemo, useState } from 'react';
+import { Calendar, Phone, Check, AlertTriangle, Printer } from 'lucide-react';
+import type { ParentAppointmentItem } from '../../data/dashboardMockData';
 import {
   CASE_STEPS,
   MINOR_CASE_STEPS,
@@ -112,8 +114,19 @@ export const CaseFlowPanel: React.FC<{
   onOpenStation?: () => void;
   /** print official call slip / summons form */
   onOpenPrint?: () => void;
-}> = ({ c, isTl, busy, suggestedSanction, onAction, onOpenStation, onOpenPrint }) => {
+  /** all appointments in the system to check if this case already has a live scheduled conference */
+  appointments?: ParentAppointmentItem[];
+  /** open the real Parent Conference scheduling modal in ParentsHub */
+  onScheduleConference?: (caseCode: string) => void;
+}> = ({ c, isTl, busy, suggestedSanction, onAction, onOpenStation, onOpenPrint, appointments = [], onScheduleConference }) => {
   const { done, next, activeSteps, isMinor } = useMemo(() => flowState(c), [c]);
+
+  // Find live scheduled appointment for this case
+  const liveAppointment = useMemo(() => {
+    return appointments.find(
+      (a) => a.caseId.toLowerCase() === c.caseCode.toLowerCase() && a.status !== 'Rescheduled'
+    );
+  }, [appointments, c.caseCode]);
 
   const [text, setText] = useState(c.explanation ?? '');
   const [how, setHow] = useState(c.parentNotifiedHow || 'Conference attended (In-Person)');
@@ -396,52 +409,99 @@ export const CaseFlowPanel: React.FC<{
           {/* Major Offense Step 4: Schedule Conference (Parent Summons) */}
           {next === 'Schedule Conference' && (
             <div className="space-y-3">
-              <div>
-                <p className="text-xs font-bold text-[#0F172A] dark:text-white">
-                  {isTl ? 'Hakbang 4: Mag-isyu ng Pormal na Patawag sa Magulang (Parent Conference Notice)' : 'Step 4: Issue Formal Parent Summons & Schedule Conference'}
-                </p>
-                <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] mt-0.5">
-                  {isTl
-                    ? 'Dahil ito ay Serious / Major / Escalated case, kailangang ipatawag ang magulang para sa isang pormal na conference hearing bago magpataw ng desisyon.'
-                    : 'Due process requires summoning the parent for an official conference hearing before rendering a sanction decision.'}
-                </p>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div>
+                  <p className="text-xs font-bold text-[#0F172A] dark:text-white">
+                    {isTl ? 'Hakbang 4: Pormal na Patawag sa Magulang at Iskedyul ng Kumperensya' : 'Step 4: Formal Parent Summons & Conference Scheduling'}
+                  </p>
+                  <p className="text-[11px] text-[#64748B] dark:text-[#94A8D0] mt-0.5">
+                    {isTl
+                      ? 'Kailangang mai-schedule ang conference sa Parents Hub at ma-isyu ang summons bago magpataw ng desisyon.'
+                      : 'Due process requires summoning the parent via Parents Hub before rendering a sanction decision.'}
+                  </p>
+                </div>
+                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-500/15 text-[#1E469B] dark:text-[#7CB8F7] border border-blue-400/30">
+                  {isTl ? 'Kailangan ang Magulang' : 'Parent Summons Required'}
+                </span>
               </div>
 
-              <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 space-y-2">
-                <label className="block">
-                  <span className="block text-[11px] font-extrabold text-amber-900 dark:text-amber-300 mb-1">
-                    {isTl ? 'Itinakdang Araw at Oras ng Conference (Hal. Bukas 10:00 AM):' : 'Proposed Conference Date & Time (e.g. Tomorrow 10:00 AM):'}
-                  </span>
-                  <input
-                    type="text"
-                    value={conferenceTargetDate}
-                    onChange={(e) => setConferenceTargetDate(e.target.value)}
-                    placeholder={isTl ? 'hal. Bukas, Nov 16 · 10:00 AM' : 'e.g. Tomorrow, Nov 16 · 10:00 AM'}
-                    className={input}
-                  />
-                </label>
-              </div>
+              {/* Show Live Scheduled Appointment from ParentsHub if already exists */}
+              {liveAppointment ? (
+                <div className="p-3.5 rounded-xl border border-emerald-300 dark:border-emerald-800/80 bg-emerald-50/70 dark:bg-emerald-950/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black uppercase text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      {isTl ? 'May Naka-schedule nang Kumperensya sa Parents Hub' : 'Active Conference Scheduled in Parents Hub'}
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-200/80 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200">
+                      {liveAppointment.status}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-[#64748B] dark:text-[#94A8D0] block text-[10px] font-bold uppercase">{isTl ? 'Araw at Oras' : 'Date & Time'}</span>
+                      <span className="font-bold text-[#0F172A] dark:text-white">{liveAppointment.date} · {liveAppointment.timeSlot}</span>
+                    </div>
+                    <div>
+                      <span className="text-[#64748B] dark:text-[#94A8D0] block text-[10px] font-bold uppercase">{isTl ? 'Magulang' : 'Parent Contact'}</span>
+                      <span className="font-semibold text-[#0F172A] dark:text-white">{liveAppointment.parentName} ({liveAppointment.parentPhone || 'No phone'})</span>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-emerald-200 dark:border-emerald-900/60 flex items-center justify-between gap-2">
+                    <p className="text-[11px] text-emerald-800 dark:text-emerald-300 font-semibold">
+                      {isTl ? 'Naka-set na ang iskedyul. Pindutin ang patotoo upang pumunta sa Pagharap ng Magulang.' : 'Schedule is set. Confirm to proceed to attendance verification.'}
+                    </p>
+                    <button
+                      type="button"
+                      data-flow="schedule-conference"
+                      disabled={busy}
+                      onClick={() => onAction({ kind: 'schedule_conference', targetDate: `${liveAppointment.date} ${liveAppointment.timeSlot}` })}
+                      className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs active:scale-[0.97]"
+                    >
+                      {isTl ? '✓ Kumpirmahin at Magpatuloy' : '✓ Confirm & Proceed'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 rounded-xl border border-amber-300 dark:border-amber-800/80 bg-amber-50/60 dark:bg-amber-950/20 space-y-3">
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                        {isTl ? 'Wala pang pormal na iskedyul ng kumperensya sa Parents Hub.' : 'No parent conference scheduled yet for this case in Parents Hub.'}
+                      </p>
+                      <p className="text-[11px] text-amber-800 dark:text-amber-300/90 mt-0.5">
+                        {isTl
+                          ? 'I-click ang button sa ibaba upang buksan ang opisyal na Parents Hub Calendar kung saan mapipili ang bakanteng oras at maipapadala ang awtomatikong SMS sa magulang.'
+                          : 'Click below to open the official Parents Hub Calendar with smart free slot finder and automated parent SMS summons.'}
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-[#F1F5F9] dark:border-[#1E2E4E] flex-wrap gap-2">
-                {onOpenPrint && (
-                  <button
-                    type="button"
-                    onClick={onOpenPrint}
-                    className={`${btn} rounded-lg border border-[#CBD5E1] dark:border-[#253B66] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#F8FAFC] dark:hover:bg-[#13203B]`}
-                  >
-                    {isTl ? 'I-print ang Form ng Conference' : 'Print Conference / Summons Form'}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  data-flow="schedule-conference"
-                  disabled={busy}
-                  onClick={() => onAction({ kind: 'schedule_conference', targetDate: conferenceTargetDate.trim() })}
-                  className={`${primary} rounded-lg`}
-                >
-                  {isTl ? '✓ Itala: Na-isyu ang Patawag sa Magulang' : '✓ Mark Summons Issued & Conference Set'}
-                </button>
-              </div>
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    {onScheduleConference && (
+                      <button
+                        type="button"
+                        onClick={() => onScheduleConference(c.caseCode)}
+                        className="px-4 py-2 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-extrabold flex items-center gap-1.5 shadow-sm active:scale-[0.97] transition-all"
+                      >
+                        <Calendar className="w-3.5 h-3.5" />
+                        {isTl ? 'Buksan ang Iskedyul ng Kumperensya (Parents Hub & SMS)' : 'Open Parent Scheduling & SMS (Parents Hub)'}
+                      </button>
+                    )}
+                    {onOpenPrint && (
+                      <button
+                        type="button"
+                        onClick={onOpenPrint}
+                        className="px-3.5 py-2 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-bold text-[#0B1F4D] dark:text-white hover:border-[#1E469B] flex items-center gap-1.5 active:scale-[0.97]"
+                      >
+                        <Printer className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
+                        {isTl ? 'Mag-print ng Call Slip / Summons' : 'Print Call Slip / Summons Form'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

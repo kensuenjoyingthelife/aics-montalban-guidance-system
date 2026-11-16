@@ -16,6 +16,7 @@ import {
   insertAppointmentInDb,
   updateAppointmentInDb,
   updateAppointmentStatusInDb,
+  updateCaseFlowInDb,
   insertFollowUpTaskInDb,
   updateFollowUpTaskInDb,
   insertActivityLogInDb,
@@ -1297,6 +1298,15 @@ const ScheduleWindow: React.FC<{
       apt,
     ]);
     if (reschedule && state.from && state.from.status === 'Scheduled') void updateAppointmentInDb(state.from.id, { status: 'Rescheduled' });
+    
+    // Automatically update the case flow in database and memory to Step 4 "Schedule Conference"
+    void updateCaseFlowInDb(c.caseCode, {
+      conference_scheduled_at: new Date().toISOString(),
+      conference_target_date: when,
+      status: 'Conference Scheduled',
+      step: 'Schedule Conference',
+    });
+
     // a "missed conference" task is handled once a new date is set
     followUps
       .filter((t) => !t.resolved && t.caseId === c.caseCode && t.category === 'Missed Conferences')

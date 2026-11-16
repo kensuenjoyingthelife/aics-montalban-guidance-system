@@ -1340,6 +1340,45 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       db = { explanation: a.text, step: 'Explanation' };
       local = { explanation: a.text, step: 'Explanation' };
       msg = isTl ? ' Na-save ang paliwanag. Susunod: ipaalam sa magulang.' : ' Explanation saved. Next: let the parent know.';
+    } else if (a.kind === 'schedule_conference') {
+      db = {
+        conference_scheduled_at: now,
+        conference_target_date: a.targetDate || now,
+        status: 'Conference Scheduled',
+        step: 'Schedule Conference',
+      };
+      local = {
+        conferenceScheduledAt: now,
+        conferenceTargetDate: a.targetDate || now,
+        status: 'Conference Scheduled' as const,
+        step: 'Schedule Conference' as const,
+      };
+      msg = isTl
+        ? ' Naitala: Naitakda ang Patawag sa Magulang. Susunod: Pagharap ng magulang (Attendance).'
+        : ' Recorded: Parent summons & conference set. Next: Parent conference attendance.';
+    } else if (a.kind === 'conference_outcome') {
+      const isNoShow = a.conferenceStatus === 'No-Show';
+      db = {
+        parent_notified_at: now,
+        parent_notified_how: a.how,
+        parent_conference_status: a.conferenceStatus,
+        status: isNoShow ? 'Pending Reschedule' : 'Conference Attended',
+        step: isNoShow ? 'Schedule Conference' : 'Parent Conference Attendance',
+      };
+      local = {
+        parentNotifiedAt: now,
+        parentNotifiedHow: a.how,
+        parentConferenceStatus: a.conferenceStatus,
+        status: (isNoShow ? 'Pending Reschedule' : 'Conference Attended') as DisciplineCaseRecord['status'],
+        step: (isNoShow ? 'Schedule Conference' : 'Parent Conference Attendance') as DisciplineCaseRecord['step'],
+      };
+      msg = isNoShow
+        ? isTl
+          ? ' Naitala: Hindi sumipot ang magulang (No-Show). Mag-issue ng 2nd summons o i-reschedule.'
+          : ' Recorded: Parent did not attend (No-Show). Issue 2nd summons or reschedule.'
+        : isTl
+        ? ' Naitala: Dumalo ang magulang sa pagdinig. Na-unlock na ang Hakbang ng Desisyon!'
+        : ' Recorded: Parent attended conference hearing. Decision step is now unlocked!';
     } else if (a.kind === 'notified') {
       const isNoShow = a.conferenceStatus === 'No-Show';
       const activate = !isNoShow && c.sanctionStatus === 'Pending parent notice';
@@ -3952,6 +3991,11 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   onAction={(a) => void applyFlow(openCase, a)} 
                   onOpenStation={() => setStationCase(openCase)} 
                   onOpenPrint={() => setCallSlipCase(openCase)}
+                  appointments={appointments}
+                  onScheduleConference={(code) => {
+                    setOpenCaseCode(null);
+                    onScheduleConference?.(code);
+                  }}
                 />
                 
                 {stationCase && (

@@ -237,19 +237,34 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     };
   }, [signOutMs, onLockTerminal]);
 
-  /** 7-step flow: a parent who attended the conference is notified → that step is done (and a waiting sanction starts) */
+  /** 8-step flow: a parent who attended the conference is notified → updates attendance and unlocks Decision */
   const markParentNotified = (caseCode: string) => {
     const c = cases.find((x) => x.caseCode === caseCode);
-    if (!c || c.parentNotifiedAt || c.status === 'Resolved') return;
+    if (!c || c.status === 'Resolved') return;
     const now = new Date().toISOString();
     const activate = c.sanctionStatus === 'Pending parent notice';
-    const db: Record<string, unknown> = { parent_notified_at: now, parent_notified_how: 'Conference attended', ...(activate ? { sanction_status: 'Active', status: 'Sanction In Progress' } : {}) };
+    const db: Record<string, unknown> = {
+      parent_notified_at: now,
+      parent_notified_how: 'Conference attended (In-Person)',
+      parent_conference_status: 'Attended',
+      status: 'Conference Attended',
+      step: c.decidedAt ? 'Decision' : 'Parent Conference Attendance',
+      ...(activate ? { sanction_status: 'Active', status: 'Sanction In Progress' } : {})
+    };
     void updateCaseFlowInDb(caseCode, db).then((ok) => {
       if (!ok) return;
       setCases((prev) =>
         prev.map((x) =>
           x.caseCode === caseCode
-            ? { ...x, parentNotifiedAt: now, parentNotifiedHow: 'Conference attended', ...(activate ? { sanctionStatus: 'Active' as const, status: 'Sanction In Progress' as const } : {}) }
+            ? {
+                ...x,
+                parentNotifiedAt: now,
+                parentNotifiedHow: 'Conference attended (In-Person)',
+                parentConferenceStatus: 'Attended',
+                status: (activate ? 'Sanction In Progress' : 'Conference Attended') as DisciplineCaseRecord['status'],
+                step: (c.decidedAt ? 'Decision' : 'Parent Conference Attendance') as DisciplineCaseRecord['step'],
+                ...(activate ? { sanctionStatus: 'Active' as const } : {})
+              }
             : x
         )
       );
