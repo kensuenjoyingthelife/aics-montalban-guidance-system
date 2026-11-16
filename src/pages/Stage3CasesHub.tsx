@@ -16,6 +16,7 @@ import { PrintFormsWindow } from '../components/cases/PrintFormsWindow';
 import { EvidencePanel } from '../components/cases/EvidencePanel';
 import { FORM_TITLES, buildBatchCallSlipsHtml, buildFormHtml, printHtml, downloadFormDocument } from '../services/printForms';
 import { useConfirmChange } from '../components/ui/ConfirmChange';
+import { useLoading } from '../components/ui/LoadingCard';
 import { soundFX } from '../services/soundEngine';
 import { checkEmail } from '../services/validators';
 import { importMasterlistFile } from '../services/masterlistImportRunner';
@@ -131,6 +132,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   const { locale } = useLanguage();
   const isTl = locale === 'tl';
   const confirmChange = useConfirmChange();
+  const { startLoading, stopLoading } = useLoading();
 
   const [subTab, setSubTab] = useState<Stage3SubTab>(prefill ? 'add-report' : initialSubTab ?? 'add-report');
 
@@ -1526,8 +1528,15 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       msg = isTl ? ` Sarado na ang kaso ni ${c.studentName} kasama ang counseling notes.` : ` ${c.studentName}'s case is officially closed with counseling notes.`;
     }
     setFlowBusy(true);
+    const taskId = startLoading({
+      titleEn: 'Updating case due process...',
+      titleTl: 'Inia-update ang due process ng kaso...',
+      messageEn: 'Saving hearing records & syncing with database...',
+      messageTl: 'Inililigtas ang tala ng pagdinig sa secure database...',
+    });
     const saved = await updateCaseFlowInDb(c.caseCode, db);
     setFlowBusy(false);
+    stopLoading(taskId);
     if (!saved) return onTriggerToast(isTl ? ' Hindi na-save. I-check ang internet, tapos subukan ulit.' : ' Not saved. Check the internet, then try again.');
     setCases((prev) => prev.map((x) => (x.caseCode === c.caseCode ? { ...x, ...local } : x)));
     soundFX.playSuccessCheck();
@@ -1763,6 +1772,12 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
 
     // One request per 500 students (not one per student), and we know exactly what was saved
     setSavingMasterlist(true);
+    const taskId = startLoading({
+      titleEn: `Importing ${validRows.length} students to database...`,
+      titleTl: `Ina-upload ang ${validRows.length} estudyante sa database...`,
+      messageEn: 'Writing masterlist batch records, please do not close...',
+      messageTl: 'Inililigtas ang talaan sa masterlist, huwag isara ang window...',
+    });
     const updateIds = new Set(validRows.filter((r) => r.isUpdate).map((r) => r.studentNumber.trim()));
     const toInsert = newStudentRecords.filter((s) => !updateIds.has(s.studentNumber));
     const toUpdate = newStudentRecords.filter((s) => updateIds.has(s.studentNumber));
@@ -1770,6 +1785,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     const upd = toUpdate.length ? await updateStudentsProfileBatchInDb(toUpdate) : { saved: 0, failed: 0, failedIds: [] as string[] };
     const result = { saved: ins.saved + upd.saved, failed: ins.failed + upd.failed, failedIds: [...ins.failedIds, ...upd.failedIds] };
     setSavingMasterlist(false);
+    stopLoading(taskId);
     const failedSet = new Set(result.failedIds);
     const savedRecords = newStudentRecords.filter((s) => !failedSet.has(s.studentNumber));
     const savedNew = savedRecords.filter((s) => !updateIds.has(s.studentNumber));

@@ -162,6 +162,15 @@ export const CaseFlowPanel: React.FC<{
 
   // Inline Step 4 Conference Scheduler State
   const isReschedule = c.parentConferenceStatus === 'No-Show';
+
+  const [changeScheduleMode, setChangeScheduleMode] = useState<boolean>(isReschedule);
+
+  // Automatically ensure reschedule mode opens directly whenever case transitions to No-Show
+  useEffect(() => {
+    if (isReschedule) {
+      setChangeScheduleMode(true);
+    }
+  }, [isReschedule]);
   const suggestions = useMemo(
     () =>
       suggestSlots(appointments, {
@@ -178,7 +187,6 @@ export const CaseFlowPanel: React.FC<{
   const [schedSendNow, setSchedSendNow] = useState<boolean>(true);
   const [schedMsgLang, setSchedMsgLang] = useState<'taglish' | 'english'>('taglish');
   const [schedMsgEdited, setSchedMsgEdited] = useState<boolean>(false);
-  const [changeScheduleMode, setChangeScheduleMode] = useState<boolean>(false);
 
   const freeSlots = useMemo(() => freeSlotsOn(appointments, schedDate), [appointments, schedDate]);
 
@@ -550,8 +558,8 @@ export const CaseFlowPanel: React.FC<{
                 </div>
               )}
 
-              {/* If an active appointment already exists and user hasn't clicked "Change date" */}
-              {liveAppointment && !changeScheduleMode ? (
+              {/* If an active appointment already exists and user hasn't clicked "Change date", but not in No-Show reschedule */}
+              {liveAppointment && !changeScheduleMode && !isReschedule ? (
                 <div className="p-3.5 rounded-xl border border-emerald-300 dark:border-emerald-800/80 bg-emerald-50/70 dark:bg-emerald-950/30 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">

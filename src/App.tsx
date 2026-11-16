@@ -6,6 +6,7 @@ import { SoundProvider } from './services/soundEngine';
 import { AicsSplashLoader } from './components/auth/AicsSplashLoader';
 import { LoginGate } from './pages/LoginGate';
 import { ConfirmChangeProvider } from './components/ui/ConfirmChange';
+import { LoadingProvider } from './components/ui/LoadingCard';
 import { DashboardPage } from './pages/DashboardPage';
 import { StaffDirectoryAccount } from './services/authSecurityService';
 import { StudentAuthGate } from './pages/StudentAuthGate';
@@ -105,6 +106,7 @@ export const App: React.FC = () => {
       <ThemeProvider>
         <LanguageProvider>
           <ConfirmChangeProvider>
+            <LoadingProvider>
             <AicsSplashLoader
               visible={showSplash}
               onComplete={() => setShowSplash(false)}
@@ -184,6 +186,7 @@ export const App: React.FC = () => {
                 />
               )
             )}
+            </LoadingProvider>
           </ConfirmChangeProvider>
         </LanguageProvider>
       </ThemeProvider>
