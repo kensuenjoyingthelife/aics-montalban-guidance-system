@@ -108,6 +108,8 @@ interface Stage3CasesHubProps {
   initialSubTab?: Stage3SubTab;
   /** open the board already filtered (from a Dashboard alert) */
   initialCaseFlag?: 'overdue' | 'waiting' | null;
+  /** directly open a specific case code in the drawer */
+  initialOpenCaseCode?: string | null;
   /** start the New Case form from a student concern */
   prefill?: CasePrefill | null;
   /** the cases saved from that prefill (so the concern can be linked to them) */
@@ -128,6 +130,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   onScheduleConference,
   initialSubTab,
   initialCaseFlag,
+  initialOpenCaseCode,
   prefill,
   onPrefillSaved,
 }) => {
@@ -249,7 +252,14 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   const [callSlipCase, setCallSlipCase] = useState<DisciplineCaseRecord | null>(null);
   const [callSlipInitialForm, setCallSlipInitialForm] = useState<import('../services/printForms').FormKind | null>(null);
   // Case Details panel
-  const [openCaseCode, setOpenCaseCode] = useState<string | null>(null);
+  const [openCaseCode, setOpenCaseCode] = useState<string | null>(initialOpenCaseCode ?? null);
+
+  useEffect(() => {
+    if (initialOpenCaseCode) {
+      setOpenCaseCode(initialOpenCaseCode);
+      setSubTab('case-board');
+    }
+  }, [initialOpenCaseCode]);
   const [caseHistory, setCaseHistory] = useState<CaseHistoryEntry[] | null | 'loading'>('loading');
   const [caseEditing, setCaseEditing] = useState<boolean>(false);
   const [flowBusy, setFlowBusy] = useState(false);

@@ -519,7 +519,24 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
           </p>
         </div>
 
-        <div className="inline-flex p-1 rounded-xl saas-card-subtle gap-1">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Executive Indicator Badges: Did Not Attend (Red) & Tomorrow Conferences (Amber) */}
+          <div className="flex items-center gap-1.5 mr-1">
+            {unresolvedNoShows.length > 0 && (
+              <span className="px-2.5 py-1 rounded-lg bg-rose-100 dark:bg-rose-950/70 border border-rose-300 dark:border-rose-800 text-rose-800 dark:text-rose-200 text-xs font-extrabold flex items-center gap-1 shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
+                <span>{unresolvedNoShows.length} {isTl ? 'Hindi Dumalo' : 'Did Not Attend'}</span>
+              </span>
+            )}
+            {remindersDue.length > 0 && (
+              <span className="px-2.5 py-1 rounded-lg bg-amber-100 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs font-extrabold flex items-center gap-1 shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span>{remindersDue.length} {isTl ? 'Bukas' : 'Tomorrow'}</span>
+              </span>
+            )}
+          </div>
+
+          <div className="inline-flex p-1 rounded-xl saas-card-subtle gap-1">
           {(
             [
               ['schedule', isTl ? `Kailangang i-schedule · ${toSchedule.length}` : `To schedule · ${toSchedule.length}`, isTl ? 'Mga kasong wala pang schedule ng conference' : 'Cases that still need a conference date'],
@@ -543,6 +560,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
               {label}
             </button>
           ))}
+          </div>
         </div>
       </div>
 

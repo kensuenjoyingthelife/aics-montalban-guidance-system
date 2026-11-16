@@ -524,12 +524,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   // "To do" = conferences still waiting for attendance + follow-ups not yet done
   const todoCount = attendanceStats.scheduled + activeFollowUpCount;
 
+  const [casesInitialOpenCaseCode, setCasesInitialOpenCaseCode] = useState<string | null>(null);
+
   /** Opens the Cases page on a given tab (used by "+ New Case" and the Open Cases card). */
-  const openCasesTab = (tab: Stage3SubTab, flag: 'overdue' | 'waiting' | null = null, prefill: CasePrefill | null = null) => {
+  const openCasesTab = (tab: Stage3SubTab, flag: 'overdue' | 'waiting' | null = null, prefill: CasePrefill | null = null, directCaseCode: string | null = null) => {
     soundFX.playStepUnlock();
     setCasesPrefill(prefill);
     setCasesInitialTab(tab);
     setCasesInitialFlag(flag);
+    setCasesInitialOpenCaseCode(directCaseCode);
     setCasesOpenKey((k) => k + 1); // remount so the chosen tab opens even if Cases is already open
     setActiveCategory(MAIN_SIDEBAR_CATEGORIES[1]);
   };
@@ -1518,6 +1521,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             key={casesOpenKey}
             initialSubTab={casesInitialTab}
             initialCaseFlag={casesInitialFlag}
+            initialOpenCaseCode={casesInitialOpenCaseCode}
             prefill={casesPrefill}
             onPrefillSaved={(codes) => {
               const p = casesPrefill;
@@ -1557,11 +1561,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               const found = cases.find((c) => c.caseCode.toLowerCase() === caseCode.toLowerCase());
               if (found) {
                 setQuickSearch('');
-                openCasesTab('case-board');
-                setTimeout(() => {
-                  const cardEl = document.querySelector(`[data-case-card="${found.caseCode}"]`) as HTMLElement;
-                  if (cardEl) cardEl.click();
-                }, 150);
+                // Pass directCaseCode so Stage3CasesHub directly opens the modal
+                openCasesTab('case-board', null, null, found.caseCode);
               } else {
                 openParents('schedule', caseCode);
               }
@@ -2066,11 +2067,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                   const found = cases.find((c) => c.caseCode.toLowerCase() === (apt.caseId || '').toLowerCase());
                                   if (found) {
                                     setQuickSearch('');
-                                    openCasesTab('case-board');
-                                    setTimeout(() => {
-                                      const cardEl = document.querySelector(`[data-case-card="${found.caseCode}"]`) as HTMLElement;
-                                      if (cardEl) cardEl.click();
-                                    }, 150);
+                                    openCasesTab('case-board', null, null, found.caseCode);
                                   } else {
                                     openParents('schedule', apt.caseId || undefined);
                                   }
