@@ -1506,6 +1506,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             onTriggerToast={triggerToast}
             onOpenParentComposer={openComposerForParent}
             appointments={appointments}
+            setAppointments={setAppointments}
             onScheduleConference={(caseCode) => openParents('schedule', caseCode)}
           />
         ) : activeCategory.id === 'parents-hub' ? (

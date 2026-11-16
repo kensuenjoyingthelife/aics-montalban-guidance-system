@@ -58,8 +58,11 @@ import {
   insertActivityLogInDb,
   updateDisciplineCaseDetailsInDb,
   fetchCaseHistoryFromDb,
+  insertAppointmentInDb,
+  updateAppointmentInDb,
   CaseHistoryEntry,
 } from '../services/supabaseClient';
+import { sendParentMessage } from '../services/parentComms';
 
 export type Stage3SubTab = 'add-report' | 'case-board' | 'closed-cases' | 'students' | 'masterlist';
 
@@ -86,6 +89,7 @@ interface Stage3CasesHubProps {
   onTriggerToast: (msg: string, undo?: () => void, next?: ToastNextAction) => void;
   /** all parent conferences (to show the next one on each case) */
   appointments?: ParentAppointmentItem[];
+  setAppointments?: React.Dispatch<React.SetStateAction<ParentAppointmentItem[]>>;
   /** open the Parents page with the schedule window for this case */
   onScheduleConference?: (caseCode: string) => void;
   onOpenParentComposer: (params: {
@@ -117,6 +121,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   onTriggerToast,
   onOpenParentComposer,
   appointments = [],
+  setAppointments,
   onScheduleConference,
   initialSubTab,
   initialCaseFlag,
@@ -1351,11 +1356,70 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       };
       const updatedHistory = [...(c.summonsHistory || []), historyItem];
 
+      // If scheduled inline inside Step 4, create/update the appointment in Parents Hub & send notice
+      if (a.inlineSchedule) {
+        const stu = students.find((s) => s.studentNumber === c.studentNumber);
+        const aptId = `APT-${Date.now().toString(36).toUpperCase()}${Math.floor(Math.random() * 90 + 10)}`;
+        const newApt: ParentAppointmentItem = {
+          id: aptId,
+          caseId: c.caseCode,
+          studentName: c.studentName,
+          studentNumber: c.studentNumber,
+          initials: stu?.initials || 'ST',
+          gradeSection: c.gradeSection,
+          offenseTypeEn: c.offenseTitleEn,
+          offenseTypeTl: c.offenseTitleTl,
+          severityTagEn: c.severity,
+          severityTagTl: c.severity,
+          severityTone: /serious|grave|major|escalat/i.test(c.severity) ? 'rose' : /2nd|consecutive/i.test(c.severity) ? 'amber' : 'cobalt',
+          parentName: stu?.parentName || 'Parent / Guardian',
+          relationship: stu?.parentRelationship || 'Parent / Guardian',
+          parentPhone: stu?.parentPhone || '',
+          parentEmail: stu?.parentEmail || '',
+          timeSlot: a.inlineSchedule.timeSlot,
+          date: a.inlineSchedule.date,
+          status: 'Scheduled',
+          noticeReceived: false,
+          reminderSentAt: null,
+          rescheduledFrom: a.inlineSchedule.rescheduleFromId,
+        };
+
+        void insertAppointmentInDb(newApt);
+        if (a.inlineSchedule.rescheduleFromId) {
+          void updateAppointmentInDb(a.inlineSchedule.rescheduleFromId, { status: 'Rescheduled' });
+        }
+        setAppointments?.((list) => [
+          ...list.map((item) =>
+            a.inlineSchedule?.rescheduleFromId && item.id === a.inlineSchedule.rescheduleFromId
+              ? { ...item, status: 'Rescheduled' as const }
+              : item
+          ),
+          newApt,
+        ]);
+
+        if (a.inlineSchedule.sendNow && stu) {
+          void sendParentMessage({
+            channel: a.inlineSchedule.channel,
+            phone: stu.parentPhone,
+            email: stu.parentEmail,
+            message: a.inlineSchedule.message,
+            kind: a.inlineSchedule.rescheduleFromId ? 'reschedule' : 'notice',
+            parentName: stu.parentName,
+            studentName: c.studentName,
+            gradeSection: c.gradeSection,
+            caseCode: c.caseCode,
+            appointmentCode: aptId,
+            scheduleText: a.targetDate || `${a.inlineSchedule.date} ${a.inlineSchedule.timeSlot}`,
+          });
+        }
+      }
+
       db = {
         conference_scheduled_at: now,
         conference_target_date: a.targetDate || now,
         summons_count: nextCount,
         summons_history: JSON.stringify(updatedHistory),
+        parent_conference_status: 'Pending',
         status: 'Conference Scheduled',
         step: 'Schedule Conference',
       };
@@ -1364,12 +1428,13 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
         conferenceTargetDate: a.targetDate || now,
         summonsCount: nextCount,
         summonsHistory: updatedHistory,
+        parentConferenceStatus: 'Pending',
         status: 'Conference Scheduled' as const,
         step: 'Schedule Conference' as const,
       };
       msg = isTl
-        ? `Naitala ang Ika-${nextCount} Patawag (Summons #${nextCount}). Susunod: Pagharap ng magulang.`
-        : `Recorded Summons #${nextCount}. Next: Parent conference attendance.`;
+        ? `Naitala ang Ika-${nextCount} Patawag (${a.targetDate || ''}). Susunod: Step 5 (Pagharap ng magulang).`
+        : `Scheduled Summons #${nextCount} (${a.targetDate || ''}). Advanced to Step 5 (Parent attendance).`;
     } else if (a.kind === 'conference_outcome') {
       const isNoShow = a.conferenceStatus === 'No-Show';
       const currentCount = c.summonsCount || 1;
@@ -2876,7 +2941,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                           {step.action === 'schedule' && (
                             <button
                               type="button"
-                              onClick={() => onScheduleConference?.(c.caseCode)}
+                              onClick={() => openCaseDetails(c)}
                               className="btn-press px-3.5 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap"
                             >
                               {isTl ? 'Mag-schedule' : 'Schedule conference'}
@@ -4094,8 +4159,9 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               <div className="overflow-y-auto clean-scroll space-y-4 p-5 bg-[#F8FAFC] dark:bg-[#070D1B]">
                 {/* 1. 7-Step Progressive Flow Stepper & Action Card */}
                 <CaseFlowPanel 
-                  key={openCase.caseCode + (openCase.step ?? '') + (openCase.decidedAt ?? '')} 
-                  c={openCase} 
+                  key={openCase.caseCode + (openCase.step ?? '') + (openCase.decidedAt ?? '') + (openCase.parentConferenceStatus ?? '')} 
+                  c={openCase}
+                  student={openCaseStudent ?? undefined}
                   isTl={isTl} 
                   busy={flowBusy} 
                   suggestedSanction={suggestedSanctionFor(openCase)} 
@@ -4103,10 +4169,6 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   onOpenStation={() => setStationCase(openCase)} 
                   onOpenPrint={() => setCallSlipCase(openCase)}
                   appointments={appointments}
-                  onScheduleConference={(code) => {
-                    setOpenCaseCode(null);
-                    onScheduleConference?.(code);
-                  }}
                 />
                 
                 {stationCase && (

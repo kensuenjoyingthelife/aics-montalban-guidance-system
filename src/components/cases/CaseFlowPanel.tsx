@@ -1,8 +1,8 @@
 // The dynamic progressive due process case flow:
 // For 1st Minor: 5 steps: Reported → Student Called → Explanation → Decision → Closed
 // For Major / 2nd Minor / Serious: 8 steps: Reported → Student Called → Explanation → Schedule Conference → Parent Conference Attendance → Decision → Follow-Up → Closed
-import React, { useMemo, useState } from 'react';
-import { Calendar, Phone, Check, AlertTriangle, Printer, Clock, RotateCcw, ShieldCheck, FileText } from 'lucide-react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { Calendar, Phone, Check, AlertTriangle, Printer, Clock, RotateCcw, ShieldCheck, FileText, Mail } from 'lucide-react';
 import type { ParentAppointmentItem } from '../../data/dashboardMockData';
 import {
   CASE_STEPS,
@@ -10,12 +10,28 @@ import {
   MAJOR_CASE_STEPS,
   type CaseStep,
   type DisciplineCaseRecord,
+  type StudentRecord,
 } from '../../data/stage3MockData';
+import { suggestSlots, freeSlotsOn, slotLabel, todayISO, addDays, isOfficeDay, parseISO } from '../../services/scheduling';
+import { findSensitiveWords, type Channel } from '../../services/parentComms';
+import { smsInfo } from '../../services/smsText';
+import { useAppConfig } from '../../services/appConfig';
 
 export type FlowAction =
   | { kind: 'call' }
   | { kind: 'explanation'; text: string }
-  | { kind: 'schedule_conference'; targetDate?: string }
+  | {
+      kind: 'schedule_conference';
+      targetDate?: string;
+      inlineSchedule?: {
+        date: string;
+        timeSlot: string;
+        sendNow: boolean;
+        channel: Channel;
+        message: string;
+        rescheduleFromId?: string;
+      };
+    }
   | { kind: 'conference_outcome'; how: string; conferenceStatus: 'Attended' | 'No-Show'; notes?: string }
   | { kind: 'notified'; how: string; conferenceStatus?: 'Attended' | 'No-Show' }
   | { kind: 'decision'; decision: string; sanction: string }
@@ -110,6 +126,7 @@ const fmt = (iso?: string | null, tl = false) =>
 
 export const CaseFlowPanel: React.FC<{
   c: DisciplineCaseRecord;
+  student?: StudentRecord;
   isTl: boolean;
   busy: boolean;
   suggestedSanction: string;
@@ -122,15 +139,93 @@ export const CaseFlowPanel: React.FC<{
   appointments?: ParentAppointmentItem[];
   /** open the real Parent Conference scheduling modal in ParentsHub */
   onScheduleConference?: (caseCode: string) => void;
-}> = ({ c, isTl, busy, suggestedSanction, onAction, onOpenStation, onOpenPrint, appointments = [], onScheduleConference }) => {
+}> = ({ c, student, isTl, busy, suggestedSanction, onAction, onOpenStation, onOpenPrint, appointments = [] }) => {
   const { done, next, activeSteps, isMinor } = useMemo(() => flowState(c), [c]);
+  const cfg = useAppConfig();
 
   // Find live scheduled appointment for this case
   const liveAppointment = useMemo(() => {
     return appointments.find(
-      (a) => a.caseId.toLowerCase() === c.caseCode.toLowerCase() && a.status !== 'Rescheduled'
+      (a) => a.caseId.toLowerCase() === c.caseCode.toLowerCase() && a.status !== 'Rescheduled' && a.status !== 'Did Not Attend'
     );
   }, [appointments, c.caseCode]);
+
+  const officeSummary = useMemo(() => {
+    const days = (cfg.officeHours?.days ?? ['Mon', 'Tue', 'Wed', 'Thu']).join('–');
+    const start = cfg.officeHours?.start ?? '08:00';
+    const end = cfg.officeHours?.end ?? '17:00';
+    return {
+      fullEn: `${days}, ${start} to ${end}`,
+      fullTl: `${days}, ${start} hanggang ${end}`,
+    };
+  }, [cfg.officeHours]);
+
+  // Inline Step 4 Conference Scheduler State
+  const isReschedule = c.parentConferenceStatus === 'No-Show';
+  const suggestions = useMemo(
+    () =>
+      suggestSlots(appointments, {
+        fromISO: addDays(todayISO(), 1),
+        prefDays: student?.parentPrefDays,
+        prefTime: student?.parentPrefTime,
+        limit: 6,
+      }),
+    [appointments, student?.parentPrefDays, student?.parentPrefTime]
+  );
+  const [schedDate, setSchedDate] = useState<string>(suggestions[0]?.date ?? addDays(todayISO(), 1));
+  const [schedStart, setSchedStart] = useState<number | null>(suggestions[0]?.start ?? null);
+  const [schedChannel, setSchedChannel] = useState<Channel>(student?.parentEmail ? 'both' : 'sms');
+  const [schedSendNow, setSchedSendNow] = useState<boolean>(true);
+  const [schedMsgLang, setSchedMsgLang] = useState<'taglish' | 'english'>('taglish');
+  const [schedMsgEdited, setSchedMsgEdited] = useState<boolean>(false);
+  const [changeScheduleMode, setChangeScheduleMode] = useState<boolean>(false);
+
+  const freeSlots = useMemo(() => freeSlotsOn(appointments, schedDate), [appointments, schedDate]);
+
+  const dayFmt = useMemo(
+    () => new Intl.DateTimeFormat(isTl ? 'fil-PH' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+    [isTl]
+  );
+  const dayTitle = (iso: string) => {
+    const t = todayISO();
+    const tmw = addDays(t, 1);
+    if (iso === t) return isTl ? 'Ngayong araw' : 'Today';
+    if (iso === tmw) return isTl ? 'Bukas' : 'Tomorrow';
+    const d = parseISO(iso);
+    return isNaN(d.getTime()) ? iso : dayFmt.format(d);
+  };
+
+  const buildInlineMsg = (d: string, s: number | null, lang: 'taglish' | 'english') => {
+    if (s === null) return '';
+    const when = `${dayTitle(d)}, ${slotLabel(s)}`;
+    if (lang === 'english') {
+      if (isReschedule) {
+        return `AICS Guidance Office: Good day. The parent conference regarding ${c.studentName} has been rescheduled to ${when}. Our office is open Mon-Thu 8AM-5PM. Thank you.`;
+      }
+      return `AICS Guidance Office: Good day. You are requested to attend a parent conference regarding ${c.studentName} on ${when} at the Guidance Office. Thank you.`;
+    }
+    if (isReschedule) {
+      return `AICS Guidance: Magandang araw po. Inilipat po sa ${when} ang Parent Conference para kay ${c.studentName}. Bukas kami Lunes-Huwebes 8AM-5PM. Salamat po.`;
+    }
+    return `AICS Guidance: Magandang araw po. Inaanyayahan po kayo sa Parent Conference para kay ${c.studentName} sa ${when} sa Guidance Office. Salamat po.`;
+  };
+
+  const [schedMessage, setSchedMessage] = useState<string>(() => buildInlineMsg(schedDate, schedStart, 'taglish'));
+  useEffect(() => {
+    if (!schedMsgEdited) {
+      setSchedMessage(buildInlineMsg(schedDate, schedStart, schedMsgLang));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schedDate, schedStart, schedMsgLang]);
+
+  const sensitiveWords = useMemo(() => findSensitiveWords(schedMessage), [schedMessage]);
+  const schedDateBad = !isOfficeDay(schedDate) || schedDate < todayISO();
+  const canSaveInlineSched =
+    !schedDateBad &&
+    schedStart !== null &&
+    freeSlots.includes(schedStart) &&
+    !busy &&
+    (!schedSendNow || (schedMessage.trim().length > 5 && sensitiveWords.length === 0));
 
   const [text, setText] = useState(c.explanation ?? '');
   const [how, setHow] = useState(c.parentNotifiedHow || 'Conference attended (In-Person)');
@@ -410,7 +505,7 @@ export const CaseFlowPanel: React.FC<{
             </div>
           )}
 
-          {/* Major Offense Step 4: Schedule Conference (Parent Summons) */}
+          {/* Major Offense Step 4: Schedule Conference (Embedded Inline Scheduler) */}
           {next === 'Schedule Conference' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -420,8 +515,8 @@ export const CaseFlowPanel: React.FC<{
                   </p>
                   <p className="text-xs text-[#64748B] dark:text-[#94A8D0] mt-0.5">
                     {isTl
-                      ? 'I-schedule ang conference sa Parents Hub bago magpataw ng desisyon.'
-                      : 'Schedule the parent conference via Parents Hub before rendering a ruling.'}
+                      ? 'Pumili ng bakanteng araw at oras at ipadala ang abiso nang hindi umaalis sa kasong ito.'
+                      : 'Pick a free date and time slot and send the parent summons directly inside this case.'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -441,94 +536,345 @@ export const CaseFlowPanel: React.FC<{
                 <div className="p-3 rounded-xl border border-rose-300 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/20 flex items-start gap-2.5">
                   <RotateCcw className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                   <div className="text-xs text-rose-950 dark:text-rose-200">
-                    <p className="font-extrabold">
+                    <p className="font-bold">
                       {isTl
                         ? `Hindi sumipot (No-Show) ang magulang sa nakaraang Summons #${c.summonsCount || 1}.`
                         : `Parent was a No-Show on previous Summons #${c.summonsCount || 1}.`}
                     </p>
-                    <p className="text-[11px] text-rose-800 dark:text-rose-300 mt-0.5 leading-relaxed">
+                    <p className="text-xs text-rose-800 dark:text-rose-300 mt-0.5 leading-relaxed">
                       {isTl
-                        ? 'Alinsunod sa DepEd DO 40, mag-isyu ng panibagong petsa ng patawag (Re-summons) sa Parents Hub o mag-print ng follow-up call slip.'
-                        : 'Pursuant to DepEd DO 40, issue a subsequent summons date in Parents Hub or print an official follow-up summons form.'}
+                        ? 'Pumili ng bagong petsa at oras sa ibaba para sa susunod na patawag (Re-summons) bago mag-desisyon.'
+                        : 'Select a new date and time below to issue the next summons before rendering a decision.'}
                     </p>
                   </div>
                 </div>
               )}
 
-              {/* Show Live Scheduled Appointment from ParentsHub if already exists */}
-              {liveAppointment ? (
-                <div className="p-3.5 rounded-xl border border-emerald-300 dark:border-emerald-800/80 bg-emerald-50/70 dark:bg-emerald-950/30 space-y-2">
+              {/* If an active appointment already exists and user hasn't clicked "Change date" */}
+              {liveAppointment && !changeScheduleMode ? (
+                <div className="p-3.5 rounded-xl border border-emerald-300 dark:border-emerald-800/80 bg-emerald-50/70 dark:bg-emerald-950/30 space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-black uppercase text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
                       <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      {isTl ? 'May Naka-schedule nang Kumperensya sa Parents Hub' : 'Active Conference Scheduled in Parents Hub'}
+                      {isTl ? 'May naka-schedule nang conference' : 'Active conference scheduled'}
                     </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-200/80 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200">
-                      {liveAppointment.status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setChangeScheduleMode(true)}
+                        className="text-xs font-semibold text-[#1E469B] dark:text-[#7CB8F7] hover:underline"
+                      >
+                        {isTl ? 'Palitan ang araw/oras' : 'Change date/time'}
+                      </button>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-200/80 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200">
+                        {liveAppointment.status}
+                      </span>
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                     <div>
-                      <span className="text-[#64748B] dark:text-[#94A8D0] block text-[10px] font-bold uppercase">{isTl ? 'Araw at Oras' : 'Date & Time'}</span>
-                      <span className="font-bold text-[#0F172A] dark:text-white">{liveAppointment.date} · {liveAppointment.timeSlot}</span>
+                      <span className="text-[#64748B] dark:text-[#94A8D0] block text-xs font-semibold">{isTl ? 'Araw at oras' : 'Date & time'}</span>
+                      <span className="font-bold text-[#0F172A] dark:text-white">{dayTitle(liveAppointment.date)} ({liveAppointment.date}) · {liveAppointment.timeSlot}</span>
                     </div>
                     <div>
-                      <span className="text-[#64748B] dark:text-[#94A8D0] block text-[10px] font-bold uppercase">{isTl ? 'Magulang' : 'Parent Contact'}</span>
+                      <span className="text-[#64748B] dark:text-[#94A8D0] block text-xs font-semibold">{isTl ? 'Magulang' : 'Parent contact'}</span>
                       <span className="font-semibold text-[#0F172A] dark:text-white">{liveAppointment.parentName} ({liveAppointment.parentPhone || 'No phone'})</span>
                     </div>
                   </div>
-                  <div className="pt-2 border-t border-emerald-200 dark:border-emerald-900/60 flex items-center justify-between gap-2">
-                    <p className="text-[11px] text-emerald-800 dark:text-emerald-300 font-semibold">
-                      {isTl ? 'Naka-set na ang iskedyul. Pindutin ang patotoo upang pumunta sa Pagharap ng Magulang.' : 'Schedule is set. Confirm to proceed to attendance verification.'}
-                    </p>
+                  <div className="pt-2 border-t border-emerald-200 dark:border-emerald-900/60 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      {onOpenPrint && (
+                        <button
+                          type="button"
+                          onClick={onOpenPrint}
+                          className="btn-press px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-[#0B1527] text-xs font-semibold text-[#0F172A] dark:text-white flex items-center gap-1.5"
+                        >
+                          <Printer className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
+                          {isTl ? 'I-print ang Call Slip' : 'Print Call Slip'}
+                        </button>
+                      )}
+                      <span className="text-xs text-emerald-800 dark:text-emerald-300 font-medium">
+                        {isTl ? 'Pindutin ang kumpirma para tumuloy sa Step 5 (Attendance).' : 'Confirm to advance to Step 5 (Attendance).'}
+                      </span>
+                    </div>
                     <button
                       type="button"
                       data-flow="schedule-conference"
                       disabled={busy}
                       onClick={() => onAction({ kind: 'schedule_conference', targetDate: `${liveAppointment.date} ${liveAppointment.timeSlot}` })}
-                      className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs active:scale-[0.97]"
+                      className="btn-press px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs"
                     >
-                      {isTl ? '✓ Kumpirmahin at Magpatuloy' : '✓ Confirm & Proceed'}
+                      {isTl ? 'Kumpirmahin at magpatuloy' : 'Confirm & proceed'}
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="p-4 rounded-xl border border-amber-300 dark:border-amber-800/80 bg-amber-50/60 dark:bg-amber-950/20 space-y-3">
-                  <div className="flex items-start gap-2.5">
-                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-xs font-bold text-amber-900 dark:text-amber-200">
-                        {isTl ? 'Wala pang pormal na iskedyul ng kumperensya sa Parents Hub.' : 'No parent conference scheduled yet for this case in Parents Hub.'}
-                      </p>
-                      <p className="text-[11px] text-amber-800 dark:text-amber-300/90 mt-0.5">
-                        {isTl
-                          ? 'I-click ang button sa ibaba upang buksan ang opisyal na Parents Hub Calendar kung saan mapipili ang bakanteng oras at maipapadala ang awtomatikong SMS sa magulang.'
-                          : 'Click below to open the official Parents Hub Calendar with smart free slot finder and automated parent SMS summons.'}
-                      </p>
+                /* FULL EMBEDDED PARENT CONFERENCE SCHEDULER INSIDE STEP 4 */
+                <div className="p-3.5 rounded-xl border border-[#CBD5E1] dark:border-[#223555] bg-[#F8FAFC] dark:bg-[#0F182C] space-y-3">
+                  {/* Parent info summary */}
+                  {student && (
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[#E2E8F0] dark:border-[#1E2E4E] text-xs">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-semibold text-[#64748B] dark:text-[#94A3B8]">{isTl ? 'Magulang:' : 'Parent:'}</span>
+                        <span className="font-bold text-[#0F172A] dark:text-white">{student.parentName || '—'}</span>
+                        {student.parentPhone && (
+                          <span className="font-mono font-semibold text-[#1E469B] dark:text-[#7CB8F7]">· {student.parentPhone}</span>
+                        )}
+                        {student.parentEmail && (
+                          <span className="text-[#64748B] dark:text-[#94A3B8]">· {student.parentEmail}</span>
+                        )}
+                      </div>
+                      {liveAppointment && changeScheduleMode && (
+                        <button
+                          type="button"
+                          onClick={() => setChangeScheduleMode(false)}
+                          className="text-xs font-semibold text-[#64748B] hover:text-[#0F172A] dark:hover:text-white"
+                        >
+                          {isTl ? 'Kanselahin ang pagpapalit' : 'Keep current schedule'}
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Suggested Free Slots */}
+                  <div className="space-y-1.5">
+                    <span className="block text-xs font-semibold text-[#0F172A] dark:text-white">
+                      {isTl ? 'Mungkahing bakanteng oras (1-click):' : 'Suggested free times (1-click):'}
+                    </span>
+                    <div className="flex flex-wrap gap-1.5" data-inline-suggestions>
+                      {suggestions.length === 0 && (
+                        <span className="text-xs text-[#64748B]">{isTl ? 'Pumili ng araw sa ibaba.' : 'Pick a date below.'}</span>
+                      )}
+                      {suggestions.map((s) => {
+                        const isSelected = s.date === schedDate && s.start === schedStart;
+                        return (
+                          <button
+                            key={s.date + s.start}
+                            type="button"
+                            onClick={() => {
+                              setSchedDate(s.date);
+                              setSchedStart(s.start);
+                            }}
+                            className={`btn-press px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors ${
+                              isSelected
+                                ? 'bg-[#1E469B] border-[#1E469B] text-white shadow-xs'
+                                : 'bg-white dark:bg-[#0B1527] border-[#CBD5E1] dark:border-[#253B66] text-[#0F172A] dark:text-white hover:border-[#1E469B]'
+                            }`}
+                          >
+                            {dayTitle(s.date)} · {s.label.split('–')[0].trim()}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    {onScheduleConference && (
-                      <button
-                        type="button"
-                        onClick={() => onScheduleConference(c.caseCode)}
-                        className="px-4 py-2 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-extrabold flex items-center gap-1.5 shadow-sm active:scale-[0.97] transition-all"
+                  {/* Manual Date & Time Slot Picker */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="font-semibold text-[#0F172A] dark:text-white" htmlFor="inline-conf-date">
+                          {isTl ? 'O pumili ng araw' : 'Or pick a day'}
+                        </label>
+                        <span className="text-xs font-medium text-[#1E469B] dark:text-[#7CB8F7]">
+                          {isTl ? officeSummary.fullTl : officeSummary.fullEn}
+                        </span>
+                      </div>
+                      <input
+                        id="inline-conf-date"
+                        type="date"
+                        min={todayISO()}
+                        value={schedDate}
+                        onChange={(e) => {
+                          setSchedDate(e.target.value);
+                          setSchedStart(null);
+                        }}
+                        className={`w-full px-3 py-1.5 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-semibold text-[#0F172A] dark:text-white ${
+                          schedDateBad ? 'ring-2 ring-rose-500' : ''
+                        }`}
+                      />
+                      {schedDateBad && (
+                        <p className="mt-1 text-xs font-medium text-rose-600 dark:text-rose-400">
+                          {schedDate < todayISO()
+                            ? isTl ? 'Lumipas na ang araw na ito.' : 'This day has passed.'
+                            : isTl ? `Bukas lamang tuwing ${officeSummary.fullTl}.` : `Open ${officeSummary.fullEn} only.`}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-[#0F172A] dark:text-white mb-1" htmlFor="inline-conf-time">
+                        {isTl ? 'Oras (45 min bawat slot)' : 'Time slot (45 mins)'}
+                      </label>
+                      <select
+                        id="inline-conf-time"
+                        value={schedStart ?? ''}
+                        onChange={(e) => setSchedStart(e.target.value === '' ? null : Number(e.target.value))}
+                        disabled={schedDateBad}
+                        className="w-full px-3 py-1.5 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-semibold text-[#0F172A] dark:text-white"
                       >
-                        <Calendar className="w-3.5 h-3.5" />
-                        {isTl ? 'Buksan ang Iskedyul ng Kumperensya (Parents Hub & SMS)' : 'Open Parent Scheduling & SMS (Parents Hub)'}
-                      </button>
+                        <option value="">
+                          {schedDateBad
+                            ? '—'
+                            : freeSlots.length
+                            ? isTl ? 'Pumili ng oras' : 'Pick a time'
+                            : isTl ? 'Puno na ang araw na ito' : 'This day is full'}
+                        </option>
+                        {freeSlots.map((s) => (
+                          <option key={s} value={s}>
+                            {slotLabel(s)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Send Notice Toggle + Channel + Message Preview */}
+                  <div className="space-y-2 pt-1 border-t border-[#E2E8F0] dark:border-[#1E2E4E]">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <label className="inline-flex items-center gap-2 text-xs font-semibold text-[#0F172A] dark:text-white cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={schedSendNow}
+                          onChange={(e) => setSchedSendNow(e.target.checked)}
+                          className="w-4 h-4 accent-[#1E469B]"
+                        />
+                        {isTl ? 'Ipadala ang abiso sa magulang ngayon' : 'Send notice to parent now'}
+                      </label>
+
+                      {schedSendNow && (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {(['sms', 'gmail', 'both'] as Channel[]).map((ch) => (
+                            <button
+                              key={ch}
+                              type="button"
+                              disabled={ch !== 'sms' && !student?.parentEmail}
+                              onClick={() => setSchedChannel(ch)}
+                              className={`px-2.5 py-1 rounded-md text-xs font-semibold border disabled:opacity-40 ${
+                                schedChannel === ch
+                                  ? 'bg-[#1E469B] border-[#1E469B] text-white'
+                                  : 'bg-white dark:bg-[#0B1527] border-[#CBD5E1] dark:border-[#253B66] text-[#475569] dark:text-[#94A8D0]'
+                              }`}
+                            >
+                              {ch === 'sms' ? 'SMS' : ch === 'gmail' ? 'Email' : 'SMS + Email'}
+                            </button>
+                          ))}
+                          <div className="inline-flex rounded-md border border-[#CBD5E1] dark:border-[#253B66] p-0.5 bg-white dark:bg-[#0B1527]">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSchedMsgLang('taglish');
+                                setSchedMsgEdited(false);
+                                setSchedMessage(buildInlineMsg(schedDate, schedStart, 'taglish'));
+                              }}
+                              className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                                schedMsgLang === 'taglish' ? 'bg-[#1E469B] text-white' : 'text-[#475569] dark:text-[#94A8D0]'
+                              }`}
+                            >
+                              Taglish
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSchedMsgLang('english');
+                                setSchedMsgEdited(false);
+                                setSchedMessage(buildInlineMsg(schedDate, schedStart, 'english'));
+                              }}
+                              className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                                schedMsgLang === 'english' ? 'bg-[#1E469B] text-white' : 'text-[#475569] dark:text-[#94A8D0]'
+                              }`}
+                            >
+                              English
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {schedSendNow && (
+                      <div className="space-y-1">
+                        <textarea
+                          rows={3}
+                          value={schedMessage}
+                          onChange={(e) => {
+                            setSchedMessage(e.target.value);
+                            setSchedMsgEdited(true);
+                          }}
+                          className={`w-full px-3 py-2 rounded-lg border bg-white dark:bg-[#0B1527] text-xs font-medium text-[#0F172A] dark:text-white leading-relaxed resize-y ${
+                            sensitiveWords.length ? 'border-rose-500 ring-1 ring-rose-500' : 'border-[#CBD5E1] dark:border-[#253B66]'
+                          }`}
+                        />
+                        {sensitiveWords.length > 0 ? (
+                          <p className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+                            {isTl
+                              ? `Bawal ang detalye ng offense sa mensahe ("${sensitiveWords.join('", "')}"). `
+                              : `No offense details allowed ("${sensitiveWords.join('", "')}"). `}
+                            <button
+                              type="button"
+                              className="underline font-bold"
+                              onClick={() => {
+                                setSchedMsgEdited(false);
+                                setSchedMessage(buildInlineMsg(schedDate, schedStart, schedMsgLang));
+                              }}
+                            >
+                              {isTl ? 'Ibalik sa ligtas na mensahe' : 'Restore safe message'}
+                            </button>
+                          </p>
+                        ) : (
+                          <p className="text-xs text-[#64748B] dark:text-[#94A8D0]">
+                            {(() => {
+                              const info = smsInfo(schedMessage);
+                              return isTl
+                                ? `${info.length} letra · ${info.parts} SMS · RA 10173 compliant (walang detalye ng offense)`
+                                : `${info.length} characters · ${info.parts} SMS · RA 10173 compliant (no offense details)`;
+                            })()}
+                          </p>
+                        )}
+                      </div>
                     )}
-                    {onOpenPrint && (
+                  </div>
+
+                  {/* Action Bar */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#E2E8F0] dark:border-[#1E2E4E]">
+                    {onOpenPrint ? (
                       <button
                         type="button"
                         onClick={onOpenPrint}
-                        className="px-3.5 py-2 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-bold text-[#0B1F4D] dark:text-white hover:border-[#1E469B] flex items-center gap-1.5 active:scale-[0.97]"
+                        className="btn-press px-3 py-1.5 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-semibold text-[#0F172A] dark:text-white hover:border-[#1E469B] flex items-center gap-1.5"
                       >
                         <Printer className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
-                        {isTl ? 'Mag-print ng Call Slip / Summons' : 'Print Call Slip / Summons Form'}
+                        {isTl ? 'Mag-print ng Call Slip / Summons' : 'Print Call Slip / Summons'}
                       </button>
-                    )}
+                    ) : <span />}
+
+                    <button
+                      type="button"
+                      data-flow="schedule-conference-inline"
+                      disabled={!canSaveInlineSched || schedStart === null}
+                      onClick={() => {
+                        if (schedStart === null) return;
+                        const slotStr = slotLabel(schedStart);
+                        onAction({
+                          kind: 'schedule_conference',
+                          targetDate: `${dayTitle(schedDate)} · ${slotStr}`,
+                          inlineSchedule: {
+                            date: schedDate,
+                            timeSlot: slotStr,
+                            sendNow: schedSendNow,
+                            channel: schedChannel,
+                            message: schedMessage.trim(),
+                            rescheduleFromId: liveAppointment?.id,
+                          },
+                        });
+                        setChangeScheduleMode(false);
+                      }}
+                      className="btn-press px-4 py-2 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold disabled:opacity-50 shadow-xs"
+                    >
+                      {schedStart === null
+                        ? isTl ? 'Pumili muna ng oras' : 'Pick a time first'
+                        : isReschedule || changeScheduleMode
+                        ? isTl ? 'I-save ang bagong schedule at tumuloy sa Step 5' : 'Save new schedule & proceed to Step 5'
+                        : isTl ? 'I-schedule ang conference at tumuloy sa Step 5' : 'Schedule conference & proceed to Step 5'}
+                    </button>
                   </div>
                 </div>
               )}
