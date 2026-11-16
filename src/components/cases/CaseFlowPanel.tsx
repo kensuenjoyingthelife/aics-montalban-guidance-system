@@ -1307,6 +1307,43 @@ export const CaseFlowPanel: React.FC<{
           </div>
         </div>
       )}
+
+      {/* Summons & Reschedule History Tracker (For Case Documentation & Closure PDF) */}
+      {(c.summonsCount || 0) > 0 && (
+        <div className="rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/40 dark:bg-amber-950/20 overflow-hidden shadow-xs mt-3">
+          <div className="px-4 py-2 bg-amber-100/60 dark:bg-amber-900/40 border-b border-amber-200 dark:border-amber-900/60 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <RotateCcw className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span className="text-xs font-bold text-amber-950 dark:text-amber-200">
+                {isTl ? 'Kasaysayan ng mga Patawag sa Magulang (Summons Record)' : 'Parent Summons & Attendance History'}
+              </span>
+            </div>
+            <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-amber-200/80 dark:bg-amber-800/60 text-amber-950 dark:text-amber-100">
+              {c.summonsCount || 1} {isTl ? 'Patawag' : 'Summons'} {c.parentConferenceStatus === 'No-Show' ? `(${c.summonsCount || 1} No-Show)` : ''}
+            </span>
+          </div>
+
+          <div className="p-3 text-xs space-y-2">
+            <p className="text-[#64748B] dark:text-amber-300 font-medium leading-relaxed">
+              {isTl
+                ? `Ang kasong ito ay may naitalang ${c.summonsCount || 1} patawag sa magulang. Naitatala ang bawat hindi pagsipot (No-Show) alinsunod sa DepEd Order No. 40 para sa pormal na buod ng saradong kaso.`
+                : `This case has recorded ${c.summonsCount || 1} parent summons. Each no-show event is preserved under DepEd Order No. 40 due process guidelines for the final closed case report.`}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-amber-200/60 dark:border-amber-900/40">
+              <div className="p-2 rounded-lg bg-white/80 dark:bg-[#0B1527] border border-amber-200 dark:border-amber-900/50">
+                <span className="text-[#64748B] dark:text-[#94A8D0] block text-[11px] font-semibold">{isTl ? 'Huling Patawag (Summons)' : 'Latest Summons'}</span>
+                <span className="font-bold text-[#0F172A] dark:text-white">Summons #{c.summonsCount || 1} · {c.conferenceTargetDate || 'Scheduled'}</span>
+              </div>
+              <div className="p-2 rounded-lg bg-white/80 dark:bg-[#0B1527] border border-amber-200 dark:border-amber-900/50">
+                <span className="text-[#64748B] dark:text-[#94A8D0] block text-[11px] font-semibold">{isTl ? 'Katayuan ng Magulang' : 'Parent Status'}</span>
+                <span className={`font-bold ${c.parentConferenceStatus === 'No-Show' ? 'text-rose-600 dark:text-rose-400' : c.parentConferenceStatus === 'Attended' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600'}`}>
+                  {c.parentConferenceStatus || 'Pending Hearing'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

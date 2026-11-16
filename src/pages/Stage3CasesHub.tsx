@@ -4129,7 +4129,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.97, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-2xl max-h-[calc(100dvh/var(--app-zoom,1)_-_2rem)] rounded-2xl saas-card flex flex-col overflow-hidden"
+              className="w-full max-w-4xl max-h-[calc(100dvh/var(--app-zoom,1)_-_2rem)] rounded-2xl saas-card flex flex-col overflow-hidden shadow-2xl"
             >
               {/* header */}
               <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-start justify-between gap-3">
