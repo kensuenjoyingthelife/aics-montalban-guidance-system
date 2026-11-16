@@ -134,7 +134,7 @@ export const CaseFlowPanel: React.FC<{
   /** open the locked Student Statement Station for this case */
   onOpenStation?: () => void;
   /** print official call slip / summons form */
-  onOpenPrint?: () => void;
+  onOpenPrint?: (initialKind?: import('../../services/printForms').FormKind) => void;
   /** all appointments in the system to check if this case already has a live scheduled conference */
   appointments?: ParentAppointmentItem[];
   /** open the real Parent Conference scheduling modal in ParentsHub */
@@ -441,7 +441,7 @@ export const CaseFlowPanel: React.FC<{
                 {onOpenPrint && (
                   <button
                     type="button"
-                    onClick={onOpenPrint}
+                    onClick={() => onOpenPrint('callSlip')}
                     className={`${btn} rounded-lg border border-[#CBD5E1] dark:border-[#253B66] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#F8FAFC] dark:hover:bg-[#13203B] flex items-center gap-1.5`}
                   >
                     <span>{isTl ? 'Mag-print ng Call Slip' : 'Print Call Slip'}</span>
@@ -594,7 +594,7 @@ export const CaseFlowPanel: React.FC<{
                       {onOpenPrint && (
                         <button
                           type="button"
-                          onClick={onOpenPrint}
+                          onClick={() => onOpenPrint('callSlip')}
                           className="btn-press px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-[#0B1527] text-xs font-semibold text-[#0F172A] dark:text-white flex items-center gap-1.5"
                         >
                           <Printer className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
@@ -842,7 +842,7 @@ export const CaseFlowPanel: React.FC<{
                     {onOpenPrint ? (
                       <button
                         type="button"
-                        onClick={onOpenPrint}
+                        onClick={() => onOpenPrint('callSlip')}
                         className="btn-press px-3 py-1.5 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-semibold text-[#0F172A] dark:text-white hover:border-[#1E469B] flex items-center gap-1.5"
                       >
                         <Printer className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
@@ -1245,7 +1245,7 @@ export const CaseFlowPanel: React.FC<{
                   {onOpenPrint && (
                     <button
                       type="button"
-                      onClick={onOpenPrint}
+                      onClick={() => onOpenPrint('caseResolutionSummary')}
                       className="btn-press px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0B1527] text-xs font-semibold text-[#0F172A] dark:text-white hover:border-[#1E469B] flex items-center gap-1.5"
                     >
                       <Printer className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />

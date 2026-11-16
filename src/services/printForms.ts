@@ -4,6 +4,8 @@
 // printed, and it works the same in the browser and in Tauri (WebView2).
 import type { DisciplineCaseRecord, StudentRecord } from '../data/stage3MockData';
 import { getAppConfig } from './appConfig';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export type FormKind = 'callSlip' | 'conference' | 'contract' | 'kasunduan' | 'suspension' | 'caseResolutionSummary';
 
@@ -186,31 +188,32 @@ export function buildFormHtml(f: FormInput, origin = ''): string {
       <p class="small">Received by parent / guardian: ______________________ &nbsp; Date: __________</p>`;
   }
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} — ${esc(c.studentName)}</title><style>
-    @page { size: A4; margin: 15mm; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #0F172A; font-size: 12px; line-height: 1.5; margin: 0; padding: 0; }
-    .page-container { border: 1.5px solid #0B1F4D; padding: 18px 24px; border-radius: 4px; }
-    header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2.5px solid #0B1F4D; padding-bottom: 12px; margin-bottom: 16px; }
-    .header-left { display: flex; align-items: center; gap: 14px; }
-    header img { width: 62px; height: 62px; object-fit: contain; }
-    .school-title { font-weight: 900; font-size: 15px; color: #0B1F4D; letter-spacing: 0.5px; }
-    .school-sub { font-size: 11.5px; color: #334155; font-weight: 600; }
-    .office-tag { font-size: 11px; font-weight: 800; color: #1E469B; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
-    .header-right { text-align: right; font-size: 10.5px; color: #475569; }
-    .form-badge { display: inline-block; padding: 3px 8px; font-weight: 800; font-size: 11px; background: #0B1F4D; color: #FFF; border-radius: 3px; margin-top: 4px; }
-    h1 { text-align: center; font-size: 17px; font-weight: 900; text-transform: uppercase; margin: 12px 0 16px; letter-spacing: 1px; color: #0B1F4D; border-bottom: 1px solid #CBD5E1; padding-bottom: 6px; }
-    h3 { font-size: 12px; font-weight: 800; text-transform: uppercase; color: #0B1F4D; margin: 14px 0 4px; letter-spacing: 0.3px; }
-    table.info { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 11.5px; }
-    table.info td { border: 1px solid #94A3B8; padding: 6px 9px; vertical-align: middle; }
+    @page { size: A4 portrait; margin: 10mm 12mm; }
+    html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #0F172A; font-size: 11px; line-height: 1.4; margin: 0; padding: 0; box-sizing: border-box; }
+    .page-container { border: 1.5px solid #0B1F4D; padding: 14px 18px; border-radius: 4px; box-sizing: border-box; max-height: 100%; page-break-inside: avoid; }
+    header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0B1F4D; padding-bottom: 8px; margin-bottom: 10px; }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    header img { width: 50px; height: 50px; object-fit: contain; }
+    .school-title { font-weight: 900; font-size: 13.5px; color: #0B1F4D; letter-spacing: 0.5px; }
+    .school-sub { font-size: 10.5px; color: #334155; font-weight: 600; }
+    .office-tag { font-size: 10px; font-weight: 800; color: #1E469B; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px; }
+    .header-right { text-align: right; font-size: 9.5px; color: #475569; }
+    .form-badge { display: inline-block; padding: 2px 7px; font-weight: 800; font-size: 10px; background: #0B1F4D; color: #FFF; border-radius: 3px; margin-top: 3px; }
+    h1 { text-align: center; font-size: 14px; font-weight: 900; text-transform: uppercase; margin: 8px 0 10px; letter-spacing: 0.5px; color: #0B1F4D; border-bottom: 1px solid #CBD5E1; padding-bottom: 4px; }
+    h3 { font-size: 11px; font-weight: 800; text-transform: uppercase; color: #0B1F4D; margin: 8px 0 3px; letter-spacing: 0.2px; }
+    table.info { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10.5px; }
+    table.info td { border: 1px solid #94A3B8; padding: 4px 7px; vertical-align: middle; }
     table.info td:nth-child(odd) { width: 20%; background: #F1F5F9; font-weight: 800; color: #1E293B; }
-    .line { border-bottom: 1px solid #94A3B8; height: 24px; }
-    .box { border: 1px solid #94A3B8; background: #F8FAFC; padding: 8px 12px; white-space: pre-wrap; font-size: 11.5px; border-radius: 3px; }
-    .signs { display: flex; gap: 24px; margin-top: 40px; }
-    .sign { flex: 1; text-align: center; font-size: 11px; }
-    .sigline { border-bottom: 1.5px solid #0F172A; height: 36px; margin-bottom: 5px; }
-    .sign-name { font-weight: 800; color: #0F172A; text-transform: uppercase; font-size: 11px; }
-    .sign-title { font-size: 10.5px; color: #475569; }
-    .small { font-size: 10.5px; color: #475569; margin-top: 16px; border-top: 1px dashed #CBD5E1; padding-top: 8px; }
-    ol { margin-top: 4px; padding-left: 20px; } li { margin: 5px 0; font-size: 11.5px; }
+    .line { border-bottom: 1px solid #94A3B8; height: 18px; }
+    .box { border: 1px solid #94A3B8; background: #F8FAFC; padding: 6px 10px; white-space: pre-wrap; font-size: 10.5px; border-radius: 3px; }
+    .signs { display: flex; gap: 16px; margin-top: 24px; page-break-inside: avoid; }
+    .sign { flex: 1; text-align: center; font-size: 10px; }
+    .sigline { border-bottom: 1.5px solid #0F172A; height: 26px; margin-bottom: 4px; }
+    .sign-name { font-weight: 800; color: #0F172A; text-transform: uppercase; font-size: 10px; }
+    .sign-title { font-size: 9.5px; color: #475569; }
+    .small { font-size: 9.5px; color: #475569; margin-top: 10px; border-top: 1px dashed #CBD5E1; padding-top: 5px; }
+    ol { margin-top: 3px; padding-left: 18px; } li { margin: 3px 0; font-size: 10.5px; }
   </style></head><body><div class="page-container">${head}<h1>${esc(title)}</h1>${body}</div></body></html>`;
 }
 
@@ -254,19 +257,59 @@ export function printHtml(html: string): boolean {
   return true;
 }
 
-/** Downloads the form directly as an HTML/PDF document file so the user can open or save directly */
-export function downloadFormDocument(html: string, filename: string): void {
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename.endsWith('.html') ? filename : `${filename}.html`;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => {
-    a.remove();
-    URL.revokeObjectURL(url);
-  }, 1000);
+/** Downloads the form directly as an authentic 1-page PDF document file using jsPDF */
+export async function downloadFormDocument(html: string, filename: string): Promise<void> {
+  // Render html inside a hidden offscreen container with exact A4 dimensions
+  const container = document.createElement('div');
+  container.style.position = 'fixed';
+  container.style.left = '-9999px';
+  container.style.top = '0';
+  container.style.width = '794px'; // 210mm at 96 DPI
+  container.style.minHeight = '1123px'; // 297mm at 96 DPI
+  container.style.background = '#FFFFFF';
+  container.style.zIndex = '-9999';
+  container.innerHTML = html;
+  document.body.appendChild(container);
+
+  try {
+    const canvas = await (html2canvas as any)(container, {
+      scale: 2, // crisp high DPI
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#FFFFFF',
+    });
+
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
+
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+
+    const safeName = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+    pdf.save(safeName);
+  } catch (err) {
+    console.error('Failed to generate pure PDF via jsPDF:', err);
+    // Fallback: download as PDF blob
+    const blob = new Blob([html], { type: 'application/pdf;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      a.remove();
+      URL.revokeObjectURL(url);
+    }, 1000);
+  } finally {
+    container.remove();
+  }
 }
 
 /** 4-in-1 Compact Call Slip Batch Sheet (Morning Routine Optimizer) */

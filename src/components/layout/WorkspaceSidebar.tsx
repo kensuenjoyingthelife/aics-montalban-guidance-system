@@ -231,7 +231,8 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
 
           <div className="space-y-1">
             {MAIN_SIDEBAR_CATEGORIES.filter((item) =>
-              ['referrals-hub', 'records-hub', 'audit-hub', 'settings-hub'].includes(item.id)
+              // Temporarily hidden 'referrals-hub' (Counselor) per user instruction
+              ['records-hub', 'audit-hub', 'settings-hub'].includes(item.id)
             ).map((item, idx) => {
               const isActive = item.id === activeCategoryId;
               const badgeVal = getBadgeCount(item);

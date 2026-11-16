@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { UserPlus, Printer, Layers } from 'lucide-react';
+import { UserPlus, Printer, Layers, Upload, X, Image as ImageIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
@@ -14,6 +14,7 @@ import { CaseFlowPanel, FlowAction, flowState } from '../components/cases/CaseFl
 import { StatementStation } from '../components/cases/StatementStation';
 import { PrintFormsWindow } from '../components/cases/PrintFormsWindow';
 import { EvidencePanel } from '../components/cases/EvidencePanel';
+import { uploadEvidence, checkEvidenceFile } from '../services/evidenceDb';
 import { FORM_TITLES, buildBatchCallSlipsHtml, buildFormHtml, printHtml, downloadFormDocument } from '../services/printForms';
 import { useConfirmChange } from '../components/ui/ConfirmChange';
 import { useLoading } from '../components/ui/LoadingCard';
@@ -160,6 +161,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   const [incidentTime, setIncidentTime] = useState<string>('');
   const [incidentPlace, setIncidentPlace] = useState<string>(prefill?.place ?? '');
   const [incidentWitness, setIncidentWitness] = useState<string>(prefill?.witnesses ?? '');
+  const [incidentEvidenceFiles, setIncidentEvidenceFiles] = useState<File[]>([]);
 
   // Synchronize prefill when prop changes (e.g. user clicks another concern in Concerns Hub)
   useEffect(() => {
@@ -244,6 +246,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   const setCaseSort = (v: SortKey) => { setCaseSortState(v); saveSort('cases', v); };
   const setStudentSort = (v: SortKey) => { setStudentSortState(v); saveSort('students', v); };
   const [callSlipCase, setCallSlipCase] = useState<DisciplineCaseRecord | null>(null);
+  const [callSlipInitialForm, setCallSlipInitialForm] = useState<import('../services/printForms').FormKind | null>(null);
   // Case Details panel
   const [openCaseCode, setOpenCaseCode] = useState<string | null>(null);
   const [caseHistory, setCaseHistory] = useState<CaseHistoryEntry[] | null | 'loading'>('loading');
@@ -959,6 +962,17 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       }
       createdCases.push(newCase);
 
+      // Upload any attached incident evidence photos/files
+      if (incidentEvidenceFiles.length > 0) {
+        for (const file of incidentEvidenceFiles) {
+          try {
+            await uploadEvidence(newCase.caseCode, file, 'Attached during initial case filing', nextReportedBy || 'Guidance Staff');
+          } catch (evErr) {
+            console.error('Failed to upload evidence for case:', newCase.caseCode, evErr);
+          }
+        }
+      }
+
 
       const nextPriorEn = escalatedToMajor
         ? `${outcomeFor(stu, pol).severityLabel} (${pol.titleEn}) — Conference Required`
@@ -1038,6 +1052,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     setIncidentTime('');
     setIncidentPlace('');
     setIncidentWitness('');
+    setIncidentEvidenceFiles([]);
     try {
       localStorage.removeItem(DRAFT_KEY);
     } catch {
@@ -1230,20 +1245,29 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     caseItem: DisciplineCaseRecord,
     nextStatus: CaseStatusType
   ) => {
+    const nextStep = nextStatus === 'Open' ? (caseItem.decidedAt ? 'Decision' : caseItem.explanation ? 'Schedule Conference' : 'Student Called') : (nextStatus === 'Resolved' ? 'Closed' : caseItem.step);
     const ok = await confirmChange({
-      title: isTl ? `I-update ang ${caseItem.caseCode}?` : `Update ${caseItem.caseCode}?`,
+      title: isTl ? (nextStatus === 'Open' ? `Muling buksan ang ${caseItem.caseCode}?` : `Isara ang ${caseItem.caseCode}?`) : (nextStatus === 'Open' ? `Reopen ${caseItem.caseCode}?` : `Close ${caseItem.caseCode}?`),
       description: `${caseItem.studentName} (${caseItem.gradeSection}) · ${
         isTl ? caseItem.offenseTitleTl : caseItem.offenseTitleEn
       }`,
-      rows: [{ label: 'Status', before: statusWord(caseItem.status), after: statusWord(nextStatus) }],
-      confirmLabel: isTl ? 'Oo, i-update' : 'Yes, update',
+      rows: [
+        { label: 'Status', before: statusWord(caseItem.status), after: statusWord(nextStatus) },
+        ...(nextStatus === 'Open' ? [{ label: isTl ? 'Babalik sa Hakbang' : 'Return to Step', after: isTl ? 'Aktibong Due Process' : 'Active Due Process' }] : []),
+      ],
+      confirmLabel: isTl ? (nextStatus === 'Open' ? 'Oo, muling buksan' : 'Oo, isara') : (nextStatus === 'Open' ? 'Yes, reopen' : 'Yes, close'),
       tone: nextStatus === 'Resolved' ? 'success' : 'primary',
     });
     if (!ok) return;
+
     setCases((prev) =>
-      prev.map((c) => (c.caseCode === caseItem.caseCode ? { ...c, status: nextStatus, closedAt: nextStatus === 'Resolved' ? c.closedAt ?? new Date().toISOString() : null } : c))
+      prev.map((c) => (c.caseCode === caseItem.caseCode ? { ...c, status: nextStatus, step: nextStep as DisciplineCaseRecord['step'], closedAt: nextStatus === 'Resolved' ? c.closedAt ?? new Date().toISOString() : null } : c))
     );
-    const savedStatus = await updateDisciplineCaseStatusInDb(caseItem.caseCode, nextStatus);
+    const savedStatus = await updateCaseFlowInDb(caseItem.caseCode, {
+      status: nextStatus,
+      step: nextStep,
+      closed_at: nextStatus === 'Resolved' ? new Date().toISOString() : null,
+    });
     if (!savedStatus) {
       setCases((prev) => prev.map((c) => (c.caseCode === caseItem.caseCode ? { ...c, status: caseItem.status, closedAt: caseItem.closedAt ?? null } : c)));
       onTriggerToast(
@@ -2478,17 +2502,72 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   />
                 </div>
 
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-bold text-[#0B1F4D] dark:text-white mb-1">
-                    {isTl ? 'Saksi o patunay (optional)' : 'Witness or proof (optional)'}
+                <div className="md:col-span-2 space-y-2">
+                  <label className="block text-xs font-bold text-[#0B1F4D] dark:text-white">
+                    {isTl ? 'Mga Saksi at Pisikal na Patunay (Witnesses & Proof)' : 'Witnesses & Incident Proof'}
                   </label>
                   <input
                     type="text"
                     value={incidentWitness}
                     onChange={(e) => setIncidentWitness(e.target.value)}
-                    placeholder={isTl ? 'hal. Guard J. Cruz; may kuha sa CCTV' : 'e.g. Guard J. Cruz; CCTV clip on file'}
+                    placeholder={isTl ? 'hal. Guard J. Cruz; Subject Teacher; may kuha sa CCTV' : 'e.g. Guard J. Cruz; Subject Teacher; CCTV clip on file'}
                     className="w-full px-3.5 py-2 rounded-xl saas-card-subtle text-xs font-bold text-[#0B1F4D] dark:text-white"
                   />
+
+                  {/* Multiple Evidence Upload (Photos / PDFs) */}
+                  <div className="mt-2 p-3 rounded-xl border border-dashed border-[#CBD5E1] dark:border-[#253B66] bg-[#F8FAFC] dark:bg-[#0B1527] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-[#475569] dark:text-[#94A3B8] flex items-center gap-1.5">
+                        <ImageIcon className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
+                        <span>{isTl ? 'Maglakip ng Litrato / Dokumento ng Insidente (Multiple Files)' : 'Attach Incident Photos & Documents (Multiple)'}</span>
+                      </span>
+                      <label className="btn-press cursor-pointer px-3 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-[11px] font-bold flex items-center gap-1 shadow-xs">
+                        <Upload className="w-3 h-3" />
+                        <span>{isTl ? 'Pumili ng Files' : 'Select Files'}</span>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/jpeg,image/png,image/webp,application/pdf"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (!e.target.files) return;
+                            const newFiles = Array.from(e.target.files);
+                            const validFiles = newFiles.filter((f) => {
+                              const err = checkEvidenceFile(f, isTl);
+                              if (err) {
+                                onTriggerToast(err);
+                                return false;
+                              }
+                              return true;
+                            });
+                            setIncidentEvidenceFiles((prev) => [...prev, ...validFiles]);
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    {incidentEvidenceFiles.length > 0 && (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {incidentEvidenceFiles.map((file, idx) => (
+                          <div
+                            key={idx}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-[#0F1A30] border border-[#CBD5E1] dark:border-[#1E3158] text-xs font-medium text-[#0F172A] dark:text-white shadow-2xs"
+                          >
+                            <span className="truncate max-w-[160px] text-[11px] font-semibold">{file.name}</span>
+                            <span className="text-[10px] text-[#64748B]">({(file.size / 1024).toFixed(0)} KB)</span>
+                            <button
+                              type="button"
+                              onClick={() => setIncidentEvidenceFiles((prev) => prev.filter((_, i) => i !== idx))}
+                              className="text-rose-500 hover:text-rose-700 p-0.5"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -2551,43 +2630,40 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 />
               </div>
 
-              </fieldset>
-              </div>
-
-              {/* Bottom Submit Row — stays visible while scrolling (fits 1366×768) */}
-              <div className="sticky bottom-0 z-20 -mx-6 -mb-6 px-6 py-3 rounded-b-2xl bg-white/95 dark:bg-[#0F1A30]/95 backdrop-blur border-t border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-3">
+              {/* Anchored Directly Below Incident Narrative (No Floating / No Sticky Scroll Overlay) */}
+              <div className="mt-4 pt-4 border-t border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-3 bg-[#F8FAFC] dark:bg-[#0B1527] p-4 rounded-xl border border-[#CBD5E1] dark:border-[#253B66]">
                 <div className="min-w-0 space-y-1">
-                <p className="text-[11px] font-bold text-[#4A608A] dark:text-[#94A8D0]">
-                  {noStudentYet
-                    ? isTl ? 'Wala pang napiling estudyante' : 'No student picked yet'
-                    : isGroup
-                    ? isTl
-                      ? `${selectedStudentsList.length} estudyante · ${selectedStudentsList.length} hiwalay na case`
-                      : `${selectedStudentsList.length} students · ${selectedStudentsList.length} separate cases`
-                    : `${selectedStudentsList[0]?.fullName ?? ''} · ${
-                        selectedStudentsList[0] ? outcomeFor(selectedStudentsList[0], policyFor(selectedStudentsList[0])).word : ''
-                      }`}
-                </p>
-                {/* Only offer Parent notice checkbox if the offense is Major or consecutive minor (escalated) */}
-                {selectedStudentsList.length > 0 && selectedStudentsList.some((s) => outcomeFor(s, policyFor(s)).escalated) ? (
-                  <label className="inline-flex items-center gap-2 text-xs font-bold text-[#0B1F4D] dark:text-white cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={autoNotifyParent}
-                      onChange={(e) => setAutoNotifyParent(e.target.checked)}
-                      className="w-4 h-4 rounded accent-[#1E469B]"
-                    />
-                    <span>
-                      {isTl
-                        ? 'Ihanda rin ang text at email sa magulang (Major / Serious)'
-                        : 'Also prepare text and email to parent (Major / Serious)'}
-                    </span>
-                  </label>
-                ) : (
-                  <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                    {isTl ? 'ℹ️ 1st Minor Offense: Walang SMS sa magulang (Paalala at tala lamang).' : 'ℹ️ 1st Minor Offense: Internal warning only (No parent SMS required).'}
+                  <p className="text-[11px] font-bold text-[#4A608A] dark:text-[#94A8D0]">
+                    {noStudentYet
+                      ? isTl ? 'Wala pang napiling estudyante' : 'No student picked yet'
+                      : isGroup
+                      ? isTl
+                        ? `${selectedStudentsList.length} estudyante · ${selectedStudentsList.length} hiwalay na case`
+                        : `${selectedStudentsList.length} students · ${selectedStudentsList.length} separate cases`
+                      : `${selectedStudentsList[0]?.fullName ?? ''} · ${
+                          selectedStudentsList[0] ? outcomeFor(selectedStudentsList[0], policyFor(selectedStudentsList[0])).word : ''
+                        }`}
                   </p>
-                )}
+                  {/* Only offer Parent notice checkbox if the offense is Major or consecutive minor (escalated) */}
+                  {selectedStudentsList.length > 0 && selectedStudentsList.some((s) => outcomeFor(s, policyFor(s)).escalated) ? (
+                    <label className="inline-flex items-center gap-2 text-xs font-bold text-[#0B1F4D] dark:text-white cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={autoNotifyParent}
+                        onChange={(e) => setAutoNotifyParent(e.target.checked)}
+                        className="w-4 h-4 rounded accent-[#1E469B]"
+                      />
+                      <span>
+                        {isTl
+                          ? 'Ihanda rin ang text at email sa magulang (Major / Serious)'
+                          : 'Also prepare text and email to parent (Major / Serious)'}
+                      </span>
+                    </label>
+                  ) : (
+                    <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      {isTl ? 'ℹ️ 1st Minor Offense: Walang SMS sa magulang (Paalala at tala lamang).' : 'ℹ️ 1st Minor Offense: Internal warning only (No parent SMS required).'}
+                    </p>
+                  )}
                 </div>
 
                 <button
@@ -2609,6 +2685,9 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     ? ` I-save ang case (${selectedStudentNumbers.length} estudyante)`
                     : ` Save case (${selectedStudentNumbers.length} student${selectedStudentNumbers.length === 1 ? '' : 's'})`}
                 </button>
+              </div>
+
+              </fieldset>
               </div>
             </div>
           </form>
@@ -4180,7 +4259,10 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   suggestedSanction={suggestedSanctionFor(openCase)} 
                   onAction={(a) => void applyFlow(openCase, a)} 
                   onOpenStation={() => setStationCase(openCase)} 
-                  onOpenPrint={() => setCallSlipCase(openCase)}
+                  onOpenPrint={(kind) => {
+                    setCallSlipInitialForm(kind ?? null);
+                    setCallSlipCase(openCase);
+                  }}
                   appointments={appointments}
                 />
                 
@@ -4416,9 +4498,12 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
           c={callSlipCase}
           stu={students.find((x) => x.studentNumber === callSlipCase.studentNumber)}
           isTl={isTl}
-          initial={callSlipCase.status === 'Resolved' ? 'caseResolutionSummary' : 'callSlip'}
+          initial={callSlipInitialForm ?? (callSlipCase.status === 'Resolved' ? 'caseResolutionSummary' : 'callSlip')}
           conferenceWhen={nextConfByCase.has(callSlipCase.caseCode) ? confText(nextConfByCase.get(callSlipCase.caseCode)!) : ''}
-          onClose={() => setCallSlipCase(null)}
+          onClose={() => {
+            setCallSlipCase(null);
+            setCallSlipInitialForm(null);
+          }}
           onPrinted={(kind) => {
             const t = FORM_TITLES[kind];
             void insertActivityLogInDb({ actor: 'Guidance Associate', actionEn: `${callSlipCase.caseCode}: printed ${t[0]}`, actionTl: `${callSlipCase.caseCode}: nag-print ng ${t[1]}`, tag: callSlipCase.caseCode, tone: 'blue' });
