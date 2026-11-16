@@ -377,36 +377,59 @@ export const LoginGate: React.FC<LoginGateProps> = ({
   };
 
   return (
-    <div className="relative min-h-screen w-full aics-sky-canvas flex flex-col justify-between overflow-x-hidden select-none">
-      {/* Twinkling Star Drops, Meteors, Floating Computers & Ringed Planets */}
-      <CelestialBackground />
+    <div className="relative min-h-screen w-full portal-hero-canvas flex flex-col justify-between overflow-x-hidden select-none">
+      {/* Sticky Institutional Header (1:1 CDM-Portal Header in AICS Palette) */}
+      <header className="portal-header-bar w-full">
+        <div className="max-w-[1240px] mx-auto px-6 min-h-[76px] flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <img
+              src="/aics-logo.jpg"
+              alt="Official AICS Seal"
+              className="w-[48px] h-[48px] rounded-full object-cover bg-white p-0.5 shadow-md"
+            />
+            <div>
+              <h1 className="font-serif text-[15px] font-bold tracking-[0.02em] text-white leading-tight">
+                Asian Institute of Computer Studies
+              </h1>
+              <p className="text-[10px] font-extrabold tracking-[0.16em] uppercase text-white/65 mt-0.5">
+                GUIDANCE &amp; COUNSELING WORKSPACE · MONTALBAN
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2" data-login-toggles>
+            <SoundTogglePill />
+            <LocaleSwitchPill />
+            <SkyThemePill />
+          </div>
+        </div>
+      </header>
 
       {/* ====================================================================
-          MAIN 2-COLUMN SPLIT LAYOUT
+          MAIN 2-COLUMN SPLIT LAYOUT (CDM-PORTAL HERO + LOGIN CARD)
           ==================================================================== */}
-      <main className="relative z-20 w-full max-w-7xl mx-auto px-6 sm:px-10 py-6 my-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-10 items-center">
+      <main className="relative z-20 w-full max-w-[1180px] mx-auto px-6 sm:px-10 py-8 my-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-12 items-center">
         {/* ==================================================================
-            LEFT BRAND PANEL (7 Columns — 2-Line Passing Light Shimmer)
+            LEFT EDITORIAL BRAND PANEL (7 Columns)
             ================================================================== */}
         <section className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left space-y-5 sm:space-y-6">
           {/* Official Pill Badge */}
           <div
             data-sound-hover="true"
-            className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full bg-white/14 border border-white/30 backdrop-blur-md shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-[#D9A93E]/35 shadow-sm"
           >
-            <span className="w-2.5 h-2.5 rounded-full bg-[#8CC5FF]" />
-            <span className="text-xs sm:text-[13px] font-extrabold tracking-[0.14em] text-white uppercase">
+            <span className="w-2 h-2 rounded-full bg-[#D9A93E]" />
+            <span className="portal-kicker-gold">
               {t.badge}
             </span>
           </div>
 
-          {/* STRICTLY 2-LINE HERO TITLE WITH PASSING LIGHT-BEAM SWEEP */}
-          <div className="space-y-1.5 w-full">
-            <h1 className="text-3xl sm:text-5xl xl:text-[56px] font-extrabold tracking-tight leading-[1.06] whitespace-nowrap title-light-sweep-white">
-              ASIAN INSTITUTE OF
-            </h1>
-            <h2 className="text-xl sm:text-3xl xl:text-[39px] font-extrabold tracking-tight leading-[1.14] whitespace-nowrap uppercase title-light-sweep-azure">
-              COMPUTER STUDIES · MONTALBAN
+          {/* Editorial Serif Display Title */}
+          <div className="space-y-2 w-full">
+            <h2 className="portal-serif-display text-4xl sm:text-5xl xl:text-[58px] text-white leading-[0.95] tracking-[-0.045em]">
+              Guidance &amp; due process{' '}
+              <span className="text-[#F2CE70] italic font-normal">workspace</span>{' '}
+              in one secure place.
             </h2>
           </div>
 
@@ -416,9 +439,9 @@ export const LoginGate: React.FC<LoginGateProps> = ({
           </div>
 
           {/* Campus Address */}
-          <div className="inline-flex items-start justify-center lg:justify-start gap-2.5 text-white/95 text-sm sm:text-[16px] max-w-xl leading-relaxed font-medium">
+          <div className="inline-flex items-start justify-center lg:justify-start gap-2.5 text-white/85 text-sm sm:text-[15px] max-w-xl leading-relaxed font-normal">
             <svg
-              className="w-5 h-5 mt-0.5 shrink-0 text-[#8CC5FF]"
+              className="w-5 h-5 mt-0.5 shrink-0 text-[#F2CE70]"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -430,19 +453,19 @@ export const LoginGate: React.FC<LoginGateProps> = ({
             <span>{t.campusAddress}</span>
           </div>
 
-          {/* 4 Larger Square Feature Tiles */}
-          <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-3.5 sm:gap-4">
+          {/* 4 Feature Tiles in Clean Matte Navy Style */}
+          <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-3">
             {FEATURE_TILES.map((tile, idx) => (
               <button
                 key={tile.id}
                 type="button"
                 onClick={() => soundFX.playKeyClick(idx)}
-                className="btn-press w-[98px] sm:w-[112px] h-[110px] sm:h-[122px] rounded-2xl aics-hero-tile backdrop-blur-md flex flex-col items-center justify-center gap-2.5 p-3 shadow-lg"
+                className="btn-press w-[98px] sm:w-[110px] h-[106px] sm:h-[116px] rounded-[18px] bg-[#0A1526]/90 border border-[#1E3250] hover:border-[#38BDF8]/50 flex flex-col items-center justify-center gap-2.5 p-3 shadow-lg"
               >
                 <IconTile color={tile.color} variant="solid" size="lg">
-                  <DuotoneIcon name={tile.icon} size={26} />
+                  <DuotoneIcon name={tile.icon} size={24} />
                 </IconTile>
-                <span className="text-xs sm:text-[13.5px] font-bold text-white leading-none tracking-wide">
+                <span className="text-xs font-bold text-white leading-none tracking-wide">
                   {locale === 'tl' ? tile.labelTl : tile.labelEn}
                 </span>
               </button>
@@ -450,32 +473,20 @@ export const LoginGate: React.FC<LoginGateProps> = ({
           </div>
 
           {/* Est. 1996 Line */}
-          <p className="pt-1 text-xs sm:text-sm font-semibold text-white/80 tracking-wide">
-            Rodriguez, Rizal — Est. 1996
+          <p className="pt-1 text-xs font-semibold text-white/65 tracking-wide">
+            Asian Institute of Computer Studies · Rodriguez, Rizal — Est. 1996
           </p>
         </section>
 
         {/* ==================================================================
-            RIGHT HIGH-CONTRAST GRADIENT GLASS CARD
-            - Light Mode: Frosted Pearl-Ice Gradient Card (#0B1F4D Deep Navy Text)
-            - Dark Mode: Frosted Midnight-Sapphire Gradient Card (#FFFFFF White Text)
-            - Locked Uniform Size Across All 4 Steps: max-w-[440px] h-[590px]
+            RIGHT COLLEGIATE AUTH CARD (CDM-PORTAL 1:1 CARD WITH GOLD TOP BAR)
             ================================================================== */}
         <section className="lg:col-span-5 flex flex-col items-center">
-          {/* Sound · language · theme — exactly as wide as the sign-in card */}
-          <div className="w-full max-w-[440px] mb-3 flex items-center justify-between gap-2" data-login-toggles>
-            <SoundTogglePill />
-            <LocaleSwitchPill />
-            <SkyThemePill />
-          </div>
-          <div className="relative z-10 w-full max-w-[440px] h-[590px] rounded-[32px] aics-true-glass overflow-hidden flex flex-col transition-all duration-300">
-            {/* Top Accent Rim */}
-            <div className="h-1.5 w-full shrink-0 bg-gradient-to-r from-[#1E469B] via-[#4E92DF] to-[#7CB8F7]" />
-
-            <div className="flex-1 px-7 sm:px-9 pt-6 pb-7 flex flex-col items-center justify-between">
+          <div className="relative z-10 w-full max-w-[440px] h-[575px] rounded-[20px] aics-true-glass overflow-hidden flex flex-col transition-all duration-200">
+            <div className="flex-1 px-7 sm:px-8 pt-7 pb-7 flex flex-col items-center justify-between">
               {/* Fixed Card Header (Logo + School Name) */}
               <div className="flex flex-col items-center shrink-0">
-                <div className="w-[80px] h-[80px] rounded-full p-1 bg-gradient-to-tr from-[#1E469B] via-[#4E92DF] to-[#9BCBFF] shadow-md mb-2.5">
+                <div className="w-[74px] h-[74px] rounded-full p-1 bg-gradient-to-tr from-[#0B1F4D] via-[#1E469B] to-[#D9A93E] shadow-md mb-2">
                   <div className="w-full h-full rounded-full p-0.5 bg-white overflow-hidden">
                     <img
                       src="/aics-logo.jpg"
@@ -485,8 +496,8 @@ export const LoginGate: React.FC<LoginGateProps> = ({
                   </div>
                 </div>
 
-                <h3 className="text-xl sm:text-[21px] font-extrabold tracking-tight text-[#0B1F4D] dark:text-white">
-                  AICS MONTALBAN
+                <h3 className="font-serif text-xl font-bold tracking-tight text-[#0B192C] dark:text-white">
+                  AICS Montalban Staff Gate
                 </h3>
               </div>
 

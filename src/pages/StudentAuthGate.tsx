@@ -715,80 +715,104 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   };
 
   return (
-    <div className={`min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none student-portal-canvas bg-[#05112B] text-white ${
-      mode === 'login' ? 'lg:h-screen lg:overflow-hidden' : 'overflow-y-auto'
-    }`}>
-      {/* Celestial Background: Active on Desktop, hidden/static on mobile */}
-      <div className="hidden lg:block">
-        <CelestialBackground />
-      </div>
-      <div className="hidden lg:block">
-        <WavyBackground />
-      </div>
-
-      {/* Top Floating Glass Island Navbar */}
-      <header className="relative z-30 w-full px-3 sm:px-6 pt-3 sm:pt-4 safe-area-top">
-        {/* ====================================================
-            DESKTOP NAVBAR: Original Classic Glass Capsule (Hidden on mobile)
-            ==================================================== */}
-        <div className="hidden lg:flex max-w-6xl mx-auto rounded-full bg-[#0B1E48]/85 dark:bg-[#07132B]/85 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-2xl shadow-blue-950/40 px-6 py-3 items-center justify-between gap-4 transition-all">
-          {/* Left: Official Brand Seal & Campus Title */}
+    <div className="min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none student-portal-canvas bg-[#040E20] text-white">
+      {/* ====================================================
+          STICKY INSTITUTIONAL HEADER (1:1 CDM-PORTAL ANATOMY IN AICS PALETTE)
+          ==================================================== */}
+      <header className="portal-header-bar w-full">
+        <div className="hidden lg:flex max-w-[1240px] mx-auto px-6 min-h-[78px] items-center justify-between gap-6">
+          {/* Left: Official Brand Lockup */}
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="relative shrink-0">
-              <img
-                src="/aics-logo.jpg"
-                alt="AICS Logo"
-                className="w-11 h-11 rounded-full object-cover ring-2 ring-white/50 bg-white p-0.5 shadow-md"
-              />
-              {/* Live Security Shield Dot */}
-              <span
-                className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-[#0B1E48] dark:ring-[#07132B]"
-                title="100% Confidential & RA 10173 Protected"
-              />
-            </div>
+            <img
+              src="/aics-logo.jpg"
+              alt="AICS Official Seal"
+              className="w-[50px] h-[50px] rounded-full object-cover bg-white p-0.5 shadow-md"
+            />
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm font-black tracking-tight text-white uppercase truncate">
-                  AICS MONTALBAN BRANCH
-                </h1>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-[10px] font-bold text-emerald-300">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  RA 10173
-                </span>
-              </div>
-              <p className="text-xs text-[#9BCBFF] font-medium truncate">
-                {isTl ? 'Ligtas at Kumpidensyal na Guidance Portal' : 'Safe & Confidential Concern Reporting'}
+              <h1 className="font-serif text-[15px] font-bold tracking-[0.02em] text-white leading-tight">
+                Asian Institute of Computer Studies
+              </h1>
+              <p className="text-[10px] font-extrabold tracking-[0.16em] uppercase text-white/65 mt-0.5">
+                AICS MONTALBAN PORTAL · RA 10173 PROTECTED
               </p>
             </div>
           </div>
 
-          {/* Right: Unified Sleek Controls Cluster + Quick Refresh */}
-          <div className="flex items-center gap-2 ml-auto shrink-0">
+          {/* Center-Right Navigation Links & Action Buttons */}
+          <nav className="flex items-center gap-2 ml-auto">
+            <a
+              href="#portal-top"
+              onClick={() => soundFX.playKeyClick(0)}
+              className="px-3 py-2 text-xs font-bold text-white/80 hover:text-white transition-colors"
+            >
+              {isTl ? 'Tahanan' : 'Home'}
+            </a>
+            <a
+              href="#portal-direction"
+              onClick={() => soundFX.playKeyClick(1)}
+              className="px-3 py-2 text-xs font-bold text-white/80 hover:text-white transition-colors"
+            >
+              {isTl ? 'Tungkol sa AICS' : 'About'}
+            </a>
+            <a
+              href="#portal-strands"
+              onClick={() => soundFX.playKeyClick(2)}
+              className="px-3 py-2 text-xs font-bold text-white/80 hover:text-white transition-colors"
+            >
+              {isTl ? 'Mga Strand' : 'SHS Strands'}
+            </a>
+            <a
+              href="#portal-services"
+              onClick={() => soundFX.playKeyClick(3)}
+              className="px-3 py-2 text-xs font-bold text-white/80 hover:text-white transition-colors"
+            >
+              {isTl ? 'Mga Serbisyo' : 'Portal Services'}
+            </a>
+
+            <div className="h-5 w-[1px] bg-white/15 mx-1.5" />
+
+            <div className="flex items-center p-1 rounded-full bg-white/5 border border-white/15">
+              <SoundTogglePill />
+              <div className="h-3.5 w-[1px] bg-white/15 mx-1" />
+              <LocaleSwitchPill />
+              <div className="h-3.5 w-[1px] bg-white/15 mx-1" />
+              <SkyThemePill />
+            </div>
+
             <button
               type="button"
               onClick={() => {
                 soundFX.playToggleSwitch(true);
-                window.location.reload();
+                setMode('login');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              title={isTl ? 'I-refresh ang pahina' : 'Refresh page'}
-              className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-sky-200 border border-white/15 shadow-sm transition-all flex items-center justify-center cursor-pointer"
+              className="btn-press ml-1.5 min-h-[42px] px-4 rounded-[10px] border border-white/30 hover:border-white/70 hover:bg-white/10 text-xs font-bold text-white transition-colors"
             >
-              <RefreshCw className="w-4 h-4" />
+              {isTl ? 'Mag-Sign In' : 'Log In'}
             </button>
-            <div className="flex items-center p-1 rounded-full bg-white/10 dark:bg-white/5 border border-white/15 dark:border-white/10 shadow-inner">
-              <SoundTogglePill />
-              <div className="h-4 w-[1px] bg-white/20 mx-1" />
-              <LocaleSwitchPill />
-              <div className="h-4 w-[1px] bg-white/20 mx-1" />
-              <SkyThemePill />
-            </div>
-          </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playToggleSwitch(true);
+                if (!privacyAgreed) {
+                  setShowPrivacyModal(true);
+                } else {
+                  setMode('register');
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="btn-press min-h-[42px] px-4 rounded-[10px] bg-[#D9A93E] hover:bg-[#EBC664] text-[#040E20] text-xs font-extrabold transition-colors"
+            >
+              {isTl ? 'Gumawa ng Account' : 'Create Account / Get Started'}
+            </button>
+          </nav>
         </div>
 
         {/* ====================================================
             MOBILE APP NAVBAR: Custom Stretched Campus Background & Layout (Visible only on mobile)
             ==================================================== */}
-        <div className="lg:hidden relative max-w-6xl mx-auto rounded-3xl overflow-hidden border border-white/25 dark:border-white/15 shadow-2xl shadow-blue-950/50 transition-all">
+        <div className="lg:hidden relative max-w-6xl mx-auto overflow-hidden border-b border-white/15 transition-all">
           {/* Campus Photo Ambient Layer stretched to fill with blue tint */}
           <div
             className="absolute inset-0 bg-no-repeat pointer-events-none"
@@ -799,14 +823,14 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
             }}
           />
           {/* Blue Translucent Overlay */}
-          <div className="absolute inset-0 bg-[#072464]/65 mix-blend-multiply pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#020b24]/40 via-[#0a2769]/35 to-[#020b24]/70 pointer-events-none" />
+          <div className="absolute inset-0 bg-[#040E20]/80 mix-blend-multiply pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#040E20]/50 via-[#0B1F4D]/40 to-[#040E20]/85 pointer-events-none" />
 
           {/* Inner Content: 2-column mobile layout with centered circular logo */}
-          <div className="relative z-10 px-4 py-3 flex items-center gap-3.5 min-h-[105px]">
+          <div className="relative z-10 px-4 py-3 flex items-center gap-3.5 min-h-[96px]">
             {/* Left: Prominent Circular Logo */}
             <div className="relative shrink-0 flex items-center justify-center my-auto">
-              <div className="w-[80px] h-[80px] rounded-full p-1 bg-white/20 backdrop-blur-md ring-2 ring-white/75 shadow-2xl flex items-center justify-center">
+              <div className="w-[68px] h-[68px] rounded-full p-1 bg-white/15 backdrop-blur-md ring-2 ring-[#D9A93E]/70 shadow-xl flex items-center justify-center">
                 <img
                   src="/aics-logo.jpg"
                   alt="AICS Logo"
@@ -814,31 +838,30 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 />
               </div>
               <span
-                className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-400 ring-2 ring-[#020b24] shadow-md"
+                className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-400 ring-2 ring-[#040E20] shadow-md"
                 title="100% Confidential & RA 10173 Protected"
               />
             </div>
 
             {/* Right: Titles on top, Toggles on bottom */}
-            <div className="flex-1 flex flex-col justify-between gap-2.5 min-w-0">
+            <div className="flex-1 flex flex-col justify-between gap-2 min-w-0">
               <div className="space-y-0.5 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <h1 className="text-sm font-black tracking-wide text-white uppercase truncate drop-shadow-md">
-                    AICS MONTALBAN BRANCH
+                  <h1 className="font-serif text-sm font-bold tracking-wide text-white truncate">
+                    Asian Institute of Computer Studies
                   </h1>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/25 border border-emerald-400/40 text-[10px] font-bold text-emerald-300 backdrop-blur-sm shadow-sm">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#D9A93E]/20 border border-[#D9A93E]/45 text-[10px] font-bold text-[#F2CE70]">
                     RA 10173
                   </span>
                 </div>
-                <p className="text-[11px] text-sky-100 font-semibold truncate drop-shadow-md">
-                  {isTl ? 'Ligtas at Kumpidensyal na Portal' : 'Safe & Confidential Concern Reporting'}
+                <p className="text-[11px] text-sky-200/80 font-semibold truncate">
+                  {isTl ? 'AICS Montalban SafeZone Portal' : 'AICS Montalban SafeZone Portal'}
                 </p>
               </div>
 
               {/* Toggles cluster & Quick Refresh Button */}
               <div className="flex items-center gap-2">
-                <div className="flex items-center p-1 rounded-full bg-slate-950/70 border border-white/25 shadow-xl backdrop-blur-md">
+                <div className="flex items-center p-1 rounded-full bg-[#040E20]/80 border border-white/20 shadow-lg">
                   <SoundTogglePill />
                   <div className="h-3.5 w-[1px] bg-white/20 mx-1" />
                   <LocaleSwitchPill />
@@ -852,7 +875,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     window.location.reload();
                   }}
                   title={isTl ? 'I-refresh ang pahina' : 'Refresh page'}
-                  className="p-1.5 rounded-full bg-slate-950/70 hover:bg-slate-900 text-sky-200 border border-white/25 shadow-xl backdrop-blur-md transition-all flex items-center justify-center cursor-pointer"
+                  className="p-1.5 rounded-full bg-[#040E20]/80 hover:bg-[#0B1F4D] text-sky-200 border border-white/20 shadow-lg transition-all flex items-center justify-center cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                 </button>
@@ -862,31 +885,69 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         </div>
       </header>
 
-      {/* Main Glassmorphic Container: Left Student Pair & Right Form Card */}
-      <main className={`relative z-20 flex-1 flex flex-col justify-center items-center p-3 sm:p-6 lg:px-8 ${
-  mode === 'login' ? 'my-1 sm:my-4 lg:my-0 lg:py-2' : 'my-4 sm:my-8 py-4 sm:py-6'
-}`}>
-        <div className="w-full max-w-7xl flex flex-col lg:flex-row items-center justify-center gap-6 xl:gap-16">
-          {/* Left Wing: Boy and Girl Students Together with 1 Message Bubble (Desktop Only) */}
+      {/* ====================================================
+          HERO SECTION + LOGIN CARD (1:1 CDM-PORTAL SPLIT HERO)
+          ==================================================== */}
+      <main id="portal-top" className="portal-hero-canvas relative z-20 flex-1 flex flex-col justify-center items-center px-4 sm:px-6 lg:px-10 py-8 lg:py-14">
+        <div className={`w-full max-w-[1180px] mx-auto ${
+          mode === 'login'
+            ? 'grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center'
+            : 'flex flex-col items-center justify-center'
+        }`}>
+          {/* Left Editorial Column (Desktop Only on Login) */}
           {mode === 'login' && (
             <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="hidden lg:flex shrink-0 items-end justify-center w-full max-w-lg xl:max-w-xl order-1 lg:order-none"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="hidden lg:flex lg:col-span-7 flex-col items-start text-left space-y-6 pr-4"
             >
-              <StudentPairInteractiveWing />
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-[#D9A93E]/35">
+                <span className="w-2 h-2 rounded-full bg-[#D9A93E]" />
+                <span className="portal-kicker-gold">
+                  {isTl ? 'OPISYAL NA STUDENT SAFEZONE PORTAL' : 'OFFICIAL STUDENT SAFEZONE & GUIDANCE PORTAL'}
+                </span>
+              </div>
+
+              <h2 className="portal-serif-display text-white text-[48px] xl:text-[62px] leading-[0.94] tracking-[-0.045em]">
+                {isTl ? (
+                  <>
+                    Ligtas na espasyo at{' '}
+                    <span className="text-[#F2CE70] italic font-normal">patas na paggabay</span>{' '}
+                    sa bawat mag-aaral.
+                  </>
+                ) : (
+                  <>
+                    Student welfare &amp;{' '}
+                    <span className="text-[#F2CE70] italic font-normal">safe guidance</span>{' '}
+                    in one secure place.
+                  </>
+                )}
+              </h2>
+
+              <p className="text-base text-white/80 leading-[1.72] max-w-xl font-normal">
+                {isTl
+                  ? 'Mag-sign in gamit ang iyong opisyal na AICS Student Number upang magpasa ng kumpidensyal na concern, humingi ng tulong sa Guidance Office, at subaybayan ang iyong mga ulat sa ilalim ng RA 10173.'
+                  : 'Sign in with your verified AICS Montalban Student ID to submit confidential concerns, connect directly with the Guidance Office, and track case resolutions under Republic Act No. 10173.'}
+              </p>
+
+              {/* Rotating Psychiatrist Affirmation Pill with Student Pair Companion */}
+              <div className="w-full pt-1">
+                <StudentPairInteractiveWing />
+              </div>
             </motion.div>
           )}
 
-          {/* Right Column: Original Form Card */}
+          {/* Right Column: CDM-Grade Login / Register / Forgot Card */}
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
+            transition={{ duration: 0.24 }}
             className={`w-full ${
-              mode === 'register' ? 'max-w-5xl xl:max-w-6xl' : 'max-w-[430px]'
-            } cosmic-glass-card p-4 sm:p-7 sm:py-8 space-y-5 sm:space-y-6 relative z-10 order-2 lg:order-none`}
+              mode === 'register'
+                ? 'max-w-5xl xl:max-w-6xl'
+                : 'lg:col-span-5 max-w-[440px] mx-auto'
+            } cosmic-glass-card p-5 sm:p-7 space-y-5 relative z-10`}
           >
           {/* ====================================================
               MODE: LOGIN SCREEN
@@ -1841,9 +1902,360 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       </div>
     </main>
 
-      {/* Footer (Hidden on mobile or when virtual keyboard opens, keeping the screen Messenger-clean) */}
-      <footer className="relative z-20 py-4 text-center text-xs text-[#9BCBFF]/75 border-t border-white/10 bg-[#0B1E48]/50 student-footer hidden sm:block">
-        Official Student Concern & Peer Referral Portal · Asian Institute of Computer Studies – Montalban (RA 10173 Protected)
+      {/* ====================================================
+          PORTAL SERVICES BENTO GRID (1:1 CDM-PORTAL 2-1-1 / 1-1-2 BENTO SECTION)
+          ==================================================== */}
+      {mode === 'login' && (
+        <>
+          <section
+            id="portal-services"
+            className="relative z-20 w-full py-16 lg:py-24 px-4 sm:px-6 lg:px-10 bg-[#EDF2F9] dark:bg-[#050C18] border-t border-[#D5E0EE] dark:border-[#1E3250] transition-colors"
+          >
+            <div className="max-w-[1180px] mx-auto space-y-10">
+              {/* Split Editorial Section Header (Left Serif Title, Right Subcopy) */}
+              <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+                <div className="space-y-3 max-w-2xl">
+                  <span className="portal-kicker block">
+                    {isTl ? 'AICS PORTAL SERVICES' : 'AICS PORTAL SERVICES'}
+                  </span>
+                  <h2 className="portal-serif-display text-3xl sm:text-5xl lg:text-[54px] text-[#0B192C] dark:text-[#EDF4FC]">
+                    {isTl
+                      ? 'Mga serbisyo ng Guidance sa iisang ligtas na lugar.'
+                      : 'Guidance workspaces in one secure place.'}
+                  </h2>
+                </div>
+                <p className="text-sm text-[#52637A] dark:text-[#94A8C4] max-w-sm leading-relaxed lg:pb-1">
+                  {isTl
+                    ? 'Mag-sign in upang ma-access ang mga serbisyo at impormasyong awtorisado para sa iyong student account.'
+                    : 'Sign in to access only the welfare services and confidential case records authorized for your student account.'}
+                </p>
+              </div>
+
+              {/* 4-Column Asymmetric Bento Grid (2-1-1 Top Row, 1-1-2 Bottom Row) */}
+              <div className="portal-bento-grid">
+                {/* Card 1: Featured 2-Col Span (Like CDM Admission) */}
+                <article
+                  onClick={() => {
+                    soundFX.playKeyClick(0);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="portal-bento-card featured cursor-pointer"
+                >
+                  <div className="portal-bento-icon">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-2.5">
+                    <span className="portal-kicker-gold block">
+                      {isTl ? 'STUDENT ACCOUNT KINAKAILANGAN' : 'STUDENT ACCOUNT REQUIRED'}
+                    </span>
+                    <h3 className="text-lg font-bold text-white">
+                      {isTl ? 'Mag-Report ng Concern (SafeZone)' : 'Confidential Concern Filing'}
+                    </h3>
+                    <p className="text-xs text-white/75 leading-relaxed max-w-md">
+                      {isTl
+                        ? 'Magpasa ng ulat tungkol sa bullying, peer conflict, o personal na alalahanin nang direkta at pribado sa Guidance Office.'
+                        : 'Submit and track bullying reports, peer referrals, or academic welfare concerns through the encrypted student workflow.'}
+                    </p>
+                  </div>
+                </article>
+
+                {/* Card 2: 1-Col Matte Card (Like CDM Enrollment) */}
+                <article
+                  onClick={() => {
+                    soundFX.playKeyClick(1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="portal-bento-card cursor-pointer"
+                >
+                  <div className="portal-bento-icon">
+                    <Shield className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-2">
+                    <span className="portal-kicker block">
+                      {isTl ? 'AWTORISADONG MAG-AARAL' : 'AUTHORIZED STUDENTS'}
+                    </span>
+                    <h3 className="text-base font-bold text-[#0B192C] dark:text-[#EDF4FC]">
+                      {isTl ? 'Status ng Iyong Ulat' : 'My Submitted Reports'}
+                    </h3>
+                    <p className="text-xs text-[#52637A] dark:text-[#94A8C4] leading-relaxed">
+                      {isTl
+                        ? 'Tingnan kung na-review, na-approve, o na-aksyunan na ng Guidance Associate ang iyong report.'
+                        : 'Review live verification status, counselor feedback, and resolution timestamps for your filed concerns.'}
+                    </p>
+                  </div>
+                </article>
+
+                {/* Card 3: 1-Col Matte Card (Like CDM Student Subjects) */}
+                <article
+                  onClick={() => {
+                    soundFX.playKeyClick(2);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="portal-bento-card cursor-pointer"
+                >
+                  <div className="portal-bento-icon">
+                    <CheckCircle2 className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-2">
+                    <span className="portal-kicker block">
+                      {isTl ? 'AWTORISADONG MAG-AARAL' : 'AUTHORIZED STUDENTS'}
+                    </span>
+                    <h3 className="text-base font-bold text-[#0B192C] dark:text-[#EDF4FC]">
+                      {isTl ? '8-Step Due Process' : 'Due Process Transparency'}
+                    </h3>
+                    <p className="text-xs text-[#52637A] dark:text-[#94A8C4] leading-relaxed">
+                      {isTl
+                        ? 'Patas na proseso alinsunod sa AICS Student Handbook at DepEd Child Protection Policy.'
+                        : 'Structured 8-stage procedural fairness from student explanation to restorative resolution.'}
+                    </p>
+                  </div>
+                </article>
+
+                {/* Card 4: 1-Col Matte Card (Like CDM Class Schedules) */}
+                <article
+                  onClick={() => {
+                    soundFX.playKeyClick(3);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="portal-bento-card cursor-pointer"
+                >
+                  <div className="portal-bento-icon">
+                    <Lock className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-2">
+                    <span className="portal-kicker block">
+                      {isTl ? 'AWTORISADONG ACCOUNT' : 'AUTHORIZED ACCOUNTS'}
+                    </span>
+                    <h3 className="text-base font-bold text-[#0B192C] dark:text-[#EDF4FC]">
+                      {isTl ? 'Iskedyul ng Counseling' : 'Conference Schedules'}
+                    </h3>
+                    <p className="text-xs text-[#52637A] dark:text-[#94A8C4] leading-relaxed">
+                      {isTl
+                        ? 'Tingnan ang nakatakdang oras ng pakikipag-usap sa Guidance Office at parent conference.'
+                        : 'See assigned guidance consultation slots, room assignments, and parent conference schedules.'}
+                    </p>
+                  </div>
+                </article>
+
+                {/* Card 5: 1-Col Matte Card (Like CDM Academic Grades) */}
+                <article
+                  onClick={() => {
+                    soundFX.playKeyClick(4);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="portal-bento-card cursor-pointer"
+                >
+                  <div className="portal-bento-icon">
+                    <User className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-2">
+                    <span className="portal-kicker block">
+                      {isTl ? 'AWTORISADONG MAG-AARAL' : 'AUTHORIZED STUDENTS'}
+                    </span>
+                    <h3 className="text-base font-bold text-[#0B192C] dark:text-[#EDF4FC]">
+                      {isTl ? 'Masterlist Verification' : 'Verified Student Identity'}
+                    </h3>
+                    <p className="text-xs text-[#52637A] dark:text-[#94A8C4] leading-relaxed">
+                      {isTl
+                        ? 'Awtomatikong beripikasyon laban sa opisyal na AICS Montalban Student Masterlist.'
+                        : 'Instant identity validation cross-checked against the official AICS Montalban enrollment masterlist.'}
+                    </p>
+                  </div>
+                </article>
+
+                {/* Card 6: Featured 2-Col Span (Like CDM Document Requests) */}
+                <article
+                  onClick={() => {
+                    soundFX.playKeyClick(5);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="portal-bento-card featured cursor-pointer"
+                >
+                  <div className="portal-bento-icon">
+                    <Shield className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-2.5">
+                    <span className="portal-kicker-gold block">
+                      {isTl ? 'AWTORISADONG ACCOUNT' : 'AUTHORIZED ACCOUNTS'}
+                    </span>
+                    <h3 className="text-lg font-bold text-white">
+                      {isTl ? 'Direct Guidance Chat & Support' : 'Direct Guidance Counseling Chat'}
+                    </h3>
+                    <p className="text-xs text-white/75 leading-relaxed max-w-md">
+                      {isTl
+                        ? 'Makipag-usap nang real-time sa Guidance Office kapag na-approve na ang iyong concern, kasama ang pagpapadala ng ebidensya.'
+                        : 'Communicate directly with the Guidance Associate once your report is verified, with support for photo evidence attachments.'}
+                    </p>
+                  </div>
+                </article>
+              </div>
+
+              {/* Bottom Security Strip (1:1 with CDM Portal bottom line) */}
+              <div className="pt-6 border-t border-[#D5E0EE] dark:border-[#1E3250] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs">
+                <span className="text-[#52637A] dark:text-[#94A8C4]">
+                  {isTl
+                    ? 'Ang mga pribadong rekord ng mag-aaral ay hindi kailanman nakikita sa pampublikong pahinang ito (RA 10173).'
+                    : 'Private student guidance records never appear on this public page (RA 10173 Compliant).'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playToggleSwitch(true);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="font-bold text-[#1E469B] dark:text-[#38BDF8] hover:underline inline-flex items-center gap-1.5"
+                >
+                  <span>{isTl ? 'Mag-sign in upang ma-access ang serbisyo' : 'Sign in to access services'}</span>
+                  <span>→</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {/* ====================================================
+              INSTITUTIONAL DIRECTION & SHS STRANDS (1:1 CDM MISSION/VISION & PROGRAMS)
+              ==================================================== */}
+          <section
+            id="portal-direction"
+            className="relative z-20 w-full py-16 lg:py-20 px-4 sm:px-6 lg:px-10 bg-white dark:bg-[#071120] border-t border-[#D5E0EE] dark:border-[#1E3250] transition-colors"
+          >
+            <div className="max-w-[1180px] mx-auto space-y-14">
+              {/* 2-Column Asymmetric Mission & Welfare Direction */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+                <div className="lg:col-span-5 space-y-3">
+                  <span className="portal-kicker block">
+                    {isTl ? 'DIREKSYON NG GUIDANCE OFFICE' : 'INSTITUTIONAL WELFARE DIRECTION'}
+                  </span>
+                  <h2 className="portal-serif-display text-3xl sm:text-4xl text-[#0B192C] dark:text-[#EDF4FC]">
+                    {isTl
+                      ? 'binuo para sa kaligtasan, disiplina, at paghilom.'
+                      : 'Built on safety, restorative discipline, and student care.'}
+                  </h2>
+                  <p className="text-xs sm:text-sm text-[#52637A] dark:text-[#94A8C4] leading-relaxed">
+                    {isTl
+                      ? 'Pinagsasama ng AICS Montalban Guidance System ang mabilis na digital reporting at makataong paggabay.'
+                      : 'AICS Montalban combines structured digital case management with compassionate student counseling.'}
+                  </p>
+                </div>
+
+                <div className="lg:col-span-7 grid grid-cols-1 gap-4">
+                  {/* Gold-Left Card (Mission) */}
+                  <article className="p-6 rounded-[20px] bg-[#F8FAFC] dark:bg-[#0A1526] border border-[#D5E0EE] dark:border-[#1E3250] border-l-4 border-l-[#D9A93E] space-y-2">
+                    <span className="portal-kicker-gold !text-[#B7841E] dark:!text-[#F2CE70] block">
+                      {isTl ? 'SAFEZONE COMMITMENT' : 'SAFEZONE COMMITMENT'}
+                    </span>
+                    <p className="font-serif text-base sm:text-lg text-[#0B192C] dark:text-[#EDF4FC] leading-relaxed">
+                      {isTl
+                        ? '“Bigyan ang bawat mag-aaral ng AICS Montalban ng ligtas, mabilis, at kumpidensyal na daluyan upang maiparating ang kanilang saloobin nang walang takot sa pagganti.”'
+                        : '“To empower every AICS Montalban student with a confidential, fear-free channel to voice concerns, ensuring timely intervention and zero retaliation.”'}
+                    </p>
+                  </article>
+
+                  {/* Royal-Blue-Left Card (Vision) */}
+                  <article className="p-6 rounded-[20px] bg-[#F8FAFC] dark:bg-[#0A1526] border border-[#D5E0EE] dark:border-[#1E3250] border-l-4 border-l-[#1E469B] dark:border-l-[#38BDF8] space-y-2">
+                    <span className="portal-kicker block">
+                      {isTl ? 'RESTORATIVE DUE PROCESS' : 'RESTORATIVE DUE PROCESS'}
+                    </span>
+                    <p className="font-serif text-base sm:text-lg text-[#0B192C] dark:text-[#EDF4FC] leading-relaxed">
+                      {isTl
+                        ? '“Isang komunidad ng Senior High School na ligtas sa bullying, tapat sa proseso ng pagdidisiplina, at katuwang ng mga magulang sa paghubog ng mag-aaral.”'
+                        : '“A Senior High School campus community free from harassment, anchored on transparent 8-step due process and active parent-school partnership.”'}
+                    </p>
+                  </article>
+                </div>
+              </div>
+
+              {/* 3-Column Academic Strands Covered (Like CDM Academic Programs Grid) */}
+              <div id="portal-strands" className="pt-8 border-t border-[#D5E0EE] dark:border-[#1E3250] space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                  <div>
+                    <span className="portal-kicker block">
+                      {isTl ? 'SAKOP NA PROGRAMA (GRADE 11 & 12)' : 'COVERED ACADEMIC TRACKS (GRADE 11 & 12)'}
+                    </span>
+                    <h3 className="portal-serif-display text-2xl sm:text-3xl text-[#0B192C] dark:text-[#EDF4FC] mt-1">
+                      {isTl ? 'AICS Montalban Senior High School Strands' : 'AICS Montalban Senior High School Strands'}
+                    </h3>
+                  </div>
+                  <span className="text-xs font-bold text-[#52637A] dark:text-[#94A8C4]">
+                    400 Verified Masterlist Students · SY 2025–2026
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    {
+                      code: 'ICT / STEM',
+                      title: 'Technology & Science Track',
+                      items: [
+                        'Information & Communications Technology (TVL-ICT)',
+                        'Science, Technology, Engineering & Mathematics (STEM)',
+                        'Computer Programming & Systems Servicing',
+                      ],
+                    },
+                    {
+                      code: 'ABM / GAS',
+                      title: 'Business & General Academic',
+                      items: [
+                        'Accountancy, Business & Management (ABM)',
+                        'General Academic Strand (GAS)',
+                        'Entrepreneurship & Office Administration',
+                      ],
+                    },
+                    {
+                      code: 'HUMSS / HE',
+                      title: 'Humanities & Home Economics',
+                      items: [
+                        'Humanities & Social Sciences (HUMSS)',
+                        'Home Economics & Culinary Arts (TVL-HE)',
+                        'Student Peer Facilitators & Welfare Circle',
+                      ],
+                    },
+                  ].map((prog) => (
+                    <article
+                      key={prog.code}
+                      className="p-6 rounded-[22px] bg-[#F8FAFC] dark:bg-[#0A1526] border border-[#D5E0EE] dark:border-[#1E3250] flex flex-col justify-between space-y-5"
+                    >
+                      <header className="flex items-center gap-3.5">
+                        <span className="w-[52px] h-[52px] rounded-[15px] bg-[#0B1F4D] dark:bg-[#132E6B] border border-[#D9A93E]/35 text-[#F2CE70] text-xs font-extrabold tracking-wider flex items-center justify-center shrink-0">
+                          {prog.code.split(' ')[0]}
+                        </span>
+                        <div>
+                          <span className="portal-kicker block">{prog.code}</span>
+                          <h4 className="text-base font-bold text-[#0B192C] dark:text-[#EDF4FC] mt-0.5">
+                            {prog.title}
+                          </h4>
+                        </div>
+                      </header>
+                      <ul className="space-y-0">
+                        {prog.items.map((item) => (
+                          <li
+                            key={item}
+                            className="border-t border-[#D5E0EE] dark:border-[#1E3250] py-3 pl-4 relative text-xs text-[#52637A] dark:text-[#94A8C4] font-medium"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#D9A93E] absolute left-0.5 top-[18px]" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* Footer (1:1 CDM-Portal Dark Obsidian Footer) */}
+      <footer className="relative z-20 py-6 px-6 text-center text-xs text-white/60 border-t border-white/10 bg-[#030914] student-footer hidden sm:block">
+        <div className="max-w-[1180px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <span>
+            Asian Institute of Computer Studies – Montalban Campus · Guidance &amp; Counseling Office
+          </span>
+          <span className="text-white/45">
+            Republic Act No. 10173 (Data Privacy Act of 2012) Compliant
+          </span>
+        </div>
       </footer>
 
       {/* ====================================================

@@ -1813,90 +1813,196 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </section>
             )}
 
-            {/* ================================================================
-                2. 4 FLAT EXECUTIVE KPI SUMMARY CARDS (ZERO SMALL-CARD ICONS)
-                ================================================================ */}
-            <section className="shrink-0 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-              {/* KPI 1: Active Cases */}
-              <button
-                type="button"
-                onClick={() => openCasesTab('case-board')}
-                title={isTl ? 'Buksan ang listahan ng bukas na kaso' : 'Open the list of open cases'}
-                className="group h-[84px] px-4 py-3 rounded-xl text-left transition-[transform,border-color] duration-150 active:scale-[0.98] saas-card border-l-[3px] border-l-[#1E469B] flex flex-col justify-between hover:border-[#1E469B]"
-              >
-                <span className="text-xs font-semibold text-[#475569] dark:text-[#94A8D0]">
-                  {isTl ? 'Mga aktibong kaso' : 'Open guidance cases'}
-                </span>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-2xl font-bold text-[#0F172A] dark:text-white font-mono">
-                    {cases.filter((c) => c.status !== 'Resolved').length}
-                  </span>
-                  <span className="text-xs font-medium text-[#64748B] dark:text-[#94A8D0]">
-                    {cases.length} {isTl ? 'kabuuang kaso' : 'total'}
-                  </span>
+              {/*New here guide / Executive Bento Hub */}
+              {/* ================================================================
+                  CDM-PORTAL 1:1 ASYMMETRIC BENTO GRID WORKSPACE HUB (2-1-1 / 1-1-2)
+                  ================================================================ */}
+              <section className="shrink-0 space-y-3" aria-label={isTl ? 'Guidance Workspace Hub' : 'Guidance Workspace Hub'}>
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+                  <div>
+                    <span className="portal-kicker block">
+                      {isTl ? 'AICS GUIDANCE PORTAL SERVICES' : 'AICS GUIDANCE PORTAL SERVICES'}
+                    </span>
+                    <h2 className="portal-serif-display text-2xl sm:text-3xl text-[#0B192C] dark:text-[#EDF4FC] mt-0.5">
+                      {isTl ? 'Academic & guidance workspaces in one secure place.' : 'Academic & guidance workspaces in one secure place.'}
+                    </h2>
+                  </div>
+                  <p className="text-xs text-[#52637A] dark:text-[#94A8C4] max-w-xs">
+                    {isTl
+                      ? 'Pumili ng workspace sa ibaba upang buksan ang kaso, parent conference, o student concerns.'
+                      : 'Select any workspace card below to manage cases, parent conferences, or student welfare records.'}
+                  </p>
                 </div>
-              </button>
 
-              {/* KPI 2: Offenses This Month */}
-              <button
-                type="button"
-                onClick={() => (() => { soundFX.playToggleSwitch(true); setActiveTab('analytics'); })()}
-                title={isTl ? 'Tingnan ang statistics' : 'See the statistics'}
-                className="group h-[84px] px-4 py-3 rounded-xl text-left transition-[transform,border-color] duration-150 active:scale-[0.98] saas-card border-l-[3px] border-l-[#2557BE] flex flex-col justify-between hover:border-[#1E469B]"
-              >
-                <span className="text-xs font-semibold text-[#475569] dark:text-[#94A8D0]">
-                  {isTl ? 'Kaso ngayong buwan' : 'Offenses this month'}
-                </span>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-2xl font-bold text-[#0F172A] dark:text-white font-mono">
-                    {offensesThisMonth}
-                  </span>
-                  <span className="text-xs font-medium text-[#64748B] dark:text-[#94A8D0]">
-                    {isTl ? 'ngayong buwan' : 'this month'}
-                  </span>
-                </div>
-              </button>
+                <div className="portal-bento-grid">
+                  {/* Bento 1: Featured 2-Col Span — File / Manage Discipline Case */}
+                  <button
+                    type="button"
+                    onClick={() => openCasesTab('add-report')}
+                    className="btn-press portal-bento-card featured text-left !min-h-[158px] !p-5 cursor-pointer"
+                  >
+                    <div className="portal-bento-icon">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <span className="portal-kicker-gold block">
+                        {isTl ? '8-STEP DUE PROCESS WORKFLOW' : '8-STEP DUE PROCESS WORKFLOW'}
+                      </span>
+                      <h3 className="text-base sm:text-lg font-bold text-white">
+                        {isTl ? 'Mag-File at Mamahala ng Kaso' : 'Discipline Case Intake & Due Process'}
+                      </h3>
+                      <p className="text-xs text-white/75 leading-relaxed max-w-md">
+                        {isTl
+                          ? 'Mag-record ng bagong offense, mag-print ng Call Slip, at subaybayan ang 8-step due process.'
+                          : 'Create new incident reports, issue student call slips, and track the complete 8-stage due process workflow.'}
+                      </p>
+                    </div>
+                  </button>
 
-              {/* KPI 3: Parent Attendance Rate */}
-              <button
-                type="button"
-                onClick={() => goToQueue('dash-conferences')}
-                title={isTl ? 'Tingnan ang mga conference ngayong araw' : 'See today’s conferences'}
-                className="group h-[84px] px-4 py-3 rounded-xl text-left transition-[transform,border-color] duration-150 active:scale-[0.98] saas-card border-l-[3px] border-l-emerald-500 flex flex-col justify-between hover:border-[#1E469B]"
-              >
-                <span className="text-xs font-semibold text-[#475569] dark:text-[#94A8D0]">
-                  {isTl ? 'Pagdalo ng magulang' : 'Parent attendance'}
-                </span>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-2xl font-bold text-[#0F172A] dark:text-white font-mono">
-                    {attendanceStats.ratePercent === null ? '—' : `${attendanceStats.ratePercent}%`}
-                  </span>
-                  <span className="text-xs font-medium text-[#64748B] dark:text-[#94A8D0]">
-                    {attendanceStats.attended}/{attendanceStats.total} {isTl ? 'dumalo' : 'attended'}
-                  </span>
-                </div>
-              </button>
+                  {/* Bento 2: 1-Col Matte Card — Active Cases */}
+                  <button
+                    type="button"
+                    onClick={() => openCasesTab('case-board')}
+                    className="btn-press portal-bento-card text-left !min-h-[158px] !p-5 cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="portal-bento-icon">
+                        <ShieldCheck className="w-5 h-5" />
+                      </div>
+                      <span className="font-mono text-2xl font-bold text-[#0B192C] dark:text-white">
+                        {cases.filter((c) => c.status !== 'Resolved').length}
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="portal-kicker block">
+                        {isTl ? 'MGA AKTIBONG KASO' : 'AUTHORIZED RECORDS'}
+                      </span>
+                      <h3 className="text-sm sm:text-base font-bold text-[#0B192C] dark:text-[#EDF4FC]">
+                        {isTl ? 'Active Cases Board' : 'Active Discipline Cases'}
+                      </h3>
+                      <p className="text-xs text-[#52637A] dark:text-[#94A8C4] leading-snug">
+                        {cases.length} {isTl ? 'kabuuang kaso sa sistema.' : 'total cases recorded in the system.'}
+                      </p>
+                    </div>
+                  </button>
 
-              {/* KPI 4: Follow-Ups Due Today */}
-              <button
-                type="button"
-                onClick={() => goToQueue('dash-followups')}
-                title={isTl ? 'Tingnan ang mga follow-up' : 'See the follow-ups'}
-                className="group h-[84px] px-4 py-3 rounded-xl text-left transition-[transform,border-color] duration-150 active:scale-[0.98] saas-card border-l-[3px] border-l-amber-500 flex flex-col justify-between hover:border-[#1E469B]"
-              >
-                <span className="text-xs font-semibold text-[#475569] dark:text-[#94A8D0]">
-                  {isTl ? 'Follow-up ngayong araw' : 'Follow-ups due'}
-                </span>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-2xl font-bold text-[#0F172A] dark:text-white font-mono">
-                    {activeFollowUpCount}
-                  </span>
-                  <span className="text-xs font-medium text-[#64748B] dark:text-[#94A8D0]">
-                    {isTl ? 'kailangang tawagan' : 'pending outreach'}
-                  </span>
+                  {/* Bento 3: 1-Col Matte Card — Student Masterlist */}
+                  <button
+                    type="button"
+                    onClick={() => openCasesTab('masterlist')}
+                    className="btn-press portal-bento-card text-left !min-h-[158px] !p-5 cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="portal-bento-icon">
+                        <BookOpen className="w-5 h-5" />
+                      </div>
+                      <span className="font-mono text-2xl font-bold text-[#0B192C] dark:text-white">
+                        {students.length}
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="portal-kicker block">
+                        {isTl ? 'OPISYAL NA MASTERLIST' : 'AUTHORIZED STUDENTS'}
+                      </span>
+                      <h3 className="text-sm sm:text-base font-bold text-[#0B192C] dark:text-[#EDF4FC]">
+                        {isTl ? 'Student Masterlist' : 'Student Masterlist'}
+                      </h3>
+                      <p className="text-xs text-[#52637A] dark:text-[#94A8C4] leading-snug">
+                        {isTl ? 'Grade 11 at Grade 12 enrolled profiles.' : 'Verified Grade 11 & 12 student directory.'}
+                      </p>
+                    </div>
+                  </button>
+
+                  {/* Bento 4: 1-Col Matte Card — Parent Conferences (Class Schedules style) */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playStepUnlock();
+                      const parentsNav = MAIN_SIDEBAR_CATEGORIES.find((c) => c.id === 'parents-hub');
+                      if (parentsNav) setActiveCategory(parentsNav);
+                    }}
+                    className="btn-press portal-bento-card text-left !min-h-[158px] !p-5 cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="portal-bento-icon">
+                        <Calendar className="w-5 h-5" />
+                      </div>
+                      <span className="font-mono text-2xl font-bold text-[#0B192C] dark:text-white">
+                        {attendanceStats.ratePercent === null ? '—' : `${attendanceStats.ratePercent}%`}
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="portal-kicker block">
+                        {isTl ? 'ISKEDYUL NG MAGULANG' : 'AUTHORIZED ACCOUNTS'}
+                      </span>
+                      <h3 className="text-sm sm:text-base font-bold text-[#0B192C] dark:text-[#EDF4FC]">
+                        {isTl ? 'Parent Conferences' : 'Conference Schedules'}
+                      </h3>
+                      <p className="text-xs text-[#52637A] dark:text-[#94A8C4] leading-snug">
+                        {attendanceStats.attended}/{attendanceStats.total} {isTl ? 'dumalong magulang.' : 'attended parent summons.'}
+                      </p>
+                    </div>
+                  </button>
+
+                  {/* Bento 5: 1-Col Matte Card — Follow-ups & Offenses This Month */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playToggleSwitch(true);
+                      setActiveTab('analytics');
+                    }}
+                    className="btn-press portal-bento-card text-left !min-h-[158px] !p-5 cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="portal-bento-icon">
+                        <Clock className="w-5 h-5" />
+                      </div>
+                      <span className="font-mono text-2xl font-bold text-[#0B192C] dark:text-white">
+                        {offensesThisMonth}
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="portal-kicker block">
+                        {isTl ? 'BUWANANG REKORD' : 'MONTHLY ANALYTICS'}
+                      </span>
+                      <h3 className="text-sm sm:text-base font-bold text-[#0B192C] dark:text-[#EDF4FC]">
+                        {isTl ? 'Offenses & Statistics' : 'Academic & Case Metrics'}
+                      </h3>
+                      <p className="text-xs text-[#52637A] dark:text-[#94A8C4] leading-snug">
+                        {activeFollowUpCount} {isTl ? 'follow-up na kailangang tawagan.' : 'pending parent follow-up calls.'}
+                      </p>
+                    </div>
+                  </button>
+
+                  {/* Bento 6: Featured 2-Col Span — Official Reports & SafeZone Concerns */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playStepUnlock();
+                      const concernsNav = MAIN_SIDEBAR_CATEGORIES.find((c) => c.id === 'support-hub');
+                      if (concernsNav) setActiveCategory(concernsNav);
+                    }}
+                    className="btn-press portal-bento-card featured text-left !min-h-[158px] !p-5 cursor-pointer"
+                  >
+                    <div className="portal-bento-icon">
+                      <MessageSquare className="w-5 h-5" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <span className="portal-kicker-gold block">
+                        {isTl ? 'SAFEZONE & PDF DOCUMENTATION' : 'SAFEZONE & OFFICIAL DOCUMENTATION'}
+                      </span>
+                      <h3 className="text-base sm:text-lg font-bold text-white">
+                        {isTl ? 'Student Concerns & Live Counseling Chat' : 'Student Concerns & Official Reports'}
+                      </h3>
+                      <p className="text-xs text-white/75 leading-relaxed max-w-md">
+                        {isTl
+                          ? 'Tugunan ang mga isinumiteng concern ng mag-aaral, makipag-chat nang pribado, at mag-download ng 1-page PDF.'
+                          : 'Review student-submitted SafeZone reports, respond via real-time counseling chat, and export 1-page official PDFs.'}
+                      </p>
+                    </div>
+                  </button>
                 </div>
-              </button>
-            </section>
+              </section>
 
             {/* ================================================================
                 3. LOCKED-POSITION SaaS WORKSPACE TABS (h-[52px] shrink-0)

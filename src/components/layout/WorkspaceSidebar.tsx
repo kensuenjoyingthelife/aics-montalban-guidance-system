@@ -82,23 +82,26 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
     <aside
       className={`relative z-30 shrink-0 h-screen sticky top-0 flex flex-col justify-between transition-[width] duration-200 select-none ${
         collapsed ? 'w-[76px]' : 'w-[264px]'
-      } bg-[#0B1F4D] dark:bg-[#070E1C] border-r border-[#1C366E] dark:border-[#14233C] text-white`}
+      } bg-[#040E20] dark:bg-[#040B18] border-r border-[#D9A93E]/25 dark:border-[#1E3250] text-white`}
     >
       {/* 1. Official Institutional Brand Header */}
-      <div className={`h-16 border-b border-white/10 flex items-center shrink-0 ${
+      <div className={`h-16 border-b border-[#D9A93E]/20 flex items-center shrink-0 ${
         collapsed ? 'justify-center px-2' : 'justify-between px-4 gap-3'
       }`}>
         <div className="flex items-center gap-3 min-w-0">
           <img
             src="/aics-logo.jpg"
             alt="AICS Montalban Seal"
-            className="w-10 h-10 rounded-full object-cover bg-white p-0.5 ring-1 ring-white/30 shrink-0 shadow-sm"
+            className="w-10 h-10 rounded-full object-cover bg-white p-0.5 ring-1 ring-[#D9A93E]/60 shrink-0 shadow-sm"
           />
           {!collapsed && (
             <div className="min-w-0">
-              <h2 className="text-[14px] font-extrabold tracking-tight text-white truncate leading-snug">
-                AICS GUIDANCE
+              <h2 className="font-serif text-[14px] font-bold tracking-wide text-white truncate leading-tight">
+                Asian Institute
               </h2>
+              <p className="text-[10px] font-extrabold tracking-[0.15em] uppercase text-[#F2CE70] truncate">
+                AICS GUIDANCE PORTAL
+              </p>
             </div>
           )}
         </div>
