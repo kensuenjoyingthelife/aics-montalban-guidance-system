@@ -1351,61 +1351,86 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 onClick={(e) => e.stopPropagation()}
                 className="w-full max-w-sm rounded-2xl saas-card p-6 text-center shadow-2xl border border-[#DCE5F2] dark:border-[#243B6B] space-y-4"
               >
-                {/* Animated Checkmark Badge */}
+                {/* Animated Icon Badge (Red for Failures, Amber for Warnings, Emerald for Success) */}
                 <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
-                  <motion.span
-                    initial={{ scale: 0.6, opacity: 0.8 }}
-                    animate={{ scale: 1.35, opacity: 0 }}
-                    transition={{ duration: 0.7, ease: 'easeOut' }}
-                    className={`absolute inset-0 rounded-full ${
-                      toastBanner.message.trim().startsWith('⚠️')
-                        ? 'bg-amber-400/40'
-                        : 'bg-emerald-400/40'
-                    }`}
-                  />
-                  <motion.div
-                    initial={{ scale: 0.5 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 18 }}
-                    className={`relative w-16 h-16 rounded-full flex items-center justify-center shadow-lg ${
-                      toastBanner.message.trim().startsWith('⚠️')
-                        ? 'bg-gradient-to-br from-amber-400 to-amber-600 shadow-amber-500/30'
-                        : 'bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-500/30'
-                    }`}
-                  >
-                    {toastBanner.message.trim().startsWith('⚠️') ? (
-                      <span className="text-2xl font-extrabold text-white">!</span>
-                    ) : (
-                      <svg
-                        className="w-8 h-8 text-white"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <motion.path
-                          d="M20 6L9 17l-5-5"
-                          initial={{ pathLength: 0, opacity: 0 }}
-                          animate={{ pathLength: 1, opacity: 1 }}
-                          transition={{ duration: 0.35, delay: 0.08, ease: 'easeOut' }}
+                  {(() => {
+                    const isError =
+                      toastBanner.message.toLowerCase().includes('not saved') ||
+                      toastBanner.message.toLowerCase().includes('hindi na-save') ||
+                      toastBanner.message.toLowerCase().includes('failed') ||
+                      toastBanner.message.toLowerCase().includes('error');
+                    const isWarn = !isError && (toastBanner.message.trim().startsWith('⚠️') || toastBanner.message.trim().startsWith('⚠'));
+
+                    return (
+                      <>
+                        <motion.span
+                          initial={{ scale: 0.6, opacity: 0.8 }}
+                          animate={{ scale: 1.35, opacity: 0 }}
+                          transition={{ duration: 0.7, ease: 'easeOut' }}
+                          className={`absolute inset-0 rounded-full ${
+                            isError
+                              ? 'bg-rose-500/30'
+                              : isWarn
+                              ? 'bg-amber-400/40'
+                              : 'bg-emerald-400/40'
+                          }`}
                         />
-                      </svg>
-                    )}
-                  </motion.div>
+                        <motion.div
+                          initial={{ scale: 0.5 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: 'spring', stiffness: 400, damping: 18 }}
+                          className={`relative w-16 h-16 rounded-full flex items-center justify-center shadow-lg ${
+                            isError
+                              ? 'bg-gradient-to-br from-rose-500 to-rose-700 shadow-rose-500/30 text-white'
+                              : isWarn
+                              ? 'bg-gradient-to-br from-amber-400 to-amber-600 shadow-amber-500/30 text-white'
+                              : 'bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-500/30 text-white'
+                          }`}
+                        >
+                          {isError ? (
+                            <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                          ) : isWarn ? (
+                            <span className="text-2xl font-black text-white">!</span>
+                          ) : (
+                            <svg
+                              className="w-8 h-8 text-white"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3.2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <motion.path
+                                d="M20 6L9 17l-5-5"
+                                initial={{ pathLength: 0, opacity: 0 }}
+                                animate={{ pathLength: 1, opacity: 1 }}
+                                transition={{ duration: 0.35, delay: 0.08, ease: 'easeOut' }}
+                              />
+                            </svg>
+                          )}
+                        </motion.div>
+                      </>
+                    );
+                  })()}
                 </div>
 
                 {/* Confirmation Heading & Message */}
                 <div className="space-y-1.5">
                   <h4 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
-                    {toastBanner.message.trim().startsWith('⚠️')
-                      ? isTl
-                        ? 'Paalala sa System'
-                        : 'Attention Required'
-                      : isTl
-                      ? 'Matagumpay na Naisagawa!'
-                      : 'Action Confirmed!'}
+                    {(() => {
+                      const msg = toastBanner.message.toLowerCase();
+                      if (msg.includes('not saved') || msg.includes('hindi na-save') || msg.includes('failed') || msg.includes('error')) {
+                        return isTl ? 'Hindi Na-save ang Aksyon' : 'Save Failed';
+                      }
+                      if (toastBanner.message.trim().startsWith('⚠️') || toastBanner.message.trim().startsWith('⚠')) {
+                        return isTl ? 'Paalala sa System' : 'Attention Required';
+                      }
+                      return isTl ? 'Matagumpay na Naisagawa!' : 'Action Confirmed!';
+                    })()}
                   </h4>
                   <p className="text-xs sm:text-[13px] font-semibold text-[#4A608A] dark:text-[#94A8D0] leading-relaxed">
                     {toastBanner.message.replace(/^(?:✓|✨|📥|⚠️|⚠)\s*/u, '')}
@@ -1451,7 +1476,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                     <button
                       type="button"
                       onClick={() => setToastBanner(null)}
-                      className="btn-press px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold shadow-sm"
+                      className={`btn-press px-6 py-2 rounded-xl text-white text-xs font-extrabold shadow-sm ${
+                        toastBanner.message.toLowerCase().includes('not saved') || toastBanner.message.toLowerCase().includes('hindi na-save')
+                          ? 'bg-rose-600 hover:bg-rose-700'
+                          : 'bg-emerald-600 hover:bg-emerald-700'
+                      }`}
                     >
                       {isTl ? 'OK, Nakuha Ko' : 'OK, Got It'}
                     </button>
