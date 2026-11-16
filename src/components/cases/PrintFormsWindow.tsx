@@ -13,6 +13,7 @@ const DESC: Record<FormKind, [string, string]> = {
   contract: ['What the student promises to do (English)', 'Mga pangako ng estudyante (English)'],
   kasunduan: ['Agreement of student, parent and school (Filipino)', 'Kasunduan ng estudyante, magulang at paaralan (Filipino)'],
   suspension: ['Letter to the parent about a suspension', 'Sulat sa magulang tungkol sa suspension'],
+  caseResolutionSummary: ['Executive Case Resolution & Due Process Summary for Principal / Dean review', 'Buod ng Pagresolba ng Kaso at Due Process para sa Punong-Guro / Dekano'],
 };
 const DEFAULT_PROMISES = 'Follow the school rules and the Student Handbook.\nRespect my teachers, classmates and school staff.\nReport to the Guidance Office when called.';
 const DEFAULT_PROMISES_TL = 'Susundin ang mga patakaran ng paaralan at ng Student Handbook.\nIgagalang ang mga guro, kaklase at kawani ng paaralan.\nPupunta sa Guidance Office kapag tinawag.';

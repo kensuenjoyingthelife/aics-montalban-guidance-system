@@ -493,6 +493,8 @@ export type CaseStatusType =
   | 'Open'
   | 'Under Review'
   | 'Conference Scheduled'
+  | 'Pending Reschedule'
+  | 'Conference Attended'
   | 'Sanction In Progress'
   | 'Resolved';
 
@@ -526,6 +528,16 @@ export interface DisciplineCaseRecord {
   counselingNotes?: string;
   /** Whether parent attended the conference or was a no-show */
   parentConferenceStatus?: 'Attended' | 'No-Show' | 'Pending';
+  /** Parent summons count (1 = 1st Summons, 2 = 2nd Summons, etc. Unlimited tracking) */
+  summonsCount?: number;
+  /** History audit trail of summons and conference hearing attempts */
+  summonsHistory?: {
+    attempt: number;
+    scheduledAt: string;
+    targetDate: string;
+    outcome: 'Attended' | 'No-Show' | 'Pending';
+    notes?: string;
+  }[];
   /** Parent summons & conference schedule timestamp */
   conferenceScheduledAt?: string | null;
   conferenceTargetDate?: string | null;

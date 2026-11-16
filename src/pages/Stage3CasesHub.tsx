@@ -1341,27 +1341,47 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       local = { explanation: a.text, step: 'Explanation' };
       msg = isTl ? ' Na-save ang paliwanag. Susunod: ipaalam sa magulang.' : ' Explanation saved. Next: let the parent know.';
     } else if (a.kind === 'schedule_conference') {
+      const currentCount = c.summonsCount || (c.conferenceScheduledAt ? 1 : 0);
+      const nextCount = currentCount + 1;
+      const historyItem = {
+        attempt: nextCount,
+        scheduledAt: now,
+        targetDate: a.targetDate || now,
+        outcome: 'Pending' as const,
+      };
+      const updatedHistory = [...(c.summonsHistory || []), historyItem];
+
       db = {
         conference_scheduled_at: now,
         conference_target_date: a.targetDate || now,
+        summons_count: nextCount,
+        summons_history: JSON.stringify(updatedHistory),
         status: 'Conference Scheduled',
         step: 'Schedule Conference',
       };
       local = {
         conferenceScheduledAt: now,
         conferenceTargetDate: a.targetDate || now,
+        summonsCount: nextCount,
+        summonsHistory: updatedHistory,
         status: 'Conference Scheduled' as const,
         step: 'Schedule Conference' as const,
       };
       msg = isTl
-        ? ' Naitala: Naitakda ang Patawag sa Magulang. Susunod: Pagharap ng magulang (Attendance).'
-        : ' Recorded: Parent summons & conference set. Next: Parent conference attendance.';
+        ? `Naitala ang Ika-${nextCount} Patawag (Summons #${nextCount}). Susunod: Pagharap ng magulang.`
+        : `Recorded Summons #${nextCount}. Next: Parent conference attendance.`;
     } else if (a.kind === 'conference_outcome') {
       const isNoShow = a.conferenceStatus === 'No-Show';
+      const currentCount = c.summonsCount || 1;
+      const updatedHistory = (c.summonsHistory || []).map((h, i) =>
+        i === (c.summonsHistory || []).length - 1 ? { ...h, outcome: a.conferenceStatus } : h
+      );
+
       db = {
         parent_notified_at: now,
         parent_notified_how: a.how,
         parent_conference_status: a.conferenceStatus,
+        summons_history: JSON.stringify(updatedHistory),
         status: isNoShow ? 'Pending Reschedule' : 'Conference Attended',
         step: isNoShow ? 'Schedule Conference' : 'Parent Conference Attendance',
       };
@@ -1369,16 +1389,17 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
         parentNotifiedAt: now,
         parentNotifiedHow: a.how,
         parentConferenceStatus: a.conferenceStatus,
+        summonsHistory: updatedHistory,
         status: (isNoShow ? 'Pending Reschedule' : 'Conference Attended') as DisciplineCaseRecord['status'],
         step: (isNoShow ? 'Schedule Conference' : 'Parent Conference Attendance') as DisciplineCaseRecord['step'],
       };
       msg = isNoShow
         ? isTl
-          ? ' Naitala: Hindi sumipot ang magulang (No-Show). Mag-issue ng 2nd summons o i-reschedule.'
-          : ' Recorded: Parent did not attend (No-Show). Issue 2nd summons or reschedule.'
+          ? `Naitala: Hindi sumipot ang magulang sa Summons #${currentCount}. Kailangan ng ika-${currentCount + 1} patawag (Reschedule).`
+          : `Recorded: Parent was a No-Show on Summons #${currentCount}. Summons #${currentCount + 1} required.`
         : isTl
-        ? ' Naitala: Dumalo ang magulang sa pagdinig. Na-unlock na ang Hakbang ng Desisyon!'
-        : ' Recorded: Parent attended conference hearing. Decision step is now unlocked!';
+        ? 'Naitala: Dumalo ang magulang sa pagdinig. Na-unlock na ang Hakbang ng Desisyon!'
+        : 'Recorded: Parent attended conference hearing. Decision step is now unlocked!';
     } else if (a.kind === 'notified') {
       const isNoShow = a.conferenceStatus === 'No-Show';
       const activate = !isNoShow && c.sanctionStatus === 'Pending parent notice';
@@ -1409,9 +1430,20 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
         ? isTl ? ' Na-save ang desisyon. Nagsimula na ang sanction.' : ' Decision saved. The sanction has started.'
         : isTl ? ' Na-save ang desisyon. Maghihintay ang sanction hanggang malaman ng magulang.' : ' Decision saved. The sanction waits until the parent is notified.';
     } else if (a.kind === 'followup') {
-      db = { step: 'Follow-Up', status: 'Sanction In Progress' };
-      local = { step: 'Follow-Up', status: 'Sanction In Progress' };
-      msg = isTl ? ' Nasa follow-up na. Isara ang kaso kapag tapos na ang sanction.' : ' In follow-up. Close the case when the sanction is done.';
+      const sanctionDone = a.sanctionDone ?? false;
+      db = {
+        step: 'Follow-Up',
+        status: sanctionDone ? 'Resolved' : 'Sanction In Progress',
+        sanction_status: sanctionDone ? 'Done' : 'Active',
+      };
+      local = {
+        step: 'Follow-Up',
+        status: (sanctionDone ? 'Resolved' : 'Sanction In Progress') as DisciplineCaseRecord['status'],
+        sanctionStatus: (sanctionDone ? 'Done' : 'Active') as DisciplineCaseRecord['sanctionStatus'],
+      };
+      msg = sanctionDone
+        ? isTl ? ' Naitala: Natapos na ang sanction. Handa na para sa pormal na pagsasara ng kaso.' : ' Recorded: Sanction fully completed. Ready for formal case resolution.'
+        : isTl ? ' Nasa follow-up na. Kasalukuyang ginagawa ang sanction.' : ' In follow-up. Sanction is currently in progress.';
     } else {
       const ok = await confirmChange({
         title: isTl ? `Isara ang kaso ni ${c.studentName}?` : `Close ${c.studentName}'s case?`,
@@ -4161,9 +4193,9 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       <button
                         type="button"
                         onClick={startCaseEdit}
-                        className="px-3 py-2 rounded-lg saas-card-subtle hover:border-[#1E469B] text-xs font-bold text-[#0B1F4D] dark:text-white"
+                        className="px-3 py-2 rounded-lg saas-card-subtle hover:border-[#1E469B] text-xs font-bold text-[#0B1F4D] dark:text-white active:scale-[0.97] transition-all"
                       >
-                         {isTl ? 'I-edit' : 'Edit'}
+                        {isTl ? 'I-edit' : 'Edit'}
                       </button>
                       <button
                         type="button"
@@ -4171,9 +4203,9 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                           setCallSlipCase(openCase);
                           setOpenCaseCode(null);
                         }}
-                        className="px-3 py-2 rounded-lg saas-card-subtle hover:border-[#1E469B] text-xs font-bold whitespace-nowrap text-[#0B1F4D] dark:text-white"
+                        className="px-3 py-2 rounded-lg saas-card-subtle hover:border-[#1E469B] text-xs font-bold whitespace-nowrap text-[#0B1F4D] dark:text-white active:scale-[0.97] transition-all"
                       >
-                        ️ {isTl ? 'Mag-print ng form…' : 'Print a form…'}
+                        {isTl ? 'Mag-print ng form / Buod…' : 'Print Form / Summary…'}
                       </button>
                       {/* Only allow Parent Text / SMS if Major or Consecutive Minor (escalated) */}
                       {openCaseStudent && (openCase.severity.toLowerCase().includes('major') || openCase.severity.toLowerCase().includes('serious') || openCase.severity.toLowerCase().includes('grave') || openCase.severity.toLowerCase().includes('consecutive')) && (
@@ -4191,9 +4223,9 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               scheduleText: '',
                             });
                           }}
-                          className="px-3 py-2 rounded-lg saas-card-subtle hover:border-[#1E469B] text-xs font-bold whitespace-nowrap text-[#1E469B] dark:text-[#7CB8F7]"
+                          className="px-3 py-2 rounded-lg saas-card-subtle hover:border-[#1E469B] text-xs font-bold whitespace-nowrap text-[#1E469B] dark:text-[#7CB8F7] active:scale-[0.97] transition-all"
                         >
-                           {isTl ? 'I-text ang magulang' : 'Text parent'}
+                          {isTl ? 'I-text ang magulang' : 'Text parent'}
                         </button>
                       )}
                     </div>
@@ -4201,9 +4233,9 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       <button
                         type="button"
                         onClick={() => handleUpdateCaseStatus(openCase, 'Open')}
-                        className="px-4 py-2 rounded-lg saas-card-subtle text-xs font-bold text-[#0B1F4D] dark:text-white"
+                        className="px-4 py-2 rounded-lg saas-card-subtle text-xs font-bold text-[#0B1F4D] dark:text-white active:scale-[0.97] transition-all"
                       >
-                        ↺ {isTl ? 'Buksan ulit' : 'Reopen case'}
+                        {isTl ? 'Buksan ulit' : 'Reopen case'}
                       </button>
                     ) : (
                       <button

@@ -2,7 +2,7 @@
 // For 1st Minor: 5 steps: Reported → Student Called → Explanation → Decision → Closed
 // For Major / 2nd Minor / Serious: 8 steps: Reported → Student Called → Explanation → Schedule Conference → Parent Conference Attendance → Decision → Follow-Up → Closed
 import React, { useMemo, useState } from 'react';
-import { Calendar, Phone, Check, AlertTriangle, Printer } from 'lucide-react';
+import { Calendar, Phone, Check, AlertTriangle, Printer, Clock, RotateCcw, ShieldCheck, FileText } from 'lucide-react';
 import type { ParentAppointmentItem } from '../../data/dashboardMockData';
 import {
   CASE_STEPS,
@@ -16,10 +16,10 @@ export type FlowAction =
   | { kind: 'call' }
   | { kind: 'explanation'; text: string }
   | { kind: 'schedule_conference'; targetDate?: string }
-  | { kind: 'conference_outcome'; how: string; conferenceStatus: 'Attended' | 'No-Show' }
+  | { kind: 'conference_outcome'; how: string; conferenceStatus: 'Attended' | 'No-Show'; notes?: string }
   | { kind: 'notified'; how: string; conferenceStatus?: 'Attended' | 'No-Show' }
   | { kind: 'decision'; decision: string; sanction: string }
-  | { kind: 'followup' }
+  | { kind: 'followup'; sanctionDone?: boolean }
   | { kind: 'close'; counselingNotes?: string };
 
 export function isMinorCase(c: DisciplineCaseRecord): boolean {
@@ -68,15 +68,19 @@ export function flowState(c: DisciplineCaseRecord) {
   const isMinor = isMinorCase(c);
   const activeSteps = isMinor ? MINOR_CASE_STEPS : MAJOR_CASE_STEPS;
   const closed = c.status === 'Resolved';
+  const isNoShowLoop = c.parentConferenceStatus === 'No-Show' && c.status === 'Pending Reschedule';
 
   const hasConferenceScheduled =
-    !!c.conferenceScheduledAt ||
-    c.status === 'Conference Scheduled' ||
-    !!c.parentNotifiedAt ||
-    !!c.parentConferenceStatus;
+    !isNoShowLoop &&
+    (!!c.conferenceScheduledAt ||
+      c.status === 'Conference Scheduled' ||
+      !!c.parentNotifiedAt ||
+      (!!c.parentConferenceStatus && c.parentConferenceStatus === 'Attended'));
 
   const hasConferenceAttendance =
-    !!c.parentConferenceStatus && c.parentConferenceStatus !== 'Pending';
+    !isNoShowLoop &&
+    !!c.parentConferenceStatus &&
+    c.parentConferenceStatus === 'Attended';
 
   const hasFollowUpDone =
     c.step === 'Follow-Up' ||
@@ -91,7 +95,7 @@ export function flowState(c: DisciplineCaseRecord) {
     Explanation: !!(c.explanation && c.explanation.trim()) || closed,
     'Schedule Conference': hasConferenceScheduled || closed,
     'Parent Conference Attendance': hasConferenceAttendance || closed,
-    'Parent Notified': !!c.parentNotifiedAt || closed,
+    'Parent Notified': (!isNoShowLoop && !!c.parentNotifiedAt) || closed,
     Decision: !!c.decidedAt || closed,
     'Follow-Up': hasFollowUpDone,
     Closed: closed,
@@ -420,10 +424,36 @@ export const CaseFlowPanel: React.FC<{
                       : 'Due process requires summoning the parent via Parents Hub before rendering a sanction decision.'}
                   </p>
                 </div>
-                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-500/15 text-[#1E469B] dark:text-[#7CB8F7] border border-blue-400/30">
-                  {isTl ? 'Kailangan ang Magulang' : 'Parent Summons Required'}
-                </span>
+                <div className="flex items-center gap-2">
+                  {(c.summonsCount || 0) > 0 && (
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-400/40">
+                      {isTl ? `Ika-${(c.summonsCount || 0) + 1} Patawag (Summons #${(c.summonsCount || 0) + 1})` : `Summons #${(c.summonsCount || 0) + 1}`}
+                    </span>
+                  )}
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-500/15 text-[#1E469B] dark:text-[#7CB8F7] border border-blue-400/30">
+                    {isTl ? 'Kailangan ang Magulang' : 'Parent Summons Required'}
+                  </span>
+                </div>
               </div>
+
+              {/* Show previous No-Show notice if rescheduled */}
+              {c.parentConferenceStatus === 'No-Show' && (
+                <div className="p-3 rounded-xl border border-rose-300 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/20 flex items-start gap-2.5">
+                  <RotateCcw className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <div className="text-xs text-rose-950 dark:text-rose-200">
+                    <p className="font-extrabold">
+                      {isTl
+                        ? `Hindi sumipot (No-Show) ang magulang sa nakaraang Summons #${c.summonsCount || 1}.`
+                        : `Parent was a No-Show on previous Summons #${c.summonsCount || 1}.`}
+                    </p>
+                    <p className="text-[11px] text-rose-800 dark:text-rose-300 mt-0.5 leading-relaxed">
+                      {isTl
+                        ? 'Alinsunod sa DepEd DO 40, mag-isyu ng panibagong petsa ng patawag (Re-summons) sa Parents Hub o mag-print ng follow-up call slip.'
+                        : 'Pursuant to DepEd DO 40, issue a subsequent summons date in Parents Hub or print an official follow-up summons form.'}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Show Live Scheduled Appointment from ParentsHub if already exists */}
               {liveAppointment ? (
@@ -532,7 +562,7 @@ export const CaseFlowPanel: React.FC<{
                         : 'bg-white dark:bg-[#0B1527] border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    <span>✓</span>
+                    <Check className="w-4 h-4" />
                     <span>{isTl ? 'Dumalo ang Magulang' : 'Parent Attended'}</span>
                   </button>
                   <button
@@ -544,7 +574,7 @@ export const CaseFlowPanel: React.FC<{
                         : 'bg-white dark:bg-[#0B1527] border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    <span>⚠️</span>
+                    <AlertTriangle className="w-4 h-4" />
                     <span>{isTl ? 'Hindi Sumipot (No-Show)' : 'Did Not Show Up'}</span>
                   </button>
                 </div>
@@ -598,11 +628,19 @@ export const CaseFlowPanel: React.FC<{
                   data-flow="conference-outcome"
                   disabled={busy || !how}
                   onClick={() => onAction({ kind: 'conference_outcome', how, conferenceStatus: parentStatus })}
-                  className={`${primary} rounded-[6px]`}
+                  className={`${primary} rounded-[6px] flex items-center gap-1.5`}
                 >
-                  {parentStatus === 'No-Show'
-                    ? (isTl ? '⚠️ I-save: No-Show (Pending Reschedule)' : '⚠️ Save: No-Show (Pending Reschedule)')
-                    : (isTl ? '✓ I-save: Dumalo ang Magulang' : '✓ Save: Parent Attended Conference')}
+                  {parentStatus === 'No-Show' ? (
+                    <>
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>{isTl ? 'I-save: No-Show & Bumalik sa Summons' : 'Save: No-Show & Re-Summons'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>{isTl ? 'I-save: Dumalo ang Magulang' : 'Save: Parent Attended'}</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -721,16 +759,104 @@ export const CaseFlowPanel: React.FC<{
           )}
 
           {next === 'Follow-Up' && (
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm text-[#0B1F4D] dark:text-white">{isTl ? 'Sinimulan na ba ng estudyante ang sanction?' : 'Has the student started the sanction?'}</p>
-              <button type="button" data-flow="followup" disabled={busy || c.sanctionStatus === 'Pending parent notice'} onClick={() => onAction({ kind: 'followup' })} className={primary} title={c.sanctionStatus === 'Pending parent notice' ? (isTl ? 'Hintayin munang malaman ng magulang' : 'Wait until the parent is notified') : undefined}>
-                {isTl ? '✓ Nagsimula na' : '✓ Started'}
-              </button>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div>
+                  <p className="text-xs font-bold text-[#0F172A] dark:text-white">
+                    {isTl ? 'Hakbang 7: Pagsubaybay sa Sanction (Sanction Monitoring)' : 'Step 7: Sanction Compliance Monitoring'}
+                  </p>
+                  <p className="text-[11px] text-[#64748B] dark:text-[#94A8D0]">
+                    {isTl ? `Ipinataw na Sanction: ${c.sanction || 'Formative Intervention'}` : `Imposed Sanction: ${c.sanction || 'Formative Intervention'}`}
+                  </p>
+                </div>
+                <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${c.sanctionStatus === 'Done' ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300'}`}>
+                  {c.sanctionStatus === 'Done' ? (isTl ? 'Natapos Na' : 'Fully Served') : (isTl ? 'Kasalukuyang Ginagawa' : 'In Progress')}
+                </span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#13203B] border border-slate-200 dark:border-white/10 space-y-2">
+                <span className="text-[11px] font-extrabold uppercase text-[#4A608A] dark:text-[#94A8D0] block">
+                  {isTl ? 'Katayuan ng Sanction / Rehabilitasyon:' : 'Sanction Fulfillment Status:'}
+                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    data-flow="followup-start"
+                    disabled={busy || c.sanctionStatus === 'Pending parent notice'}
+                    onClick={() => onAction({ kind: 'followup', sanctionDone: false })}
+                    className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0B1527] text-xs font-bold text-slate-800 dark:text-slate-200 hover:border-[#1E469B] active:scale-[0.97] transition-all"
+                  >
+                    <Clock className="w-3.5 h-3.5 inline mr-1 text-[#1E469B]" />
+                    {isTl ? 'Nagsimula / Ginagawa Pa' : 'Serving / In Progress'}
+                  </button>
+                  <button
+                    type="button"
+                    data-flow="followup-done"
+                    disabled={busy || c.sanctionStatus === 'Pending parent notice'}
+                    onClick={() => onAction({ kind: 'followup', sanctionDone: true })}
+                    className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold active:scale-[0.97] transition-all flex items-center gap-1.5 shadow-xs"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    {isTl ? '✓ Nakumpleto Na ang Sanction' : '✓ Sanction Fully Completed'}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
           {next === 'Closed' && (
             <div className="space-y-3">
+              {/* Executive Due Process & Sanction Compliance Summary Card */}
+              <div className="rounded-xl border border-emerald-300 dark:border-emerald-800/80 bg-emerald-50/60 dark:bg-emerald-950/20 p-3.5 space-y-2.5">
+                <div className="flex items-center justify-between border-b border-emerald-200 dark:border-emerald-900/40 pb-2">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-xs font-black uppercase tracking-wider text-emerald-900 dark:text-emerald-200">
+                      {isTl ? 'Buod ng Pagsunod sa Due Process (Ready for Closure)' : 'Due Process & Compliance Audit Summary'}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-600 text-white">
+                    {isTl ? 'Kumpleto ang mga Hakbang' : 'All Pre-Conditions Satisfied'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                  <div className="p-2 rounded-lg bg-white/80 dark:bg-[#0B1527] border border-emerald-200/80 dark:border-emerald-950">
+                    <span className="text-[10px] font-black uppercase text-[#64748B] dark:text-[#94A8D0] block">
+                      {isTl ? '1. Salaysay ng Estudyante' : '1. Student Statement'}
+                    </span>
+                    <span className="font-bold text-[#0F172A] dark:text-white flex items-center gap-1 mt-0.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      {c.explanation ? (isTl ? 'Nakasulat & Naitala' : 'Filed & Verified') : (isTl ? 'Walang Sumpa' : 'Acknowledged')}
+                    </span>
+                  </div>
+
+                  {!isMinor && (
+                    <div className="p-2 rounded-lg bg-white/80 dark:bg-[#0B1527] border border-emerald-200/80 dark:border-emerald-950">
+                      <span className="text-[10px] font-black uppercase text-[#64748B] dark:text-[#94A8D0] block">
+                        {isTl ? '2. Pagharap ng Magulang' : '2. Parent Hearing'}
+                      </span>
+                      <span className="font-bold text-[#0F172A] dark:text-white flex items-center gap-1 mt-0.5">
+                        <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        {c.parentConferenceStatus === 'Attended'
+                          ? (isTl ? `Dumalo (${c.summonsCount || 1} Summons)` : `Attended (${c.summonsCount || 1} Summons)`)
+                          : (isTl ? 'Naabisuhan' : 'Hearing Held')}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="p-2 rounded-lg bg-white/80 dark:bg-[#0B1527] border border-emerald-200/80 dark:border-emerald-950">
+                    <span className="text-[10px] font-black uppercase text-[#64748B] dark:text-[#94A8D0] block">
+                      {isMinor ? '2. Sanction Imposed' : '3. Sanction Served'}
+                    </span>
+                    <span className="font-bold text-[#0F172A] dark:text-white flex items-center gap-1 mt-0.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span className="truncate">{c.sanction || (isTl ? 'Babala & Counseling' : 'Warning & Counseling')}</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <p className="text-xs font-bold text-[#0F172A] dark:text-white">
                   {isTl ? 'Intervention & Counseling Anecdotal Notes (Bago Isara ang Kaso):' : 'Counseling Anecdotal & Behavioral Notes (Before Closure):'}
@@ -749,19 +875,32 @@ export const CaseFlowPanel: React.FC<{
                 placeholder={isTl ? 'hal. Nakausap si Mark; nagpakita ng pagsisisi, nangakong hindi na magdadala ng vape, at maayos na nag-community service nang 3 araw sa library.' : 'e.g. Student showed remorse, signed behavioral pledge, and completed 3 days campus service.'}
               />
               <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#F1F5F9] dark:border-[#1E2E4E]">
-                <span className="text-[10.5px] font-semibold text-[#64748B] dark:text-[#94A3B8]">
-                  {counselingNotes.trim().length < 5
-                    ? (isTl ? 'Maglagay ng maikling tala ng counseling bago isara.' : 'Enter brief counseling notes before closing.')
-                    : (isTl ? '✓ Handa nang isara nang opisyal' : '✓ Ready for formal case resolution')}
-                </span>
+                <div className="flex items-center gap-2">
+                  {onOpenPrint && (
+                    <button
+                      type="button"
+                      onClick={onOpenPrint}
+                      className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0B1527] text-xs font-bold text-[#0B1F4D] dark:text-white hover:border-[#1E469B] flex items-center gap-1.5 active:scale-[0.97]"
+                    >
+                      <Printer className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
+                      <span>{isTl ? 'I-print ang Buod ng Kaso' : 'Print Resolution Summary'}</span>
+                    </button>
+                  )}
+                  <span className="text-[10.5px] font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                    {counselingNotes.trim().length < 5
+                      ? (isTl ? 'Maglagay ng maikling tala ng counseling bago isara.' : 'Enter brief counseling notes before closing.')
+                      : (isTl ? '✓ Handa nang isara nang opisyal' : '✓ Ready for formal case resolution')}
+                  </span>
+                </div>
                 <button
                   type="button"
                   data-flow="close"
                   disabled={busy}
                   onClick={() => onAction({ kind: 'close', counselingNotes: counselingNotes.trim() })}
-                  className={`${btn} bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 active:scale-[0.97]`}
+                  className={`${btn} bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 active:scale-[0.97] flex items-center gap-1.5`}
                 >
-                  {isTl ? '✓ Pormal na Isara ang Kaso (Resolved)' : '✓ Officially Close Case (Resolved)'}
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{isTl ? 'Pormal na Isara ang Kaso (Resolved)' : 'Officially Close Case (Resolved)'}</span>
                 </button>
               </div>
             </div>
