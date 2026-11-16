@@ -1419,8 +1419,6 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       db = {
         conference_scheduled_at: now,
         conference_target_date: a.targetDate || now,
-        summons_count: nextCount,
-        summons_history: JSON.stringify(updatedHistory),
         parent_conference_status: 'Pending',
         status: 'Conference Scheduled',
         step: 'Schedule Conference',
@@ -1448,7 +1446,6 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
         parent_notified_at: now,
         parent_notified_how: a.how,
         parent_conference_status: a.conferenceStatus,
-        summons_history: JSON.stringify(updatedHistory),
         status: isNoShow ? 'Pending Reschedule' : 'Conference Attended',
         step: isNoShow ? 'Schedule Conference' : 'Parent Conference Attendance',
       };
