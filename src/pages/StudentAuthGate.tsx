@@ -21,6 +21,7 @@ import { SoundTogglePill, soundFX } from '../services/soundEngine';
 import { SkyThemePill } from '../context/ThemeContext';
 import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
 import { SafezoneMascot } from '../components/auth/SafezoneMascot';
+import { AicyForgotWing } from '../components/auth/AicyForgotWing';
 import { CloudflareTurnstile } from '../components/auth/CloudflareTurnstile';
 import { LiveCameraCaptureModal } from '../components/student/LiveCameraCaptureModal';
 import { compressImageClientSide } from '../services/imageOptimizer';
@@ -876,6 +877,17 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               className="hidden lg:flex shrink-0 items-end justify-center w-full max-w-lg xl:max-w-xl order-1 lg:order-none"
             >
               <StudentPairInteractiveWing />
+            </motion.div>
+          )}
+          {/* Forgot password: Aicy the robot on the left (website), card on the right, same layout as sign-in */}
+          {mode === 'forgot' && (
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="hidden lg:flex shrink-0 items-end justify-center w-full max-w-lg xl:max-w-xl order-1 lg:order-none"
+            >
+              <AicyForgotWing isTl={isTl} />
             </motion.div>
           )}
 
