@@ -36,6 +36,9 @@ import { SkyThemePill } from '../context/ThemeContext';
 import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
 import { StudentPortalUser } from '../services/studentAuthService';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../services/supabaseClient';
+import { loadAppConfig, useAppConfig } from '../services/appConfig';
+import { officeHoursText } from '../services/scheduling';
+import { Clock as ClockIcon, Check as CheckIcon, ShieldCheck as ShieldIcon } from 'lucide-react';
 import { QuickExitButton } from '../components/security/QuickExitButton';
 import { MobileAppTourModal } from '../components/student/MobileAppTourModal';
 import { moderateReportContent, recordSecurityAudit } from '../services/securityEngine';
@@ -77,6 +80,13 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
   // Right-side Drawer / Menu Bar state
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+
+  // office hours come from the office's Settings (never a hard-coded schedule)
+  useAppConfig();
+  useEffect(() => {
+    void loadAppConfig();
+  }, []);
+  const hoursText = officeHoursText(isTl);
 
   // Submit Concern Form State
   const [reportType, setReportType] = useState<string>('Vaping / Smoking Infraction');
@@ -602,7 +612,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   };
 
   return (
-    <div className="min-h-[100dvh] w-full relative flex flex-col justify-start overflow-x-hidden font-sans select-none student-portal-canvas sd-canvas bg-[#F5F5F7] dark:bg-[#0B1220] text-slate-900 dark:text-white transition-colors duration-150">
+    <div className="min-h-[100dvh] w-full relative flex flex-col justify-start overflow-x-clip font-sans select-none student-portal-canvas sd-canvas bg-[#F5F5F7] dark:bg-[#0B1220] text-slate-900 dark:text-white transition-colors duration-150">
       {/* Top Navigation Bar - Clean, Organized & Non-Congested Header */}
       <header className="sticky top-0 z-30 w-full sd-header safe-area-top">
         <div className="max-w-3xl mx-auto h-14 px-4 flex items-center justify-between gap-3">
@@ -918,7 +928,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       </AnimatePresence>
 
       {/* Main Workspace Area (Clean Responsive Vertical Flow: Compact Spacing on Mobile) */}
-      <main className="relative z-20 flex-1 max-w-3xl w-full mx-auto px-4 pt-4 sm:px-6 space-y-5 pb-28 md:pb-10">
+      <main className={`relative z-20 flex-1 w-full mx-auto px-4 pt-4 sm:px-6 space-y-5 pb-28 md:pb-10 ${activeTab === 'submit' ? 'max-w-6xl' : 'max-w-3xl'}`}>
         {/* Navigation Tabs (Hidden on Mobile < 768px because everything is neatly in the Right Menu Drawer) */}
         <div className="hidden md:flex justify-center pt-2">
           <div className="seg-track p-1" role="tablist">
@@ -949,10 +959,56 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
         {/* TAB 1: SUBMIT REPORT (Compact, Responsive Padding) */}
         {activeTab === 'submit' && (
+          <div className="lg:grid lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-6 lg:items-start">
+          {/* LEFT (website): who is reporting, the 3 steps, office hours — the form gets the full right side */}
+          <aside className="hidden lg:flex flex-col gap-4 sticky top-20">
+            <div className="sd-hero p-5 text-white">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-[17px] font-semibold">
+                  {user.fullName.split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join('')}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[16px] font-semibold truncate">{user.fullName}</p>
+                  <p className="text-[12px] text-white/75 truncate">{user.gradeSection || user.studentNumber}</p>
+                </div>
+              </div>
+              <p className="mt-4 text-[13px] leading-snug text-white/85 flex items-start gap-2">
+                <ShieldIcon className="w-4 h-4 mt-0.5 shrink-0" />
+                {isTl ? 'Pribado ito. Ang Guidance Office lang ang makakabasa.' : 'This is private. Only the Guidance Office can read it.'}
+              </p>
+            </div>
+            <ol className="sd-card p-3">
+              {[
+                isTl ? 'Uri ng concern' : 'What kind of concern',
+                isTl ? 'Sino ang inirereklamo' : 'Who it is about',
+                isTl ? 'Ano ang nangyari' : 'What happened',
+              ].map((s, i) => {
+                const n = i + 1;
+                const done = formStep > n;
+                const on = formStep === n;
+                return (
+                  <li key={n} className={`flex items-center gap-3 px-3 py-3 rounded-xl ${on ? 'bg-[#0A84FF]/[0.08]' : ''}`}>
+                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[13px] font-semibold shrink-0 ${done ? 'bg-[#30D158] text-white' : on ? 'bg-[#0A84FF] text-white' : 'bg-black/[0.06] dark:bg-white/[0.1] text-[#6E6E73]'}`}>
+                      {done ? <CheckIcon className="w-4 h-4" /> : n}
+                    </span>
+                    <span className={`text-[14px] ${on ? 'font-semibold text-[#1D1D1F] dark:text-white' : 'text-[#6E6E73] dark:text-[#A1A1A6]'}`}>{s}</span>
+                  </li>
+                );
+              })}
+            </ol>
+            <div className="sd-card p-4 flex items-start gap-3">
+              <span className="w-9 h-9 rounded-xl tile-grad tile-teal text-white flex items-center justify-center shrink-0"><ClockIcon className="w-4 h-4" /></span>
+              <div className="min-w-0">
+                <p className="text-[14px] font-semibold text-[#1D1D1F] dark:text-white">{isTl ? 'Oras ng Guidance Office' : 'Guidance Office hours'}</p>
+                <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">{hoursText}</p>
+                <p className="mt-1 text-[12px] text-[#8E8E93]">{isTl ? 'Ang report sa labas ng oras ay babasahin sa susunod na pasok.' : 'Reports sent after hours are read on the next office day.'}</p>
+              </div>
+            </div>
+          </aside>
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl sm:rounded-3xl sd-card p-4 sm:p-7 space-y-4 sm:space-y-6 shadow-xl"
+            className="sd-card p-5 sm:p-7 space-y-5"
           >
             {/* Form Header & Progress Tracker */}
             <div className="space-y-4">
@@ -978,8 +1034,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   </p>
                 </div>
 
-                {/* Visual Step Bar */}
-                <div className="flex items-center gap-2 self-start sm:self-auto">
+                {/* Visual Step Bar (phones) */}
+                <div className="flex lg:hidden items-center gap-2 self-start sm:self-auto">
                   {[1, 2, 3].map((step) => (
                     <div
                       key={step}
@@ -996,26 +1052,12 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
               </div>
             </div>
 
-                        {/* AICS Guidance Operational Hours Announcement */}
-            <div className="p-3.5 rounded-2xl sd-note flex items-start gap-3">
-              <div className="w-7 h-7 rounded-xl bg-sky-500/20 text-sky-600 dark:text-sky-300 flex items-center justify-center shrink-0 font-semibold text-sm">
-                ⏰
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-semibold text-[#1D1D1F] dark:text-white">
-                    {isTl ? 'AICS Guidance Office Schedule' : 'AICS Guidance Office Hours'}
-                  </span>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-                    {isTl ? 'Bukas: Lunes - Huwebes' : 'Open: Monday - Thursday'}
-                  </span>
-                </div>
-                <p className="text-[11px] text-[#6E6E73] dark:text-[#9BCBFF] font-medium mt-0.5">
-                  {isTl
-                    ? 'Lunes hanggang Huwebes (8:00 AM – 5:00 PM). Ang mga isinumiteng report tuwing Biyernes o weekend ay agad na rerepasuhin pagsapit ng Lunes ng umaga.'
-                    : 'Monday to Thursday (8:00 AM – 5:00 PM). Reports submitted on Fridays or weekends will be immediately attended to first thing Monday morning.'}
-                </p>
-              </div>
+            {/* office hours (phones; the website shows it on the left) */}
+            <div className="lg:hidden p-3.5 rounded-2xl sd-note flex items-center gap-3">
+              <span className="w-8 h-8 rounded-xl tile-grad tile-teal text-white flex items-center justify-center shrink-0"><ClockIcon className="w-4 h-4" /></span>
+              <p className="text-[13px] text-[#1D1D1F] dark:text-white">
+                <b className="font-semibold">{isTl ? 'Oras ng opisina' : 'Office hours'}:</b> {hoursText}
+              </p>
             </div>
 
 {submitError && (
@@ -1183,7 +1225,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   </div>
 
                   {/* Step 1 Next Button */}
-                  <div className="pt-2 flex justify-end">
+                  <div className="sd-actionbar flex justify-end">
                     <button
                       type="button"
                       onClick={() => {
@@ -1296,7 +1338,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   </div>
 
                   {/* Step 2 Back & Next Buttons */}
-                  <div className="pt-2 flex items-center justify-between gap-3">
+                  <div className="sd-actionbar flex items-center justify-between gap-3">
                     <button
                       type="button"
                       onClick={() => {
@@ -1578,7 +1620,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   </div>
 
                   {/* Step 3 Action Buttons */}
-                  <div className="pt-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="sd-actionbar flex flex-row items-center justify-between gap-2 sm:gap-3">
                     <button
                       type="button"
                       onClick={() => {
@@ -1610,6 +1652,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
               )}
             </form>
           </motion.div>
+          </div>
         )}
 
         {/* TAB 2: MY SUBMITTED REPORTS HISTORY */}

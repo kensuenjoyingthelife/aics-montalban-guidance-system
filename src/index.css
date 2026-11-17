@@ -2261,3 +2261,28 @@ html.dark:has(.sd-canvas), html.dark:has(.sd-canvas) body { background: #0B1220 
 .sd-bubble-office { background: #FFFFFF !important; color: #1D1D1F !important; border: 0 !important; box-shadow: 0 1px 1px rgba(0, 0, 0, 0.06) !important; }
 :root.dark .sd-bubble-office { background: #2A3348 !important; color: #F5F5F7 !important; }
 .sd-bubble-office *, .sd-bubble-me * { font-weight: 500; }
+/* report: hero card on the left (same blue mesh as the desktop dashboard hero) */
+.sd-hero {
+  border-radius: 20px;
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(125, 211, 252, 0.55), transparent 55%),
+    radial-gradient(90% 80% at 100% 100%, rgba(129, 140, 248, 0.6), transparent 60%),
+    linear-gradient(135deg, #1E469B 0%, #2563EB 55%, #4F46E5 100%);
+  box-shadow: 0 18px 40px -18px rgba(37, 99, 235, 0.6);
+}
+/* Next / Back / Submit always in reach: a frosted bar stuck to the bottom of the screen */
+.sd-actionbar {
+  position: sticky;
+  bottom: 12px;
+  z-index: 20;
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 30px -14px rgba(0, 0, 0, 0.25);
+}
+:root.dark .sd-actionbar { background: rgba(20, 28, 46, 0.78); border-color: rgba(255, 255, 255, 0.1); }
+@media (max-width: 767px) { .sd-actionbar { bottom: calc(76px + env(safe-area-inset-bottom)); } }
