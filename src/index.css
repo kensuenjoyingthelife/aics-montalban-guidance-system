@@ -2199,3 +2199,13 @@ html.lite .urgent-pill::before { animation: none; }
 
 /* timeline: finished segment glows blue → cyan */
 .tl-done { background: linear-gradient(90deg, #2563EB, #22D3EE); }
+
+/* Student portal (website): on big screens show the content as if the browser were at 125%, so it reads
+   clearly at the normal 100% zoom. Only the content (header, main, footer) grows; the page itself stays exactly
+   one screen tall. Laptops (1366x768) stay at 100% so the sign-in card still fits. */
+@media (min-width: 1500px) and (min-height: 800px) {
+  .student-portal-canvas > header, .student-portal-canvas > main, .student-portal-canvas > footer { zoom: 1.1; }
+}
+@media (min-width: 1700px) and (min-height: 880px) {
+  .student-portal-canvas > header, .student-portal-canvas > main, .student-portal-canvas > footer { zoom: 1.25; }
+}
