@@ -66,10 +66,18 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const y = event ? event.clientY : 48;
 
     const docWithVT = document as Document & {
-      startViewTransition?: (cb: () => void) => { ready: Promise<void>; finished: Promise<void> };
+      startViewTransition?: (cb: () => void) => { ready: Promise<void>; finished: Promise<void>; skipTransition?: () => void };
     };
 
-    if (!docWithVT.startViewTransition) {
+    // only ONE circle reveal at a time: a second click while one is running froze the page.
+    // While one runs, finish it at once and just switch the colors.
+    if (!docWithVT.startViewTransition || activeVT) {
+      try {
+        activeVT?.skipTransition?.();
+      } catch {
+        /* already done */
+      }
+      document.documentElement.classList.remove('theme-fading');
       setTheme(nextTheme);
       return;
     }
@@ -90,6 +98,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           setTheme(nextTheme);
         });
       });
+      activeVT = transition;
 
       transition.ready
         .then(() => {
@@ -113,7 +122,20 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       transition.finished.finally(() => {
         root.classList.remove('theme-fading');
+        if (activeVT === transition) activeVT = null;
       });
+      // never let a stuck transition keep the page frozen
+      window.setTimeout(() => {
+        if (activeVT === transition) {
+          try {
+            transition.skipTransition?.();
+          } catch {
+            /* done */
+          }
+          activeVT = null;
+          root.classList.remove('theme-fading');
+        }
+      }, 1200);
     } catch {
       setTheme(nextTheme);
       root.classList.remove('theme-fading');
@@ -132,6 +154,9 @@ export const useTheme = (): ThemeContextValue => {
   if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
   return ctx;
 };
+
+/** the circle-reveal theme transition that is running now (if any) */
+let activeVT: { skipTransition?: () => void } | null = null;
 
 export const SkyThemePill: React.FC = () => {
   const { theme, toggleThemeWithAura } = useTheme();

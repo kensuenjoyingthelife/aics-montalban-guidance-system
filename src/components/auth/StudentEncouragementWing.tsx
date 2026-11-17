@@ -181,6 +181,8 @@ export const AicsBoyStudentSvg: React.FC<{ className?: string }> = ({ className 
 
     {/* ANIMATED TALKING MOUTH */}
     <motion.path
+      initial={{ d: 'M76 63 Q80 66 84 63' }}
+      d='M76 63 Q80 66 84 63'
       animate={{
         d: [
           'M76 63 Q80 66 84 63',
@@ -364,6 +366,8 @@ export const AicsGirlStudentSvg: React.FC<{ className?: string }> = ({ className
 
     {/* ANIMATED TALKING MOUTH */}
     <motion.path
+      initial={{ d: 'M76 62 Q80 66 84 62' }}
+      d='M76 62 Q80 66 84 62'
       animate={{
         d: [
           'M76 62 Q80 66 84 62',
