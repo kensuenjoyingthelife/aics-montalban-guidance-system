@@ -716,7 +716,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
   return (
     <div className={`min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none student-portal-canvas bg-[#05112B] text-white ${
-      'overflow-y-auto'
+      mode === 'login' ? 'lg:h-screen lg:overflow-hidden' : 'overflow-y-auto'
     }`}>
       {/* Celestial Background: Active on Desktop, hidden/static on mobile */}
       <div className="hidden lg:block">
@@ -893,30 +893,13 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               ==================================================== */}
           {mode === 'login' && (
             <div className="space-y-4 sm:space-y-6">
-              <div className="text-center space-y-3 pb-2 sm:pb-4">
-                {/* Desktop: Official AICS Seal (hidden on mobile, where the robot shows) */}
-                <div className="hidden lg:block">
-                  <div className="w-16 h-16 rounded-full overflow-hidden mx-auto shadow-xl ring-2 ring-blue-400/40 bg-white p-0.5">
-                    <img src="/aics-logo.jpg" alt="AICS Logo" className="w-full h-full object-cover rounded-full" />
-                  </div>
-                </div>
-
+              <div className="text-center space-y-3 pb-2 sm:pb-4 lg:hidden">
                 {/* Mobile App: Friendly Animated Safezone Robot Companion in White-Blue Gradient Card (Visible only on Mobile) */}
                 <div className="block lg:hidden my-2">
                   <div className="p-3 sm:p-4 rounded-3xl bg-gradient-to-br from-white via-sky-50 to-blue-100/80 dark:from-slate-900/90 dark:via-sky-950/50 dark:to-blue-900/40 border-2 border-sky-300/80 dark:border-sky-500/40 shadow-lg shadow-sky-950/10 dark:shadow-none flex flex-col items-center justify-center">
                     <SafezoneMascot />
                   </div>
                 </div>
-
-                {/* Desktop Title: AICS SAFEZONE (Hidden on mobile per user request) */}
-                <h2 className="hidden lg:block text-2xl sm:text-3xl font-extrabold tracking-tight card-title-text uppercase">
-                  AICS SAFEZONE
-                </h2>
-
-                {/* Desktop: 1 sentence only description below AICS SAFEZONE */}
-                <p className="hidden lg:block text-sm font-semibold card-subtitle-text">
-                  {isTl ? 'Bawat hinaing at alalahanin mo ay karapat-dapat sa kalinga.' : 'Every Concern Deserves Care.'}
-                </p>
 
                 {/* Mobile Phone Only: 3.5s Rotating Affirmation Carousel (Clean without quotation marks "") */}
                 <div
@@ -1110,7 +1093,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               </div>
 
               {/* Download Android APK & PWA Install (Mobile Screen Only - hidden on desktop website) */}
-              <div className="pt-2 space-y-2">
+              <div className="lg:hidden pt-2 space-y-2">
                 {/* Mobile-Only PWA Home Screen Install Banner */}
                 <button
                   type="button"
