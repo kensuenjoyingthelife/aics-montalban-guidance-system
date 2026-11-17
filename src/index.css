@@ -2209,3 +2209,108 @@ html.lite .urgent-pill::before { animation: none; }
 @media (min-width: 1700px) and (min-height: 880px) {
   .student-portal-canvas > header, .student-portal-canvas > main, .student-portal-canvas > footer { zoom: 1.25; }
 }
+
+/* =============================================================================
+   STUDENT DASHBOARD (web + mobile) — Apple UI, same feel as the desktop app:
+   mesh-gradient canvas, frosted-glass header and cards, segmented tabs, calm sentence-case labels.
+   Scoped to .portal-apple so the sign-in screens are untouched.
+   ============================================================================= */
+:root.dark .portal-apple.student-portal-canvas {
+  background:
+    radial-gradient(900px 520px at 12% -5%, rgba(56, 189, 248, 0.22), transparent 60%),
+    radial-gradient(760px 520px at 100% 20%, rgba(129, 140, 248, 0.22), transparent 60%),
+    radial-gradient(900px 600px at 50% 110%, rgba(30, 70, 155, 0.45), transparent 60%),
+    #070F24 !important;
+}
+:root:not(.dark) .portal-apple.student-portal-canvas {
+  background:
+    radial-gradient(900px 520px at 10% -10%, rgba(125, 211, 252, 0.55), transparent 60%),
+    radial-gradient(760px 520px at 100% 15%, rgba(199, 210, 254, 0.7), transparent 60%),
+    radial-gradient(900px 600px at 50% 115%, rgba(191, 219, 254, 0.8), transparent 60%),
+    #F5F7FB !important;
+  color: #1D1D1F !important;
+}
+/* header: floating frosted capsule */
+.portal-apple .student-portal-header {
+  margin: 10px auto 0;
+  width: calc(100% - 20px);
+  max-width: 1120px;
+  border-radius: 22px !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  background: rgba(255, 255, 255, 0.62) !important;
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  box-shadow: 0 10px 30px -12px rgba(15, 23, 42, 0.25) !important;
+}
+:root.dark .portal-apple .student-portal-header {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(15, 27, 54, 0.55) !important;
+  box-shadow: 0 10px 34px -12px rgba(0, 0, 0, 0.6) !important;
+}
+/* cards: frosted glass with a soft light edge */
+.portal-apple .cosmic-glass-card {
+  border-radius: 28px !important;
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.62)) !important;
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 24px 60px -24px rgba(30, 70, 155, 0.35) !important;
+  color: #1D1D1F;
+}
+:root.dark .portal-apple .cosmic-glass-card {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  background: linear-gradient(180deg, rgba(30, 44, 80, 0.62), rgba(15, 27, 54, 0.55)) !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 24px 60px -24px rgba(0, 0, 0, 0.7) !important;
+  color: #F5F5F7;
+}
+/* inner boxes (tabs track, sections): quiet grouped panels */
+.portal-apple .register-section-card {
+  border-radius: 20px !important;
+  border: 1px solid rgba(15, 23, 42, 0.06) !important;
+  background: rgba(118, 118, 128, 0.08) !important;
+  box-shadow: none !important;
+}
+:root.dark .portal-apple .register-section-card {
+  border-color: rgba(255, 255, 255, 0.07) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+/* labels: calm sentence case instead of shouting ALL CAPS */
+.portal-apple main label.uppercase,
+.portal-apple main span.uppercase,
+.portal-apple main h3.uppercase {
+  text-transform: none !important;
+  letter-spacing: -0.005em !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+}
+/* fields: soft filled inputs, blue focus ring */
+.portal-apple main input:not([type='checkbox']):not([type='radio']):not([type='file']),
+.portal-apple main select,
+.portal-apple main textarea {
+  border-radius: 14px !important;
+  border: 1px solid rgba(15, 23, 42, 0.1) !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  color: #1D1D1F !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+:root.dark .portal-apple main input:not([type='checkbox']):not([type='radio']):not([type='file']),
+:root.dark .portal-apple main select,
+:root.dark .portal-apple main textarea {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(0, 0, 0, 0.28) !important;
+  color: #F5F5F7 !important;
+}
+.portal-apple main input:focus,
+.portal-apple main select:focus,
+.portal-apple main textarea:focus {
+  outline: none !important;
+  border-color: #0A84FF !important;
+  box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.18) !important;
+}
+/* buttons: every button gets the gentle Apple press */
+.portal-apple main button { transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease; }
+.portal-apple main button:active { transform: scale(0.97); }
+/* light mode: keep small chips and step dots readable on the white glass */
+:root:not(.dark) .portal-apple main .text-sky-300 { color: #0369A1 !important; }
+:root:not(.dark) .portal-apple main .bg-white\/20,
+:root:not(.dark) .portal-apple main .bg-white\/10 { background-color: rgba(15, 23, 42, 0.12) !important; }

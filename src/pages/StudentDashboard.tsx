@@ -602,7 +602,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   };
 
   return (
-    <div className="min-h-[100dvh] w-full relative flex flex-col justify-start overflow-x-hidden font-sans select-none student-portal-canvas bg-[#F4F8FD] dark:bg-[#05112B] text-slate-900 dark:text-white transition-colors duration-150">
+    <div className="min-h-[100dvh] w-full relative flex flex-col justify-start overflow-x-hidden font-sans select-none student-portal-canvas portal-apple bg-[#F4F8FD] dark:bg-[#05112B] text-slate-900 dark:text-white transition-colors duration-150">
       <WavyBackground />
 
       {/* Top Navigation Bar - Clean, Organized & Non-Congested Header */}
@@ -1754,7 +1754,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                       </div>
                       <p className="text-xs register-label opacity-90 line-clamp-2">{item.whatHappened}</p>
                       <p className="text-[10px] card-subtitle-text">
-                        Date: {new Date(item.createdAt).toLocaleDateString()}
+                        {isTl ? 'Petsa' : 'Date'}: {new Date(item.createdAt).toLocaleDateString(isTl ? 'fil-PH' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                       </p>
                     </div>
 
