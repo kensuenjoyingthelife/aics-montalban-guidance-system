@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { postMail } from '../services/mailApi';
+import { checkPinOnServer, startStaffLogin, verifyStaffCode } from '../services/staffAuth';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLanguage, LocaleSwitchPill } from '../context/LanguageContext';
 import { SkyThemePill } from '../context/ThemeContext';
@@ -135,11 +135,27 @@ export const LoginGate: React.FC<LoginGateProps> = ({
     return () => window.clearInterval(interval);
   }, [step, otpSecondsLeft]);
 
-  // Step 1: PIN Verification
+  // Step 1: PIN Verification (checked on the SERVER, with the server's own lockout)
+  const pinRef = useRef('');
   const handleVerifyPin = useCallback(
     async (code: string) => {
       if (Math.ceil((readLock().until - Date.now()) / 1000) > 0) return;
-      if (await checkPin(code)) {
+      const pinErr = await checkPinOnServer(code);
+      if (pinErr === 'network') {
+        soundFX.playError();
+        setPinError(locale === 'tl' ? 'Walang koneksyon sa server. I-check ang internet, tapos subukan ulit.' : 'Cannot reach the server. Check the internet, then try again.');
+        return;
+      }
+      if (pinErr === 'locked') {
+        const mins = Math.max(1, Number(getAppConfig().security.pinLockMinutes) || 5);
+        writeLock({ fails: 0, until: Date.now() + mins * 60000 });
+        setLockLeft(mins * 60);
+        soundFX.playError();
+        setPinError(locale === 'tl' ? `Masyadong maraming maling PIN. Naka-lock nang ${mins} minuto.` : `Too many wrong PINs. Locked for ${mins} minute(s).`);
+        return;
+      }
+      if (!pinErr) {
+        pinRef.current = code;
         writeLock({ fails: 0, until: 0 });
         soundFX.playStepUnlock();
         setPinError(null);
@@ -259,11 +275,11 @@ export const LoginGate: React.FC<LoginGateProps> = ({
     setEmailError(null);
     setIsSendingEmail(true);
 
-    const generatedCode = generateSafeSixCharOtp();
+    // the SERVER makes and emails the code; the app never sees it
     const now = Date.now();
     const record: ActiveOtpRecord = {
       email: cleanedEmail,
-      code: generatedCode,
+      code: '',
       issuedAt: now,
       expiresAt: now + 300 * 1000,
       attemptsUsed: 0,
@@ -274,14 +290,16 @@ export const LoginGate: React.FC<LoginGateProps> = ({
     };
 
     try {
-      const result = await postMail('otp', { email: cleanedEmail, code: generatedCode, locale });
+      const result = await startStaffLogin(pinRef.current, cleanedEmail, locale);
       if (!result.ok) {
         setIsSendingEmail(false);
         soundFX.playError();
         setEmailError(
-          locale === 'tl'
-            ? 'Hindi naipadala ang code sa email. I-check ang internet, tapos pindutin ulit.'
-            : 'The code could not be emailed. Check the internet, then press again.'
+          result.error === 'not_staff'
+            ? locale === 'tl' ? 'Hindi staff account ang email na ito.' : 'This email is not a staff account.'
+            : result.error === 'wrong_pin' || result.error === 'locked'
+            ? locale === 'tl' ? 'Kailangang ilagay ulit ang PIN. Bumalik sa unang hakbang.' : 'Please enter the PIN again. Go back to the first step.'
+            : locale === 'tl' ? 'Hindi naipadala ang code sa email. I-check ang internet, tapos pindutin ulit.' : 'The code could not be emailed. Check the internet, then press again.'
         );
         return;
       }
@@ -309,14 +327,18 @@ export const LoginGate: React.FC<LoginGateProps> = ({
   };
 
   // Step 3: Verify 6-Character OTP
-  const handleVerifyOtp = (codeToVerify: string) => {
+  const handleVerifyOtp = async (codeToVerify: string) => {
     if (!activeOtp) return;
     const clean = codeToVerify.trim().toUpperCase();
+    const res = await verifyStaffCode(activeOtp.email, clean);
 
-    if (clean === activeOtp.code) {
+    if (res.ok) {
       soundFX.playVerifiedFanfare();
+      const s = res.staff;
       const acc = getAppConfig().staff.find((a) => a.email.toLowerCase() === activeOtp.email);
-      const staff = (acc
+      const staff = (s
+        ? { email: s.email, fullName: s.full_name, role: s.role, department: s.department || 'Guidance & Counseling Office · Montalban', badgeCode: s.badge_code || '' }
+        : acc
         ? { email: acc.email, fullName: acc.fullName, role: acc.role, department: 'Guidance & Counseling Office · Montalban', badgeCode: '' }
         : findRegisteredStaff(activeOtp.email)) || {
         email: activeOtp.email,
@@ -331,9 +353,13 @@ export const LoginGate: React.FC<LoginGateProps> = ({
       soundFX.playError();
       setOtpShake(true);
       setOtpError(
-        locale === 'tl'
-          ? 'Mali ang code na nailagay. Pakisubukan ulit.'
-          : 'Incorrect verification code. Please try again.'
+        res.error === 'expired'
+          ? locale === 'tl' ? 'Nag-expire na ang code. Magpadala ng bago.' : 'The code expired. Send a new one.'
+          : res.error === 'too_many'
+          ? locale === 'tl' ? 'Masyadong maraming mali. Magpadala ng bagong code.' : 'Too many wrong tries. Send a new code.'
+          : res.error === 'network' || res.error === 'auth_failed'
+          ? locale === 'tl' ? 'Walang koneksyon sa server. Subukan ulit.' : 'Cannot reach the server. Try again.'
+          : locale === 'tl' ? 'Mali ang code na nailagay. Pakisubukan ulit.' : 'Incorrect verification code. Please try again.'
       );
       window.setTimeout(() => setOtpShake(false), 380);
     }
@@ -377,59 +403,36 @@ export const LoginGate: React.FC<LoginGateProps> = ({
   };
 
   return (
-    <div className="relative min-h-screen w-full portal-hero-canvas flex flex-col justify-between overflow-x-hidden select-none">
-      {/* Sticky Institutional Header (1:1 CDM-Portal Header in AICS Palette) */}
-      <header className="portal-header-bar w-full">
-        <div className="max-w-[1240px] mx-auto px-6 min-h-[76px] flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <img
-              src="/aics-logo.jpg"
-              alt="Official AICS Seal"
-              className="w-[48px] h-[48px] rounded-full object-cover bg-white p-0.5 shadow-md"
-            />
-            <div>
-              <h1 className="font-serif text-[15px] font-bold tracking-[0.02em] text-white leading-tight">
-                Asian Institute of Computer Studies
-              </h1>
-              <p className="text-[10px] font-extrabold tracking-[0.16em] uppercase text-white/65 mt-0.5">
-                GUIDANCE &amp; COUNSELING WORKSPACE · MONTALBAN
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2" data-login-toggles>
-            <SoundTogglePill />
-            <LocaleSwitchPill />
-            <SkyThemePill />
-          </div>
-        </div>
-      </header>
+    <div className="relative min-h-screen w-full aics-sky-canvas flex flex-col justify-between overflow-x-hidden select-none">
+      {/* Twinkling Star Drops, Meteors, Floating Computers & Ringed Planets */}
+      <CelestialBackground />
 
       {/* ====================================================================
-          MAIN 2-COLUMN SPLIT LAYOUT (CDM-PORTAL HERO + LOGIN CARD)
+          MAIN 2-COLUMN SPLIT LAYOUT
           ==================================================================== */}
-      <main className="relative z-20 w-full max-w-[1180px] mx-auto px-6 sm:px-10 py-8 my-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-12 items-center">
+      <main className="relative z-20 w-full max-w-7xl mx-auto px-6 sm:px-10 py-6 my-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-10 items-center">
         {/* ==================================================================
-            LEFT EDITORIAL BRAND PANEL (7 Columns)
+            LEFT BRAND PANEL (7 Columns — 2-Line Passing Light Shimmer)
             ================================================================== */}
         <section className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left space-y-5 sm:space-y-6">
           {/* Official Pill Badge */}
           <div
             data-sound-hover="true"
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-[#D9A93E]/35 shadow-sm"
+            className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full bg-white/14 border border-white/30 backdrop-blur-md shadow-sm"
           >
-            <span className="w-2 h-2 rounded-full bg-[#D9A93E]" />
-            <span className="portal-kicker-gold">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#8CC5FF]" />
+            <span className="text-xs sm:text-[13px] font-extrabold tracking-[0.14em] text-white uppercase">
               {t.badge}
             </span>
           </div>
 
-          {/* Editorial Serif Display Title */}
-          <div className="space-y-2 w-full">
-            <h2 className="portal-serif-display text-4xl sm:text-5xl xl:text-[58px] text-white leading-[0.95] tracking-[-0.045em]">
-              Guidance &amp; due process{' '}
-              <span className="text-[#F2CE70] italic font-normal">workspace</span>{' '}
-              in one secure place.
+          {/* STRICTLY 2-LINE HERO TITLE WITH PASSING LIGHT-BEAM SWEEP */}
+          <div className="space-y-1.5 w-full">
+            <h1 className="text-3xl sm:text-5xl xl:text-[56px] font-extrabold tracking-tight leading-[1.06] whitespace-nowrap title-light-sweep-white">
+              ASIAN INSTITUTE OF
+            </h1>
+            <h2 className="text-xl sm:text-3xl xl:text-[39px] font-extrabold tracking-tight leading-[1.14] whitespace-nowrap uppercase title-light-sweep-azure">
+              COMPUTER STUDIES · MONTALBAN
             </h2>
           </div>
 
@@ -439,9 +442,9 @@ export const LoginGate: React.FC<LoginGateProps> = ({
           </div>
 
           {/* Campus Address */}
-          <div className="inline-flex items-start justify-center lg:justify-start gap-2.5 text-white/85 text-sm sm:text-[15px] max-w-xl leading-relaxed font-normal">
+          <div className="inline-flex items-start justify-center lg:justify-start gap-2.5 text-white/95 text-sm sm:text-[16px] max-w-xl leading-relaxed font-medium">
             <svg
-              className="w-5 h-5 mt-0.5 shrink-0 text-[#F2CE70]"
+              className="w-5 h-5 mt-0.5 shrink-0 text-[#8CC5FF]"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -453,19 +456,19 @@ export const LoginGate: React.FC<LoginGateProps> = ({
             <span>{t.campusAddress}</span>
           </div>
 
-          {/* 4 Feature Tiles in Clean Matte Navy Style */}
-          <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-3">
+          {/* 4 Larger Square Feature Tiles */}
+          <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-3.5 sm:gap-4">
             {FEATURE_TILES.map((tile, idx) => (
               <button
                 key={tile.id}
                 type="button"
                 onClick={() => soundFX.playKeyClick(idx)}
-                className="btn-press w-[98px] sm:w-[110px] h-[106px] sm:h-[116px] rounded-[18px] bg-[#0A1526]/90 border border-[#1E3250] hover:border-[#38BDF8]/50 flex flex-col items-center justify-center gap-2.5 p-3 shadow-lg"
+                className="btn-press w-[98px] sm:w-[112px] h-[110px] sm:h-[122px] rounded-2xl aics-hero-tile backdrop-blur-md flex flex-col items-center justify-center gap-2.5 p-3 shadow-lg"
               >
                 <IconTile color={tile.color} variant="solid" size="lg">
-                  <DuotoneIcon name={tile.icon} size={24} />
+                  <DuotoneIcon name={tile.icon} size={26} />
                 </IconTile>
-                <span className="text-xs font-bold text-white leading-none tracking-wide">
+                <span className="text-xs sm:text-[13.5px] font-bold text-white leading-none tracking-wide">
                   {locale === 'tl' ? tile.labelTl : tile.labelEn}
                 </span>
               </button>
@@ -473,20 +476,32 @@ export const LoginGate: React.FC<LoginGateProps> = ({
           </div>
 
           {/* Est. 1996 Line */}
-          <p className="pt-1 text-xs font-semibold text-white/65 tracking-wide">
-            Asian Institute of Computer Studies · Rodriguez, Rizal — Est. 1996
+          <p className="pt-1 text-xs sm:text-sm font-semibold text-white/80 tracking-wide">
+            Rodriguez, Rizal — Est. 1996
           </p>
         </section>
 
         {/* ==================================================================
-            RIGHT COLLEGIATE AUTH CARD (CDM-PORTAL 1:1 CARD WITH GOLD TOP BAR)
+            RIGHT HIGH-CONTRAST GRADIENT GLASS CARD
+            - Light Mode: Frosted Pearl-Ice Gradient Card (#0B1F4D Deep Navy Text)
+            - Dark Mode: Frosted Midnight-Sapphire Gradient Card (#FFFFFF White Text)
+            - Locked Uniform Size Across All 4 Steps: max-w-[440px] h-[590px]
             ================================================================== */}
         <section className="lg:col-span-5 flex flex-col items-center">
-          <div className="relative z-10 w-full max-w-[440px] h-[575px] rounded-[20px] aics-true-glass overflow-hidden flex flex-col transition-all duration-200">
-            <div className="flex-1 px-7 sm:px-8 pt-7 pb-7 flex flex-col items-center justify-between">
+          {/* Sound · language · theme — exactly as wide as the sign-in card */}
+          <div className="w-full max-w-[440px] mb-3 flex items-center justify-between gap-2" data-login-toggles>
+            <SoundTogglePill />
+            <LocaleSwitchPill />
+            <SkyThemePill />
+          </div>
+          <div className="relative z-10 w-full max-w-[440px] h-[590px] rounded-[32px] aics-true-glass overflow-hidden flex flex-col transition-all duration-300">
+            {/* Top Accent Rim */}
+            <div className="h-1.5 w-full shrink-0 bg-gradient-to-r from-[#1E469B] via-[#4E92DF] to-[#7CB8F7]" />
+
+            <div className="flex-1 px-7 sm:px-9 pt-6 pb-7 flex flex-col items-center justify-between">
               {/* Fixed Card Header (Logo + School Name) */}
               <div className="flex flex-col items-center shrink-0">
-                <div className="w-[74px] h-[74px] rounded-full p-1 bg-gradient-to-tr from-[#0B1F4D] via-[#1E469B] to-[#D9A93E] shadow-md mb-2">
+                <div className="w-[80px] h-[80px] rounded-full p-1 bg-gradient-to-tr from-[#1E469B] via-[#4E92DF] to-[#9BCBFF] shadow-md mb-2.5">
                   <div className="w-full h-full rounded-full p-0.5 bg-white overflow-hidden">
                     <img
                       src="/aics-logo.jpg"
@@ -496,8 +511,8 @@ export const LoginGate: React.FC<LoginGateProps> = ({
                   </div>
                 </div>
 
-                <h3 className="font-serif text-xl font-bold tracking-tight text-[#0B192C] dark:text-white">
-                  AICS Montalban Staff Gate
+                <h3 className="text-xl sm:text-[21px] font-extrabold tracking-tight text-[#0B1F4D] dark:text-white">
+                  AICS MONTALBAN
                 </h3>
               </div>
 

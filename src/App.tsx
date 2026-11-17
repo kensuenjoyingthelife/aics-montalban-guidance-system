@@ -5,6 +5,7 @@ import { LanguageProvider } from './context/LanguageContext';
 import { SoundProvider } from './services/soundEngine';
 import { AicsSplashLoader } from './components/auth/AicsSplashLoader';
 import { LoginGate } from './pages/LoginGate';
+import { hasStaffSession, signOutStaff } from './services/staffAuth';
 import { ConfirmChangeProvider } from './components/ui/ConfirmChange';
 import { LoadingProvider } from './components/ui/LoadingCard';
 import { DashboardPage } from './pages/DashboardPage';
@@ -62,11 +63,14 @@ export const App: React.FC = () => {
   // Staff Desktop Session: Defaults directly to logged-in Guidance Associate in development or if remembered
   const [activeStaffSession, setActiveStaffSession] = useState<StaffDirectoryAccount | null>(() => {
     if (typeof window === 'undefined') return null;
+    // Real app (.exe / built site): ALWAYS sign in with PIN + OTP. Never reuse a saved session, never auto-enter.
+    // a database session (Supabase Auth) is required everywhere; dev only skips the screens when one is still active
+    if (!import.meta.env.DEV || !hasStaffSession()) return null;
     try {
       const saved = localStorage.getItem('aics_staff_session');
       if (saved) return JSON.parse(saved);
     } catch {}
-    // Auto-enter directly into dashboard for quick desktop testing
+    // dev server only: auto-enter for quick testing
     return {
       email: 'aicsmontalbansafeguard@gmail.com',
       fullName: 'AICS Montalban Guidance Associate',
@@ -101,6 +105,12 @@ export const App: React.FC = () => {
     }
   });
 
+  React.useEffect(() => {
+    const end = () => setActiveStaffSession(null);
+    window.addEventListener('aics-session-expired', end);
+    return () => window.removeEventListener('aics-session-expired', end);
+  }, []);
+
   return (
     <SoundProvider>
       <ThemeProvider>
@@ -122,7 +132,10 @@ export const App: React.FC = () => {
                   <DashboardPage
                     staffEmail={activeStaffSession.email}
                     staffRole={activeStaffSession.role}
-                    onLockTerminal={() => setActiveStaffSession(null)}
+                    onLockTerminal={() => {
+                      void signOutStaff();
+                      setActiveStaffSession(null);
+                    }}
                   />
                   <GuidanceChatHead />
                 </>

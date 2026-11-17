@@ -1,5 +1,6 @@
+import { decisionNoticeMessage } from '../services/summonsLadder';
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { UserPlus, Printer, Layers, Upload, X, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { UserPlus, Printer, Layers, Upload, X, Image as ImageIcon, Trash2, Check, Search, Info, Plus, Undo2, SlidersHorizontal, MoreHorizontal, FolderOpen, AlertTriangle, CalendarDays, Download, ChevronRight, Pencil, MessageSquare, ShieldCheck } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
@@ -10,10 +11,12 @@ import { useAppConfig, activeOffenses } from '../services/appConfig';
 import { DuotoneIcon } from '../components/ui/icons';
 import { Legend } from '../components/ui/Charts';
 import { StudentForm, StudentFormValue } from '../components/students/StudentForm';
-import { CaseFlowPanel, FlowAction, flowState } from '../components/cases/CaseFlowPanel';
+import { CaseFlowPanel, FlowAction, flowState, isMinorCase } from '../components/cases/CaseFlowPanel';
 import { StatementStation } from '../components/cases/StatementStation';
 import { PrintFormsWindow } from '../components/cases/PrintFormsWindow';
 import { EvidencePanel } from '../components/cases/EvidencePanel';
+import { StatementsPanel } from '../components/cases/StatementsPanel';
+import { DateField } from '../components/ui/DateField';
 import { uploadEvidence, checkEvidenceFile } from '../services/evidenceDb';
 import { FORM_TITLES, buildBatchCallSlipsHtml, buildFormHtml, printHtml, downloadFormDocument } from '../services/printForms';
 import { useConfirmChange } from '../components/ui/ConfirmChange';
@@ -24,7 +27,7 @@ import { importMasterlistFile } from '../services/masterlistImportRunner';
 import { ImportScanModal } from '../components/ui/ImportScanModal';
 import type { ToastNextAction } from './DashboardPage';
 import type { ParentAppointmentItem } from '../data/dashboardMockData';
-import { todayISO, byDateTime } from '../services/scheduling';
+import { todayISO, byDateTime, sanctionEndingSoon } from '../services/scheduling';
 import { computeImportFindings, countRowsNeedingFix } from '../services/importFindings';
 import {
   buildTemplateCsv,
@@ -44,6 +47,9 @@ import {
   OffenseHandbookRule,
   MasterlistPreviewRow,
   SAMPLE_MASTERLIST_IMPORT_BATCH,
+  MINOR_CASE_STEPS,
+  MAJOR_CASE_STEPS,
+  type CaseStep,
 } from '../data/stage3MockData';
 import {
   insertDisciplineCaseInDb,
@@ -54,13 +60,13 @@ import {
   insertStudentInDb,
   updateStudentDetailsInDb,
   updateCaseFlowInDb,
-  deleteDisciplineCaseInDb,
   setStudentEnrollmentInDb,
   moveUpSchoolYearInDb,
   undoSchoolYearMoveInDb,
   insertActivityLogInDb,
   updateDisciplineCaseDetailsInDb,
   fetchCaseHistoryFromDb,
+  fetchHighestCaseNumberEver,
   insertAppointmentInDb,
   updateAppointmentInDb,
   CaseHistoryEntry,
@@ -81,6 +87,8 @@ export interface CasePrefill {
   search: string;
   /** Suggested or matched offense policy code from student report (e.g. 'MAJ-01' for Bullying) */
   policyCode?: string;
+  /** staff-only: the student who was affected (from the concern) */
+  affectedStudentNumber?: string;
 }
 
 interface Stage3CasesHubProps {
@@ -103,11 +111,12 @@ interface Stage3CasesHubProps {
     parentEmail: string;
     scheduleText: string;
       caseCode?: string;
+    message?: string;
   }) => void;
   /** Which tab to open first (e.g. "+ New Case" opens Add Report, the Open Cases card opens the board). */
   initialSubTab?: Stage3SubTab;
   /** open the board already filtered (from a Dashboard alert) */
-  initialCaseFlag?: 'overdue' | 'waiting' | null;
+  initialCaseFlag?: 'overdue' | 'waiting' | 'ending' | null;
   /** directly open a specific case code in the drawer */
   initialOpenCaseCode?: string | null;
   /** start the New Case form from a student concern */
@@ -116,6 +125,8 @@ interface Stage3CasesHubProps {
   onPrefillSaved?: (caseCodes: string[]) => void;
 }
 
+
+type BoardBucket = 'ALL' | 'new' | 'progress' | 'conference' | 'sanction' | 'done';
 
 export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   students,
@@ -139,7 +150,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   const confirmChange = useConfirmChange();
   const { startLoading, stopLoading } = useLoading();
 
-  const [subTab, setSubTab] = useState<Stage3SubTab>(prefill ? 'add-report' : initialSubTab ?? 'add-report');
+  const [subTab, setSubTab] = useState<Stage3SubTab>(prefill ? 'add-report' : initialSubTab ?? 'case-board');
 
   // ==========================================================================
   // SUB-TAB 1 STATE: ADD NEW CASE REPORT (PAGE 2)
@@ -162,6 +173,10 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   const [incidentDate, setIncidentDate] = useState<string>(() => new Date().toLocaleDateString('en-CA'));
   const [reportedBy, setReportedBy] = useState<string>(prefill?.reportedBy ?? '');
   const [incidentNotes, setIncidentNotes] = useState<string>(prefill?.notes ?? '');
+  const [affectedQuery, setAffectedQuery] = useState(() => {
+    const s = prefill?.affectedStudentNumber ? students.find((x) => x.studentNumber === prefill.affectedStudentNumber) : undefined;
+    return s ? `${s.fullName} · #${s.studentNumber}` : '';
+  });
   const [incidentTime, setIncidentTime] = useState<string>('');
   const [incidentPlace, setIncidentPlace] = useState<string>(prefill?.place ?? '');
   const [incidentWitness, setIncidentWitness] = useState<string>(prefill?.witnesses ?? '');
@@ -235,13 +250,28 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   // ==========================================================================
   // SUB-TAB 2 STATE: ACTIVE CASE BOARD (PAGE 3)
   // ==========================================================================
-  const [caseStatusFilter, setCaseStatusFilter] = useState<'ALL' | CaseStatusType>('ALL');
+  const [caseStatusFilter, setCaseStatusFilter] = useState<BoardBucket>('ALL');
+  /** One plain bucket per case, same words as the badge on each card (Golden Rule 3) */
+  const bucketOf = (c: DisciplineCaseRecord): Exclude<BoardBucket, 'ALL'> =>
+    c.status === 'Resolved'
+      ? 'done'
+      : c.status === 'Sanction In Progress'
+      ? 'sanction'
+      : c.status === 'Conference Scheduled' || c.status === 'Pending Reschedule' || c.status === 'Conference Attended'
+      ? 'conference'
+      : !c.step || c.step === 'Reported'
+      ? 'new'
+      : 'progress';
+  const bucketWord = (b: BoardBucket): string =>
+    (isTl
+      ? { ALL: 'Lahat', new: 'Bago', progress: 'Ginagawa', conference: 'Conference', sanction: 'May sanction', done: 'Tapos na' }
+      : { ALL: 'All', new: 'New', progress: 'In progress', conference: 'Conference', sanction: 'Serving sanction', done: 'Done' })[b];
   // extra filters (grade, period, overdue / waiting sanction)
   const [gradeF, setGradeF] = useState<'all' | '11' | '12'>('all');
   const [periodF, setPeriodF] = useState<'all' | 'week' | 'month' | 'custom'>('all');
   const [fromF, setFromF] = useState('');
   const [toF, setToF] = useState('');
-  const [flagF, setFlagF] = useState<'all' | 'overdue' | 'waiting'>(initialCaseFlag ?? 'all');
+  const [flagF, setFlagF] = useState<'all' | 'overdue' | 'waiting' | 'ending'>(initialCaseFlag ?? 'all');
   // sort choice per list (newest first by default, remembered on this computer)
   const [pickerSort, setPickerSortState] = useState<SortKey>(() => loadSort('picker'));
   const [caseSort, setCaseSortState] = useState<SortKey>(() => loadSort('cases'));
@@ -253,6 +283,11 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   const [callSlipInitialForm, setCallSlipInitialForm] = useState<import('../services/printForms').FormKind | null>(null);
   // Case Details panel
   const [openCaseCode, setOpenCaseCode] = useState<string | null>(initialOpenCaseCode ?? null);
+  // A wrong case is WITHDRAWN (kept + audited), never deleted — the audit trail cannot be edited (manuscript)
+  const [withdrawFor, setWithdrawFor] = useState<DisciplineCaseRecord | null>(null);
+  const [withdrawReason, setWithdrawReason] = useState('');
+  // 'withdraw' = filed by mistake; 'notProven' = heard both sides, not enough proof / found untrue
+  const [closeMode, setCloseMode] = useState<'withdraw' | 'notProven'>('withdraw');
 
   useEffect(() => {
     if (initialOpenCaseCode) {
@@ -292,6 +327,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   // SUB-TAB 3 STATE: STUDENTS DIRECTORY & HISTORY (PAGE 4)
   // ==========================================================================
   const [sectionFilter, setSectionFilter] = useState<string>('ALL');
+  const [studentGrade, setStudentGrade] = useState<'ALL' | '11' | '12'>('ALL');
+  const [studentOffense, setStudentOffense] = useState<'all' | 'serious' | 'watch' | 'minor' | 'none'>('all');
   // manual add / edit (restored) + enrolled filter
   const [studentFormFor, setStudentFormFor] = useState<StudentRecord | 'new' | null>(null);
   const [studentSaving, setStudentSaving] = useState(false);
@@ -362,13 +399,17 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   // offenses count as a serious offense". Offense classes: Minor, Less Serious,
   // Serious, Grave. Change here once the official AICS Student Handbook says otherwise.
   // ==========================================================================
+  /** a case withdrawn as "filed in error" is kept for the record but never counts as an offense */
+  const isWithdrawn = (c: DisciplineCaseRecord) => /^(withdrawn|not proven)/i.test(c.decision ?? '');
+  const isNotProven = (c: DisciplineCaseRecord) => /^not proven/i.test(c.decision ?? '');
+  const closedWord = (c: DisciplineCaseRecord) => (isNotProven(c) ? (isTl ? 'Hindi napatunayan' : 'Not proven') : isTl ? 'Binawi' : 'Withdrawn');
   const isMinorSeverity = (sev: string) =>
     /minor/i.test(sev) && !/escalat|→ serious|serious offense|major case/i.test(sev);
 
   /** How many minor offenses in a row the student has right now (newest first, stops at a serious one). */
   const minorsInARow = (stu: StudentRecord): number => {
     const list = cases
-      .filter((c) => c.studentNumber === stu.studentNumber)
+      .filter((c) => c.studentNumber === stu.studentNumber && !isWithdrawn(c))
       .sort((a, b) => b.incidentDate.localeCompare(a.incidentDate) || b.caseCode.localeCompare(a.caseCode));
     if (!list.length) return stu.majorOffenseCount === 0 ? stu.minorOffenseCount : 0; // no case yet: use the counts
     let n = 0;
@@ -402,10 +443,15 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       : consecutive
       ? '2nd Minor (Consecutive) → Serious Offense'
       : stu.minorOffenseCount >= 1
-      ? `${stu.minorOffenseCount + 1}nd Minor → Serious Offense`
+      ? `${((n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'))(stu.minorOffenseCount + 1)} Minor → Serious Offense`
       : '1st Minor Offense';
     return { nextMinor, escalated, consecutive, word, severityLabel };
   };
+  // the datalist value is "Name · #number"; match it back to one student
+  const affectedStudent = useMemo(() => {
+    const m = affectedQuery.match(/#(\S+)\s*$/);
+    return m ? students.find((s) => s.studentNumber === m[1]) ?? null : null;
+  }, [affectedQuery, students]);
   const isGroup = selectedStudentNumbers.length > 1;
 
 
@@ -556,7 +602,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   const filteredCases = useMemo(() => {
     const q = quickSearch.trim().toLowerCase();
     const list = cases.filter((c) => {
-      const matchesStatus = caseStatusFilter === 'ALL' || c.status === caseStatusFilter;
+      const matchesStatus = caseStatusFilter === 'ALL' || bucketOf(c) === caseStatusFilter;
       const matchesSearch =
         !q ||
         c.studentName.toLowerCase().includes(q) ||
@@ -572,6 +618,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       }
       if (flagF === 'overdue' && !(c.status !== 'Resolved' && daysSince(d) > overdueDays)) return false;
       if (flagF === 'waiting' && c.sanctionStatus !== 'Pending parent notice') return false;
+      if (flagF === 'ending' && !sanctionEndingSoon(c)) return false;
       return true;
     });
     const t = new Map(list.map((c) => [c, caseTime(c)])); // each date read once
@@ -591,7 +638,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   const caseStatusCount = useMemo(() => {
     const m: Record<string, number> = { ALL: cases.length };
     cases.forEach((c) => {
-      m[c.status] = (m[c.status] ?? 0) + 1;
+      const k = bucketOf(c);
+      m[k] = (m[k] ?? 0) + 1;
     });
     return m;
   }, [cases]);
@@ -747,12 +795,19 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   };
 
   // Filtered Students for Sub-Tab 3
+  /** "Grade 11 · ABM" → "11" */
+  const gradeOf = (s: StudentRecord) => s.gradeSection.match(/Grade\s*(\d+)/i)?.[1] ?? '';
+  /** one offense level per student (same rule as the badge on each row) */
+  const offenseLevel = (s: StudentRecord): 'serious' | 'watch' | 'minor' | 'none' =>
+    s.majorOffenseCount > 0 ? 'serious' : s.minorOffenseCount >= 2 ? 'watch' : s.minorOffenseCount === 1 ? 'minor' : 'none';
   const filteredDirectoryStudents = useMemo(() => {
     if (subTab !== 'students') return [] as StudentRecord[]; // only sort 1,000 students when that tab is open
     const q = quickSearch.trim().toLowerCase();
     const list = students.filter((s) => {
       if ((s.enrolled !== false) !== (enrolledFilter === 'enrolled')) return false;
       const matchesSec = sectionFilter === 'ALL' || s.sectionCode === sectionFilter;
+      if (studentGrade !== 'ALL' && gradeOf(s) !== studentGrade) return false;
+      if (studentOffense !== 'all' && offenseLevel(s) !== studentOffense) return false;
       const matchesSearch =
         !q ||
         s.fullName.toLowerCase().includes(q) ||
@@ -762,13 +817,16 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       return matchesSec && matchesSearch;
     });
     return sortStudents(list, studentSort);
-  }, [students, sectionFilter, quickSearch, subTab, studentSort, enrolledFilter]);
+  }, [students, sectionFilter, quickSearch, subTab, studentSort, enrolledFilter, studentGrade, studentOffense]);
 
+  // section counts follow the chosen grade, so "ABM 33" means Grade 11 ABM when Grade 11 is picked
   const sectionOptions = useMemo(() => {
     const m = new Map<string, number>();
-    students.forEach((s) => m.set(s.sectionCode, (m.get(s.sectionCode) ?? 0) + 1));
+    students
+      .filter((s) => studentGrade === 'ALL' || gradeOf(s) === studentGrade)
+      .forEach((s) => m.set(s.sectionCode, (m.get(s.sectionCode) ?? 0) + 1));
     return [...m.entries()].filter(([k]) => k).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [students]);
+  }, [students, studentGrade]);
 
   const DIR_PAGE_SIZE = 50;
   const dirPageCount = Math.max(1, Math.ceil(filteredDirectoryStudents.length / DIR_PAGE_SIZE));
@@ -902,21 +960,42 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
           : `One incident · ${selectedStudentsList.length} separate cases · ${incidentDate}`
         : `${isTl ? selectedPolicy.titleTl : selectedPolicy.titleEn} · ${incidentDate}`,
       rows: previewRows,
-      note: autoNotifyParent
-        ? isTl
-          ? 'Ihahanda rin ang SMS/Gmail notice para sa magulang.'
-          : 'A parent SMS/Gmail notice will also be prepared.'
-        : undefined,
+      // Prevent mistakes (Golden Rule 7): same student + same offense + same day is probably filed twice
+      note: (() => {
+        const dupes = selectedStudentsList.filter((stu) => {
+          const pol = policyFor(stu);
+          return cases.some(
+            (c) =>
+              c.studentNumber === stu.studentNumber &&
+              c.incidentDate === incidentDate &&
+              c.offenseTitleEn === pol.titleEn &&
+              !isWithdrawn(c)
+          );
+        });
+        const dupeNote = dupes.length
+          ? isTl
+            ? `Babala: may kaso na sa parehong araw at offense para kay ${dupes.map((d) => d.fullName).join(', ')}. Baka doble ito.`
+            : `Heads up: ${dupes.map((d) => d.fullName).join(', ')} already has a case for this offense on this day. This may be a duplicate.`
+          : '';
+        const smsNote = autoNotifyParent
+          ? isTl
+            ? 'Ihahanda rin ang SMS/Gmail notice para sa magulang.'
+            : 'A parent SMS/Gmail notice will also be prepared.'
+          : '';
+        return [dupeNote, smsNote].filter(Boolean).join(' ') || undefined;
+      })(),
       confirmLabel: isTl ? 'Oo, i-save ang case' : 'Yes, save case',
     });
     if (!okCase) return;
 
     const createdCases: DisciplineCaseRecord[] = [];
     // unique, increasing case numbers (the old random number could repeat inside a group)
+    // never reuse a case number, even one from an old deleted case (its history would mix in)
+    const everUsed = await fetchHighestCaseNumberEver();
     const lastCaseNo = cases.reduce((m, c) => {
       const n = Number(c.caseCode.split('-').pop());
       return Number.isFinite(n) && n > m ? n : m;
-    }, 100);
+    }, Math.max(100, everUsed));
     const usedIncidents = new Set(cases.map((c) => c.incidentCode).filter(Boolean));
     let incidentCode: string | undefined;
     if (isGroupSave) {
@@ -946,7 +1025,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
         .filter(Boolean)
         .join(' · ');
       const nextNotes =
-        [details, incidentNotes.trim()].filter(Boolean).join('\n') || 'No notes added.';
+        [details, incidentNotes.trim()].filter(Boolean).join('\n');
 
       const newCase: DisciplineCaseRecord = {
         createdAt: new Date().toISOString(),
@@ -963,6 +1042,9 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
         reportedBy: nextReportedBy,
         incidentDate,
         notes: nextNotes,
+        ...(affectedStudent && affectedStudent.studentNumber !== stu.studentNumber
+          ? { affectedStudentNumber: affectedStudent.studentNumber, affectedStudentName: affectedStudent.fullName }
+          : {}),
       };
 
       // save the case first; only count the offense if the database really has it
@@ -1082,6 +1164,11 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   // HANDLER 2: UPDATE CASE STATUS ON BOARD
   // ==========================================================================
 
+  /** "New" only until the student is called; after that the case is "In progress" (badge matches the stepper) */
+  const caseBadgeWord = (c: DisciplineCaseRecord): string =>
+    c.status === 'Open' && !!c.step && c.step !== 'Reported'
+      ? isTl ? 'Ginagawa' : 'In progress'
+      : statusWord(c.status);
   // One plain word per status (Golden Rule 3)
   const statusWord = (st: CaseStatusType): string =>
     ((isTl
@@ -1089,6 +1176,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
           Open: 'Bago',
           'Under Review': 'Sinusuri',
           'Conference Scheduled': 'Kailangan ng conference',
+          'Pending Reschedule': 'Kailangan ng bagong araw',
+          'Conference Attended': 'Tapos ang conference',
           'Sanction In Progress': 'May sanction',
           Resolved: 'Tapos na',
         }
@@ -1096,6 +1185,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
           Open: 'New',
           'Under Review': 'Reviewing',
           'Conference Scheduled': 'Needs conference',
+          'Pending Reschedule': 'Needs new date',
+          'Conference Attended': 'Conference done',
           'Sanction In Progress': 'Serving sanction',
           Resolved: 'Done',
         }) as Record<string, string>)[st] ?? st;
@@ -1108,13 +1199,13 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
   };
   const severityInfo = (sev: string): { word: string; cls: string } => {
     const red = 'bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300';
-    if (/grave/i.test(sev)) return { word: isTl ? 'Grave offense' : 'Grave offense', cls: red };
-    if (/less serious/i.test(sev)) return { word: isTl ? 'Less serious offense' : 'Less serious offense', cls: red };
-    if (/serious/i.test(sev)) return { word: isTl ? 'Serious offense' : 'Serious offense', cls: red };
+    if (/grave/i.test(sev)) return { word: isTl ? 'Mabigat na offense (grave)' : 'Grave offense', cls: red };
+    if (/less serious/i.test(sev)) return { word: isTl ? 'Medyo seryosong offense' : 'Less serious offense', cls: red };
+    if (/serious/i.test(sev)) return { word: isTl ? 'Seryosong offense' : 'Serious offense', cls: red };
     // check "2nd" before "major": "2nd Minor · Next is Major" is still a minor offense
     if (/escalat/i.test(sev) || (/major/i.test(sev) && !/minor/i.test(sev)))
       return {
-        word: isTl ? 'Major offense' : 'Major offense',
+        word: isTl ? 'Malaking offense' : 'Major offense',
         cls: 'bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300',
       };
     if (/2nd/i.test(sev))
@@ -1327,7 +1418,11 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
 
   const loadCaseHistory = async (code: string) => {
     setCaseHistory('loading');
-    setCaseHistory(await fetchCaseHistoryFromDb(code));
+    const rows = await fetchCaseHistoryFromDb(code);
+    // a case number used by an old (deleted) case must not mix its history in: keep entries from this case's start
+    const c = cases.find((x) => x.caseCode === code);
+    const start = c?.createdAt ? Date.parse(c.createdAt) - 60_000 : NaN;
+    setCaseHistory(rows && Number.isFinite(start) ? rows.filter((h) => Date.parse(h.when) >= start) : rows);
   };
 
   const openCaseDetails = (c: DisciplineCaseRecord) => {
@@ -1374,16 +1469,49 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     let db: Record<string, unknown> = {};
     let local: Partial<DisciplineCaseRecord> = {};
     let msg = '';
-    if (a.kind === 'call') {
+    if (a.kind === 'absent') {
+      // nothing changes in the case; only the attempt goes to the audit trail
+      void insertActivityLogInDb({
+        actor: 'Guidance Associate',
+        actionEn: `${c.caseCode}: Tried to call the student, absent today`,
+        actionTl: `${c.caseCode}: Sinubukang tawagin ang estudyante, absent ngayon`,
+        tag: c.caseCode,
+        tone: 'amber',
+      }).then(() => void loadCaseHistory(c.caseCode));
+      onTriggerToast(isTl ? 'Naitala: absent ang estudyante. Subukan ulit bukas.' : 'Saved: the student was absent. Try again tomorrow.');
+      return;
+    }
+    if (a.kind === 'proceed_without_parent') {
+      const ok = await confirmChange({
+        title: isTl ? 'Tumuloy nang wala ang magulang?' : 'Continue without the parent?',
+        description: `${c.studentName} · ${c.caseCode}`,
+        rows: [
+          { label: isTl ? 'Mga patawag' : 'Summons sent', after: String(appointments.filter((x) => x.caseId === c.caseCode).length) },
+          { label: isTl ? 'Dahilan' : 'Reason', after: a.reason },
+        ],
+        note: isTl
+          ? 'Itatala ito sa Audit Trail. Ipaalam pa rin sa magulang ang desisyon.'
+          : 'This goes to the Audit Trail. The parent must still be told the decision.',
+        confirmLabel: isTl ? 'Oo, tumuloy' : 'Yes, continue',
+      });
+      if (!ok) return;
+      db = { proceeded_without_parent: true, parent_conference_status: 'No-Show', status: 'Open', step: 'Parent Conference Attendance' };
+      local = { proceededWithoutParent: true, parentConferenceStatus: 'No-Show', status: 'Open', step: 'Parent Conference Attendance' };
+      msg = isTl ? ' Tumuloy nang wala ang magulang. Susunod: Desisyon.' : ' Continued without the parent. Next: Decision.';
+    } else if (a.kind === 'call') {
       db = { student_called_at: now, step: 'Student Called' };
       local = { studentCalledAt: now, step: 'Student Called' };
       msg = isTl ? ' Naitala: natawag ang estudyante. Susunod: isulat ang paliwanag niya.' : ' Saved: student called. Next: write their explanation.';
     } else if (a.kind === 'explanation') {
-      db = { explanation: a.text, step: 'Explanation' };
-      local = { explanation: a.text, step: 'Explanation' };
-      msg = isTl ? ' Na-save ang paliwanag. Susunod: ipaalam sa magulang.' : ' Explanation saved. Next: let the parent know.';
+      const text = a.refused ? '(The student chose not to give a statement.)' : a.text;
+      const noticedAt = a.noticed ? c.complaintNoticedAt || now : c.complaintNoticedAt || null;
+      db = { explanation: text, explanation_refused: !!a.refused, explanation_present: a.present ?? null, complaint_noticed_at: noticedAt, step: 'Explanation' };
+      local = { explanation: text, explanationRefused: !!a.refused, explanationPresent: a.present, complaintNoticedAt: noticedAt, step: 'Explanation' };
+      msg = a.refused
+        ? isTl ? ' Naitala: ayaw magbigay ng pahayag ng estudyante. Tuloy ang kaso.' : ' Saved: the student chose not to explain. The case moves on.'
+        : isTl ? ' Na-save ang paliwanag. Susunod na hakbang.' : ' Explanation saved. On to the next step.';
     } else if (a.kind === 'schedule_conference') {
-      const currentCount = c.summonsCount || (c.conferenceScheduledAt ? 1 : 0);
+      const currentCount = appointments.filter((x) => x.caseId === c.caseCode).length || c.summonsCount || (c.conferenceScheduledAt ? 1 : 0);
       const nextCount = currentCount + 1;
       const historyItem = {
         attempt: nextCount,
@@ -1472,7 +1600,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
         : `Scheduled Summons #${nextCount} (${a.targetDate || ''}). Advanced to Step 5 (Parent attendance).`;
     } else if (a.kind === 'conference_outcome') {
       const isNoShow = a.conferenceStatus === 'No-Show';
-      const currentCount = c.summonsCount || 1;
+      const currentCount = appointments.filter((x) => x.caseId === c.caseCode).length || c.summonsCount || 1;
       const updatedHistory = (c.summonsHistory || []).map((h, i) =>
         i === (c.summonsHistory || []).length - 1 ? { ...h, outcome: a.conferenceStatus } : h
       );
@@ -1483,6 +1611,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
         parent_conference_status: a.conferenceStatus,
         status: isNoShow ? 'Pending Reschedule' : 'Conference Attended',
         step: isNoShow ? 'Schedule Conference' : 'Parent Conference Attendance',
+        ...(isNoShow ? {} : { conference_attended_by: a.attendedBy ?? null, conference_minutes: a.notes || null }),
       };
       local = {
         parentNotifiedAt: now,
@@ -1491,14 +1620,24 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
         summonsHistory: updatedHistory,
         status: (isNoShow ? 'Pending Reschedule' : 'Conference Attended') as DisciplineCaseRecord['status'],
         step: (isNoShow ? 'Schedule Conference' : 'Parent Conference Attendance') as DisciplineCaseRecord['step'],
+        ...(isNoShow ? {} : { conferenceAttendedBy: a.attendedBy, conferenceMinutes: a.notes || undefined }),
       };
+      // the conference itself (Parents page, reminders, time slots) must show the same answer
+      const apt = appointments
+        .filter((x) => x.caseId === c.caseCode && x.status === 'Scheduled')
+        .sort((x, y) => (y.date + y.timeSlot).localeCompare(x.date + x.timeSlot))[0];
+      if (apt) {
+        const aptStatus = isNoShow ? 'Did Not Attend' : 'Attended';
+        setAppointments?.((list) => list.map((x) => (x.id === apt.id ? { ...x, status: aptStatus } : x)));
+        void updateAppointmentInDb(apt.id, { status: aptStatus });
+      }
       msg = isNoShow
         ? isTl
-          ? `Naitala: Hindi sumipot ang magulang sa Summons #${currentCount}. Kailangan ng ika-${currentCount + 1} patawag (Reschedule).`
-          : `Recorded: Parent was a No-Show on Summons #${currentCount}. Summons #${currentCount + 1} required.`
+          ? `Naitala: hindi dumating ang magulang (ika-${currentCount} patawag). Susunod: pumili ng bagong araw.`
+          : `Saved: the parent did not come (summons ${currentCount}). Next: pick a new date.`
         : isTl
-        ? 'Naitala: Dumalo ang magulang sa pagdinig. Na-unlock na ang Hakbang ng Desisyon!'
-        : 'Recorded: Parent attended conference hearing. Decision step is now unlocked!';
+        ? 'Naitala: dumating ang magulang. Susunod: Desisyon.'
+        : 'Saved: the parent came. Next: Decision.';
     } else if (a.kind === 'notified') {
       const isNoShow = a.conferenceStatus === 'No-Show';
       const activate = !isNoShow && c.sanctionStatus === 'Pending parent notice';
@@ -1521,10 +1660,15 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
         : activate
         ? isTl ? ' Dumalo ang magulang — nagsimula na ang sanction.' : ' Parent attended — the sanction has started.'
         : isTl ? ' Dumalo/Naabisuhan ang magulang. Susunod: itala ang desisyon.' : ' Parent attended/notified. Next: record the decision.';
+    } else if (a.kind === 'appeal') {
+      db = { appeal_requested_at: now, appeal_by: a.by, appeal_reason: a.reason, appeal_result: a.result, appeal_note: a.note || null };
+      local = { appealRequestedAt: now, appealBy: a.by, appealReason: a.reason, appealResult: a.result, appealNote: a.note || null };
+      msg = isTl ? 'Naitala ang apela. Kung binago ang parusa, i-edit ang kaso.' : 'Appeal saved. If the sanction changed, edit the case.';
     } else if (a.kind === 'decision') {
       const notified = !!c.parentNotifiedAt;
-      db = { decision: a.decision, sanction: a.sanction, decided_at: now, step: notified ? 'Decision' : c.step || 'Explanation', sanction_status: notified ? 'Active' : 'Pending parent notice', ...(notified ? { status: 'Sanction In Progress' } : {}) };
-      local = { decision: a.decision, sanction: a.sanction, decidedAt: now, step: (notified ? 'Decision' : c.step || 'Explanation') as DisciplineCaseRecord['step'], sanctionStatus: notified ? 'Active' : 'Pending parent notice', ...(notified ? { status: 'Sanction In Progress' as const } : {}) };
+      const appr = a.principalApprovedBy ? { principal_approved_by: a.principalApprovedBy, principal_approved_at: now } : {};
+      db = { ...appr, decision: a.decision, sanction: a.sanction, sanction_end_date: a.sanctionEndDate || null, decided_at: now, step: notified ? 'Decision' : c.step || 'Explanation', sanction_status: notified ? 'Active' : 'Pending parent notice', ...(notified ? { status: 'Sanction In Progress' } : {}) };
+      local = { ...(a.principalApprovedBy ? { principalApprovedBy: a.principalApprovedBy, principalApprovedAt: now } : {}), decision: a.decision, sanction: a.sanction, sanctionEndDate: a.sanctionEndDate || null, decidedAt: now, step: (notified ? 'Decision' : c.step || 'Explanation') as DisciplineCaseRecord['step'], sanctionStatus: notified ? 'Active' : 'Pending parent notice', ...(notified ? { status: 'Sanction In Progress' as const } : {}) };
       msg = notified
         ? isTl ? ' Na-save ang desisyon. Nagsimula na ang sanction.' : ' Decision saved. The sanction has started.'
         : isTl ? ' Na-save ang desisyon. Maghihintay ang sanction hanggang malaman ng magulang.' : ' Decision saved. The sanction waits until the parent is notified.';
@@ -1532,16 +1676,16 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       const sanctionDone = a.sanctionDone ?? false;
       db = {
         step: 'Follow-Up',
-        status: sanctionDone ? 'Resolved' : 'Sanction In Progress',
+        status: sanctionDone ? 'Open' : 'Sanction In Progress', // closing is its own step (Step 8)
         sanction_status: sanctionDone ? 'Done' : 'Active',
       };
       local = {
         step: 'Follow-Up',
-        status: (sanctionDone ? 'Resolved' : 'Sanction In Progress') as DisciplineCaseRecord['status'],
+        status: (sanctionDone ? 'Open' : 'Sanction In Progress') as DisciplineCaseRecord['status'],
         sanctionStatus: (sanctionDone ? 'Done' : 'Active') as DisciplineCaseRecord['sanctionStatus'],
       };
       msg = sanctionDone
-        ? isTl ? ' Naitala: Natapos na ang sanction. Handa na para sa pormal na pagsasara ng kaso.' : ' Recorded: Sanction fully completed. Ready for formal case resolution.'
+        ? isTl ? ' Natapos na ang sanction. Susunod: isara ang kaso.' : ' Sanction done. Next: close the case.'
         : isTl ? ' Nasa follow-up na. Kasalukuyang ginagawa ang sanction.' : ' In follow-up. Sanction is currently in progress.';
     } else {
       const ok = await confirmChange({
@@ -1555,9 +1699,9 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       });
       if (!ok) return;
       const notes = a.kind === 'close' ? a.counselingNotes : undefined;
-      db = { step: 'Closed', status: 'Resolved', counseling_notes: notes || null, ...(c.sanction ? { sanction_status: 'Done' } : {}) };
+      db = { step: 'Closed', status: 'Resolved', closed_at: now, counseling_notes: notes || null, ...(c.sanction ? { sanction_status: 'Done' } : {}) };
       local = { step: 'Closed', status: 'Resolved', closedAt: now, counselingNotes: notes, ...(c.sanction ? { sanctionStatus: 'Done' as const } : {}) };
-      msg = isTl ? ` Sarado na ang kaso ni ${c.studentName} kasama ang counseling notes.` : ` ${c.studentName}'s case is officially closed with counseling notes.`;
+      msg = isTl ? ` Sarado na ang kaso ni ${c.studentName}. Nasa Closed Cases na ito.` : ` ${c.studentName}'s case is closed. You can find it in Closed Cases.`;
     }
     setFlowBusy(true);
     const taskId = startLoading({
@@ -1579,8 +1723,11 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       setSubTab('closed-cases');
     }
     const stepWords: Record<FlowAction['kind'], [string, string]> = {
+      absent: ['Student absent', 'Absent ang estudyante'],
+      proceed_without_parent: [`Continued without the parent after repeated no-shows · Reason: ${a.kind === 'proceed_without_parent' ? a.reason : ''}`, `Tumuloy nang wala ang magulang · Dahilan: ${a.kind === 'proceed_without_parent' ? a.reason : ''}`],
       call: ['Student called to the Guidance Office', 'Tinawag ang estudyante sa Guidance Office'],
-      explanation: ['Student explanation written', 'Naisulat ang paliwanag ng estudyante'],
+      explanation: [a.kind === 'explanation' && a.refused ? 'Student refused to give a statement' : `Student explanation written${a.kind === 'explanation' && a.present ? ` (present: ${a.present})` : ''}`, a.kind === 'explanation' && a.refused ? 'Ayaw magbigay ng pahayag ang estudyante' : 'Naisulat ang paliwanag ng estudyante'],
+      appeal: [a.kind === 'appeal' ? `Appeal by ${a.by}: ${a.result}` : 'Appeal recorded', a.kind === 'appeal' ? `Apela ng ${a.by === 'Student' ? 'estudyante' : 'magulang'}: ${a.result}` : 'Naitala ang apela'],
       schedule_conference: ['Parent conference scheduled', 'Naitakda ang conference ng magulang'],
       conference_outcome: ['Parent conference outcome documented', 'Naitala ang kinalabasan ng conference'],
       notified: [`Parent notified (${a.kind === 'notified' ? a.how : ''})`, `Naabisuhan ang magulang (${a.kind === 'notified' ? a.how : ''})`],
@@ -1612,7 +1759,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     if (!openCase) return;
     setEditDate(openCase.incidentDate);
     setEditReportedBy(openCase.reportedBy);
-    setEditNotes(hideIncidentMarker(openCase.notes));
+    setEditNotes(hideIncidentMarker(openCase.notes).replace(/^No notes added.$/, ''));
     setCaseEditing(true);
   };
 
@@ -1621,7 +1768,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     const next = {
       incidentDate: editDate || openCase.incidentDate,
       reportedBy: editReportedBy.trim() || openCase.reportedBy,
-      notes: keepIncidentMarker(openCase.notes, editNotes.trim() || 'No notes added.'),
+      notes: keepIncidentMarker(openCase.notes, editNotes.trim()),
     };
     const rows = [
       { label: isTl ? 'Petsa' : 'Date', before: prettyDate(openCase.incidentDate), after: prettyDate(next.incidentDate) },
@@ -2010,15 +2157,9 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
           DIRECT, CLEAN SUB-TAB BAR WITH PROMINENT ACTION BUTTONS
           ==================================================================== */}
       <div className="shrink-0 py-2 sm:h-[58px] flex flex-wrap items-center justify-between gap-3 border-b border-[#DCE5F2] dark:border-[#1E3158]">
-        <div className="inline-flex p-1 rounded-xl saas-card-subtle gap-1 overflow-x-auto">
+        <div className="seg-track overflow-x-auto">
           {(
             [
-              {
-                id: 'add-report',
-                labelEn: '+ File New Case',
-                labelTl: '+ Gumawa ng Kaso',
-                tip: isTl ? 'Magtala ng bagong disciplinary case' : 'File a new disciplinary case',
-              },
               {
                 id: 'case-board',
                 labelEn: `Active Cases (${summaryStats.activeCases})`,
@@ -2033,15 +2174,9 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               },
               {
                 id: 'students',
-                labelEn: `Student Masterlist (${students.length})`,
-                labelTl: `Talaan ng Estudyante (${students.length})`,
+                labelEn: `Students (${students.length})`,
+                labelTl: `Mga Estudyante (${students.length})`,
                 tip: isTl ? 'Lahat ng estudyante sa listahan' : 'All enrolled students directory',
-              },
-              {
-                id: 'masterlist',
-                labelEn: 'Import Masterlist (Excel)',
-                labelTl: 'Mag-import ng Excel Masterlist',
-                tip: isTl ? 'Mag-upload ng Excel ng mga estudyante' : 'Upload student batch spreadsheet',
               },
             ] as const
           ).map((tab) => {
@@ -2055,10 +2190,10 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   soundFX.playToggleSwitch(true);
                   setSubTab(tab.id);
                 }}
-                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-[13px] font-extrabold whitespace-nowrap transition-all active:scale-[0.98] ${
+                className={`px-3.5 sm:px-4 py-2 rounded-lg text-xs sm:text-[13px] font-bold whitespace-nowrap transition-[background-color,color,transform] duration-150 active:scale-[0.97] ${
                   isActive
-                    ? 'bg-[#1E469B] text-white shadow-md ring-2 ring-[#1E469B]/20'
-                    : 'text-[#4A608A] dark:text-[#94A8D0] hover:text-[#0B1F4D] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                    ? 'seg-on'
+                    : 'seg-off'
                 }`}
               >
                 {isTl ? tab.labelTl : tab.labelEn}
@@ -2067,7 +2202,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
           })}
         </div>
 
-        {/* PROMINENT DIRECT ACTION BUTTON: ADD STUDENT */}
+        {/* Golden Rule 1 + AGENTS.md §5 #13: ONE solid primary (New Case), the rest are ghost buttons */}
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -2075,11 +2210,41 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               soundFX.playStepUnlock();
               setStudentFormFor('new');
             }}
-            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.97] text-white text-xs sm:text-[13px] font-black shadow-md flex items-center gap-1.5 transition-all"
-            title={isTl ? 'Magdagdag ng bagong estudyante sa records' : 'Register a new student directly'}
+            className="h-10 px-4 rounded-full bg-white dark:bg-white/[0.06] shadow-[0_0_0_0.5px_rgb(15_23_42/0.1)] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#EEF3F9] dark:hover:bg-[#0E1D34] active:scale-[0.97] text-xs sm:text-[13px] font-bold flex items-center gap-1.5 transition-[background-color,transform] duration-150 whitespace-nowrap"
+            title={isTl ? 'Magdagdag ng isang estudyante sa records' : 'Add one student to the records'}
           >
-            <UserPlus className="w-4 h-4" />
-            <span>{isTl ? '＋ Magdagdag ng Estudyante' : '＋ Add Student to Records'}</span>
+            <UserPlus className="w-4 h-4" aria-hidden />
+            <span>{isTl ? 'Estudyante' : 'Add Student'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playToggleSwitch(true);
+              setSubTab('masterlist');
+            }}
+            className={`h-10 px-4 rounded-full text-xs sm:text-[13px] font-bold flex items-center gap-1.5 transition-[background-color,transform] duration-150 active:scale-[0.97] whitespace-nowrap ${
+              subTab === 'masterlist'
+                ? 'bg-[#1E469B]/10 text-[#1E469B] dark:text-[#7CB8F7]'
+                : 'bg-white dark:bg-white/[0.06] shadow-[0_0_0_0.5px_rgb(15_23_42/0.1)] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#F5F5F7] dark:hover:bg-white/[0.1]'
+            }`}
+            title={isTl ? 'Mag-upload ng Excel ng mga estudyante' : 'Upload the student masterlist (Excel)'}
+          >
+            <Upload className="w-4 h-4" aria-hidden />
+            <span>{isTl ? 'Import' : 'Import Masterlist'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playStepUnlock();
+              setSubTab('add-report');
+            }}
+            className={`h-10 px-5 rounded-full text-white text-xs sm:text-[13px] font-semibold flex items-center gap-1.5 transition-[background-color,transform] duration-150 active:scale-[0.97] whitespace-nowrap ${
+              subTab === 'add-report' ? 'bg-[#16377E] ring-2 ring-[#1E469B]/30' : 'bg-[#1E469B] hover:bg-[#16377E]'
+            }`}
+            title={isTl ? 'Magtala ng bagong kaso' : 'File a new discipline case'}
+          >
+            <Plus className="w-4 h-4" aria-hidden />
+            <span>{isTl ? 'Bagong Kaso' : 'New Case'}</span>
           </button>
         </div>
       </div>
@@ -2141,7 +2306,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               </div>
             )}
             {/* LEFT 5 COLS: Student Selector (Supports 1 or Multiple Students) */}
-            <div className="xl:col-span-5 rounded-2xl saas-card p-6 flex flex-col gap-4">
+            <div className="xl:col-span-5 ring-card p-6 flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
@@ -2160,8 +2325,11 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 </span>
               </div>
 
+              <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#4A608A] dark:text-[#94A8D0] pointer-events-none" aria-hidden />
               <input
                 type="text"
+                autoFocus
                 value={studentPickerQuery}
                 onChange={(e) => setStudentPickerQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -2179,8 +2347,9 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     ? 'Hanapin: pangalan, student no., o section'
                     : 'Search name, student no., or section'
                 }
-                className="w-full px-3.5 py-2 rounded-xl saas-card-subtle text-xs font-semibold text-[#0B1F4D] dark:text-white focus:outline-none focus:border-[#1E469B]"
+                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl saas-card-subtle text-sm font-semibold text-[#0B1F4D] dark:text-white focus:outline-none focus:border-[#1E469B]"
               />
+              </div>
               <div className="-mt-2 flex items-center justify-between gap-3">
                 <SortControl id="picker" value={pickerSort} onChange={setPickerSort} isTl={isTl} />
                 <button
@@ -2194,7 +2363,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 </button>
               </div>
 
-              <div className="max-h-[290px] xl:max-h-none xl:h-0 xl:flex-1 xl:min-h-[200px] overflow-y-auto clean-scroll divide-y divide-[#E2E9F5] dark:divide-[#1E3158] rounded-xl border border-[#DCE5F2] dark:border-[#1E3158]">
+              {/* Fills the card down to the same height as Step 2 (no empty gap) */}
+              <div className="max-h-[290px] xl:max-h-none xl:flex-1 xl:h-0 xl:min-h-[240px] overflow-y-auto clean-scroll divide-y divide-[#E2E9F5] dark:divide-[#1E3158] rounded-xl border border-[#DCE5F2] dark:border-[#1E3158]">
                 {visiblePicker.map((stu) => {
                   const isChecked = selectedStudentNumbers.includes(stu.studentNumber);
                   return (
@@ -2223,19 +2393,20 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               : 'border-[#94A8D0] text-transparent'
                           }`}
                         >
-                          
+                          {isChecked && <Check className="w-3.5 h-3.5" strokeWidth={3} aria-hidden />}
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs sm:text-sm font-extrabold text-[#0B1F4D] dark:text-white leading-snug">
                             {stu.fullName}
                           </p>
                           <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
-                            #{stu.studentNumber} · {stu.gradeSection} · {stu.parentName}
-                            {stu.createdAt ? ` · ${addedLabel(stu.createdAt, isTl)}` : ''}
+                            #{stu.studentNumber} · {stu.gradeSection}
                           </p>
                         </div>
                       </div>
 
+                      {/* Only show a record badge when there is a record (no "0 Minor" noise) */}
+                      {(stu.majorOffenseCount > 0 || stu.minorOffenseCount > 0) && (
                       <span
                         className={`px-2 py-0.5 rounded-md text-[10.5px] font-bold shrink-0 ${
                           stu.majorOffenseCount > 0
@@ -2249,6 +2420,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                           ? `${stu.majorOffenseCount} ${isTl ? 'malubha' : 'serious'}`
                           : `${stu.minorOffenseCount} Minor`}
                       </span>
+                      )}
                     </button>
                   );
                 })}
@@ -2270,7 +2442,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
             </div>
 
             {/* RIGHT 7 COLS: Offense Details, Auto-Classification & Early Intervention Alert */}
-            <div className="xl:col-span-7 rounded-2xl saas-card p-6 space-y-5 flex flex-col">
+            <div className="xl:col-span-7 ring-card p-6 space-y-5 flex flex-col">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
@@ -2304,7 +2476,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 disabled={noStudentYet}
                 aria-disabled={noStudentYet}
                 className={`min-w-0 m-0 p-0 border-0 space-y-5 transition-opacity duration-200 ${
-                  noStudentYet ? 'opacity-35 select-none' : ''
+                  noStudentYet ? 'opacity-60 select-none' : ''
                 }`}
               >
               {/* LIVE EARLY INTERVENTION / ESCALATION ALERT BANNER */}
@@ -2463,12 +2635,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   <label className="block text-xs font-bold text-[#0B1F4D] dark:text-white mb-1">
                     {isTl ? 'Petsa' : 'Date'}
                   </label>
-                  <input
-                    type="date"
-                    value={incidentDate}
-                    onChange={(e) => setIncidentDate(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl saas-card-subtle text-xs font-bold text-[#0B1F4D] dark:text-white"
-                  />
+                  <DateField value={incidentDate} onChange={setIncidentDate} isTl={isTl} max={todayISO()} ariaLabel={isTl ? 'Petsa ng insidente' : 'Incident date'} />
                 </div>
 
                 <div>
@@ -2519,9 +2686,36 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   />
                 </div>
 
+                {/* Affected student (complainant): staff-only, never in SMS or the parent's copy */}
+                <div className="md:col-span-2 space-y-1.5">
+                  <label htmlFor="affected-student" className="block text-xs font-bold text-[#0B1F4D] dark:text-white">
+                    {isTl ? 'May naapektuhang estudyante? (opsyonal)' : 'Was a student affected? (optional)'}
+                  </label>
+                  <input
+                    id="affected-student"
+                    list="affected-student-list"
+                    value={affectedQuery}
+                    onChange={(e) => setAffectedQuery(e.target.value)}
+                    placeholder={isTl ? 'I-type ang pangalan o student no.' : 'Type a name or student no.'}
+                    className="w-full px-3.5 py-2 rounded-xl saas-card-subtle text-xs font-bold text-[#0B1F4D] dark:text-white"
+                  />
+                  <datalist id="affected-student-list">
+                    {affectedQuery.trim().length >= 2 &&
+                      students
+                        .filter((s) => `${s.fullName} ${s.studentNumber}`.toLowerCase().includes(affectedQuery.trim().toLowerCase()))
+                        .slice(0, 8)
+                        .map((s) => <option key={s.studentNumber} value={`${s.fullName} · #${s.studentNumber}`} />)}
+                  </datalist>
+                  <p className="text-[11px] text-[#64748B] dark:text-[#94A8D0]">
+                    {affectedStudent
+                      ? isTl ? `Naitala: ${affectedStudent.fullName}. Staff lang ang makakakita.` : `Linked: ${affectedStudent.fullName}. Only staff can see this.`
+                      : isTl ? 'Staff lang ang makakakita. Hindi ito lalabas sa SMS o sa kopya ng magulang.' : 'Only staff can see this. It never appears in SMS or the parent copy.'}
+                  </p>
+                </div>
+
                 <div className="md:col-span-2 space-y-2">
                   <label className="block text-xs font-bold text-[#0B1F4D] dark:text-white">
-                    {isTl ? 'Mga Saksi at Pisikal na Patunay (Witnesses & Proof)' : 'Witnesses & Incident Proof'}
+                    {isTl ? 'Mga saksi at patunay' : 'Witnesses and proof'}
                   </label>
                   <input
                     type="text"
@@ -2762,141 +2956,181 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
         )}
 
         {subTab === 'case-board' && (
-          <section className="rounded-2xl saas-card overflow-hidden">
-            <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
-                  {isTl ? 'Lahat ng kaso' : 'All cases'}
-                </h2>
-                <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
-                  {isTl
-                    ? 'Nasa itaas ang kailangan pang asikasuhin; nasa baba ang tapos na.'
-                    : 'Cases that still need action are on top; finished ones are at the bottom.'}
-                </p>
-              </div>
-
-              <div className="inline-flex flex-wrap p-1 rounded-lg saas-card-subtle gap-1">
-                {(
-                  [
-                    { key: 'ALL', label: isTl ? 'Lahat' : 'All' },
-                    { key: 'Open', label: statusWord('Open') },
-                    { key: 'Conference Scheduled', label: statusWord('Conference Scheduled') },
-                    { key: 'Sanction In Progress', label: statusWord('Sanction In Progress') },
-                    { key: 'Resolved', label: statusWord('Resolved') },
-                  ] as const
-                ).map((f) => (
+          <section className="space-y-4">
+            {/* Summary tiles (Dashboard theme): what needs attention first, each one filters the list */}
+            {(() => {
+              const now = new Date();
+              const open = cases.filter((c) => c.status !== 'Resolved');
+              const overdueN = open.filter((c) => caseAge(c.incidentDate).days > overdueDays).length;
+              const doneMonth = cases.filter((c) => {
+                if (c.status !== 'Resolved' || isWithdrawn(c)) return false;
+                const d = new Date(c.closedAt || c.incidentDate);
+                return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+              }).length;
+              const tiles = [
+                { k: 'todo', n: open.length, en: 'Need action', tl: 'Kailangang asikasuhin', chip: 'bg-[#1E469B]/10 text-[#1E469B] dark:bg-[#7CB8F7]/15 dark:text-[#7CB8F7]', icon: <FolderOpen className="w-4 h-4" aria-hidden />, on: caseStatusFilter === 'ALL' && flagF === 'all', go: () => { setFlagF('all'); setCaseStatusFilter('ALL'); } },
+                { k: 'overdue', n: overdueN, en: `Overdue (over ${overdueDays} days)`, tl: `Overdue (higit ${overdueDays} araw)`, chip: 'bg-[#E11D48]/10 text-[#E11D48] dark:bg-[#FB7185]/15 dark:text-[#FB7185]', icon: <AlertTriangle className="w-4 h-4" aria-hidden />, on: flagF === 'overdue', go: () => { setCaseStatusFilter('ALL'); setFlagF('overdue'); } },
+                { k: 'conf', n: caseStatusCount.conference ?? 0, en: 'Parent conference', tl: 'Conference ng magulang', chip: 'bg-[#D97706]/10 text-[#D97706] dark:bg-[#FBBF24]/15 dark:text-[#FBBF24]', icon: <CalendarDays className="w-4 h-4" aria-hidden />, on: caseStatusFilter === 'conference', go: () => { setFlagF('all'); setCaseStatusFilter('conference'); } },
+                { k: 'done', n: doneMonth, en: 'Closed this month', tl: 'Naisara ngayong buwan', chip: 'bg-[#059669]/10 text-[#059669] dark:bg-[#34D399]/15 dark:text-[#34D399]', icon: <Check className="w-4 h-4" aria-hidden />, on: caseStatusFilter === 'done', go: () => { setFlagF('all'); setCaseStatusFilter('done'); } },
+              ];
+              return (
+                <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+                  {tiles.map((t) => (
+                    <button
+                      key={t.k}
+                      type="button"
+                      onClick={t.go}
+                      aria-pressed={t.on}
+                      className={`bento-tile text-left rounded-[18px] px-4 py-3.5 flex items-center gap-3 transition-transform duration-150 hover:-translate-y-0.5 active:scale-[0.985] ${t.on ? 'ring-2 ring-[#1E469B]/40 dark:ring-[#7CB8F7]/40' : ''}`}
+                    >
+                      <span className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${t.chip}`}>{t.icon}</span>
+                      <span className="min-w-0">
+                        <span className="block text-[24px] leading-none font-semibold tabular-nums tracking-[-0.02em] text-[#1D1D1F] dark:text-[#F5F5F7]">{t.n}</span>
+                        <span className="block text-[12px] text-[#6E6E73] dark:text-[#A1A1A6] mt-1 truncate">{isTl ? t.tl : t.en}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+            {/* ONE toolbar row (Dashboard theme): status chips · Filter menu · More menu */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="seg-track flex-wrap" role="tablist" aria-label={isTl ? 'Ipakita ang mga kaso' : 'Show cases'}>
+                {(['ALL', 'new', 'progress', 'conference', 'sanction', 'done'] as const).map((k) => (
                   <button
-                    key={f.key}
+                    key={k}
                     type="button"
-                    onClick={() => setCaseStatusFilter(f.key)}
-                    className={`px-3 py-1 rounded-md text-xs font-bold whitespace-nowrap transition-colors ${
-                      caseStatusFilter === f.key
-                        ? 'bg-[#1E469B] text-white'
-                        : 'text-[#4A608A] dark:text-[#94A8D0] hover:text-[#0B1F4D] dark:hover:text-white'
-                    }`}
+                    role="tab"
+                    aria-selected={caseStatusFilter === k}
+                    onClick={() => setCaseStatusFilter(k)}
+                    className={`px-3 py-1.5 text-xs whitespace-nowrap ${caseStatusFilter === k ? 'seg-on' : 'seg-off'}`}
                   >
-                    {f.label} · {caseStatusCount[f.key] ?? 0}
+                    {bucketWord(k)} <span className="tabular-nums opacity-70">{caseStatusCount[k] ?? 0}</span>
                   </button>
                 ))}
               </div>
 
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  data-action="batch-print-call-slips"
-                  onClick={() => {
-                    // Pick cases needing student call or immediate action (Step 1/2 or Open)
-                    const queue = cases.filter((c) => c.status !== 'Resolved' && (!c.step || c.step === 'Reported' || c.step === 'Student Called'));
-                    const toPrint = queue.length ? queue.slice(0, 4) : cases.slice(0, 4);
-                    if (!toPrint.length) {
-                      onTriggerToast(isTl ? 'Walang case na ma-print ang call slip.' : 'No cases available for call slip printing.');
-                      return;
-                    }
-                    soundFX.playStepUnlock();
-                    const html = buildBatchCallSlipsHtml(
-                      toPrint.map((c) => ({
-                        caseCode: c.caseCode,
-                        studentName: c.studentName,
-                        gradeSection: c.gradeSection,
-                        offenseTitle: c.offenseTitleEn,
-                        when: isTl ? 'Agad / Unang Period ng Guidance' : 'Immediate / Next Guidance Period',
-                      })),
-                      window.location.origin
-                    );
-                    printHtml(html);
-                    onTriggerToast(
-                      isTl
-                        ? `Naihanda na ang 4-in-1 Batch Call Slip sheet (${toPrint.map((x) => x.studentName).join(', ')}).`
-                        : `4-in-1 Batch Call Slip sheet generated (${toPrint.map((x) => x.studentName).join(', ')}).`
-                    );
-                  }}
-                  className="px-3.5 py-1.5 rounded-lg border border-[#1E469B]/40 bg-[#EEF3FC] dark:bg-[#13203B] hover:bg-[#E0EBFB] dark:hover:bg-[#192A4E] text-[#1E469B] dark:text-[#7CB8F7] text-xs font-bold transition-all active:scale-[0.97] inline-flex items-center gap-1.5 shadow-xs"
-                  title="Morning Routine: Batch print 4 call slips on a single bond paper"
-                >
-                  <Layers className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
-                  <span>{isTl ? 'Batch Call Slips (4-in-1 Sheet)' : 'Batch Call Slips (4-in-1 Sheet)'}</span>
-                </button>
-                <SortControl id="cases" value={caseSort} onChange={setCaseSort} isTl={isTl} />
+                {filtersOn && (
+                  <button
+                    type="button"
+                    data-filter="clear"
+                    onClick={() => { setGradeF('all'); setPeriodF('all'); setFlagF('all'); setFromF(''); setToF(''); }}
+                    className="h-9 px-3 rounded-full text-xs font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                  >
+                    <span data-filter-count>{isTl ? `${filteredCases.length} kaso` : `${filteredCases.length} case(s)`}</span> · {isTl ? 'Alisin ang filter' : 'Clear filters'}
+                  </button>
+                )}
+
+                {/* Filter + sort (fewer controls on screen) */}
+                <details className="relative" data-case-filters>
+                  <summary className={`list-none [&::-webkit-details-marker]:hidden cursor-pointer h-9 px-3.5 rounded-full inline-flex items-center gap-1.5 text-xs font-medium transition-colors ${filtersOn ? 'bg-[#1E469B]/10 text-[#1E469B] dark:text-[#7CB8F7]' : 'bg-white dark:bg-white/[0.06] text-[#1D1D1F] dark:text-[#F5F5F7] shadow-[0_0_0_0.5px_rgb(15_23_42/0.1)] hover:bg-[#F5F5F7] dark:hover:bg-white/[0.1]'}`}>
+                    <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden />
+                    {isTl ? 'Filter at ayos' : 'Filter & sort'}
+                  </summary>
+                  <div className="absolute right-0 top-full mt-2 z-30 p-4 ring-card w-[300px] space-y-3">
+                    <label className="block space-y-1">
+                      <span className="text-[11px] font-medium text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Baitang' : 'Grade'}</span>
+                      <select data-filter="grade" value={gradeF} onChange={(e) => setGradeF(e.target.value as typeof gradeF)} className="w-full h-9 px-2.5 rounded-lg saas-card-subtle text-xs font-medium">
+                        <option value="all">{isTl ? 'Lahat ng grade' : 'All grades'}</option>
+                        <option value="11">Grade 11</option>
+                        <option value="12">Grade 12</option>
+                      </select>
+                    </label>
+                    <label className="block space-y-1">
+                      <span className="text-[11px] font-medium text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Petsa ng insidente' : 'Incident date'}</span>
+                      <select data-filter="period" value={periodF} onChange={(e) => setPeriodF(e.target.value as typeof periodF)} className="w-full h-9 px-2.5 rounded-lg saas-card-subtle text-xs font-medium">
+                        <option value="all">{isTl ? 'Lahat ng petsa' : 'Any date'}</option>
+                        <option value="week">{isTl ? 'Ngayong linggo' : 'This week'}</option>
+                        <option value="month">{isTl ? 'Ngayong buwan' : 'This month'}</option>
+                        <option value="custom">{isTl ? 'Pumili ng petsa…' : 'Pick dates…'}</option>
+                      </select>
+                    </label>
+                    {periodF === 'custom' && (
+                      <div className="flex items-center gap-2">
+                        <DateField compact className="flex-1" value={fromF} max={toF || undefined} onChange={setFromF} isTl={isTl} ariaLabel={isTl ? 'Mula' : 'From'} placeholder={isTl ? 'Mula' : 'From'} />
+                        <span className="text-xs text-[#6E6E73]">–</span>
+                        <DateField compact className="flex-1" value={toF} min={fromF || undefined} onChange={setToF} isTl={isTl} ariaLabel={isTl ? 'Hanggang' : 'To'} placeholder={isTl ? 'Hanggang' : 'To'} />
+                      </div>
+                    )}
+                    <label className="block space-y-1">
+                      <span className="text-[11px] font-medium text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Kailangang aksyunan' : 'Needs action'}</span>
+                      <select data-filter="flag" value={flagF} onChange={(e) => setFlagF(e.target.value as typeof flagF)} className="w-full h-9 px-2.5 rounded-lg saas-card-subtle text-xs font-medium">
+                        <option value="all">{isTl ? 'Lahat ng kaso' : 'All cases'}</option>
+                        <option value="overdue">{isTl ? `Overdue lang (higit ${overdueDays} araw)` : `Overdue only (over ${overdueDays} days)`}</option>
+                        <option value="waiting">{isTl ? 'Naghihintay ang sanction' : 'Sanction waiting for parent'}</option>
+                      </select>
+                    </label>
+                    <div className="space-y-1">
+                      <span className="text-[11px] font-medium text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Ayos' : 'Sort'}</span>
+                      <SortControl id="cases" value={caseSort} onChange={setCaseSort} isTl={isTl} />
+                    </div>
+                  </div>
+                </details>
+
+                {/* rare actions live in one More menu (Golden Rule 1) */}
+                <details className="relative">
+                  <summary
+                    title={isTl ? 'Iba pa' : 'More'}
+                    aria-label={isTl ? 'Iba pa' : 'More'}
+                    className="list-none [&::-webkit-details-marker]:hidden cursor-pointer h-9 w-9 rounded-full inline-flex items-center justify-center bg-white dark:bg-white/[0.06] text-[#1D1D1F] dark:text-[#F5F5F7] shadow-[0_0_0_0.5px_rgb(15_23_42/0.1)] hover:bg-[#F5F5F7] dark:hover:bg-white/[0.1]"
+                  >
+                    <MoreHorizontal className="w-4 h-4" aria-hidden />
+                  </summary>
+                  <div className="absolute right-0 top-full mt-2 z-30 p-2 ring-card w-[300px]">
+                    <button
+                      type="button"
+                      data-action="batch-print-call-slips"
+                      onClick={() => {
+                        const queue = cases.filter((c) => c.status !== 'Resolved' && (!c.step || c.step === 'Reported' || c.step === 'Student Called'));
+                        const toPrint = queue.length ? queue.slice(0, 4) : cases.slice(0, 4);
+                        if (!toPrint.length) {
+                          onTriggerToast(isTl ? 'Walang case na ma-print ang call slip.' : 'No cases available for call slip printing.');
+                          return;
+                        }
+                        soundFX.playStepUnlock();
+                        const html = buildBatchCallSlipsHtml(
+                          toPrint.map((c) => ({
+                            caseCode: c.caseCode,
+                            studentName: c.studentName,
+                            gradeSection: c.gradeSection,
+                            offenseTitle: c.offenseTitleEn,
+                            when: isTl ? 'Agad / Unang Period ng Guidance' : 'Immediate / Next Guidance Period',
+                          })),
+                          window.location.origin
+                        );
+                        printHtml(html);
+                        onTriggerToast(
+                          isTl
+                            ? `Naihanda na ang 4 na call slip (${toPrint.map((x) => x.studentName).join(', ')}).`
+                            : `4 call slips are ready to print (${toPrint.map((x) => x.studentName).join(', ')}).`
+                        );
+                      }}
+                      className="w-full flex items-start gap-2.5 px-3 py-2.5 rounded-xl text-left hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                    >
+                      <Layers className="w-4 h-4 mt-0.5 text-[#1E469B] dark:text-[#7CB8F7] shrink-0" aria-hidden />
+                      <span>
+                        <span className="block text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Mag-print ng 4 na call slip' : 'Print 4 call slips'}</span>
+                        <span className="block text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Mga estudyanteng tatawagin pa, sa isang papel' : 'Students still to call, on one sheet'}</span>
+                      </span>
+                    </button>
+                    <div className="px-3 py-2.5 space-y-2 border-t border-black/[0.06] dark:border-white/[0.08] mt-1">
+                      <span className="block text-[11px] font-medium text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Ibig sabihin ng kulay ng tuldok' : 'What the dot colors mean'}</span>
+                      <Legend
+                        items={[
+                          { color: '#F43F5E', label: isTl ? 'Seryoso / Grave / Major' : 'Serious / Grave / Major', shape: 'dot' },
+                          { color: '#FBBF24', label: isTl ? 'Ika-2 minor' : '2nd minor', shape: 'dot' },
+                          { color: '#2557BE', label: 'Minor', shape: 'dot' },
+                          { color: '#10B981', label: isTl ? 'Tapos na' : 'Done', shape: 'dot' },
+                        ]}
+                      />
+                    </div>
+                  </div>
+                </details>
               </div>
             </div>
-            {/* more filters: grade, period, overdue / waiting sanction */}
-            <div className="px-6 py-2 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center gap-2" data-case-filters>
-              <span className="text-[11px] font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'I-filter:' : 'Filter:'}</span>
-              <select data-filter="grade" value={gradeF} onChange={(e) => setGradeF(e.target.value as typeof gradeF)} aria-label="Grade" className="px-2.5 py-1.5 rounded-lg border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-bold text-[#0B1F4D] dark:text-white">
-                <option value="all">{isTl ? 'Lahat ng grade' : 'All grades'}</option>
-                <option value="11">Grade 11</option>
-                <option value="12">Grade 12</option>
-              </select>
-              <select data-filter="period" value={periodF} onChange={(e) => setPeriodF(e.target.value as typeof periodF)} aria-label={isTl ? 'Petsa ng insidente' : 'Incident date'} className="px-2.5 py-1.5 rounded-lg border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-bold text-[#0B1F4D] dark:text-white">
-                <option value="all">{isTl ? 'Lahat ng petsa' : 'Any date'}</option>
-                <option value="week">{isTl ? 'Ngayong linggo' : 'This week'}</option>
-                <option value="month">{isTl ? 'Ngayong buwan' : 'This month'}</option>
-                <option value="custom">{isTl ? 'Pumili ng petsa…' : 'Pick dates…'}</option>
-              </select>
-              {periodF === 'custom' && (
-                <>
-                  <input type="date" data-filter="from" value={fromF} max={toF || undefined} onChange={(e) => setFromF(e.target.value)} aria-label={isTl ? 'Mula' : 'From'} className="px-2 py-1 rounded-lg border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs text-[#0B1F4D] dark:text-white" />
-                  <span className="text-xs text-[#4A608A]">–</span>
-                  <input type="date" data-filter="to" value={toF} min={fromF || undefined} onChange={(e) => setToF(e.target.value)} aria-label={isTl ? 'Hanggang' : 'To'} className="px-2 py-1 rounded-lg border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs text-[#0B1F4D] dark:text-white" />
-                </>
-              )}
-              <select data-filter="flag" value={flagF} onChange={(e) => setFlagF(e.target.value as typeof flagF)} aria-label={isTl ? 'Kailangang aksyunan' : 'Needs action'} className="px-2.5 py-1.5 rounded-lg border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-bold text-[#0B1F4D] dark:text-white">
-                <option value="all">{isTl ? 'Lahat ng kaso' : 'All cases'}</option>
-                <option value="overdue">{isTl ? `Overdue lang (higit ${overdueDays} araw)` : `Overdue only (over ${overdueDays} days)`}</option>
-                <option value="waiting">{isTl ? 'Naghihintay ang sanction' : 'Sanction waiting for parent'}</option>
-              </select>
-              {filtersOn && (
-                <>
-                  <span className="text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7]" data-filter-count>
-                    {isTl ? `${filteredCases.length} kaso` : `${filteredCases.length} case(s)`}
-                  </span>
-                  <button type="button" data-filter="clear" onClick={() => { setGradeF('all'); setPeriodF('all'); setFlagF('all'); setFromF(''); setToF(''); }} className="px-2.5 py-1.5 rounded-lg saas-card-subtle text-xs font-bold">
-                    {isTl ? 'Alisin ang filter' : 'Clear filters'}
-                  </button>
-                </>
-              )}
-            </div>
-            {/* what the colors on each card mean */}
-            <div className="px-6 py-2 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center gap-x-6 gap-y-1">
-              <span className="text-[11px] font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Kulay ng guhit sa gilid:' : 'Side stripe:'}</span>
-              <Legend
-                items={[
-                  { color: '#F43F5E', label: isTl ? 'Serious / Grave / Major' : 'Serious / Grave / Major', shape: 'box' },
-                  { color: '#FBBF24', label: isTl ? 'Ika-2 minor' : '2nd minor', shape: 'box' },
-                  { color: '#2557BE', label: isTl ? 'Minor' : 'Minor', shape: 'box' },
-                  { color: '#10B981', label: isTl ? 'Tapos na' : 'Done', shape: 'box' },
-                ]}
-              />
-              <span className="text-[11px] font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Ilang araw:' : 'Days open:'}</span>
-              <Legend
-                items={[
-                  { color: '#E11D48', label: isTl ? '7+ araw' : '7+ days', shape: 'dot' },
-                  { color: '#B45309', label: isTl ? '3–6 araw' : '3–6 days', shape: 'dot' },
-                ]}
-              />
-            </div>
 
-            <div className="p-4 sm:p-5 space-y-5 bg-[#F4F7FC] dark:bg-[#0B1527]">
+            <div className="space-y-5">
               {filteredCases.length === 0 && (
                 <div className="px-6 py-10 text-center space-y-3 rounded-xl bg-white dark:bg-[#0F1A30] border border-[#D3DDEE] dark:border-[#253B66]">
                   <p className="text-sm font-bold text-[#0B1F4D] dark:text-white">
@@ -2909,8 +3143,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                         ? 'Wala pang naitalang kaso.'
                         : 'No cases yet.'
                       : isTl
-                      ? `Walang kaso na "${statusWord(caseStatusFilter)}".`
-                      : `No cases marked "${statusWord(caseStatusFilter)}".`}
+                      ? `Walang kaso na "${bucketWord(caseStatusFilter)}".`
+                      : `No cases marked "${bucketWord(caseStatusFilter)}".`}
                   </p>
                   <div className="flex justify-center gap-2">
                     {caseStatusFilter !== 'ALL' && (
@@ -2945,6 +3179,11 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   const step = nextStepFor(c);
                   const groupSize = c.incidentCode ? groupSizeByIncident.get(c.incidentCode) ?? 0 : 0;
                   const menuOpen = caseMenuOpen === c.caseCode;
+                  // due-process progress for the mini bar (5 steps for a 1st minor, 8 otherwise)
+                  const flow = isMinorCase(c) ? MINOR_CASE_STEPS : MAJOR_CASE_STEPS;
+                  const doneSteps = isResolved ? flow.length : Math.max(1, flow.indexOf((c.step ?? 'Reported') as CaseStep) + 1);
+                  const tone = stripeFor(c); // bg-* color by how serious / done
+                  const initials = c.studentName.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('');
                   return (
                     <div
                       key={c.caseCode}
@@ -2952,97 +3191,87 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       data-status={c.status}
                       role="button"
                       tabIndex={0}
-                      title={isTl ? 'I-click para makita ang buong kaso' : 'Click to see the full case'}
+                      title={`${c.caseCode} · ${isTl ? 'I-click para makita ang buong kaso' : 'Click to see the full case'}`}
                       onClick={() => openCaseDetails(c)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') openCaseDetails(c);
                       }}
-                      className={`relative rounded-xl bg-white dark:bg-[#0B1528] border border-[#CBD5E1] dark:border-[#223555] pl-5 pr-4 py-3.5 cursor-pointer hover:border-[#1E469B] dark:hover:border-[#3A5794] transition-[border-color,transform] duration-150 ${
-                        isResolved && !menuOpen ? 'opacity-75' : ''
+                      className={`group relative grid grid-cols-[auto_minmax(0,1fr)_auto] lg:grid-cols-[auto_minmax(0,1fr)_190px_220px] items-center gap-x-5 gap-y-2 row-card px-4 py-3.5 cursor-pointer ${
+                        isResolved && !menuOpen ? 'opacity-70' : ''
                       } ${menuOpen ? 'z-30' : ''}`}
                     >
-                      <span
-                        aria-hidden="true"
-                        data-stripe
-                        className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${stripeFor(c)}`}
-                      />
-                      {/* line 1: who + how serious + how long */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex flex-wrap items-center gap-2 min-w-0">
-                          <span className="text-[15px] font-bold text-[#0F172A] dark:text-white">
-                            {c.studentName}
-                          </span>
-                          <span title={c.severity} className="text-xs font-medium text-[#475569] dark:text-[#94A8D0]">
-                            · {sev.word}
-                          </span>
+                      {/* avatar tinted by how serious the case is */}
+                      {/* boy/girl avatar with a colored ring for how serious the case is */}
+                      <span aria-hidden="true" data-stripe data-initials={initials} className={`relative rounded-full p-[2px] ${tone}`}>
+                        <span className="block rounded-full bg-white dark:bg-[#0F1B2E] p-[1.5px]">
+                          <StudentGenderAvatar fullName={c.studentName} size="md" />
+                        </span>
+                        {!isResolved && age.days >= 7 && (
+                          <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-[#E11D48] ring-2 ring-white dark:ring-[#0F1B2E]" title={isTl ? 'Overdue' : 'Overdue'} />
+                        )}
+                      </span>
+
+                      {/* who + what */}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[15px] font-semibold tracking-[-0.01em] text-[#1D1D1F] dark:text-[#F5F5F7] truncate">{c.studentName}</span>
                           {groupSize > 1 && (
-                            <span
-                              title={isTl ? 'Kasama sa iisang insidente' : 'Part of one group incident'}
-                              className="px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                            >
-                              {isTl ? 'May kasama' : 'Group'} · {groupSize}
+                            <span title={isTl ? 'Kasama sa iisang insidente' : 'Part of one group incident'} className="shrink-0 px-1.5 py-px rounded-full text-[10px] font-semibold bg-[#F5F5F7] dark:bg-white/[0.08] text-[#6E6E73] dark:text-[#A1A1A6]">
+                              {isTl ? 'Grupo' : 'Group'} {groupSize}
                             </span>
                           )}
                         </div>
-                        <span
-                          title={prettyDate(c.incidentDate)}
-                          className={`shrink-0 text-xs font-semibold whitespace-nowrap ${
-                            !isResolved && age.days >= 7
-                              ? 'text-rose-600 dark:text-rose-400'
-                              : !isResolved && age.days >= 3
-                              ? 'text-amber-700 dark:text-amber-400'
-                              : 'text-[#64748B] dark:text-[#94A8D0]'
-                          }`}
-                        >
-                          {age.text}
-                        </span>
+                        <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6] truncate">
+                          <span className="text-[#1D1D1F] dark:text-[#E5E5EA]">{isTl ? c.offenseTitleTl : c.offenseTitleEn}</span>
+                          {' · '}
+                          <span title={c.severity}>{sev.word}</span>
+                          {' · '}
+                          {c.gradeSection}
+                        </p>
                       </div>
 
-                      {/* line 2: what + where */}
-                      <p className="mt-0.5 text-xs text-[#475569] dark:text-[#94A8D0] truncate">
-                        <span className="font-semibold text-[#0F172A] dark:text-[#DCE8FF]">
-                          {isTl ? c.offenseTitleTl : c.offenseTitleEn}
-                        </span>{' '}
-                        · {c.gradeSection} ·{' '}
-                        <span className="font-mono text-xs" title={isTl ? 'Case number' : 'Case number'}>
-                          {c.caseCode}
-                        </span>
-                        {c.createdAt ? <span data-added> · {addedLabel(c.createdAt, isTl)}</span> : null}
-                      </p>
+                      {/* due-process progress: one glance shows how far the case is */}
+                      <div className="hidden lg:block" title={isTl ? `Hakbang ${doneSteps} ng ${flow.length}` : `Step ${doneSteps} of ${flow.length}`}>
+                        <div className="flex items-center justify-between gap-2 text-[11px] mb-1">
+                          <span className={`font-semibold truncate ${isResolved ? 'text-emerald-700 dark:text-emerald-400' : 'text-[#1D1D1F] dark:text-[#F5F5F7]'}`}>
+                            {isWithdrawn(c)
+                              ? closedWord(c)
+                              : c.status === 'Conference Scheduled' && nextConfByCase.has(c.caseCode)
+                              ? isTl ? 'May schedule na' : 'Conference set'
+                              : caseBadgeWord(c)}
+                          </span>
+                          <span className={`shrink-0 tabular-nums ${!isResolved && age.days >= 7 ? 'text-rose-600 dark:text-rose-400 font-semibold' : 'text-[#8E8E93]'}`} title={prettyDate(c.incidentDate)}>
+                            {age.text}
+                          </span>
+                        </div>
+                        <div className="flex gap-0.5" aria-hidden="true">
+                          {flow.map((_, i) => (
+                            <span
+                              key={i}
+                              className={`h-1.5 flex-1 rounded-full ${
+                                i < doneSteps ? (isResolved ? 'bg-emerald-500' : 'bg-[#1E469B] dark:bg-[#5B8DEF]') : 'bg-[#E8E8ED] dark:bg-white/10'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
 
-                      {/* line 3: the one next step */}
+                      {/* the ONE next action (no duplicate "Next:" text) */}
                       <div
-                        className="mt-2.5 flex items-center justify-between gap-3"
+                        className="flex items-center gap-2 justify-end"
                         onClick={(e) => e.stopPropagation()}
                         onKeyDown={(e) => {
                           if (e.key !== 'Escape') e.stopPropagation();
                         }}
                       >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span
-                            className={`px-2.5 py-0.5 rounded-[6px] text-xs font-semibold shrink-0 ${
-                              isResolved
-                                ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300'
-                                : 'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300'
-                            }`}
-                          >
-                            {c.status === 'Conference Scheduled' && nextConfByCase.has(c.caseCode)
-                              ? isTl ? 'May schedule na' : 'Conference set'
-                              : statusWord(c.status)}
-                          </span>
-                          {step.hint && (
-                            <span className="text-xs font-medium text-[#1E469B] dark:text-[#7CB8F7] truncate">
-                              · {step.hint}
-                            </span>
-                          )}
-                        </div>
+                        {step.hint && <span className="sr-only">{step.hint}</span>}
                         <div className="flex items-center gap-1.5 shrink-0">
                           {step.action === 'text' && (
                             <button
                               type="button"
                               onClick={() => openComposerForCase(c)}
                               title={isTl ? 'Hindi kasama ang offense sa text' : 'The message never includes the offense'}
-                              className="btn-press px-3.5 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap"
+                              className="btn-press h-8 px-4 rounded-full bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap"
                             >
                               {isTl ? 'I-text ang magulang' : 'Text parent'}
                             </button>
@@ -3051,7 +3280,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                             <button
                               type="button"
                               onClick={() => openCaseDetails(c)}
-                              className="btn-press px-3.5 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap"
+                              className="btn-press h-8 px-4 rounded-full bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap"
                             >
                               {isTl ? 'Mag-schedule' : 'Schedule conference'}
                             </button>
@@ -3061,7 +3290,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               type="button"
                               data-card-flow={c.caseCode}
                               onClick={() => openCaseDetails(c)}
-                              className="btn-press px-3.5 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap"
+                              className="btn-press h-8 px-4 rounded-full bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap"
                             >
                               {step.button}
                             </button>
@@ -3070,7 +3299,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                             <button
                               type="button"
                               onClick={() => handleUpdateCaseStatus(c, 'Resolved')}
-                              className="btn-press px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold whitespace-nowrap"
+                              className="btn-press h-8 px-4 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold whitespace-nowrap"
                             >
                               {isTl ? 'Tapos na' : 'Mark as done'}
                             </button>
@@ -3083,7 +3312,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               aria-label={isTl ? 'Iba pang gagawin' : 'More actions'}
                               title={isTl ? 'Iba pang gagawin' : 'More actions'}
                               onClick={() => setCaseMenuOpen(menuOpen ? null : c.caseCode)}
-                              className="w-8 h-8 rounded-lg saas-card-subtle hover:border-[#1E469B] text-sm font-bold text-[#475569] dark:text-[#94A8D0]"
+                              className="w-8 h-8 rounded-full bg-[#F5F5F7] dark:bg-white/[0.08] hover:bg-[#E8E8ED] dark:hover:bg-white/[0.14] text-sm font-bold text-[#6E6E73] dark:text-[#A1A1A6]"
                             >
                               ⋯
                             </button>
@@ -3166,11 +3395,6 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   <>
                     {todo.length > 0 && (
                       <div className="space-y-2.5">
-                        {groupDone && (
-                          <p className="text-[11px] font-extrabold tracking-[0.08em] uppercase text-[#4A608A] dark:text-[#94A8D0]">
-                            {isTl ? 'Kailangan pang asikasuhin' : 'Needs action'} · {todo.length}
-                          </p>
-                        )}
                         {todo.slice(0, boardLimit).map(card)}
                         {moreButton(todo.length - boardLimit)}
                       </div>
@@ -3215,199 +3439,121 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
             SUB-TAB: CLOSED CASES ARCHIVE (EXECUTIVE SUMMARY & 1-CLICK PDF/PRINT)
             ================================================================== */}
         {subTab === 'closed-cases' && (
-          <section className="rounded-2xl saas-card overflow-hidden">
-            <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-base font-bold text-[#0F172A] dark:text-white">
-                  {isTl ? 'Mga saradong kaso at buod ng due process' : 'Closed cases & due process archive'}
-                </h2>
-                <p className="text-xs text-[#475569] dark:text-[#94A8D0]">
-                  {isTl
-                    ? 'Opisyal na rekord ng naresolbang kaso, bilang ng patawag sa magulang, hatol, at patunay ng counseling.'
-                    : 'Official executive record of resolved cases, parent summons count, ruling, sanction, and counseling notes.'}
-                </p>
-              </div>
+          <section className="space-y-4">
+            <p className="px-1 text-[15px] text-[#6E6E73] dark:text-[#A1A1A6]">
+              {isTl
+                ? `${summaryStats.closedCases} saradong kaso. Pindutin ang isang kaso para makita ang buong record, o i-print ang buod.`
+                : `${summaryStats.closedCases} closed case${summaryStats.closedCases === 1 ? '' : 's'}. Open one to see the full record, or print its summary.`}
+            </p>
 
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-md text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300">
-                  {summaryStats.closedCases} {isTl ? 'naresolba' : 'resolved'}
-                </span>
-              </div>
-            </div>
-
-            <div className="p-4 sm:p-5 space-y-3 bg-[#F4F7FC] dark:bg-[#0B1527]">
-              {(() => {
-                const closed = cases.filter((c) => c.status === 'Resolved');
-                if (closed.length === 0) {
-                  return (
-                    <div className="py-12 text-center space-y-2">
-                      <p className="text-sm font-bold text-[#475569] dark:text-[#94A8D0]">
-                        {isTl ? 'Walang saradong kaso sa kasalukuyan.' : 'No closed cases found.'}
-                      </p>
-                      <p className="text-xs text-[#64748B] dark:text-[#89A7DF]">
-                        {isTl ? 'Kapag minarkahang Resolved ang kaso, lalabas ito rito.' : 'Cases marked as Resolved will be stored here.'}
-                      </p>
-                    </div>
-                  );
+            {(() => {
+              const closed = cases.filter((c) => c.status === 'Resolved');
+              if (closed.length === 0) {
+                return (
+                  <div className="py-14 text-center space-y-1.5">
+                    <Check className="w-7 h-7 mx-auto mb-2 text-[#C7C7CC] dark:text-[#636366]" aria-hidden />
+                    <p className="text-[15px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Wala pang saradong kaso' : 'No closed cases yet'}</p>
+                    <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Lalabas dito ang kaso kapag naisara na.' : 'A case shows up here once it is closed.'}</p>
+                  </div>
+                );
+              }
+              const fact = (label: string, value: string | undefined, accent = false) => (
+                <div className="min-w-0">
+                  <span className="block text-[11px] text-[#8E8E93]">{label}</span>
+                  <span className={`block text-[13px] truncate ${accent ? 'text-emerald-700 dark:text-emerald-400 font-medium' : 'text-[#1D1D1F] dark:text-[#F5F5F7]'}`} title={value || ''}>
+                    {value?.trim() ? value : '—'}
+                  </span>
+                </div>
+              );
+              const printSummary = async (c: DisciplineCaseRecord, mode: 'print' | 'download') => {
+                const stu = students.find((s) => s.studentNumber === c.studentNumber);
+                const ok = await confirmChange({
+                  title: mode === 'print' ? (isTl ? 'I-print ang buod ng kaso?' : 'Print the case summary?') : isTl ? 'I-download ang buod (PDF)?' : 'Download the summary (PDF)?',
+                  description: `${c.studentName} · ${c.caseCode}`,
+                  rows: [{ label: isTl ? 'Kaso' : 'Case', after: c.caseCode }],
+                  confirmLabel: mode === 'print' ? (isTl ? 'Mag-print' : 'Print') : isTl ? 'I-download' : 'Download',
+                  tone: 'primary',
+                });
+                if (!ok) return;
+                const html = buildFormHtml({ kind: 'caseResolutionSummary', c, stu }, window.location.origin);
+                if (mode === 'download') {
+                  await downloadFormDocument(html, `${c.caseCode}_Case_Summary`);
+                  onTriggerToast(isTl ? `Na-download ang buod ng ${c.caseCode}.` : `Downloaded the summary of ${c.caseCode}.`);
+                } else if (printHtml(html)) {
+                  onTriggerToast(isTl ? 'Bukas na ang print window (piliin ang printer o Save as PDF).' : 'The print window is open (choose a printer or Save as PDF).');
                 }
+              };
 
-                return closed.map((c) => {
-                  const stu = students.find((s) => s.studentNumber === c.studentNumber);
-                  const summonsTotal = c.summonsCount || (c.conferenceScheduledAt ? 1 : 0);
-
-                  return (
-                    <div
-                      key={c.caseCode}
-                      onClick={() => {
-                        soundFX.playStepUnlock();
-                        setOpenCaseCode(c.caseCode);
-                      }}
-                      className="rounded-xl bg-white dark:bg-[#0B1528] border border-[#CBD5E1] dark:border-[#223555] border-l-[3px] border-l-emerald-500 p-4 space-y-3 cursor-pointer hover:border-[#1E469B] transition-[border-color] duration-150"
-                    >
-                      {/* Top row: Student, Case Code, Actions */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              return (
+                <div className="space-y-2.5">
+                  {closed.map((c) => {
+                    const withdrawn = isWithdrawn(c);
+                    const summonsTotal = appointments.filter((x) => x.caseId === c.caseCode).length || c.summonsCount || 0;
+                    const initials = c.studentName.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('');
+                    return (
+                      <div
+                        key={c.caseCode}
+                        role="button"
+                        tabIndex={0}
+                        title={c.caseCode}
+                        onClick={() => {
+                          soundFX.playStepUnlock();
+                          setOpenCaseCode(c.caseCode);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') setOpenCaseCode(c.caseCode);
+                        }}
+                        className="grid grid-cols-[auto_minmax(0,1fr)_auto] lg:grid-cols-[auto_minmax(0,1.1fr)_minmax(0,2fr)_auto] items-center gap-x-5 gap-y-2 row-card px-4 py-3.5 cursor-pointer"
+                      >
+                        <span aria-hidden="true" className={`w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-semibold text-white ${withdrawn ? 'bg-[#8E8E93]' : 'bg-emerald-500'}`}>
+                          {initials}
+                        </span>
                         <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-[15px] font-bold text-[#0F172A] dark:text-white">
-                              {c.studentName}
-                            </span>
-                            <span className="font-mono text-xs font-semibold text-[#1E469B] dark:text-[#7CB8F7]">
-                              {c.caseCode}
-                            </span>
-                            <span className="text-xs text-[#475569] dark:text-[#94A8D0]">
-                              · {c.gradeSection}
-                            </span>
-                            <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300">
-                              {isTl ? 'Naresolba' : 'Resolved'}
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-[15px] font-semibold tracking-[-0.01em] text-[#1D1D1F] dark:text-[#F5F5F7] truncate">{c.studentName}</span>
+                            <span className={`shrink-0 px-2 py-px rounded-full text-[10.5px] font-semibold ${withdrawn ? 'bg-[#F5F5F7] text-[#6E6E73] dark:bg-white/[0.08] dark:text-[#A1A1A6]' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'}`}>
+                              {withdrawn ? (isTl ? 'Binawi' : 'Withdrawn') : isTl ? 'Sarado' : 'Closed'}
                             </span>
                           </div>
-                          <p className="text-xs font-medium text-[#475569] dark:text-[#94A8D0] mt-0.5">
-                            <span className="font-semibold text-[#0F172A] dark:text-white">
-                              {isTl ? c.offenseTitleTl : c.offenseTitleEn}
-                            </span>{' '}
-                            · {c.severity} · {isTl ? 'Petsa ng insidente:' : 'Incident:'} {prettyDate(c.incidentDate)}
+                          <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6] line-clamp-2">
+                            <span className="text-[#1D1D1F] dark:text-[#E5E5EA]">{isTl ? c.offenseTitleTl : c.offenseTitleEn}</span> · {c.gradeSection} · {prettyDate(c.incidentDate)}
                           </p>
                         </div>
-
-                        <div className="flex flex-wrap items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <div className="hidden lg:grid grid-cols-3 gap-4">
+                          {fact(isTl ? 'Desisyon' : 'Decision', withdrawn ? (c.decision ?? '').replace(/^(Withdrawn|Not proven):\s*/i, `${closedWord(c)}: `) : c.decision)}
+                          {fact(isTl ? 'Sanction' : 'Sanction', c.sanction, c.sanctionStatus === 'Done')}
+                          {fact(
+                            isTl ? 'Patawag sa magulang' : 'Parent summons',
+                            summonsTotal > 0
+                              ? `${summonsTotal} · ${c.proceededWithoutParent ? (isTl ? 'tumuloy nang wala' : 'went on without') : c.parentConferenceStatus === 'Attended' ? (isTl ? 'dumalo' : 'came') : isTl ? 'naitala' : 'recorded'}`
+                              : isMinorCase(c) ? (isTl ? 'Hindi kailangan (1st minor)' : 'Not needed (1st minor)') : undefined
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 justify-end" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                           <button
                             type="button"
-                            onClick={async () => {
-                              const ok = await confirmChange({
-                                title: isTl ? 'I-download ang Executive Summary (PDF)?' : 'Download Executive Summary (PDF)?',
-                                description: isTl
-                                  ? `I-eexport at idodownload ang opisyal na 1-page Resolution Summary PDF para sa kaso ni ${c.studentName} (${c.caseCode}).`
-                                  : `Export and download the official 1-page Resolution Summary PDF for ${c.studentName} (${c.caseCode}).`,
-                                rows: [
-                                  { label: isTl ? 'Kaso' : 'Case Code', after: c.caseCode },
-                                  { label: isTl ? 'Estudyante' : 'Student', after: c.studentName },
-                                  { label: isTl ? 'Format' : 'Format', after: 'Pure 1-Page PDF (.pdf)' },
-                                ],
-                                confirmLabel: isTl ? 'I-download Na' : 'Download Now',
-                                tone: 'primary',
-                              });
-                              if (!ok) return;
-
-                              const html = buildFormHtml(
-                                { kind: 'caseResolutionSummary', c, stu },
-                                window.location.origin
-                              );
-                              await downloadFormDocument(html, `${c.caseCode}_Executive_Case_Resolution_Summary`);
-                              onTriggerToast(
-                                isTl
-                                  ? `Na-download ang Executive Summary ng ${c.caseCode}.`
-                                  : `Downloaded Executive Resolution Summary for ${c.caseCode}.`
-                              );
-                            }}
-                            className="btn-press px-3 py-1.5 rounded-lg saas-card-subtle text-xs font-semibold text-[#0F172A] dark:text-white hover:border-[#1E469B]"
+                            onClick={() => void printSummary(c, 'download')}
+                            title={isTl ? 'I-download ang buod (PDF)' : 'Download the summary (PDF)'}
+                            aria-label={isTl ? 'I-download ang buod (PDF)' : 'Download the summary (PDF)'}
+                            className="w-8 h-8 rounded-full bg-[#F5F5F7] dark:bg-white/[0.08] hover:bg-[#E8E8ED] dark:hover:bg-white/[0.14] flex items-center justify-center text-[#6E6E73] dark:text-[#A1A1A6]"
                           >
-                            {isTl ? 'I-download ang buod (PDF)' : 'Download summary (PDF)'}
+                            <Download className="w-4 h-4" aria-hidden />
                           </button>
                           <button
                             type="button"
-                            onClick={async () => {
-                              const ok = await confirmChange({
-                                title: isTl ? 'I-print ang Executive Summary?' : 'Print Executive Summary?',
-                                description: isTl
-                                  ? `Bubuksan ang print preview dialog para kay ${c.studentName} (${c.caseCode}).`
-                                  : `Open print dialog for ${c.studentName} (${c.caseCode}).`,
-                                rows: [
-                                  { label: isTl ? 'Kaso' : 'Case Code', after: c.caseCode },
-                                  { label: isTl ? 'Dokumento' : 'Document', after: 'Executive Case Resolution Summary' },
-                                ],
-                                confirmLabel: isTl ? 'Mag-print' : 'Print',
-                                tone: 'primary',
-                              });
-                              if (!ok) return;
-
-                              const html = buildFormHtml(
-                                { kind: 'caseResolutionSummary', c, stu },
-                                window.location.origin
-                              );
-                              if (printHtml(html)) {
-                                onTriggerToast(
-                                  isTl
-                                    ? 'Binuksan ang print window (piliin ang Save as PDF o Printer).'
-                                    : 'Print window opened (choose Save as PDF or your printer).'
-                                );
-                              }
-                            }}
-                            className="btn-press px-3.5 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold"
+                            onClick={() => void printSummary(c, 'print')}
+                            className="btn-press h-8 px-4 rounded-full bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1.5"
                           >
-                            {isTl ? 'I-print / Save as PDF' : 'Print / Save PDF'}
+                            <Printer className="w-3.5 h-3.5" aria-hidden />
+                            {isTl ? 'I-print ang buod' : 'Print summary'}
                           </button>
                         </div>
                       </div>
-
-                      {/* Structured Executive Summary Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-2 border-t border-[#F1F5F9] dark:border-[#1E2E4E] text-xs">
-                        <div className="p-2.5 rounded-lg bg-[#F8FAFC] dark:bg-[#0F1D36] border border-[#E2E8F0] dark:border-[#1E2E4E]">
-                          <span className="block font-semibold text-[#64748B] dark:text-[#94A8D0]">
-                            {isTl ? 'Patawag at pagharap ng magulang' : 'Parent summons & hearing'}
-                          </span>
-                          <span className="font-semibold text-[#0F172A] dark:text-white block mt-0.5">
-                            {summonsTotal > 0
-                              ? isTl
-                                ? `${summonsTotal}x patawag · ${c.parentConferenceStatus === 'Attended' ? 'Dumalo' : 'Naitala'}`
-                                : `${summonsTotal} summons · ${c.parentConferenceStatus === 'Attended' ? 'Attended' : 'Documented'}`
-                              : isTl
-                              ? '1st minor (hindi kailangan)'
-                              : '1st minor (not required)'}
-                          </span>
-                        </div>
-
-                        <div className="p-2.5 rounded-lg bg-[#F8FAFC] dark:bg-[#0F1D36] border border-[#E2E8F0] dark:border-[#1E2E4E]">
-                          <span className="block font-semibold text-[#64748B] dark:text-[#94A8D0]">
-                            {isTl ? 'Opisyal na hatol' : 'Administrative ruling'}
-                          </span>
-                          <span className="font-semibold text-[#0F172A] dark:text-white block mt-0.5 truncate" title={c.decision}>
-                            {c.decision || (isTl ? 'Naresolba ayon sa Handbook' : 'Resolved per Student Handbook')}
-                          </span>
-                        </div>
-
-                        <div className="p-2.5 rounded-lg bg-[#F8FAFC] dark:bg-[#0F1D36] border border-[#E2E8F0] dark:border-[#1E2E4E]">
-                          <span className="block font-semibold text-[#64748B] dark:text-[#94A8D0]">
-                            {isTl ? 'Sanction at katayuan' : 'Sanction & compliance'}
-                          </span>
-                          <span className="font-semibold text-emerald-700 dark:text-emerald-300 block mt-0.5 truncate" title={c.sanction}>
-                            {c.sanction ? `${c.sanction} (${isTl ? 'Tapos na' : 'Completed'})` : (isTl ? 'Paalala at counseling (Tapos na)' : 'Warning & counseling (Completed)')}
-                          </span>
-                        </div>
-
-                        <div className="p-2.5 rounded-lg bg-[#F8FAFC] dark:bg-[#0F1D36] border border-[#E2E8F0] dark:border-[#1E2E4E]">
-                          <span className="block font-semibold text-[#64748B] dark:text-[#94A8D0]">
-                            {isTl ? 'Tala ng counseling' : 'Counseling notes'}
-                          </span>
-                          <span className="font-medium text-[#0F172A] dark:text-white block mt-0.5 truncate" title={c.counselingNotes}>
-                            {c.counselingNotes || (isTl ? 'May restorative counseling na isinagawa' : 'Restorative counseling completed')}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                });
-              })()}
-            </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </section>
         )}
 
@@ -3415,200 +3561,206 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
             SUB-TAB 3: STUDENT DIRECTORY & OFFENSE HISTORY (PAGE 4)
             ================================================================== */}
         {subTab === 'students' && (
-          <section className="rounded-2xl saas-card overflow-hidden">
-            <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
-                  {isTl
-                    ? `Mga estudyante (${filteredDirectoryStudents.length})`
-                    : `Students (${filteredDirectoryStudents.length})`}
-                </h2>
-                <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
-                  {(isTl
-                    ? { newest: 'Pinakabagong idinagdag ang nasa itaas.', oldest: 'Pinakalumang idinagdag ang nasa itaas.', name: 'Ayon sa pangalan (A–Z).', attention: 'Nasa itaas ang may serious o paulit-ulit na offense.' }
-                    : { newest: 'Newest added on top.', oldest: 'Oldest added on top.', name: 'By name (A–Z).', attention: 'Students with serious or repeated offenses on top.' })[studentSort]}{' '}
-                  {isTl ? 'I-click ang estudyante para makita ang record.' : 'Click a student to see their record.'}
-                </p>
-              </div>
+          <section className="space-y-4">
+            {/* ONE toolbar row: sections · Filter & sort · More (Add student is already the button on top) */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex p-1 rounded-lg saas-card-subtle gap-1" role="group" aria-label={isTl ? 'Naka-enroll o hindi' : 'Enrolled or not'}>
-                  {(
-                    [
-                      ['enrolled', isTl ? `Naka-enroll · ${students.filter((x) => x.enrolled !== false).length}` : `Enrolled · ${students.filter((x) => x.enrolled !== false).length}`],
-                      ['left', isTl ? `Hindi na naka-enroll · ${students.filter((x) => x.enrolled === false).length}` : `Not enrolled · ${students.filter((x) => x.enrolled === false).length}`],
-                    ] as const
-                  ).map(([k, t]) => (
-                    <button key={k} type="button" data-enrolled-filter={k} onClick={() => { setEnrolledFilter(k); setDirPage(0); }} className={`px-2.5 py-1 rounded-md text-xs font-bold whitespace-nowrap ${enrolledFilter === k ? 'bg-[#1E469B] text-white' : 'text-[#4A608A] dark:text-[#94A8D0]'}`}>
-                      {t}
-                    </button>
-                  ))}
-                </div>
-                <button type="button" data-action="add-student" onClick={() => setStudentFormFor('new')} className="px-3 py-1.5 rounded-lg bg-[#1E469B] text-white text-xs font-bold whitespace-nowrap">
-                  + {isTl ? 'Magdagdag ng estudyante' : 'Add student'}
-                </button>
-                <button type="button" data-action="move-up" onClick={() => void moveUpSchoolYear()} title={isTl ? 'Grade 11 → 12 at Grade 12 → Graduated (sa simula ng school year)' : 'Grade 11 → 12 and Grade 12 → Graduated (start of a school year)'} className="px-3 py-1.5 rounded-lg saas-card-subtle text-xs font-bold whitespace-nowrap">
-                  {isTl ? 'Umakyat ng school year…' : 'Move up a school year…'}
-                </button>
+              {/* Grade first, then section (Grade 11 / Grade 12 are picked most often) */}
+              <div className="seg-track" role="tablist" aria-label={isTl ? 'Baitang' : 'Grade'}>
+                {(['ALL', '11', '12'] as const).map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    role="tab"
+                    aria-selected={studentGrade === g}
+                    onClick={() => {
+                      setStudentGrade(g);
+                      setSectionFilter('ALL');
+                      setDirPage(0);
+                    }}
+                    className={`px-3 py-1.5 text-xs whitespace-nowrap ${studentGrade === g ? 'seg-on' : 'seg-off'}`}
+                  >
+                    {g === 'ALL' ? (isTl ? 'Lahat ng grade' : 'All grades') : `Grade ${g}`}{' '}
+                    <span className="tabular-nums opacity-70">{g === 'ALL' ? students.length : students.filter((s) => gradeOf(s) === g).length}</span>
+                  </button>
+                ))}
               </div>
-              <SortControl id="students" value={studentSort} onChange={(v) => { setStudentSort(v); setDirPage(0); }} isTl={isTl} />
-              <Legend
-                className="w-full"
-                items={[
-                  { color: '#F43F5E', label: isTl ? 'May serious offense' : 'Has a serious offense', shape: 'box' },
-                  { color: '#F59E0B', label: isTl ? 'Bantayan (2+ minor)' : 'Watch (2+ minor)', shape: 'box' },
-                  { color: '#0EA5E9', label: '1 minor', shape: 'box' },
-                  { color: '#10B981', label: isTl ? 'Walang offense' : 'No offense', shape: 'box' },
-                ]}
-              />
-
-              <div className="inline-flex flex-wrap p-1 rounded-lg saas-card-subtle gap-1">
-                {[['ALL', students.length] as [string, number], ...sectionOptions].map(([sec, n]) => (
+              <div className="seg-track flex-wrap" role="tablist" aria-label={isTl ? 'Section' : 'Section'}>
+                {[['ALL', sectionOptions.reduce((a, [, n]) => a + n, 0)] as [string, number], ...sectionOptions].map(([sec, n]) => (
                   <button
                     key={sec}
                     type="button"
+                    role="tab"
+                    aria-selected={sectionFilter === sec}
                     onClick={() => {
                       setSectionFilter(sec);
                       setDirPage(0);
                     }}
-                    className={`px-2.5 py-1 rounded-md text-xs font-bold whitespace-nowrap transition-colors ${
-                      sectionFilter === sec
-                        ? 'bg-[#1E469B] text-white'
-                        : 'text-[#4A608A] dark:text-[#94A8D0] hover:text-[#0B1F4D] dark:hover:text-white'
-                    }`}
+                    className={`px-3 py-1.5 text-xs whitespace-nowrap ${sectionFilter === sec ? 'seg-on' : 'seg-off'}`}
                   >
-                    {sec === 'ALL' ? (isTl ? 'Lahat' : 'All') : sec} · {n}
+                    {sec === 'ALL' ? (isTl ? 'Lahat' : 'All') : sec} <span className="tabular-nums opacity-70">{n}</span>
                   </button>
                 ))}
               </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <details className="relative">
+                  <summary className={`list-none [&::-webkit-details-marker]:hidden cursor-pointer h-9 px-3.5 rounded-full inline-flex items-center gap-1.5 text-xs font-medium transition-colors ${enrolledFilter !== 'enrolled' || studentOffense !== 'all' ? 'bg-[#1E469B]/10 text-[#1E469B] dark:text-[#7CB8F7]' : 'bg-white dark:bg-white/[0.06] text-[#1D1D1F] dark:text-[#F5F5F7] shadow-[0_0_0_0.5px_rgb(15_23_42/0.1)] hover:bg-[#F5F5F7] dark:hover:bg-white/[0.1]'}`}>
+                    <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden />
+                    {isTl ? 'Filter at ayos' : 'Filter & sort'}
+                  </summary>
+                  <div className="absolute right-0 top-full mt-2 z-30 p-4 ring-card w-[300px] space-y-3">
+                    <div className="space-y-1">
+                      <span className="text-[11px] font-medium text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Offense' : 'Offenses'}</span>
+                      <div className="flex flex-col">
+                        {(
+                          [
+                            ['all', isTl ? 'Lahat' : 'All students', ''],
+                            ['serious', isTl ? 'May serious offense' : 'Has a serious offense', 'bg-rose-500'],
+                            ['watch', isTl ? 'Bantayan (2+ minor)' : 'Watch (2+ minor)', 'bg-amber-400'],
+                            ['minor', isTl ? '1 minor' : '1 minor', 'bg-sky-500'],
+                            ['none', isTl ? 'Walang offense' : 'No offense', 'bg-emerald-500'],
+                          ] as const
+                        ).map(([k, t, dot]) => (
+                          <button
+                            key={k}
+                            type="button"
+                            data-offense-filter={k}
+                            onClick={() => { setStudentOffense(k); setDirPage(0); }}
+                            className="flex items-center justify-between gap-3 px-2 py-1.5 rounded-lg text-[13px] text-left text-[#1D1D1F] dark:text-[#F5F5F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                          >
+                            <span className="flex items-center gap-2">
+                              {dot ? <span className={`w-2 h-2 rounded-full ${dot}`} /> : <span className="w-2 h-2" />}
+                              {t}
+                              <span className="text-[#8E8E93] tabular-nums">
+                                {k === 'all' ? students.length : students.filter((s) => offenseLevel(s) === k).length}
+                              </span>
+                            </span>
+                            {studentOffense === k && <Check className="w-4 h-4 text-[#1E469B] dark:text-[#7CB8F7]" aria-hidden />}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[11px] font-medium text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Ipakita' : 'Show'}</span>
+                      <div className="seg-track w-full">
+                        {(
+                          [
+                            ['enrolled', isTl ? `Naka-enroll ${students.filter((x) => x.enrolled !== false).length}` : `Enrolled ${students.filter((x) => x.enrolled !== false).length}`],
+                            ['left', isTl ? `Umalis ${students.filter((x) => x.enrolled === false).length}` : `Left ${students.filter((x) => x.enrolled === false).length}`],
+                          ] as const
+                        ).map(([k, t]) => (
+                          <button key={k} type="button" data-enrolled-filter={k} onClick={() => { setEnrolledFilter(k); setDirPage(0); }} className={`flex-1 px-3 py-1.5 text-xs ${enrolledFilter === k ? 'seg-on' : 'seg-off'}`}>
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[11px] font-medium text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Ayos' : 'Sort'}</span>
+                      <SortControl id="students" value={studentSort} onChange={(v) => { setStudentSort(v); setDirPage(0); }} isTl={isTl} />
+                    </div>
+                  </div>
+                </details>
+                <details className="relative">
+                  <summary
+                    title={isTl ? 'Iba pa' : 'More'}
+                    aria-label={isTl ? 'Iba pa' : 'More'}
+                    className="list-none [&::-webkit-details-marker]:hidden cursor-pointer h-9 w-9 rounded-full inline-flex items-center justify-center bg-white dark:bg-white/[0.06] text-[#1D1D1F] dark:text-[#F5F5F7] shadow-[0_0_0_0.5px_rgb(15_23_42/0.1)] hover:bg-[#F5F5F7] dark:hover:bg-white/[0.1]"
+                  >
+                    <MoreHorizontal className="w-4 h-4" aria-hidden />
+                  </summary>
+                  <div className="absolute right-0 top-full mt-2 z-30 p-2 ring-card w-[300px]">
+                    <button
+                      type="button"
+                      data-action="move-up"
+                      onClick={() => void moveUpSchoolYear()}
+                      className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                    >
+                      <span className="block text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Umakyat ng school year…' : 'Move up a school year…'}</span>
+                      <span className="block text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Grade 11 → 12, Grade 12 → Graduated' : 'Grade 11 → 12, Grade 12 → Graduated'}</span>
+                    </button>
+                  </div>
+                </details>
+              </div>
             </div>
 
-            <div className="divide-y divide-[#E2E9F5] dark:divide-[#1E3158]">
-              {filteredDirectoryStudents.length === 0 && (
-                <div className="px-6 py-10 text-center space-y-3">
-                  <p className="text-sm font-bold text-[#0B1F4D] dark:text-white">
-                    {students.length === 0
-                      ? isTl
-                        ? 'Wala pang estudyante. Mag-import ng masterlist o magdagdag ng isa.'
-                        : 'No students yet. Import the masterlist or add one.'
-                      : quickSearch.trim()
-                      ? isTl
-                        ? `Walang estudyanteng tugma sa "${quickSearch.trim()}".`
-                        : `No student matches "${quickSearch.trim()}".`
-                      : isTl
-                      ? 'Walang estudyante sa section na ito.'
-                      : 'No students in this section.'}
-                  </p>
-                  <div className="flex justify-center gap-2">
-                    {sectionFilter !== 'ALL' && (
-                      <button
-                        type="button"
-                        onClick={() => setSectionFilter('ALL')}
-                        className="px-3 py-1.5 rounded-lg saas-card-subtle text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7]"
-                      >
-                        {isTl ? 'Ipakita lahat' : 'Show all students'}
-                      </button>
-                    )}
-                    {students.length === 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setSubTab('masterlist')}
-                        className="px-3 py-1.5 rounded-lg bg-[#1E469B] text-white text-xs font-bold"
-                      >
-                        {isTl ? 'I-import ang masterlist' : 'Import masterlist'}
-                      </button>
-                    )}
-                  </div>
+            {filteredDirectoryStudents.length === 0 ? (
+              <div className="py-14 text-center space-y-2">
+                <p className="text-[15px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">
+                  {students.length === 0
+                    ? isTl ? 'Wala pang estudyante' : 'No students yet'
+                    : quickSearch.trim()
+                    ? isTl ? `Walang tugma sa "${quickSearch.trim()}"` : `No student matches "${quickSearch.trim()}"`
+                    : isTl ? 'Walang estudyante dito' : 'No students here'}
+                </p>
+                <div className="flex justify-center gap-2">
+                  {sectionFilter !== 'ALL' && (
+                    <button type="button" onClick={() => setSectionFilter('ALL')} className="h-9 px-4 rounded-full text-xs font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04]">
+                      {isTl ? 'Ipakita lahat' : 'Show all students'}
+                    </button>
+                  )}
+                  {students.length === 0 && (
+                    <button type="button" onClick={() => setSubTab('masterlist')} className="h-9 px-4 rounded-full bg-[#1E469B] text-white text-xs font-semibold">
+                      {isTl ? 'I-import ang masterlist' : 'Import masterlist'}
+                    </button>
+                  )}
                 </div>
-              )}
-              {pagedDirectoryStudents.map((stu) => (
-                <div
-                  key={stu.studentNumber}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => {
+              </div>
+            ) : (
+              /* Apple inset grouped list: one surface, hairline dividers, chevron = opens the record */
+              <div className="space-y-2.5">
+                {pagedDirectoryStudents.map((stu) => {
+                  const hasRecord = stu.minorOffenseCount > 0 || stu.majorOffenseCount > 0;
+                  const open = () => {
                     soundFX.playStepUnlock();
                     setSelectedStudentProfile(stu);
                     setPasswordResetCode(null);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      setSelectedStudentProfile(stu);
-                      setPasswordResetCode(null);
-                    }
-                  }}
-                  className="px-6 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer hover:bg-[#F8FAFE] dark:hover:bg-[#13203B] transition-colors"
-                >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <StudentGenderAvatar fullName={stu.fullName} size="md" />
-                    <div className="min-w-0 space-y-0.5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
-                          {stu.fullName}
-                        </span>
-                        <span className="font-mono text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7]">
-                          #{stu.studentNumber}
-                        </span>
-                        <span className="text-xs font-semibold text-[#4A608A] dark:text-[#94A8D0]">
-                          · {stu.gradeSection}
-                        </span>
-                      </div>
-                      <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
-                        {isTl ? 'Magulang' : 'Parent'}: {stu.parentName} · {stu.parentPhone || (isTl ? 'walang number' : 'no number')}
-                        {stu.createdAt ? <span data-added> · {addedLabel(stu.createdAt, isTl)}</span> : null}
-                        {(stu.minorOffenseCount > 0 || stu.majorOffenseCount > 0) && (
-                          <>
-                            {' · '}
-                            <span className="font-semibold">
-                              {stu.minorOffenseCount} minor · {stu.majorOffenseCount} {isTl ? 'malubha' : 'serious'}
-                            </span>
-                          </>
-                        )}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2.5 shrink-0">
-                    <span className={`px-2.5 py-1 rounded-[6px] text-[11px] font-bold whitespace-nowrap ${attentionBadge(stu).cls}`}>
-                      {attentionBadge(stu).text}
-                    </span>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        soundFX.playStepUnlock();
-                        setSelectedStudentProfile(stu);
-                        setPasswordResetCode(null);
+                  };
+                  return (
+                    <div
+                      key={stu.studentNumber}
+                      role="button"
+                      tabIndex={0}
+                      onClick={open}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') open();
                       }}
-                      className="px-3 py-1.5 rounded-lg saas-card-subtle hover:border-[#1E469B] text-xs font-bold whitespace-nowrap text-[#0B1F4D] dark:text-white"
+                      className="row-card group px-4 py-3.5 flex items-center gap-3.5 cursor-pointer"
                     >
-                      {isTl ? 'Tingnan ang record' : 'View record'}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                      <StudentGenderAvatar fullName={stu.fullName} size="md" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[15px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7] truncate">
+                          {stu.fullName} <span className="text-[13px] font-normal text-[#8E8E93]">#{stu.studentNumber}</span>
+                        </p>
+                        <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6] truncate">
+                          {stu.gradeSection} · {isTl ? 'Magulang' : 'Parent'}: {stu.parentName}
+                          {stu.parentPhone ? '' : isTl ? ' · walang number' : ' · no number'}
+                        </p>
+                      </div>
+                      {/* only show a badge when there is something to see (no "No offense" on every row) */}
+                      {hasRecord && (
+                        <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ${attentionBadge(stu).cls}`}>
+                          {attentionBadge(stu).text}
+                        </span>
+                      )}
+                      <ChevronRight className="w-4 h-4 text-[#C7C7CC] dark:text-[#636366] shrink-0 transition-transform group-hover:translate-x-0.5" aria-hidden />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {dirPageCount > 1 && (
-              <div className="px-6 py-3 border-t border-[#DCE5F2] dark:border-[#1E3158] flex items-center justify-between text-xs font-bold text-[#4A608A] dark:text-[#94A8D0]">
-                <span>
-                  {isTl ? 'Ipinapakita' : 'Showing'} {safeDirPage * DIR_PAGE_SIZE + 1}–
-                  {Math.min((safeDirPage + 1) * DIR_PAGE_SIZE, filteredDirectoryStudents.length)}{' '}
-                  {isTl ? 'sa' : 'of'} {filteredDirectoryStudents.length}
+              <div className="flex items-center justify-between text-xs text-[#6E6E73] dark:text-[#A1A1A6] px-1">
+                <span className="tabular-nums">
+                  {safeDirPage * DIR_PAGE_SIZE + 1}–{Math.min((safeDirPage + 1) * DIR_PAGE_SIZE, filteredDirectoryStudents.length)} {isTl ? 'sa' : 'of'} {filteredDirectoryStudents.length}
                 </span>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    disabled={safeDirPage === 0}
-                    onClick={() => setDirPage(safeDirPage - 1)}
-                    className="px-3 py-1.5 rounded-lg saas-card-subtle disabled:opacity-40"
-                  >
+                <div className="seg-track">
+                  <button type="button" disabled={safeDirPage === 0} onClick={() => setDirPage(safeDirPage - 1)} className="px-3 py-1.5 seg-off disabled:opacity-40">
                     ← {isTl ? 'Nakaraan' : 'Previous'}
                   </button>
-                  <button
-                    type="button"
-                    disabled={safeDirPage >= dirPageCount - 1}
-                    onClick={() => setDirPage(safeDirPage + 1)}
-                    className="px-3 py-1.5 rounded-lg saas-card-subtle disabled:opacity-40"
-                  >
+                  <button type="button" disabled={safeDirPage >= dirPageCount - 1} onClick={() => setDirPage(safeDirPage + 1)} className="px-3 py-1.5 seg-off disabled:opacity-40">
                     {isTl ? 'Susunod' : 'Next'} →
                   </button>
                 </div>
@@ -4108,7 +4260,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                         <td className="py-2.5 px-4">
                           <div className="flex items-center gap-1.5">
                             <select
-                              aria-label="Grade level"
+                              aria-label={isTl ? 'Baitang' : 'Grade level'}
                               value={(row.gradeSection.match(/^Grade (11|12)/) || [])[1] || ''}
                               onChange={(e) => {
                                 const g = e.target.value;
@@ -4158,7 +4310,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                           <input
                             type="text"
                             value={row.parentName}
-                            placeholder="Enter parent name..."
+                            placeholder={isTl ? 'Pangalan ng magulang…' : 'Parent name…'}
                             onChange={(e) =>
                               setPreviewRows((prev) =>
                                 prev.map((item) =>
@@ -4193,7 +4345,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                         <td className="py-2.5 px-4">
                           <input
                             type="email"
-                            aria-label="Parent Gmail"
+                            aria-label={isTl ? 'Gmail ng magulang' : 'Parent Gmail'}
                             value={row.parentEmail}
                             placeholder={isTl ? 'optional' : 'optional'}
                             onChange={(e) =>
@@ -4241,7 +4393,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 !m-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
+            className="fixed inset-0 !m-0 z-50 bg-[#040E20]/65 backdrop-blur-sm flex items-center justify-center p-4"
             onClick={() => !caseEditing && setOpenCaseCode(null)}
             onKeyDown={(e) => {
               if (e.key === 'Escape' && !caseEditing && !document.querySelector('[data-evidence-viewer], [data-print-forms], [data-statement-station], [data-help-assistant]')) setOpenCaseCode(null);
@@ -4250,66 +4402,206 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
             <motion.div
               role="dialog"
               aria-label={isTl ? 'Detalye ng kaso' : 'Case details'}
-              initial={{ scale: 0.97, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.97, opacity: 0 }}
+              initial={{ scale: 0.96, opacity: 0, y: 8 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.96, opacity: 0, y: 6 }}
+              transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-4xl max-h-[calc(100dvh/var(--app-zoom,1)_-_2rem)] rounded-2xl saas-card flex flex-col overflow-hidden shadow-2xl"
+              className="w-full max-w-4xl max-h-[calc(100dvh/var(--app-zoom,1)_-_2rem)] rounded-[22px] shadow-[0_0_0_0.5px_rgb(0_0_0/0.08),0_40px_100px_-20px_rgba(4,14,32,0.5)] flex flex-col overflow-hidden"
             >
-              {/* header */}
-              <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
-                      {openCase.studentName}
-                    </h3>
-                    <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${severityInfo(openCase.severity).cls}`}>
-                      {severityInfo(openCase.severity).word}
-                    </span>
-                    <span
-                      className={`px-2.5 py-0.5 rounded-[6px] text-[11px] font-bold ${
-                        openCase.status === 'Resolved'
-                          ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300'
-                          : 'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300'
-                      }`}
-                    >
-                      {statusWord(openCase.status)}
-                    </span>
+              <div className="w-full flex-1 min-h-0 rounded-[20px] panel-2026 flex flex-col overflow-hidden">
+              {/* Apple sheet header (Dashboard theme): calm surface, big name, small chips */}
+              <div className="px-6 py-4 border-b border-black/[0.06] dark:border-white/[0.08] bg-white dark:bg-[#0F1B2E] flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <StudentGenderAvatar fullName={openCase.studentName} size="md" />
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-[20px] font-semibold tracking-[-0.02em] text-[#1D1D1F] dark:text-[#F5F5F7]">
+                        {openCase.studentName}
+                      </h3>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${severityInfo(openCase.severity).cls}`}>
+                        {severityInfo(openCase.severity).word}
+                      </span>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
+                          openCase.status === 'Resolved'
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
+                            : 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200'
+                        }`}
+                      >
+                        {caseBadgeWord(openCase)}
+                      </span>
+                    </div>
+                    <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6] mt-0.5">
+                      {/* role as plain text, never "suspect" */}
+                      <span title={isTl ? 'Ang estudyanteng inireklamo (respondent)' : 'The student this case is about (respondent)'}>{isTl ? 'Inireklamo' : 'Student reported'}</span> · {openCase.gradeSection} · #{openCase.studentNumber} · <span className="font-mono">{openCase.caseCode}</span>
+                    </p>
+                    {openCase.affectedStudentName && (
+                      <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6] mt-0.5" title={isTl ? 'Staff lang ang nakakakita nito' : 'Only staff can see this'}>
+                        {isTl ? 'Naapektuhan' : 'Student affected'}: <span className="font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{openCase.affectedStudentName}</span>
+                      </p>
+                    )}
                   </div>
-                  <p className="text-xs text-[#4A608A] dark:text-[#94A8D0] mt-0.5">
-                    {openCase.gradeSection} · #{openCase.studentNumber} ·{' '}
-                    <span className="font-mono">{openCase.caseCode}</span>
-                  </p>
                 </div>
+                {/* toolbar (Apple Mail style): Edit, Print, More. The step's action stays the ONLY bar at the bottom */}
+                {!caseEditing && (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button type="button" onClick={startCaseEdit} title={isTl ? 'I-edit ang detalye ng kaso' : 'Edit case details'} className="h-8 px-3 rounded-full bg-[#F5F5F7] dark:bg-white/[0.08] hover:bg-[#E8E8ED] dark:hover:bg-white/[0.14] text-[12px] font-medium inline-flex items-center gap-1.5 transition-colors text-[#1D1D1F] dark:text-[#F5F5F7]">
+                      <Pencil className="w-3.5 h-3.5" aria-hidden />
+                      {isTl ? 'I-edit' : 'Edit'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCallSlipCase(openCase);
+                        setOpenCaseCode(null);
+                      }}
+                      title={isTl ? 'Mag-print ng form (Kasunduan, conference form, sulat)' : 'Print a form (Kasunduan, conference form, letter)'}
+                      className="h-8 px-3 rounded-full bg-[#F5F5F7] dark:bg-white/[0.08] hover:bg-[#E8E8ED] dark:hover:bg-white/[0.14] text-[12px] font-medium inline-flex items-center gap-1.5 transition-colors text-[#1D1D1F] dark:text-[#F5F5F7]"
+                    >
+                      <Printer className="w-3.5 h-3.5" aria-hidden />
+                      Print
+                    </button>
+                    {openCase.status === 'Resolved' ? (
+                      <button type="button" onClick={() => handleUpdateCaseStatus(openCase, 'Open')} className="h-8 px-3 rounded-full bg-[#F5F5F7] dark:bg-white/[0.08] hover:bg-[#E8E8ED] dark:hover:bg-white/[0.14] text-[12px] font-medium inline-flex items-center gap-1.5 transition-colors text-[#1E469B] dark:text-[#7CB8F7]">
+                        {isTl ? 'Buksan ulit' : 'Reopen'}
+                      </button>
+                    ) : (
+                      <details className="relative">
+                        <summary aria-label={isTl ? 'Iba pa' : 'More'} title={isTl ? 'Iba pa' : 'More'} className="list-none [&::-webkit-details-marker]:hidden cursor-pointer w-8 h-8 rounded-full bg-[#F5F5F7] dark:bg-white/[0.08] hover:bg-[#E8E8ED] dark:hover:bg-white/[0.14] flex items-center justify-center text-[#6E6E73] dark:text-[#A1A1A6]">
+                          <MoreHorizontal className="w-4 h-4" aria-hidden />
+                        </summary>
+                        <div className="absolute right-0 top-full mt-2 z-40 p-1.5 ring-card w-[280px]">
+                          {!/major|serious|grave|consecutive|2nd|3rd|[4-9]th/i.test(openCase.severity) && (
+                            <button type="button" onClick={() => handleUpdateCaseStatus(openCase, 'Resolved')} className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">
+                              <span className="block text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Paalala lang, isara' : 'Reminder only, close'}</span>
+                              <span className="block text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Para sa 1st minor lang' : 'For a 1st minor only'}</span>
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.currentTarget.closest('details')?.removeAttribute('open');
+                              setWithdrawReason('');
+                              setCloseMode('notProven');
+                              setWithdrawFor(openCase);
+                            }}
+                            className="w-full flex items-start gap-2.5 text-left px-3 py-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                          >
+                            <ShieldCheck className="w-4 h-4 mt-0.5 text-[#1E469B] dark:text-[#7CB8F7] shrink-0" aria-hidden />
+                            <span>
+                              <span className="block text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Isara: Hindi napatunayan' : 'Close: Not proven'}</span>
+                              <span className="block text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Walang sapat na ebidensya o hindi totoo. Hindi bibilang na offense.' : 'Not enough proof or found untrue. Does not count as an offense.'}</span>
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.currentTarget.closest('details')?.removeAttribute('open');
+                              setWithdrawReason('');
+                              setCloseMode('withdraw');
+                              setWithdrawFor(openCase);
+                            }}
+                            className="w-full flex items-start gap-2.5 text-left px-3 py-2.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                          >
+                            <Undo2 className="w-4 h-4 mt-0.5 text-rose-600 shrink-0" aria-hidden />
+                            <span>
+                              <span className="block text-[13px] font-medium text-rose-700 dark:text-rose-300">{isTl ? 'Bawiin ang kaso' : 'Withdraw case'}</span>
+                              <span className="block text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Para sa maling pagka-file. Mananatili sa records.' : 'Filed by mistake. It stays in the records.'}</span>
+                            </span>
+                          </button>
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={() => setOpenCaseCode(null)}
                   disabled={caseEditing}
                   title={isTl ? 'Isara' : 'Close'}
                   aria-label={isTl ? 'Isara' : 'Close'}
-                  className="w-8 h-8 rounded-lg saas-card-subtle flex items-center justify-center text-sm font-bold text-[#475569] hover:text-[#0F172A] dark:text-[#94A8D0] dark:hover:text-white disabled:opacity-40 shrink-0"
+                  className="w-8 h-8 rounded-full bg-[#F5F5F7] dark:bg-white/[0.08] hover:bg-[#E8E8ED] dark:hover:bg-white/[0.14] flex items-center justify-center text-[#6E6E73] dark:text-[#A1A1A6] disabled:opacity-40 shrink-0 transition-colors"
                 >
-                  ✕
+                  <X className="w-4 h-4" aria-hidden />
                 </button>
               </div>
 
               {/* body */}
-              <div className="overflow-y-auto clean-scroll space-y-4 p-5 bg-[#F8FAFC] dark:bg-[#070D1B]">
+              <div className="overflow-y-auto clean-scroll space-y-4 p-5 bg-[#F5F5F7] dark:bg-[#0A1526]">
                 {/* 1. 7-Step Progressive Flow Stepper & Action Card */}
+                {/* One save at a time (Golden Rule 1): while editing the record, the step panel is paused */}
+                {caseEditing && (
+                  <p className="px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 text-[12px] font-medium text-amber-900 dark:text-amber-200">
+                    {isTl ? "Nag-e-edit ka ng record. I-save o i-cancel muna bago ituloy ang hakbang." : "You are editing the record. Save or cancel first, then continue the steps."}
+                  </p>
+                )}
+                <div className={caseEditing ? "opacity-40 pointer-events-none select-none" : ""} aria-disabled={caseEditing} {...(caseEditing ? { inert: "" } : {})}>
                 <CaseFlowPanel 
                   key={openCase.caseCode + (openCase.step ?? '') + (openCase.decidedAt ?? '') + (openCase.parentConferenceStatus ?? '')} 
-                  c={openCase}
+                  c={{
+                    ...openCase,
+                    // summons count comes from the saved conference appointments (it is not a DB column, so it survives a reload)
+                    summonsCount: appointments.filter((x) => x.caseId === openCase.caseCode).length || openCase.summonsCount,
+                  }}
                   student={openCaseStudent ?? undefined}
                   isTl={isTl} 
                   busy={flowBusy} 
                   suggestedSanction={suggestedSanctionFor(openCase)} 
-                  onAction={(a) => void applyFlow(openCase, a)} 
+                  onAction={(a) => void applyFlow(openCase, a)}
+                  onScheduleOthers={async (items) => {
+                    for (const it of items) await applyFlow(it.c, it.action);
+                    const sched = items[0]?.action.kind === 'schedule_conference';
+                    onTriggerToast(
+                      sched
+                        ? isTl ? `Na-schedule din ang ${items.length} pang magulang sa parehong araw.` : `${items.length} more parent(s) scheduled on the same day.`
+                        : isTl ? `Naitala rin ang pagdalo ng ${items.length} pang pamilya.` : `Attendance saved for ${items.length} more family(ies).`
+                    );
+                  }}
                   onOpenStation={() => setStationCase(openCase)} 
                   onOpenPrint={(kind) => {
                     setCallSlipInitialForm(kind ?? null);
                     setCallSlipCase(openCase);
                   }}
                   appointments={appointments}
+                  onComposeParent={
+                    openCaseStudent
+                      ? () => {
+                          setOpenCaseCode(null);
+                          onOpenParentComposer({
+                            studentName: openCaseStudent.fullName,
+                            gradeSection: openCaseStudent.gradeSection,
+                            parentName: openCaseStudent.parentName,
+                            parentPhone: openCaseStudent.parentPhone,
+                            parentEmail: openCaseStudent.parentEmail,
+                            scheduleText: '',
+                            caseCode: openCase.caseCode,
+                            message: decisionNoticeMessage('taglish', openCaseStudent.fullName),
+                          });
+                        }
+                      : undefined
+                  }
+                  onSetWaitForAll={
+                    openCase.incidentCode
+                      ? async (on) => {
+                          const code = openCase.incidentCode;
+                          const group = cases.filter((x) => x.incidentCode === code);
+                          setCases((prev) => prev.map((x) => (x.incidentCode === code ? { ...x, waitForAll: on } : x)));
+                          const results = await Promise.all(group.map((g) => updateCaseFlowInDb(g.caseCode, { wait_for_all: on })));
+                          if (results.some((r) => !r)) {
+                            setCases((prev) => prev.map((x) => (x.incidentCode === code ? { ...x, waitForAll: !on } : x)));
+                            onTriggerToast(isTl ? 'Hindi na-save. I-check ang internet, tapos subukan ulit.' : 'Not saved. Check the internet, then try again.');
+                            return;
+                          }
+                          onTriggerToast(
+                            on
+                              ? isTl ? 'Hihintayin ang lahat ng magulang bago magdesisyon.' : 'Decisions now wait for every parent.'
+                              : isTl ? 'Pwede nang mauna ang estudyanteng dumating ang magulang.' : 'A student whose parent came can now go first.'
+                          );
+                        }
+                      : undefined
+                  }
+                  groupCases={openCase.incidentCode ? cases.filter((x) => x.incidentCode === openCase.incidentCode && x.caseCode !== openCase.caseCode && !isWithdrawn(x)) : []}
                   onUpdateStudentContact={async (studentNumber, phone, email) => {
                     const saved = await updateStudentDetailsInDb(studentNumber, {
                       parent_phone: phone,
@@ -4336,6 +4628,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     return false;
                   }}
                 />
+                </div>
                 
                 {stationCase && (
                   <StatementStation 
@@ -4347,283 +4640,125 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   />
                 )}
 
-                {/* 2. Structured Incident Details & Evidence Cards */}
-                <div className="space-y-3">
-                  {/* Incident Information Card */}
-                  <div className="rounded-xl border border-[#CBD5E1] dark:border-[#1E2E4E] bg-white dark:bg-[#0C1527] overflow-hidden shadow-xs">
-                    <div className="px-4 py-2.5 bg-[#F8FAFC] dark:bg-[#0E1A33] border-b border-[#E2E8F0] dark:border-[#1E2E4E] flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7]">
-                        {isTl ? 'Detalye ng insidente' : 'Incident record'}
-                      </span>
-                      <span className="text-xs font-mono font-semibold text-[#64748B] dark:text-[#94A3B8]">
-                        {openCase.caseCode}
-                      </span>
-                    </div>
-
-                    <div className="p-4 space-y-3 text-xs">
-                      <div>
-                        <p className="text-xs font-semibold text-[#64748B] dark:text-[#94A3B8]">
-                          {isTl ? 'Paglabag' : 'Offense title'}
-                        </p>
-                        <p className="text-sm font-bold text-[#0F172A] dark:text-white mt-0.5">
-                          {isTl ? openCase.offenseTitleTl : openCase.offenseTitleEn}
-                        </p>
+                {/* 2. Record, evidence and history as Apple grouped sections */}
+                <div className="space-y-5 pt-2">
+                  <section className="space-y-2">
+                    <h4 className="px-1 text-[13px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Detalye ng insidente' : 'Incident'}</h4>
+                    <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
+                      <div className="px-4 py-3 flex items-start justify-between gap-4">
+                        <span className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6] shrink-0">{isTl ? 'Paglabag' : 'Offense'}</span>
+                        <span className="text-[14px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7] text-right">{isTl ? openCase.offenseTitleTl : openCase.offenseTitleEn}</span>
                       </div>
-
-                      <div className="grid grid-cols-2 gap-3 pt-2 border-t border-[#F1F5F9] dark:border-[#1E2E4E]">
-                        <div>
-                          <p className="text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1">
-                            {isTl ? 'Petsa ng insidente' : 'Incident date'}
-                          </p>
-                          {caseEditing ? (
-                            <input
-                              type="date"
-                              value={editDate}
-                              onChange={(e) => setEditDate(e.target.value)}
-                              className="w-full px-3 py-1.5 rounded-lg border border-[#CBD5E1] font-semibold text-[#0F172A] dark:text-white"
-                            />
-                          ) : (
-                            <p className="text-xs font-bold text-[#0F172A] dark:text-white">{prettyDate(openCase.incidentDate)}</p>
-                          )}
-                        </div>
-
-                        <div>
-                          <p className="text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1">
-                            {isTl ? 'Nag-ulat' : 'Reported by'}
-                          </p>
-                          {caseEditing ? (
-                            <input
-                              type="text"
-                              value={editReportedBy}
-                              onChange={(e) => setEditReportedBy(e.target.value)}
-                              className="w-full px-3 py-1.5 rounded-lg border border-[#CBD5E1] font-semibold text-[#0F172A] dark:text-white"
-                            />
-                          ) : (
-                            <p className="text-xs font-bold text-[#0F172A] dark:text-white">{openCase.reportedBy}</p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="pt-2 border-t border-[#F1F5F9] dark:border-[#1E2E4E]">
-                        <p className="text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1">
-                          {isTl ? 'Salaysay ng insidente' : 'Incident narrative'}
-                        </p>
+                      <div className="px-4 py-3 flex items-center justify-between gap-4">
+                        <label htmlFor="edit-incident-date" className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6] shrink-0">{isTl ? 'Petsa' : 'Date'}</label>
                         {caseEditing ? (
-                          <textarea
-                            rows={3}
-                            value={editNotes}
-                            onChange={(e) => setEditNotes(e.target.value)}
-                            className="w-full p-2.5 rounded-lg border border-[#CBD5E1] font-medium text-xs text-[#0F172A] dark:text-white"
-                          />
+                          <DateField value={editDate} onChange={setEditDate} isTl={isTl} max={todayISO()} ariaLabel={isTl ? 'Petsa ng insidente' : 'Incident date'} className="max-w-[260px]" />
                         ) : (
-                          <div className="p-3 rounded-lg bg-[#F8FAFC] dark:bg-[#0A1224] border border-[#E2E8F0] dark:border-[#1E2E4E] text-xs leading-relaxed text-[#0F172A] dark:text-white whitespace-pre-line font-medium">
-                            {hideIncidentMarker(openCase.notes)}
-                          </div>
+                          <span className="text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7]">{prettyDate(openCase.incidentDate)}</span>
                         )}
                       </div>
-
+                      <div className="px-4 py-3 flex items-center justify-between gap-4">
+                        <label htmlFor="edit-reported-by" className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6] shrink-0">{isTl ? 'Nag-ulat' : 'Reported by'}</label>
+                        {caseEditing ? (
+                          <input id="edit-reported-by" type="text" value={editReportedBy} onChange={(e) => setEditReportedBy(e.target.value)} className="h-10 w-64 max-w-full px-3 rounded-xl border border-[#DDE3EC] dark:border-white/10 bg-white dark:bg-[#0A1526] text-[14px] text-[#1D1D1F] dark:text-white" />
+                        ) : (
+                          <span className="text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] text-right">{openCase.reportedBy}</span>
+                        )}
+                      </div>
                       {openCaseStudent && (
-                        <div className="pt-2 border-t border-[#F1F5F9] dark:border-[#1E2E4E] flex items-center justify-between text-xs">
-                          <span className="text-xs font-semibold text-[#64748B] dark:text-[#94A3B8]">
-                            {isTl ? 'Magulang:' : 'Parent contact:'}
-                          </span>
-                          <span className="font-bold text-[#0F172A] dark:text-white">
-                            {openCaseStudent.parentName} · <span className="font-mono text-[#1E469B] dark:text-[#7CB8F7]">{openCaseStudent.parentPhone || 'No phone'}</span>
+                        <div className="px-4 py-3 flex items-center justify-between gap-4">
+                          <span className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6] shrink-0">{isTl ? 'Magulang' : 'Parent'}</span>
+                          <span className="text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] text-right">
+                            {openCaseStudent.parentName}
+                            {openCaseStudent.parentPhone ? (
+                              <a href={`tel:${openCaseStudent.parentPhone.replace(/\D/g, '')}`} className="ml-1 text-[#1E469B] dark:text-[#7CB8F7] tabular-nums">· {openCaseStudent.parentPhone}</a>
+                            ) : (
+                              <span className="text-[#8E8E93]"> · {isTl ? 'walang number' : 'no number'}</span>
+                            )}
                           </span>
                         </div>
                       )}
+                      <div className="px-4 py-3 space-y-1.5">
+                        <label htmlFor="edit-notes" className="block text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Salaysay' : 'What happened'}</label>
+                        {caseEditing ? (
+                          <textarea id="edit-notes" rows={3} value={editNotes} onChange={(e) => setEditNotes(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-[#DDE3EC] dark:border-white/10 bg-white dark:bg-[#0A1526] text-[14px] leading-relaxed text-[#1D1D1F] dark:text-white" />
+                        ) : (
+                          <p className="text-[14px] leading-relaxed text-[#1D1D1F] dark:text-[#F5F5F7] whitespace-pre-line">
+                            {hideIncidentMarker(openCase.notes).replace(/^No notes added.$/, '').trim() || <span className="text-[#8E8E93]">{isTl ? 'Walang naisulat na kuwento.' : 'No narrative written.'}</span>}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  </section>
 
-                  {/* Evidence Card */}
-                  <div className="rounded-xl border border-[#CBD5E1] dark:border-[#1E2E4E] bg-white dark:bg-[#0C1527] p-4 shadow-xs">
-                    <EvidencePanel
-                      caseCode={openCase.caseCode}
-                      isTl={isTl}
-                      by={appConfig.staff.find((x) => x.active)?.email ?? ''}
-                      onToast={(m, undo) => onTriggerToast(m, undo)}
-                      onChanged={() => void loadCaseHistory(openCase.caseCode)}
-                    />
-                  </div>
+                  <section className="space-y-2">
+                    <h4 className="px-1 text-[13px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Salaysay ng nag-ulat at testigo' : 'Reporter and witness statements'}</h4>
+                    <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 p-4">
+                      <StatementsPanel
+                        caseCode={openCase.caseCode}
+                        incidentCode={openCase.incidentCode}
+                        isTl={isTl}
+                        onPrintBlank={() => {
+                          setCallSlipInitialForm('witnessStatement');
+                          setCallSlipCase(openCase);
+                        }}
+                        onSaved={(m) => {
+                          onTriggerToast(m);
+                          void loadCaseHistory(openCase.caseCode);
+                        }}
+                      />
+                    </div>
+                  </section>
 
-                  {/* Case Audit Timeline Card */}
-                  <div className="rounded-xl border border-[#CBD5E1] dark:border-[#1E2E4E] bg-white dark:bg-[#0C1527] p-4 shadow-xs">
-                    <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7] mb-2.5">
-                      {isTl ? 'Timeline ng mga Aksyon sa Kaso' : 'Official Case Action History'}
-                    </p>
-                    {caseHistory === 'loading' ? (
-                      <p className="text-[#64748B] dark:text-[#94A3B8] text-xs">{isTl ? 'Kinukuha…' : 'Loading history…'}</p>
-                    ) : caseHistory === null ? (
-                      <p className="text-rose-600 text-xs font-semibold">
-                        {isTl ? 'Hindi makuha ang history.' : "Couldn't load history."}
-                      </p>
-                    ) : caseHistory.length === 0 ? (
-                      <p className="text-[#64748B] dark:text-[#94A3B8] text-xs">{isTl ? 'Wala pang naitala.' : 'No audit entries yet.'}</p>
-                    ) : (
-                      <ol className="space-y-2 border-l-2 border-[#E2E8F0] dark:border-[#1E2E4E] pl-3 text-xs">
-                        {caseHistory.map((h, i) => (
-                          <li key={i}>
-                            <p className="font-bold text-[#0F172A] dark:text-white">{isTl ? h.actionTl : h.actionEn}</p>
-                            <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
-                              {prettyTime(h.when)} · {h.actor}
-                            </p>
-                          </li>
-                        ))}
-                      </ol>
-                    )}
-                  </div>
+                  <section className="space-y-2">
+                    <h4 className="px-1 text-[13px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Ebidensya' : 'Evidence'}</h4>
+                    <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 p-4">
+                      <EvidencePanel
+                        caseCode={openCase.caseCode}
+                        isTl={isTl}
+                        by={appConfig.staff.find((x) => x.active)?.email ?? ''}
+                        onToast={(m, undo) => onTriggerToast(m, undo)}
+                        onChanged={() => void loadCaseHistory(openCase.caseCode)}
+                      />
+                    </div>
+                  </section>
+
+                  <section className="space-y-2">
+                    <h4 className="px-1 text-[13px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Kasaysayan ng kaso' : 'Case history'}</h4>
+                    <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 px-4 py-3">
+                      {caseHistory === 'loading' ? (
+                        <p className="text-[13px] text-[#8E8E93]">{isTl ? 'Kinukuha…' : 'Loading…'}</p>
+                      ) : caseHistory === null ? (
+                        <p className="text-[13px] text-rose-700 dark:text-rose-300">{isTl ? 'Hindi makuha ang kasaysayan. I-check ang internet.' : "Couldn't load the history. Check the internet."}</p>
+                      ) : caseHistory.length === 0 ? (
+                        <p className="text-[13px] text-[#8E8E93]">{isTl ? 'Wala pang naitala.' : 'Nothing recorded yet.'}</p>
+                      ) : (
+                        <ol className="relative space-y-3 pl-5 before:absolute before:left-[5px] before:top-1.5 before:bottom-1.5 before:w-px before:bg-black/[0.08] dark:before:bg-white/[0.12]">
+                          {caseHistory.map((h, i) => (
+                            <li key={i} className="relative">
+                              <span className={`absolute -left-5 top-1.5 w-2.5 h-2.5 rounded-full ring-2 ring-white dark:ring-[#0F1B2E] ${i === 0 ? 'bg-[#2563EB]' : 'bg-[#C7C7CC] dark:bg-[#636366]'}`} />
+                              <p className="text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? h.actionTl : h.actionEn}</p>
+                              <p className="text-[12px] text-[#8E8E93]">{prettyTime(h.when)} · {h.actor}</p>
+                            </li>
+                          ))}
+                        </ol>
+                      )}
+                    </div>
+                  </section>
                 </div>
               </div>
 
-              {/* footer */}
-              <div className="px-6 py-3 border-t border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-2">
-                {caseEditing ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setCaseEditing(false)}
-                      className="px-4 py-2 rounded-lg saas-card-subtle text-xs font-bold"
-                    >
-                      {isTl ? 'Kanselahin' : 'Cancel'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={saveCaseEdit}
-                      className="px-4 py-2 rounded-lg bg-[#1E469B] text-white text-xs font-extrabold"
-                    >
-                      {isTl ? ' I-save' : ' Save changes'}
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={startCaseEdit}
-                        className="px-3 py-2 rounded-lg saas-card-subtle hover:border-[#1E469B] text-xs font-bold text-[#0B1F4D] dark:text-white active:scale-[0.97] transition-all"
-                      >
-                        {isTl ? 'I-edit' : 'Edit'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCallSlipCase(openCase);
-                          setOpenCaseCode(null);
-                        }}
-                        className="px-3 py-2 rounded-lg saas-card-subtle hover:border-[#1E469B] text-xs font-bold whitespace-nowrap text-[#0B1F4D] dark:text-white active:scale-[0.97] transition-all"
-                      >
-                        {isTl ? 'Mag-print ng form / Buod…' : 'Print Form / Summary…'}
-                      </button>
-                      {/* Only allow Parent Text / SMS if Major or Consecutive Minor (escalated) */}
-                      {openCaseStudent && (openCase.severity.toLowerCase().includes('major') || openCase.severity.toLowerCase().includes('serious') || openCase.severity.toLowerCase().includes('grave') || openCase.severity.toLowerCase().includes('consecutive')) && (
-                        <button
-                          type="button"
-                          title={isTl ? 'Hindi kasama ang offense sa text' : 'The message never includes the offense'}
-                          onClick={() => {
-                            setOpenCaseCode(null);
-                            onOpenParentComposer({
-                              studentName: openCaseStudent.fullName,
-                              gradeSection: openCaseStudent.gradeSection,
-                              parentName: openCaseStudent.parentName,
-                              parentPhone: openCaseStudent.parentPhone,
-                              parentEmail: openCaseStudent.parentEmail,
-                              scheduleText: '',
-                            });
-                          }}
-                          className="px-3 py-2 rounded-lg saas-card-subtle hover:border-[#1E469B] text-xs font-bold whitespace-nowrap text-[#1E469B] dark:text-[#7CB8F7] active:scale-[0.97] transition-all"
-                        >
-                          {isTl ? 'I-text ang magulang' : 'Text parent'}
-                        </button>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          const reason = window.prompt(
-                            isTl
-                              ? `Pakilagay ang dahilan ng pag-delete sa kasong ${openCase.caseCode} (hal. maling pag-file, duplicate entry):`
-                              : `Please provide a mandatory reason for deleting case ${openCase.caseCode} (e.g. filed by mistake, duplicate entry):`
-                          );
-                          if (!reason || !reason.trim()) {
-                            if (reason !== null) onTriggerToast(isTl ? 'Kailangan ng dahilan upang mai-delete ang kaso.' : 'A reason is required to delete a case.');
-                            return;
-                          }
-
-                          const ok = await confirmChange({
-                            title: isTl ? `Permanenteng I-delete ang Kasong ${openCase.caseCode}?` : `Permanently Delete Case ${openCase.caseCode}?`,
-                            description: isTl
-                              ? `Mabubura ang kasong ito sa database. Dahilan: "${reason.trim()}".`
-                              : `This will remove the case from the database. Reason: "${reason.trim()}".`,
-                            rows: [
-                              { label: isTl ? 'Kaso' : 'Case Code', after: openCase.caseCode },
-                              { label: isTl ? 'Estudyante' : 'Student', after: openCase.studentName },
-                              { label: isTl ? 'Dahilan ng Deletion' : 'Deletion Reason', after: reason.trim() },
-                            ],
-                            confirmLabel: isTl ? 'Oo, I-delete ang Kaso' : 'Yes, Delete Case',
-                            tone: 'danger',
-                          });
-                          if (!ok) return;
-
-                          const taskId = startLoading({
-                            titleEn: 'Deleting case...',
-                            titleTl: 'Binubura ang kaso...',
-                            messageEn: 'Updating database and audit logs...',
-                            messageTl: 'Inia-update ang database at audit logs...',
-                          });
-                          const deleted = await deleteDisciplineCaseInDb(openCase.caseCode);
-                          stopLoading(taskId);
-
-                          if (deleted) {
-                            setCases((prev) => prev.filter((x) => x.caseCode !== openCase.caseCode));
-                            setOpenCaseCode(null);
-                            soundFX.playStepUnlock();
-                            void insertActivityLogInDb({
-                              actor: 'Guidance Associate',
-                              actionEn: `Deleted case ${openCase.caseCode} for ${openCase.studentName} · Reason: ${reason.trim()}`,
-                              actionTl: `Binura ang kasong ${openCase.caseCode} para kay ${openCase.studentName} · Dahilan: ${reason.trim()}`,
-                              tag: openCase.caseCode,
-                              tone: 'rose',
-                            });
-                            onTriggerToast(
-                              isTl
-                                ? `Nai-delete na ang kasong ${openCase.caseCode}.`
-                                : `Case ${openCase.caseCode} was deleted.`
-                            );
-                          } else {
-                            onTriggerToast(
-                              isTl ? 'Hindi nai-delete. I-check ang internet.' : 'Failed to delete case.'
-                            );
-                          }
-                        }}
-                        className="btn-press px-3 py-2 rounded-lg border border-rose-300 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 text-xs font-bold hover:bg-rose-100 flex items-center gap-1.5 shadow-2xs"
-                        title={isTl ? 'I-delete ang kaso na may dahilan' : 'Delete case with reason'}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>{isTl ? 'I-delete ang Kaso' : 'Delete Case'}</span>
-                      </button>
-
-                      {openCase.status === 'Resolved' ? (
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateCaseStatus(openCase, 'Open')}
-                          className="px-4 py-2 rounded-lg saas-card-subtle text-xs font-bold text-[#0B1F4D] dark:text-white active:scale-[0.97] transition-all"
-                        >
-                          {isTl ? 'Buksan ulit' : 'Reopen case'}
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateCaseStatus(openCase, 'Resolved')}
-                          title={isTl ? 'Isara agad nang hindi dumadaan sa lahat ng hakbang (hal. simpleng paalala sa 1st minor)' : 'Close right away without all the steps (e.g. a simple reminder for a 1st minor)'}
-                          className="px-4 py-2 rounded-lg saas-card-subtle text-xs font-bold text-[#0B1F4D] dark:text-white"
-                        >
-                          {isTl ? 'Isara agad' : 'Close right away'}
-                        </button>
-                      )}
-                    </div>
-                  </>
-                )}
+              {/* footer only while editing: Cancel / Save (the one action at that moment) */}
+              {caseEditing && (
+                <div className="px-6 py-3 bg-white dark:bg-[#0F1B2E] border-t border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between gap-2">
+                  <button type="button" onClick={() => setCaseEditing(false)} className="h-10 px-5 rounded-full text-[14px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">
+                    {isTl ? 'Huwag na' : 'Cancel'}
+                  </button>
+                  <button type="button" onClick={saveCaseEdit} className="btn-lit h-10 px-6 text-[14px] font-semibold">
+                    {isTl ? 'I-save ang pagbabago' : 'Save changes'}
+                  </button>
+                </div>
+              )}
               </div>
             </motion.div>
           </motion.div>
@@ -4631,10 +4766,152 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       </AnimatePresence>
       ,document.body)}
 
+      {/* WITHDRAW CASE: in-app dialog (window.prompt does not work in the Tauri desktop app) */}
+      {withdrawFor && createPortal(
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setWithdrawFor(null)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="withdraw-title"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md ring-card p-6 space-y-4"
+          >
+            <div className="space-y-1">
+              <h3 id="withdraw-title" className="text-[17px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">
+                {closeMode === 'notProven'
+                  ? isTl ? `Isara ang ${withdrawFor.caseCode} bilang hindi napatunayan?` : `Close ${withdrawFor.caseCode} as not proven?`
+                  : isTl ? `Bawiin ang ${withdrawFor.caseCode}?` : `Withdraw ${withdrawFor.caseCode}?`}
+              </h3>
+              <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">
+                {withdrawFor.studentName} · {isTl ? withdrawFor.offenseTitleTl : withdrawFor.offenseTitleEn}
+              </p>
+            </div>
+            <p className="text-[13px] text-[#1D1D1F] dark:text-[#F5F5F7] rounded-xl bg-[#F5F5F7] dark:bg-white/[0.06] px-3 py-2.5">
+              {closeMode === 'notProven'
+                ? isTl
+                  ? 'Isasara ang kaso bilang "Hindi napatunayan". Hindi ito mabubura at hindi bibilangin bilang offense. Walang SMS na ipapadala.'
+                  : 'The case is closed as "Not proven". It is not erased and does not count as an offense. No SMS is sent.'
+                : isTl
+                ? 'Isasara ang kaso bilang "Binawi". Hindi ito mabubura: makikita pa rin sa Closed Cases at Audit Trail, at hindi ito bibilangin bilang offense.'
+                : 'The case is closed as "Withdrawn". It is not erased: it stays in Closed Cases and the Audit Trail, and does not count as an offense.'}
+            </p>
+            <div className="space-y-2">
+              <label htmlFor="withdraw-reason" className="block text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">
+                {isTl ? 'Dahilan' : 'Reason'} <span className="text-rose-600">*</span>
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {(closeMode === 'notProven'
+                  ? isTl
+                    ? ['Walang sapat na ebidensya', 'Napatunayang hindi totoo', 'Magkasalungat ang salaysay']
+                    : ['Not enough evidence', 'Found to be untrue', 'Statements conflict']
+                  : isTl
+                  ? ['Maling estudyante', 'Doble ang na-file', 'Maling offense', 'Hindi pala nangyari']
+                  : ['Wrong student', 'Filed twice', 'Wrong offense', 'Did not happen']
+                ).map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setWithdrawReason(r)}
+                    className={`h-8 px-3 rounded-full text-xs font-medium transition-colors active:scale-[0.97] ${
+                      withdrawReason === r
+                        ? 'bg-[#1E469B] text-white'
+                        : 'bg-[#F5F5F7] dark:bg-white/[0.08] text-[#1D1D1F] dark:text-[#F5F5F7] hover:bg-[#E8E8ED] dark:hover:bg-white/[0.12]'
+                    }`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+              <input
+                id="withdraw-reason"
+                autoFocus
+                value={withdrawReason}
+                onChange={(e) => setWithdrawReason(e.target.value)}
+                placeholder={isTl ? 'O isulat ang dahilan…' : 'Or type the reason…'}
+                className="w-full h-10 px-3 rounded-xl saas-card-subtle text-sm text-[#1D1D1F] dark:text-white focus:outline-none focus:border-[#1E469B]"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setWithdrawFor(null)}
+                className="h-10 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+              >
+                {isTl ? 'Huwag na' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                disabled={withdrawReason.trim().length < 3}
+                onClick={async () => {
+                  const c = withdrawFor;
+                  const reason = withdrawReason.trim();
+                  const mode = closeMode;
+                  const decision = `${mode === 'notProven' ? 'Not proven' : 'Withdrawn'}: ${reason}`;
+                  const closedAt = new Date().toISOString();
+                  setWithdrawFor(null);
+                  setCases((prev) => prev.map((x) => (x.caseCode === c.caseCode ? { ...x, status: 'Resolved', step: 'Closed' as DisciplineCaseRecord['step'], decision, closedAt } : x)));
+                  const saved = await updateCaseFlowInDb(c.caseCode, { status: 'Resolved', step: 'Closed', decision, closed_at: closedAt });
+                  if (!saved) {
+                    setCases((prev) => prev.map((x) => (x.caseCode === c.caseCode ? c : x)));
+                    onTriggerToast(isTl ? '⚠️ Hindi nabawi ang kaso. I-check ang internet, tapos subukan ulit.' : '⚠️ The case was not withdrawn. Check the internet, then try again.');
+                    return;
+                  }
+                  // Undo the offense count this case added, so escalation stays correct
+                  const stu = students.find((s) => s.studentNumber === c.studentNumber);
+                  if (stu) {
+                    const wasMinor = /minor/i.test(c.severity);
+                    const wasEscalated = !isMinorSeverity(c.severity);
+                    const minor = Math.max(0, stu.minorOffenseCount - (wasMinor ? 1 : 0));
+                    const major = Math.max(0, stu.majorOffenseCount - (wasEscalated ? 1 : 0));
+                    setStudents((prev) => prev.map((s) => (s.studentNumber === stu.studentNumber ? { ...s, minorOffenseCount: minor, majorOffenseCount: major } : s)));
+                    void updateStudentOffenseInDb(stu.studentNumber, {
+                      minor_offense_count: minor,
+                      major_offense_count: major,
+                      prior_offenses_en: stu.priorOffensesEn,
+                      prior_offenses_tl: stu.priorOffensesTl,
+                    });
+                  }
+                  void insertActivityLogInDb({
+                    actor: 'Guidance Associate',
+                    actionEn: mode === 'notProven' ? `Closed case ${c.caseCode} (${c.studentName}) as not proven · Reason: ${reason}` : `Withdrew case ${c.caseCode} (${c.studentName}) · Reason: ${reason}`,
+                    actionTl: mode === 'notProven' ? `Isinara ang kasong ${c.caseCode} (${c.studentName}) bilang hindi napatunayan · Dahilan: ${reason}` : `Binawi ang kasong ${c.caseCode} (${c.studentName}) · Dahilan: ${reason}`,
+                    tag: c.caseCode,
+                    tone: 'rose',
+                  });
+                  setOpenCaseCode(null);
+                  if (mode === 'notProven') {
+                    // parent already summoned? next step: give them the "matter closed" notice (no details)
+                    const parentInvolved = !!c.conferenceScheduledAt || (c.summonsCount || 0) > 0;
+                    onTriggerToast(
+                      isTl ? `Isinara ang ${c.caseCode}: hindi napatunayan. Nasa Closed Cases ito.` : `${c.caseCode} closed as not proven. It is in Closed Cases.`,
+                      undefined,
+                      parentInvolved
+                        ? { label: isTl ? 'I-print ang paabiso sa magulang' : 'Print notice for the parent', run: () => { setCallSlipInitialForm('closedNotice'); setCallSlipCase({ ...c, status: 'Resolved', decision }); } }
+                        : undefined
+                    );
+                  } else {
+                    onTriggerToast(
+                      isTl ? `Binawi ang ${c.caseCode}. Nasa Closed Cases ito.` : `${c.caseCode} was withdrawn. You can find it in Closed Cases.`
+                    );
+                  }
+                }}
+                className={closeMode === "notProven" ? "btn-lit h-10 px-5 text-[13px] font-semibold disabled:opacity-40 disabled:cursor-not-allowed" : "h-10 px-5 rounded-full bg-[#E11D48] hover:bg-[#BE123C] disabled:bg-[#E11D48]/40 disabled:cursor-not-allowed text-white text-[13px] font-semibold transition-[background-color,transform] active:scale-[0.97]"}
+              >
+                {closeMode === 'notProven' ? (isTl ? 'Isara ang kaso' : 'Close the case') : isTl ? 'Bawiin ang kaso' : 'Withdraw case'}
+              </button>
+            </div>
+          </motion.div>
+        </div>,
+        document.body
+      )}
+
       {/* Print forms: call slip, conference form, behavioral contract, kasunduan, suspension letter, resolution summary */}
       {callSlipCase && (
         <PrintFormsWindow
-          c={callSlipCase}
+          c={{ ...callSlipCase, summonsCount: appointments.filter((x) => x.caseId === callSlipCase.caseCode).length || callSlipCase.summonsCount }}
           stu={students.find((x) => x.studentNumber === callSlipCase.studentNumber)}
           isTl={isTl}
           initial={callSlipInitialForm ?? (callSlipCase.status === 'Resolved' ? 'caseResolutionSummary' : 'callSlip')}
@@ -4671,191 +4948,174 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 !m-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
+            className="fixed inset-0 !m-0 z-50 bg-[#040E20]/65 backdrop-blur-sm flex items-center justify-center p-4"
           >
             <motion.div
-              initial={{ scale: 0.96, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.96, opacity: 0 }}
-              className="w-full max-w-xl rounded-2xl saas-card p-6 space-y-4"
+              initial={{ scale: 0.96, opacity: 0, y: 8 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.96, opacity: 0, y: 6 }}
+              transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+              className="w-full max-w-xl max-h-[calc(100dvh/var(--app-zoom,1)_-_2rem)] rounded-[22px] overflow-hidden flex flex-col bg-[#F5F5F7] dark:bg-[#0A1526] shadow-[0_0_0_0.5px_rgb(0_0_0/0.08),0_40px_100px_-20px_rgba(4,14,32,0.5)]"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <StudentGenderAvatar fullName={selectedStudentProfile.fullName} size="lg" />
-                  <div>
-                    <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
-                      {selectedStudentProfile.fullName}
-                    </h3>
-                    <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
-                      #{selectedStudentProfile.studentNumber} ·{' '}
-                      {selectedStudentProfile.gradeSection}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedStudentProfile(null)}
-                  title={isTl ? 'Isara' : 'Close'}
-                  aria-label={isTl ? 'Isara' : 'Close'}
-                  className="w-8 h-8 rounded-lg saas-card-subtle flex items-center justify-center text-sm font-bold text-[#475569] hover:text-[#0F172A] dark:text-[#94A8D0] dark:hover:text-white"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="p-3 rounded-xl saas-card-subtle">
-                  <p className="text-[#4A608A] dark:text-[#94A8D0] font-bold">
-                    {isTl ? 'Magulang / guardian' : 'Parent / guardian'}
-                  </p>
-                  <p className="font-extrabold text-[#0B1F4D] dark:text-white mt-0.5">
-                    {selectedStudentProfile.parentName}
-                  </p>
-                  <p className="font-semibold text-[#4A608A] dark:text-[#94A8D0]">
-                    {selectedStudentProfile.parentPhone || (isTl ? 'walang number' : 'no number')}
-                  </p>
-                </div>
-                <div className="p-3 rounded-xl saas-card-subtle">
-                  <p className="text-[#4A608A] dark:text-[#94A8D0] font-bold">
-                    {isTl ? 'Kabuuang offense' : 'Offenses so far'}
-                  </p>
-                  <p className="font-extrabold text-[#0B1F4D] dark:text-white mt-0.5">
-                    {selectedStudentProfile.minorOffenseCount} minor ·{' '}
-                    {selectedStudentProfile.majorOffenseCount} {isTl ? 'malubha' : 'serious'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Student's Case History List */}
-              <div className="space-y-2">
-                <p className="text-xs font-extrabold text-[#0B1F4D] dark:text-white">
-                  {isTl ? 'Mga kaso niya' : 'Their cases'}
-                </p>
-                {cases.filter((c) => c.studentNumber === selectedStudentProfile.studentNumber).length === 0 && (
-                  <p className="p-3 rounded-xl saas-card-subtle text-xs font-semibold text-[#4A608A] dark:text-[#94A8D0]">
-                    {isTl ? 'Wala pang naitalang kaso. Malinis ang record.' : 'No cases recorded. Clean record.'}
-                  </p>
-                )}
-                {cases
-                  .filter((c) => c.studentNumber === selectedStudentProfile.studentNumber)
-                  .sort((a, b) => b.incidentDate.localeCompare(a.incidentDate))
-                  .map((c) => (
-                    <button
-                      key={c.caseCode}
-                      type="button"
-                      title={isTl ? 'Buksan ang buong kaso' : 'Open the full case'}
-                      onClick={() => {
-                        setSelectedStudentProfile(null);
-                        openCaseDetails(c);
-                      }}
-                      className="w-full text-left p-3 rounded-xl saas-card-subtle hover:border-[#1E469B] flex items-center justify-between gap-3 text-xs"
-                    >
-                      <div className="min-w-0">
-                        <p className="font-bold text-[#0B1F4D] dark:text-white">
-                          {isTl ? c.offenseTitleTl : c.offenseTitleEn}
-                        </p>
-                        <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
-                          {prettyDate(c.incidentDate)} · <span className="font-mono">{c.caseCode}</span>
-                        </p>
+              {(() => {
+                const p = selectedStudentProfile;
+                const theirCases = cases.filter((c) => c.studentNumber === p.studentNumber).sort((a, b) => b.incidentDate.localeCompare(a.incidentDate));
+                const badge = attentionBadge(p);
+                const hasRecord = p.minorOffenseCount > 0 || p.majorOffenseCount > 0;
+                const group = 'rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 overflow-hidden divide-y divide-black/[0.06] dark:divide-white/[0.06]';
+                const row = 'px-4 py-3 flex items-center justify-between gap-4';
+                const label = 'text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]';
+                const value = 'text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] text-right';
+                return (
+                  <>
+                    {/* Apple sheet header */}
+                    <div className="px-6 py-4 bg-white dark:bg-[#0F1B2E] border-b border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <StudentGenderAvatar fullName={p.fullName} size="lg" />
+                        <div className="min-w-0">
+                          <h3 className="text-[20px] font-semibold tracking-[-0.02em] text-[#1D1D1F] dark:text-[#F5F5F7] truncate">{p.fullName}</h3>
+                          <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">#{p.studentNumber} · {p.gradeSection}</p>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className={`px-2 py-0.5 rounded-md text-[10.5px] font-bold ${severityInfo(c.severity).cls}`}>
-                          {severityInfo(c.severity).word}
-                        </span>
-                        <span className="px-2 py-0.5 rounded-full text-[10.5px] font-bold saas-card-subtle">
-                          {statusWord(c.status)}
-                        </span>
-                        <span className="text-[#4A608A]">→</span>
-                      </div>
-                    </button>
-                  ))}
-              </div>
-
-              {/* extra info from Settings › Student fields, and the actions */}
-              {Object.keys(selectedStudentProfile.extra ?? {}).filter((k) => (selectedStudentProfile.extra ?? {})[k]).length > 0 && (
-                <div className="grid grid-cols-2 gap-2 text-xs" data-extra-info>
-                  {appConfig.studentFields.custom
-                    .filter((c) => (selectedStudentProfile.extra ?? {})[c.key])
-                    .map((c) => (
-                      <div key={c.key} className="p-2.5 rounded-xl saas-card-subtle">
-                        <p className="text-[#4A608A] dark:text-[#94A8D0] font-bold">{isTl ? c.labelTl || c.labelEn : c.labelEn}</p>
-                        <p className="font-extrabold text-[#0B1F4D] dark:text-white break-words">{(selectedStudentProfile.extra ?? {})[c.key]}</p>
-                      </div>
-                    ))}
-                </div>
-              )}
-              {selectedStudentProfile.enrolled === false && (
-                <p className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-[#0B1F4D] dark:text-white">
-                  {isTl ? 'Hindi na naka-enroll' : 'Not enrolled anymore'} · {selectedStudentProfile.leftReason || '—'}
-                </p>
-              )}
-              <div className="flex flex-wrap gap-2">
-                <button type="button" data-action="edit-student" onClick={() => setStudentFormFor(selectedStudentProfile)} className="px-4 py-2 rounded-lg bg-[#1E469B] text-white text-xs font-bold">
-                  {isTl ? 'Baguhin ang impormasyon' : 'Edit details'}
-                </button>
-                {selectedStudentProfile.enrolled === false ? (
-                  <button type="button" data-action="re-enroll" onClick={() => void setEnrollment(selectedStudentProfile, true)} className="px-4 py-2 rounded-lg saas-card-subtle text-xs font-bold">
-                    {isTl ? 'Ibalik bilang naka-enroll' : 'Mark as enrolled again'}
-                  </button>
-                ) : (
-                  <button type="button" data-action="not-enrolled" onClick={() => setLeaveFor(selectedStudentProfile)} className="px-4 py-2 rounded-lg saas-card-subtle text-xs font-bold text-rose-700 dark:text-rose-300">
-                    {isTl ? 'Hindi na naka-enroll…' : 'Not enrolled anymore…'}
-                  </button>
-                )}
-              </div>
-              {leaveFor && leaveFor.studentNumber === selectedStudentProfile.studentNumber && (
-                <div className="p-3 rounded-xl border border-rose-200 dark:border-rose-800 space-y-2" data-leave-reasons>
-                  <p className="text-xs font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Bakit?' : 'Why?'}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {(isTl ? [['Graduated', 'Graduated'], ['Transferred', 'Lumipat ng school'], ['Stopped', 'Huminto sa pag-aaral']] : [['Graduated', 'Graduated'], ['Transferred', 'Transferred'], ['Stopped', 'Stopped school']]).map(([k, t]) => (
-                      <button key={k} type="button" data-leave-reason={k} onClick={() => void setEnrollment(selectedStudentProfile, false, t)} className="px-3 py-1.5 rounded-lg saas-card-subtle text-xs font-bold">
-                        {t}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedStudentProfile(null)}
+                        title={isTl ? 'Isara' : 'Close'}
+                        aria-label={isTl ? 'Isara' : 'Close'}
+                        className="w-8 h-8 rounded-full bg-[#F5F5F7] dark:bg-white/[0.08] hover:bg-[#E8E8ED] dark:hover:bg-white/[0.14] flex items-center justify-center text-[#6E6E73] dark:text-[#A1A1A6] shrink-0 transition-colors"
+                      >
+                        <X className="w-4 h-4" aria-hidden />
                       </button>
-                    ))}
-                    <button type="button" onClick={() => setLeaveFor(null)} className="px-3 py-1.5 rounded-lg text-xs font-bold text-[#4A608A]">
-                      {isTl ? 'Kanselahin' : 'Cancel'}
-                    </button>
-                  </div>
-                </div>
-              )}
+                    </div>
 
-              {/* Portal password help — not connected to the student portal yet, so it is shown as "Coming soon" (Golden Rule 2) */}
-              <div className="p-3.5 rounded-xl saas-card-subtle flex items-center justify-between gap-3 text-xs opacity-70">
-                <div>
-                  <p className="font-extrabold text-[#0B1F4D] dark:text-white">
-                     {isTl ? 'Nakalimutan ang password sa student portal' : 'Forgot student portal password'}
-                  </p>
-                  <p className="text-[#4A608A] dark:text-[#94A8D0]">
-                    {isTl
-                      ? 'Paparating pa: gagana ito kapag nakakonekta na ang student portal.'
-                      : 'Coming soon: this will work once the student portal is connected.'}
-                  </p>
-                </div>
-                <span className="px-2.5 py-1 rounded-full text-[10.5px] font-extrabold shrink-0 saas-card-subtle text-[#4A608A]">
-                  {isTl ? 'Paparating' : 'Coming soon'}
-                </span>
-              </div>
+                    <div className="flex-1 min-h-0 overflow-y-auto clean-scroll p-5 space-y-5">
+                      {p.enrolled === false && (
+                        <p className="px-4 py-2.5 rounded-xl bg-[#E8E8ED] dark:bg-white/[0.08] text-[13px] text-[#1D1D1F] dark:text-[#F5F5F7]">
+                          {isTl ? 'Hindi na naka-enroll' : 'Not enrolled anymore'} · {p.leftReason || '—'}
+                        </p>
+                      )}
 
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedStudentProfile(null)}
-                  className="px-4 py-2 rounded-lg saas-card-subtle text-xs font-bold"
-                >
-                  {isTl ? 'Isara' : 'Close'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedStudentNumbers([selectedStudentProfile.studentNumber]);
-                    setSelectedStudentProfile(null);
-                    setSubTab('add-report');
-                  }}
-                  className="px-4 py-2 rounded-lg bg-[#1E469B] text-white text-xs font-bold"
-                >
-                  {isTl ? '＋ Bagong kaso para sa kanya' : '＋ New case for this student'}
-                </button>
-              </div>
+                      {/* details as an inset grouped list */}
+                      <div className={group}>
+                        <div className={row}>
+                          <span className={label}>{isTl ? 'Magulang / guardian' : 'Parent / guardian'}</span>
+                          <span className={value}>{p.parentName || '—'}</span>
+                        </div>
+                        <div className={row}>
+                          <span className={label}>{isTl ? 'Mobile ng magulang' : 'Parent mobile'}</span>
+                          {p.parentPhone ? (
+                            <a href={`tel:${p.parentPhone.replace(/\D/g, '')}`} className="text-[14px] text-[#1E469B] dark:text-[#7CB8F7] font-medium tabular-nums">{p.parentPhone}</a>
+                          ) : (
+                            <span className={value}>{isTl ? 'walang number' : 'no number'}</span>
+                          )}
+                        </div>
+                        <div className={row}>
+                          <span className={label}>{isTl ? 'Mga offense' : 'Offenses'}</span>
+                          <span className="flex items-center gap-2">
+                            <span className={value}>
+                              {p.minorOffenseCount} minor · {p.majorOffenseCount} {isTl ? 'malubha' : 'serious'}
+                            </span>
+                            {hasRecord && <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${badge.cls}`}>{badge.text}</span>}
+                          </span>
+                        </div>
+                        {appConfig.studentFields.custom
+                          .filter((c) => (p.extra ?? {})[c.key])
+                          .map((c) => (
+                            <div key={c.key} className={row} data-extra-info>
+                              <span className={label}>{isTl ? c.labelTl || c.labelEn : c.labelEn}</span>
+                              <span className={`${value} break-words`}>{(p.extra ?? {})[c.key]}</span>
+                            </div>
+                          ))}
+                      </div>
+
+                      {/* their cases */}
+                      <div className="space-y-2">
+                        <p className="px-1 text-[13px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">
+                          {isTl ? 'Mga kaso niya' : 'Their cases'} <span className="font-normal text-[#8E8E93]">{theirCases.length}</span>
+                        </p>
+                        {theirCases.length === 0 ? (
+                          <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 px-4 py-5 flex items-center gap-3">
+                            <span className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 flex items-center justify-center"><Check className="w-4 h-4" aria-hidden /></span>
+                            <span className="text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Walang kaso. Malinis ang record.' : 'No cases. Clean record.'}</span>
+                          </div>
+                        ) : (
+                          <div className={group}>
+                            {theirCases.map((c) => (
+                              <button
+                                key={c.caseCode}
+                                type="button"
+                                title={c.caseCode}
+                                onClick={() => {
+                                  setSelectedStudentProfile(null);
+                                  openCaseDetails(c);
+                                }}
+                                className="w-full text-left px-4 py-3 flex items-center justify-between gap-3 hover:bg-[#F4F8FF] dark:hover:bg-white/[0.04] transition-colors"
+                              >
+                                <span className="min-w-0">
+                                  <span className="block text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] truncate">{isTl ? c.offenseTitleTl : c.offenseTitleEn}</span>
+                                  <span className="block text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{prettyDate(c.incidentDate)} · {severityInfo(c.severity).word}</span>
+                                </span>
+                                <span className="flex items-center gap-2 shrink-0">
+                                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${c.status === 'Resolved' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200' : 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200'}`}>
+                                    {isWithdrawn(c) ? closedWord(c) : caseBadgeWord(c)}
+                                  </span>
+                                  <ChevronRight className="w-4 h-4 text-[#C7C7CC] dark:text-[#636366]" aria-hidden />
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {leaveFor && leaveFor.studentNumber === p.studentNumber && (
+                        <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-rose-200 dark:border-rose-900/60 p-4 space-y-2.5" data-leave-reasons>
+                          <p className="text-[13px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Bakit hindi na naka-enroll?' : 'Why is the student leaving?'}</p>
+                          <div className="flex flex-wrap gap-2">
+                            {(isTl ? [['Graduated', 'Graduated'], ['Transferred', 'Lumipat ng school'], ['Stopped', 'Huminto sa pag-aaral']] : [['Graduated', 'Graduated'], ['Transferred', 'Transferred'], ['Stopped', 'Stopped school']]).map(([k, t]) => (
+                              <button key={k} type="button" data-leave-reason={k} onClick={() => void setEnrollment(p, false, t)} className="h-8 px-3.5 rounded-full bg-[#F5F5F7] dark:bg-white/[0.08] hover:bg-[#E8E8ED] dark:hover:bg-white/[0.14] text-[13px] text-[#1D1D1F] dark:text-[#F5F5F7]">
+                                {t}
+                              </button>
+                            ))}
+                            <button type="button" onClick={() => setLeaveFor(null)} className="h-8 px-3.5 rounded-full text-[13px] text-[#1E469B] dark:text-[#7CB8F7]">
+                              {isTl ? 'Huwag na' : 'Cancel'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* footer: rare actions on the left, the one main action on the right */}
+                    <div className="px-5 py-3.5 bg-white dark:bg-[#0F1B2E] border-t border-black/[0.06] dark:border-white/[0.08] flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button type="button" data-action="edit-student" onClick={() => setStudentFormFor(p)} className="h-9 px-4 rounded-full bg-[#F5F5F7] dark:bg-white/[0.08] hover:bg-[#E8E8ED] dark:hover:bg-white/[0.14] text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">
+                          {isTl ? 'Baguhin' : 'Edit details'}
+                        </button>
+                        {p.enrolled === false ? (
+                          <button type="button" data-action="re-enroll" onClick={() => void setEnrollment(p, true)} className="h-9 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">
+                            {isTl ? 'Ibalik bilang naka-enroll' : 'Mark as enrolled again'}
+                          </button>
+                        ) : (
+                          <button type="button" data-action="not-enrolled" onClick={() => setLeaveFor(p)} className="h-9 px-4 rounded-full text-[13px] font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30">
+                            {isTl ? 'Hindi na naka-enroll…' : 'Not enrolled anymore…'}
+                          </button>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedStudentNumbers([p.studentNumber]);
+                          setSelectedStudentProfile(null);
+                          setSubTab('add-report');
+                        }}
+                        className="h-9 px-5 rounded-full bg-[#1E469B] hover:bg-[#16377E] text-white text-[13px] font-semibold inline-flex items-center gap-1.5"
+                      >
+                        <Plus className="w-4 h-4" aria-hidden />
+                        {isTl ? 'Bagong kaso' : 'New case'}
+                      </button>
+                    </div>
+                  </>
+                );
+              })()}
             </motion.div>
           </motion.div>
         )}

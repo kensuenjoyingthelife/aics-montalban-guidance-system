@@ -33,9 +33,9 @@
   --portal-shadow: 0 22px 55px rgba(4, 14, 32, 0.09);
 
   /* CDM Portal Academic Design Tokens */
-  --cdm-font-serif: "Newsreader", "Playfair Display", Georgia, "Times New Roman", serif;
-  --cdm-font-sans: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --cdm-font-mono: "JetBrains Mono", "Fira Code", monospace;
+  --cdm-font-serif: "Inter", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --cdm-font-sans: "Inter", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --cdm-font-mono: "Inter", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   /* Emil Kowalski Easing Curves & Timing */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -140,36 +140,40 @@
 }
 
 /* ============================================================================
-   2. COLLEGIATE EDITORIAL CARD (CDM-PORTAL 1:1 SURFACE + TOP GOLD ACCENT BAR)
-      - Light Mode: Crisp Elevated White (#FFFFFF) with 1px #D5E0EE border & Top Gold Bar
-      - Dark Mode: Matte Obsidian Navy (#0A1526) with 1px #1E3250 border & Top Gold Bar
+   2. HIGH-CONTRAST FROSTED GRADIENT GLASS CARD (WCAG AAA READABILITY)
+      - Light Mode: Frosted Pearl-Ice Gradient Glass with Deep Oxford Navy (#0B1F4D) Text
+      - Dark Mode: Frosted Midnight-Sapphire Gradient Glass with Crisp White (#FFFFFF) Text
    ============================================================================ */
 .aics-true-glass {
-  position: relative;
-  background: var(--portal-surface);
-  border: 1px solid var(--portal-border);
-  border-radius: 20px;
-  box-shadow: 0 32px 75px rgba(2, 8, 22, 0.35);
-  color: var(--portal-ink);
-}
-
-.aics-true-glass::before {
-  position: absolute;
-  top: 0;
-  left: 29px;
-  width: 72px;
-  height: 3px;
-  background: var(--aics-gold);
-  border-radius: 2px;
-  content: "";
-  z-index: 20;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(235, 243, 255, 0.88) 55%,
+    rgba(222, 235, 255, 0.84) 100%
+  );
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1.5px solid rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 30px 72px -12px rgba(6, 18, 48, 0.52),
+    inset 0 1px 2px rgba(255, 255, 255, 1);
+  color: #0B1F4D;
 }
 
 .dark .aics-true-glass {
-  background: #0A1526;
-  border: 1px solid #1E3250;
-  box-shadow: 0 32px 75px rgba(0, 0, 0, 0.65);
-  color: #EDF4FC;
+  background: linear-gradient(
+    145deg,
+    rgba(17, 35, 76, 0.86) 0%,
+    rgba(11, 24, 54, 0.80) 55%,
+    rgba(8, 18, 42, 0.88) 100%
+  );
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 1.5px solid rgba(124, 184, 247, 0.36);
+  box-shadow:
+    0 34px 80px -12px rgba(0, 0, 0, 0.85),
+    inset 0 1px 2px rgba(186, 230, 253, 0.28);
+  color: #FFFFFF;
 }
 
 /* Left Panel Feature Tile Glass */
@@ -234,94 +238,115 @@
 }
 
 /* ============================================================================
-   2C. CDM-PORTAL COLLEGIATE CARD SURFACE & TOP GOLD ACCENT BAR
+   2C. ULTRA-PREMIUM COSMIC FROSTED GLASSSMORPHISM (INSPIRED BY FIGMA/MACOS)
    ============================================================================ */
 .cosmic-glass-card {
   position: relative;
-  background: var(--portal-surface);
-  border-radius: 20px;
-  border: 1px solid var(--portal-border);
-  box-shadow: 0 32px 75px rgba(2, 8, 22, 0.35);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.04) 45%,
+    rgba(14, 38, 88, 0.42) 100%
+  );
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border-radius: 36px;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(124, 184, 247, 0.25),
+    0 25px 60px -12px rgba(2, 6, 23, 0.85),
+    0 0 50px -10px rgba(78, 146, 223, 0.35),
+    inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -2px 6px 0 rgba(0, 0, 0, 0.35);
   overflow: hidden;
-  transition: transform 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out), border-color 0.2s var(--ease-out);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
-
-.cosmic-glass-card::before {
-  position: absolute;
-  top: 0;
-  left: 29px;
-  width: 72px;
-  height: 3px;
-  background: var(--aics-gold);
-  border-radius: 2px;
-  content: "";
-  z-index: 20;
-}
-
-/* ============================================================================
-   PERFECT THEME SWITCHING: DARK MODE vs LIGHT MODE (CDM-PORTAL 1:1)
-   ============================================================================ */
 
 /* 1. BACKGROUND CANVAS */
-/* DARK MODE BACKGROUND: Deep Obsidian Navy (CDM: #042017 / #07100c) */
+/* DARK MODE BACKGROUND */
 :root.dark .student-portal-canvas {
   background:
-    radial-gradient(680px 440px at 14% 20%, rgba(30, 70, 155, 0.28), transparent 68%),
-    radial-gradient(620px 420px at 86% 78%, rgba(217, 169, 62, 0.08), transparent 65%),
-    linear-gradient(115deg, #040E20 0%, #071630 52%, #050C18 100%) !important;
-  color: #EDF4FC !important;
+    radial-gradient(1100px 700px at 15% 15%, rgba(37, 99, 235, 0.28), transparent 60%),
+    radial-gradient(900px 600px at 85% 85%, rgba(79, 70, 229, 0.24), transparent 60%),
+    linear-gradient(145deg, #050D24 0%, #0A1B44 50%, #102A6B 100%) !important;
+  color: #FFFFFF !important;
 }
 
-/* LIGHT MODE BACKGROUND: Clean Academic Soft Canvas */
+/* LIGHT MODE BACKGROUND: Soft Twilight-Azure */
 :root:not(.dark) .student-portal-canvas {
   background:
-    radial-gradient(720px 480px at 15% 18%, rgba(30, 70, 155, 0.10), transparent 65%),
-    linear-gradient(180deg, #040E20 0%, #091D42 520px, #EDF2F9 520px, #F8FAFC 100%) !important;
-  color: #0B192C !important;
+    radial-gradient(960px 600px at 20% 20%, rgba(59, 130, 246, 0.28), transparent 65%),
+    radial-gradient(880px 540px at 80% 80%, rgba(99, 102, 241, 0.22), transparent 65%),
+    linear-gradient(135deg, #A8C7F7 0%, #BBD6FC 50%, #CDE3FD 100%) !important;
+  color: #0B1F4D !important;
 }
 
 /* 2. TOP HEADER BAR */
 :root.dark .student-portal-header {
-  background: rgba(4, 14, 32, 0.94) !important;
-  border-color: rgba(217, 169, 62, 0.22) !important;
+  background: rgba(5, 13, 36, 0.85) !important;
+  border-color: rgba(147, 197, 253, 0.2) !important;
   color: #FFFFFF !important;
 }
 :root.dark .student-portal-header h1 {
   color: #FFFFFF !important;
 }
 :root.dark .student-portal-header p {
-  color: #94A8C4 !important;
+  color: #93C5FD !important;
 }
 
 :root:not(.dark) .student-portal-header {
-  background: rgba(4, 14, 32, 0.94) !important;
-  border-color: rgba(217, 169, 62, 0.22) !important;
-  color: #FFFFFF !important;
+  background: rgba(255, 255, 255, 0.82) !important;
+  border-color: rgba(30, 70, 155, 0.18) !important;
+  color: #0B1F4D !important;
 }
 :root:not(.dark) .student-portal-header h1 {
-  color: #FFFFFF !important;
+  color: #0B1F4D !important;
 }
 :root:not(.dark) .student-portal-header p {
-  color: #93C5FD !important;
+  color: #1E469B !important;
 }
 
 /* 3. CARD SURFACES (DARK CARD in Dark Mode vs LIGHT CARD in Light Mode) */
 :root.dark .cosmic-glass-card {
   position: relative;
-  background: #0A1526 !important;
-  border-radius: 20px !important;
-  border: 1px solid #1E3250 !important;
-  box-shadow: 0 32px 75px rgba(0, 0, 0, 0.62) !important;
-  color: #EDF4FC !important;
+  background: linear-gradient(
+    145deg,
+    rgba(14, 38, 92, 0.92) 0%,
+    rgba(30, 70, 155, 0.88) 30%,
+    rgba(19, 46, 107, 0.90) 55%,
+    rgba(9, 25, 62, 0.95) 75%,
+    rgba(14, 38, 92, 0.92) 100%
+  ) !important;
+  background-size: 300% 300% !important;
+  animation: aics-card-gradient-shift 8s ease-in-out infinite alternate !important;
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border-radius: 36px;
+  border: 1.5px solid rgba(147, 197, 253, 0.45) !important;
+  box-shadow:
+    0 30px 80px -15px rgba(0, 0, 0, 0.8),
+    0 0 50px -10px rgba(59, 130, 246, 0.45),
+    inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.35) !important;
+  color: #FFFFFF !important;
+  will-change: background-position;
 }
 
 :root:not(.dark) .cosmic-glass-card {
   position: relative;
-  background: #FFFFFF !important;
-  border-radius: 20px !important;
-  border: 1px solid #D5E0EE !important;
-  box-shadow: 0 32px 75px rgba(4, 14, 32, 0.18) !important;
-  color: #0B192C !important;
+  background: linear-gradient(
+    145deg,
+    #FFFFFF 0%,
+    #F0F7FF 35%,
+    #E1EFFF 70%,
+    #D0E5FF 100%
+  ) !important;
+  border-radius: 32px;
+  border: 1.5px solid #94A3B8 !important;
+  box-shadow:
+    0 15px 35px -5px rgba(30, 58, 138, 0.12),
+    0 4px 12px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  color: #0B1F4D !important;
 }
 
 @keyframes aics-card-gradient-shift {
@@ -889,6 +914,165 @@ body.low-tier-device [style*="animation: twinkleGlow"] {
   font-weight: 500;
   letter-spacing: -0.04em;
   line-height: 0.96;
+}
+
+/* ============================================================================
+   2E. 2026 INSTITUTIONAL COMMAND CENTER (LINEAR + MACOS SEQUOIA LAYERED UI)
+   ============================================================================ */
+.cmd-banner-2026 {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  background:
+    radial-gradient(520px 260px at 88% 15%, rgba(56, 189, 248, 0.22), transparent 68%),
+    radial-gradient(420px 240px at 14% 90%, rgba(217, 169, 62, 0.16), transparent 65%),
+    linear-gradient(125deg, #06132B 0%, #0D2658 54%, #15387E 100%);
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  box-shadow:
+    0 20px 45px -12px rgba(4, 14, 32, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  color: #FFFFFF;
+}
+
+.dark .cmd-banner-2026 {
+  background:
+    radial-gradient(520px 260px at 88% 15%, rgba(56, 189, 248, 0.18), transparent 68%),
+    radial-gradient(420px 240px at 14% 90%, rgba(217, 169, 62, 0.12), transparent 65%),
+    linear-gradient(125deg, #050E20 0%, #0A1D42 55%, #0F2B63 100%);
+  border-color: rgba(56, 189, 248, 0.24);
+  box-shadow:
+    0 22px 50px -12px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* 3-Layer Luminous KPI Card */
+.kpi-card-2026 {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  padding: 20px 22px 18px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F9FBFF 100%);
+  border: 1px solid #CFD9EC;
+  box-shadow:
+    0 10px 28px -8px rgba(11, 31, 77, 0.08),
+    0 2px 6px rgba(11, 31, 77, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+  transition: transform 180ms var(--ease-out), border-color 180ms var(--ease-out), box-shadow 180ms var(--ease-out);
+}
+
+.kpi-card-2026:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 18px 38px -10px rgba(11, 31, 77, 0.14),
+    0 4px 10px rgba(11, 31, 77, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
+.dark .kpi-card-2026 {
+  background: linear-gradient(165deg, #0D1B33 0%, #091324 100%);
+  border: 1px solid rgba(96, 165, 250, 0.20);
+  box-shadow:
+    0 16px 38px -10px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.dark .kpi-card-2026:hover {
+  border-color: rgba(56, 189, 248, 0.45);
+  box-shadow:
+    0 22px 46px -10px rgba(0, 0, 0, 0.72),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+/* Color-Coded 3D Duotone Squircle Badges */
+.kpi-icon-sapphire {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+  border: 1px solid #BFDBFE;
+  color: #1D4ED8;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12), inset 0 1px 0 #FFFFFF;
+}
+.dark .kpi-icon-sapphire {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.26) 0%, rgba(29, 78, 216, 0.14) 100%);
+  border-color: rgba(96, 165, 250, 0.32);
+  color: #60A5FA;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.kpi-icon-amber {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+  border: 1px solid #FDE68A;
+  color: #B45309;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.12), inset 0 1px 0 #FFFFFF;
+}
+.dark .kpi-icon-amber {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.24) 0%, rgba(180, 83, 9, 0.14) 100%);
+  border-color: rgba(251, 191, 36, 0.32);
+  color: #FBBF24;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.kpi-icon-emerald {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+  border: 1px solid #A7F3D0;
+  color: #047857;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12), inset 0 1px 0 #FFFFFF;
+}
+.dark .kpi-icon-emerald {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.24) 0%, rgba(4, 120, 87, 0.14) 100%);
+  border-color: rgba(52, 211, 153, 0.32);
+  color: #34D399;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.kpi-icon-rose {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%);
+  border: 1px solid #FECDD3;
+  color: #BE123C;
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.12), inset 0 1px 0 #FFFFFF;
+}
+.dark .kpi-icon-rose {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.24) 0%, rgba(190, 18, 60, 0.14) 100%);
+  border-color: rgba(251, 113, 133, 0.32);
+  color: #FB7185;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Elevated Operational Panel (Conferences, Follow-ups, Cases, Tables) */
+.panel-2026 {
+  border-radius: 22px;
+  background: #FFFFFF;
+  border: 1px solid #CFD9EC;
+  box-shadow:
+    0 12px 32px -10px rgba(11, 31, 77, 0.07),
+    0 2px 6px rgba(11, 31, 77, 0.03),
+    inset 0 1px 0 #FFFFFF;
+}
+
+.dark .panel-2026 {
+  background: linear-gradient(180deg, #0C182E 0%, #091223 100%);
+  border: 1px solid rgba(96, 165, 250, 0.18);
+  box-shadow:
+    0 18px 42px -10px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 /* Clean custom scrollbar for Sidebar & Modals */
@@ -1528,11 +1712,31 @@ body.low-tier-device .cosmic-glass-card {
 }
 
 /* ==========================================================================
-   P0 TYPE SCALE, FLAT SURFACES & ANTI-SLOP ENFORCEMENT
-   - Minimum 12px font size across all elements for executive readability
-   - Tamed weights: 400 body, 600 labels, 700 titles (eliminate excessive 900)
+   P0 TYPE SCALE, REDEX-GRADE CLEAN GEOMETRIC TYPOGRAPHY & ANTI-SLOP ENFORCEMENT
+   - Pure Inter / Plus Jakarta Sans for all Numbers, Headers, and Labels
+   - Zero monospace slashed-zero robot numbers; uses clean tabular-nums
+   - Tamed weights: 400 body, 500 labels, 600 numbers & headers (no screaming 900)
    - Hardware-accelerated Emil Kowalski transitions (<300ms ease-out)
    ========================================================================== */
+.font-mono,
+.font-serif {
+  font-family: "Inter", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-variant-numeric: tabular-nums !important;
+  font-feature-settings: "tnum" 1, "cv02" 1, "cv03" 1, "cv04" 1, "cv11" 1 !important;
+}
+
+.text-3xl,
+.text-2xl {
+  letter-spacing: -0.03em !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.text-xl,
+.text-lg,
+.text-base {
+  letter-spacing: -0.018em !important;
+}
+
 .text-\[9px\],
 .text-\[9\.5px\],
 .text-\[10px\],
@@ -1540,26 +1744,26 @@ body.low-tier-device .cosmic-glass-card {
 .text-\[11px\],
 .text-\[11\.5px\] {
   font-size: 12px !important;
-  line-height: 1.4 !important;
+  line-height: 1.45 !important;
 }
 
-.font-black {
-  font-weight: 700 !important;
-}
-
-.font-extrabold {
+.font-black,
+.font-extrabold,
+.font-bold {
   font-weight: 600 !important;
 }
 
-h1.font-extrabold,
-h2.font-extrabold,
-h3.font-extrabold,
-h4.font-extrabold,
-.text-2xl.font-extrabold,
-.text-xl.font-extrabold,
-.text-lg.font-extrabold,
-.text-base.font-extrabold {
-  font-weight: 700 !important;
+h1,
+h2,
+h3,
+h4,
+.text-3xl,
+.text-2xl,
+.text-xl,
+.text-lg,
+.text-base {
+  font-family: "Inter", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-weight: 600 !important;
 }
 
 .transition-all {
@@ -1745,3 +1949,253 @@ a.btn-press:active {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 16px 36px -6px rgba(0, 0, 0, 0.65);
 }
 
+
+/* AGENTS.md §2 double-ring card: outer soft ring + inner matte surface (no extra DOM) */
+.ring-card {
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid rgb(226 232 240 / 0.8);
+  box-shadow:
+    0 0 0 6px rgb(226 232 240 / 0.7),
+    0 0 0 7px rgb(203 213 225 / 0.8),
+    0 1px 2px rgb(15 23 42 / 0.06);
+}
+.dark .ring-card {
+  background: #0A1526;
+  border-color: rgb(255 255 255 / 0.05);
+  box-shadow:
+    0 0 0 6px rgb(14 29 52 / 0.8),
+    0 0 0 7px rgb(255 255 255 / 0.08),
+    0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+/* ============================================================================
+   AGENTS.md PASS (2026-11-17): one card language for Dashboard + Cases
+   §2 double-ring elevation, §1 hairline borders, §5 #15 contrast, §3 low-end degrade
+   ============================================================================ */
+.saas-card,
+.panel-2026,
+.kpi-card-2026 {
+  background: #FFFFFF;
+  border: 1px solid rgb(226 232 240 / 0.9);
+  border-radius: 18px;
+  box-shadow:
+    0 0 0 5px rgb(226 232 240 / 0.55),
+    0 0 0 6px rgb(203 213 225 / 0.7),
+    0 1px 2px rgb(15 23 42 / 0.05);
+}
+.dark .saas-card,
+.dark .panel-2026,
+.dark .kpi-card-2026 {
+  background: #0A1526;
+  border: 1px solid rgb(255 255 255 / 0.06);
+  box-shadow:
+    0 0 0 5px rgb(14 29 52 / 0.75),
+    0 0 0 6px rgb(255 255 255 / 0.07),
+    0 1px 2px rgb(0 0 0 / 0.3);
+}
+.kpi-card-2026:hover,
+.dark .kpi-card-2026:hover {
+  transform: translateY(-2px);
+}
+.dark .kpi-card-2026:hover { border-color: rgb(125 211 252 / 0.35); }
+.kpi-card-2026:hover { border-color: #A9BCDD; }
+
+/* §5 #15 / #24: placeholders readable (WCAG AA on white) */
+input::placeholder,
+textarea::placeholder { color: #64748B; opacity: 1; }
+.dark input::placeholder,
+.dark textarea::placeholder { color: #8FA3BF; opacity: 1; }
+
+/* §3.2 low-end auto-degrade: html.lite is set on weak devices (see main.tsx) */
+html.lite *,
+html.lite *::before,
+html.lite *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ============================================================================
+   APPLE-STYLE SURFACES (user, 2026-11-17): replaces the grey double ring.
+   No visible thick borders. A 0.5px hairline plus a soft, wide, low shadow.
+   ============================================================================ */
+.saas-card,
+.panel-2026,
+.kpi-card-2026,
+.ring-card {
+  background: #FFFFFF;
+  border: 0;
+  border-radius: 20px;
+  box-shadow:
+    0 0 0 0.5px rgb(15 23 42 / 0.06),
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 10px 30px -12px rgb(15 23 42 / 0.10);
+}
+.kpi-card-2026:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 0.5px rgb(15 23 42 / 0.08),
+    0 2px 4px rgb(15 23 42 / 0.05),
+    0 18px 40px -14px rgb(15 23 42 / 0.16);
+}
+.dark .saas-card,
+.dark .panel-2026,
+.dark .kpi-card-2026,
+.dark .ring-card {
+  background: #0F1B2E;
+  border: 0;
+  box-shadow:
+    0 0 0 0.5px rgb(255 255 255 / 0.08),
+    inset 0 1px 0 rgb(255 255 255 / 0.04),
+    0 12px 32px -12px rgb(0 0 0 / 0.6);
+}
+.dark .kpi-card-2026:hover {
+  box-shadow:
+    0 0 0 0.5px rgb(255 255 255 / 0.14),
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 20px 44px -14px rgb(0 0 0 / 0.7);
+}
+
+/* ============================================================================
+   BENTO DASHBOARD (2026): mesh-gradient hero + frosted widgets
+   ============================================================================ */
+.bento-hero {
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgb(56 189 248 / 0.35) 0%, transparent 55%),
+    radial-gradient(80% 70% at 0% 100%, rgb(217 169 62 / 0.28) 0%, transparent 60%),
+    linear-gradient(135deg, #0B1F4D 0%, #163A86 55%, #1E469B 100%);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.12) inset, 0 24px 48px -20px rgb(11 31 77 / 0.55);
+}
+.bento-hero-glow {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgb(255 255 255 / 0.10) 1px, transparent 1px);
+  background-size: 18px 18px;
+  mask-image: radial-gradient(70% 80% at 85% 20%, #000 0%, transparent 75%);
+  -webkit-mask-image: radial-gradient(70% 80% at 85% 20%, #000 0%, transparent 75%);
+  pointer-events: none;
+}
+.bento-tile {
+  background: rgb(255 255 255 / 0.9);
+  box-shadow:
+    0 0 0 0.5px rgb(15 23 42 / 0.06),
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 12px 32px -14px rgb(15 23 42 / 0.14);
+}
+.bento-tile:hover {
+  box-shadow:
+    0 0 0 0.5px rgb(15 23 42 / 0.08),
+    0 2px 4px rgb(15 23 42 / 0.05),
+    0 22px 44px -16px rgb(15 23 42 / 0.2);
+}
+.dark .bento-tile {
+  background: linear-gradient(180deg, #131F33 0%, #0E1828 100%);
+  box-shadow:
+    0 0 0 0.5px rgb(255 255 255 / 0.09),
+    inset 0 1px 0 rgb(255 255 255 / 0.05),
+    0 14px 36px -14px rgb(0 0 0 / 0.7);
+}
+.dark .bento-hero {
+  box-shadow: 0 0 0 0.5px rgb(255 255 255 / 0.12), 0 24px 48px -20px rgb(0 0 0 / 0.8);
+}
+
+/* Apple segmented control: one look for every tab group (Dashboard theme) */
+.seg-track { display: inline-flex; padding: 2px; gap: 2px; border-radius: 10px; background: #E8E8ED; }
+.dark .seg-track { background: rgb(255 255 255 / 0.08); }
+.seg-on, .seg-off { border-radius: 8px !important; font-weight: 500 !important; transition: background-color 150ms, color 150ms, box-shadow 150ms; }
+.seg-on { background: #FFFFFF; color: #1D1D1F; box-shadow: 0 1px 3px rgb(0 0 0 / 0.12); }
+.dark .seg-on { background: #3A3A3C; color: #FFFFFF; }
+.seg-off { color: #6E6E73; }
+.seg-off:hover { color: #1D1D1F; }
+.dark .seg-off { color: #A1A1A6; }
+.dark .seg-off:hover { color: #FFFFFF; }
+
+/* every remaining card surface follows the Dashboard theme */
+.cdm-panel { background: #FFFFFF; border: 0; border-radius: 20px; box-shadow: 0 0 0 0.5px rgb(15 23 42 / 0.06), 0 1px 2px rgb(15 23 42 / 0.04), 0 10px 30px -12px rgb(15 23 42 / 0.10); }
+.dark .cdm-panel { background: #0F1B2E; border: 0; box-shadow: 0 0 0 0.5px rgb(255 255 255 / 0.08), inset 0 1px 0 rgb(255 255 255 / 0.04), 0 12px 32px -12px rgb(0 0 0 / 0.6); }
+
+/* List row card: visible edge on any monitor + clear hover highlight (Cases, Closed, Students) */
+.row-card {
+  background: #FFFFFF;
+  border: 1px solid #DDE3EC;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+  transition: border-color 150ms, background-color 150ms, box-shadow 150ms, transform 150ms;
+}
+.row-card:hover {
+  border-color: #1E469B;
+  background: #F4F8FF;
+  box-shadow: 0 8px 24px -12px rgb(30 70 155 / 0.35);
+  transform: translateY(-1px);
+}
+.row-card:focus-visible { outline: 2px solid #1E469B; outline-offset: 2px; }
+.dark .row-card { background: #0F1B2E; border-color: rgb(255 255 255 / 0.10); box-shadow: none; }
+.dark .row-card:hover { border-color: #5B8DEF; background: #13233D; box-shadow: 0 8px 24px -12px rgb(0 0 0 / 0.6); }
+html.lite .row-card:hover { transform: none; }
+
+/* ============================================================================
+   EXPRESSIVE APPLE KIT (Concerns first): gradient icon tiles, glass bars,
+   lit primary buttons, glowing urgent pill. Gradients ONLY on small accents.
+   ============================================================================ */
+.tile-grad {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #fff; border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 4px 10px -4px var(--tile-shadow, rgb(15 23 42 / 0.35));
+}
+.tile-grad::after { /* soft top shine like an iOS icon */
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.28) 0%, rgb(255 255 255 / 0) 55%);
+}
+.tile-amber  { background: linear-gradient(135deg, #FBBF24 0%, #F97316 100%); --tile-shadow: rgb(249 115 22 / 0.45); }
+.tile-violet { background: linear-gradient(135deg, #A78BFA 0%, #6366F1 100%); --tile-shadow: rgb(99 102 241 / 0.45); }
+.tile-rose   { background: linear-gradient(135deg, #FB7185 0%, #E11D48 100%); --tile-shadow: rgb(225 29 72 / 0.45); }
+.tile-blue   { background: linear-gradient(135deg, #38BDF8 0%, #2563EB 100%); --tile-shadow: rgb(37 99 235 / 0.45); }
+.tile-teal   { background: linear-gradient(135deg, #2DD4BF 0%, #0D9488 100%); --tile-shadow: rgb(13 148 136 / 0.45); }
+.tile-slate  { background: linear-gradient(135deg, #94A3B8 0%, #475569 100%); --tile-shadow: rgb(71 85 105 / 0.45); }
+
+/* report header tint: a whisper of the category color fading to the surface */
+.hero-tint { background: radial-gradient(120% 140% at 0% 0%, var(--hero, rgb(37 99 235 / 0.10)) 0%, transparent 60%), #FFFFFF; }
+.dark .hero-tint { background: radial-gradient(120% 140% at 0% 0%, var(--hero, rgb(37 99 235 / 0.18)) 0%, transparent 60%), #0F1B2E; }
+.hero-amber  { --hero: rgb(251 191 36 / 0.20); }
+.hero-violet { --hero: rgb(139 92 246 / 0.18); }
+.hero-rose   { --hero: rgb(244 63 94 / 0.16); }
+.hero-blue   { --hero: rgb(56 189 248 / 0.18); }
+.hero-teal   { --hero: rgb(45 212 191 / 0.18); }
+.hero-slate  { --hero: rgb(148 163 184 / 0.18); }
+
+/* frosted action bar */
+.glass-bar {
+  background: rgb(255 255 255 / 0.72);
+  -webkit-backdrop-filter: saturate(180%) blur(18px); backdrop-filter: saturate(180%) blur(18px);
+  border-top: 1px solid rgb(15 23 42 / 0.08);
+}
+.dark .glass-bar { background: rgb(15 27 46 / 0.72); border-top-color: rgb(255 255 255 / 0.08); }
+
+/* lit primary button: subtle top-down gradient + inner highlight */
+.btn-lit {
+  color: #fff; border-radius: 9999px;
+  background: linear-gradient(180deg, #2E62D0 0%, #1E469B 100%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25), 0 6px 16px -8px rgb(30 70 155 / 0.7);
+  transition: transform 150ms, filter 150ms, box-shadow 150ms;
+}
+.btn-lit:hover { filter: brightness(1.06); }
+.btn-lit:active { transform: scale(0.97); }
+.btn-lit:disabled { opacity: 0.5; }
+.btn-lit-green { background: linear-gradient(180deg, #16A34A 0%, #047857 100%); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25), 0 6px 16px -8px rgb(4 120 87 / 0.7); }
+
+/* urgent pill with a soft glow + pulsing dot */
+.urgent-pill {
+  display: inline-flex; align-items: center; gap: 6px; border-radius: 9999px;
+  padding: 2px 9px; font-size: 11px; font-weight: 600; color: #BE123C;
+  background: rgb(244 63 94 / 0.10); box-shadow: 0 0 0 1px rgb(244 63 94 / 0.25), 0 0 14px -2px rgb(244 63 94 / 0.35);
+}
+.dark .urgent-pill { color: #FDA4AF; background: rgb(244 63 94 / 0.16); }
+.urgent-pill::before { content: ''; width: 6px; height: 6px; border-radius: 9999px; background: #E11D48; animation: urgentPulse 1.6s ease-in-out infinite; }
+@keyframes urgentPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.8); } }
+html.lite .urgent-pill::before { animation: none; }
+
+/* timeline: finished segment glows blue → cyan */
+.tl-done { background: linear-gradient(90deg, #2563EB, #22D3EE); }

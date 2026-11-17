@@ -524,8 +524,35 @@ export interface DisciplineCaseRecord {
   sanctionStatus?: 'Pending parent notice' | 'Active' | 'Done' | '';
   decidedAt?: string | null;
   closedAt?: string | null;
-  /** Guidance intervention & behavioral counseling notes */
+  /** Closing note (kept in the old counseling_notes column; not counseling) */
   counselingNotes?: string;
+  /** student who was affected (complainant). Staff-only: never in SMS or the parent copy of forms */
+  affectedStudentNumber?: string;
+  affectedStudentName?: string;
+  /** who sat with the student during the explanation (adviser, parent, none) */
+  explanationPresent?: string;
+  /** the student chose not to give a statement */
+  explanationRefused?: boolean;
+  /** who came to the conference (mother, father, guardian) and the agreed points */
+  conferenceAttendedBy?: string;
+  conferenceMinutes?: string;
+  /** decision made without the parent after repeated no-shows (reason is in the audit trail) */
+  proceededWithoutParent?: boolean;
+  /** same incident: decide only after every student's parent conference is done */
+  waitForAll?: boolean;
+  /** due process: the student was told what the complaint is (reporter not named) */
+  complaintNoticedAt?: string | null;
+  /** major offense / suspension: approved by the principal */
+  principalApprovedBy?: string | null;
+  principalApprovedAt?: string | null;
+  /** appeal / request for reconsideration */
+  appealRequestedAt?: string | null;
+  appealBy?: string | null;
+  appealReason?: string | null;
+  appealResult?: string | null;
+  appealNote?: string | null;
+  /** day the sanction should be finished (YYYY-MM-DD) */
+  sanctionEndDate?: string | null;
   /** Whether parent attended the conference or was a no-show */
   parentConferenceStatus?: 'Attended' | 'No-Show' | 'Pending';
   /** Parent summons count (1 = 1st Summons, 2 = 2nd Summons, etc. Unlimited tracking) */

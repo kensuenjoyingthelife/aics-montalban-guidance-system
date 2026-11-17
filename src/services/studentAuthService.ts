@@ -1,4 +1,4 @@
-import { postMail } from './mailApi';
+import { postPortalReset } from './mailApi';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabaseClient';
 import { uploadImageToCloudinary } from './cloudinaryService';
 
@@ -89,10 +89,12 @@ export async function verifyStudentInMasterlist(studentNumber: string): Promise<
     const cleanNumber = studentNumber.trim();
     if (!cleanNumber) return { exists: false };
 
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/students?student_number=eq.${encodeURIComponent(cleanNumber)}&select=student_number,full_name,grade_section`,
-      { headers: headers() }
-    );
+    // the students table is staff-only; this RPC returns just name + grade (no parent phone or email)
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/portal_find_student`, {
+      method: 'POST',
+      headers: { ...headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_number: cleanNumber }),
+    });
     if (!res.ok) return { exists: false };
     const rows = await res.json();
     if (rows && rows.length > 0) {
@@ -181,7 +183,7 @@ export async function registerStudentPortalAccount(params: RegisterStudentParams
       is_practice: false,
     };
 
-    let insertRes = await fetch(`${SUPABASE_URL}/rest/v1/portal_accounts`, {
+    let insertRes = await fetch(`${SUPABASE_URL}/rest/v1/portal_accounts?select=id`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({
@@ -194,7 +196,7 @@ export async function registerStudentPortalAccount(params: RegisterStudentParams
     if (!insertRes.ok) {
       const errText = await insertRes.text();
       if (errText.includes('quick_pin_hash')) {
-        insertRes = await fetch(`${SUPABASE_URL}/rest/v1/portal_accounts`, {
+        insertRes = await fetch(`${SUPABASE_URL}/rest/v1/portal_accounts?select=id`, {
           method: 'POST',
           headers: headers(),
           body: JSON.stringify(basePayload),
@@ -257,39 +259,20 @@ export async function loginStudentPortal(
       return { success: false, error: 'Please enter both Student ID and Password.' };
     }
 
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/portal_accounts?student_number=eq.${encodeURIComponent(
-        cleanNumber
-      )}&select=*`,
-      { headers: headers() }
+    // The password is checked inside the database (portal_login); the hash never comes to the browser.
+    const r = await rpc<{ ok: boolean; error?: string; reason?: string; account?: Record<string, unknown>; has_pin?: boolean }>(
+      'portal_login',
+      { p_number: cleanNumber, p_hash: await hashPassword(plainPassword) }
     );
-
-    if (!res.ok) {
-      return { success: false, error: 'Connection error with database.' };
-    }
-
-    const rows = await res.json();
-    if (!rows || rows.length === 0) {
-      return {
-        success: false,
-        error: `No registered account found for Student ID: ${cleanNumber}. Please create an account first.`,
-      };
-    }
-
-    const account = rows[0];
-
-    if (account.status === 'Deactivated') {
-      return {
-        success: false,
-        error: `This account is deactivated (${account.deactivated_reason || 'Please visit the Guidance Office'}).`,
-      };
-    }
-
-    const hashed = await hashPassword(plainPassword);
-    if (account.password_hash && account.password_hash !== hashed) {
+    if (!r) return { success: false, error: 'Connection error with database.' };
+    if (!r.ok) {
+      if (r.error === 'no_account')
+        return { success: false, error: `No registered account found for Student ID: ${cleanNumber}. Please create an account first.` };
+      if (r.error === 'deactivated')
+        return { success: false, error: `This account is deactivated (${r.reason || 'Please visit the Guidance Office'}).` };
       return { success: false, error: 'Incorrect password. Please verify or use Forgot Password.' };
     }
-
+    const account = r.account ?? {};
     const master = await verifyStudentInMasterlist(cleanNumber);
 
     return {
@@ -297,13 +280,13 @@ export async function loginStudentPortal(
       account: {
         id: Number(account.id),
         studentNumber: cleanNumber,
-        fullName: account.full_name,
-        email: account.email || '',
-        contactNumber: account.contact_number || '',
+        fullName: String(account.full_name ?? ''),
+        email: String(account.email ?? ''),
+        contactNumber: String(account.contact_number ?? ''),
         gradeSection: master.gradeSection || 'SHS Student',
-        studentIdImageUrl: account.student_id_image,
-        nationalIdImageUrl: account.national_id_image,
-        quickPin: account.quick_pin_hash ? 'SET' : null,
+        studentIdImageUrl: account.student_id_image as string | undefined,
+        nationalIdImageUrl: account.national_id_image as string | undefined,
+        quickPin: r.has_pin ? 'SET' : null,
       },
     };
   } catch (err: unknown) {
@@ -311,6 +294,20 @@ export async function loginStudentPortal(
     return { success: false, error: msg };
   }
 }
+
+/** call a database function (security definer) with the public key */
+async function rpc<T>(name: string, args: Record<string, unknown>): Promise<T | null> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(args),
+  });
+  if (!res.ok) return null;
+  return (await res.json()) as T;
+}
+
+/** the safe (non-secret) account fields */
+const SAFE_COLS = 'id,student_number,full_name,email,status,contact_number,student_id_image,national_id_image';
 
 /**
  * 5.1 Quick PIN Login / Unlock for Mobile App
@@ -331,31 +328,26 @@ export async function verifyStudentQuickPin(
     }
 
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/portal_accounts?student_number=eq.${encodeURIComponent(
-        cleanNumber
-      )}&select=*`,
+      `${SUPABASE_URL}/rest/v1/portal_accounts?student_number=eq.${encodeURIComponent(cleanNumber)}&select=${SAFE_COLS}`,
       { headers: headers() }
     );
-
     if (!res.ok) {
       return { success: false, error: 'Connection error with database.' };
     }
-
     const rows = await res.json();
     if (!rows || rows.length === 0) {
       return { success: false, error: 'Student account not found.' };
     }
-
     const account = rows[0];
     if (account.status === 'Deactivated') {
       return { success: false, error: 'This account is deactivated.' };
     }
 
     const hashedInputPin = await hashPassword(cleanPin);
+    // checked in the database; the phone's own saved PIN still works offline-first
+    const okDb = await rpc<boolean>('portal_check_pin', { p_number: cleanNumber, p_pin_hash: hashedInputPin });
     const localPin = typeof localStorage !== 'undefined' ? localStorage.getItem(`aics_pin_${cleanNumber}`) : null;
-    const expectedPin = account.quick_pin_hash || localPin;
-
-    if (!expectedPin || expectedPin !== hashedInputPin) {
+    if (!okDb && localPin !== hashedInputPin) {
       return { success: false, error: 'Incorrect 5-digit PIN. Please try again or login with password.' };
     }
 
@@ -383,6 +375,8 @@ export async function verifyStudentQuickPin(
 
 /**
  * 6. Send Forgot Password OTP
+ * The code is made, saved and emailed by the server (aics-mailer). The browser never sees it,
+ * so nobody can reset another student's password.
  */
 export async function sendForgotPasswordOtp(
   identifier: string
@@ -390,51 +384,13 @@ export async function sendForgotPasswordOtp(
   try {
     const clean = identifier.trim();
     if (!clean) return { success: false, error: 'Please enter your Student ID or Email.' };
-
-    const query = clean.includes('@')
-      ? `email=eq.${encodeURIComponent(clean.toLowerCase())}`
-      : `student_number=eq.${encodeURIComponent(clean)}`;
-
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/portal_accounts?${query}&select=*`, {
-      headers: headers(),
-    });
-
-    if (!res.ok) return { success: false, error: 'Database search failed.' };
-    const rows = await res.json();
-    if (!rows || rows.length === 0) {
-      return { success: false, error: 'No account found matching this Student ID or Email.' };
+    const r = await postPortalReset(clean, 'tl');
+    if (!r.ok) {
+      if (r.error === 'no_account') return { success: false, error: 'No account found matching this Student ID or Email.' };
+      if (r.error === 'no_email') return { success: false, error: 'No email address linked to this account.' };
+      return { success: false, error: 'The code could not be sent. Please try again.' };
     }
-
-    const account = rows[0];
-    const targetEmail = account.email;
-
-    if (!targetEmail) {
-      return { success: false, error: 'No email address linked to this account.' };
-    }
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-
-    await fetch(`${SUPABASE_URL}/rest/v1/portal_accounts?id=eq.${account.id}`, {
-      method: 'PATCH',
-      headers: headers(),
-      body: JSON.stringify({ otp_code: otp, otp_expires_at: expiresAt }),
-    });
-
-    try {
-      await postMail('otp', { email: targetEmail, code: otp, locale: 'tl' });
-    } catch {
-      // ignore
-    }
-
-    const parts = targetEmail.split('@');
-    const namePart = parts[0];
-    const masked =
-      namePart.length > 2
-        ? `${namePart[0]}***${namePart[namePart.length - 1]}@${parts[1]}`
-        : `${namePart[0]}***@${parts[1]}`;
-
-    return { success: true, emailMasked: masked };
+    return { success: true, emailMasked: r.emailMasked };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     return { success: false, error: msg };
@@ -442,7 +398,7 @@ export async function sendForgotPasswordOtp(
 }
 
 /**
- * 7. Reset Password with OTP
+ * 7. Reset Password with OTP (checked inside the database)
  */
 export async function resetPasswordWithOtp(
   identifier: string,
@@ -450,45 +406,16 @@ export async function resetPasswordWithOtp(
   newPassword: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const clean = identifier.trim();
-    const cleanOtp = otpCode.trim();
-
-    const query = clean.includes('@')
-      ? `email=eq.${encodeURIComponent(clean.toLowerCase())}`
-      : `student_number=eq.${encodeURIComponent(clean)}`;
-
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/portal_accounts?${query}&select=*`, {
-      headers: headers(),
+    const r = await rpc<string>('portal_reset_password', {
+      p_identifier: identifier.trim(),
+      p_code: otpCode.trim(),
+      p_new_hash: await hashPassword(newPassword),
     });
-
-    if (!res.ok) return { success: false, error: 'Account lookup failed.' };
-    const rows = await res.json();
-    if (!rows || rows.length === 0) return { success: false, error: 'Account not found.' };
-
-    const account = rows[0];
-
-    if (!account.otp_code || account.otp_code !== cleanOtp) {
-      return { success: false, error: 'Invalid 6-digit OTP code.' };
-    }
-
-    if (account.otp_expires_at && new Date(account.otp_expires_at).getTime() < Date.now()) {
-      return { success: false, error: 'OTP code has expired.' };
-    }
-
-    const newHash = await hashPassword(newPassword);
-    const updateRes = await fetch(`${SUPABASE_URL}/rest/v1/portal_accounts?id=eq.${account.id}`, {
-      method: 'PATCH',
-      headers: headers(),
-      body: JSON.stringify({
-        password_hash: newHash,
-        otp_code: null,
-        otp_expires_at: null,
-      }),
-    });
-
-    if (!updateRes.ok) return { success: false, error: 'Failed to update password.' };
-
-    return { success: true };
+    if (r === 'ok') return { success: true };
+    if (r === 'bad_code') return { success: false, error: 'Invalid 6-digit OTP code.' };
+    if (r === 'expired') return { success: false, error: 'OTP code has expired.' };
+    if (r === 'no_account') return { success: false, error: 'Account not found.' };
+    return { success: false, error: 'Failed to update password.' };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     return { success: false, error: msg };

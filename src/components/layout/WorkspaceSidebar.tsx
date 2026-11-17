@@ -96,11 +96,11 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
           />
           {!collapsed && (
             <div className="min-w-0">
-              <h2 className="font-serif text-[14px] font-bold tracking-wide text-white truncate leading-tight">
-                Asian Institute
+              <h2 className="text-[14px] font-semibold tracking-tight text-white truncate leading-tight">
+                AICS Montalban
               </h2>
-              <p className="text-[10px] font-extrabold tracking-[0.15em] uppercase text-[#F2CE70] truncate">
-                AICS GUIDANCE PORTAL
+              <p className="text-[11px] font-medium text-[#F2CE70] truncate">
+                Guidance Office
               </p>
             </div>
           )}
@@ -109,7 +109,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
         {!collapsed && (
           <button
             type="button"
-            title="Collapse Sidebar"
+            title={isTl ? 'Itago ang sidebar' : 'Collapse sidebar'}
             onClick={() => {
               soundFX.playToggleSwitch(!collapsed);
               onToggleCollapse();
@@ -136,7 +136,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
         <div className="pt-2 px-2 flex justify-center">
           <button
             type="button"
-            title="Expand Sidebar"
+            title={isTl ? 'Ipakita ang sidebar' : 'Expand sidebar'}
             onClick={() => {
               soundFX.playToggleSwitch(!collapsed);
               onToggleCollapse();
@@ -311,7 +311,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
             </span>
             {!collapsed && (
               <span className="truncate">
-                {isTl ? 'Tagalog (Piliin: EN)' : 'English (Select: TL)'}
+                {isTl ? 'Wika: Tagalog' : 'Language: English'}
               </span>
             )}
           </div>
@@ -326,12 +326,12 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
             collapsed ? 'justify-center p-2' : 'px-3 py-2'
           } rounded-[8px] text-[13px] font-medium text-[#DCE8FF]/80 hover:bg-white/6 hover:text-white transition-colors`}
         >
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             <span className="w-5 h-5 rounded-[4px] bg-white/10 flex items-center justify-center text-[10px] font-black text-[#9BCBFF] shrink-0 border border-white/15">
               {TEXT_SIZES.find((s) => s.id === currentSize)?.short ?? 'S'}
             </span>
             {!collapsed && (
-              <span className="truncate flex items-center justify-between flex-1">
+              <span className="truncate flex items-center justify-between gap-2 flex-1">
                 <span>{isTl ? 'Sukat ng Letra' : 'Font Size'}</span>
                 <span className="text-[11px] text-[#9BCBFF]/90 font-semibold uppercase tracking-wider">
                   {isTl
@@ -347,7 +347,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
         <button
           type="button"
           onClick={(e) => toggleThemeWithAura(e)}
-          title="Switch Dark / Light Mode"
+          title={isTl ? 'Palitan ang dark / light mode' : 'Switch dark / light mode'}
           className={`w-full flex items-center ${
             collapsed ? 'justify-center p-2' : 'px-3 py-2'
           } rounded-[8px] text-[13px] font-medium text-[#DCE8FF]/80 hover:bg-white/6 hover:text-white transition-colors`}
@@ -366,7 +366,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
             </svg>
             {!collapsed && (
               <span className="truncate">
-                {isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                {isDark ? (isTl ? 'Gawing light mode' : 'Switch to Light Mode') : (isTl ? 'Gawing dark mode' : 'Switch to Dark Mode')}
               </span>
             )}
           </div>

@@ -208,7 +208,7 @@ export async function sendMessage(concernId: number, sender: 'office' | 'student
 
 export async function fetchAccounts(): Promise<PortalAccount[] | null> {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/portal_accounts?select=*&order=id.desc&limit=1000`, { headers: headers() });
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/portal_accounts?select=id,student_number,full_name,email,status,deactivated_reason,deactivated_at,is_practice,created_at,contact_number,student_id_image,national_id_image&order=id.desc&limit=1000`, { headers: headers() });
     if (!res.ok) return null;
     return ((await res.json()) as Record<string, unknown>[]).map((r) => ({
       id: Number(r.id),
@@ -230,7 +230,7 @@ export async function fetchAccounts(): Promise<PortalAccount[] | null> {
 
 export async function setAccountStatus(id: number, active: boolean, reason = ''): Promise<boolean> {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/portal_accounts?id=eq.${id}`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/portal_accounts?id=eq.${id}&select=id,status`, {
       method: 'PATCH',
       headers: headers(),
       body: JSON.stringify(
@@ -256,7 +256,7 @@ export async function insertPracticeConcern(p: {
   what: string;
 }): Promise<boolean> {
   try {
-    const acc = await fetch(`${SUPABASE_URL}/rest/v1/portal_accounts`, {
+    const acc = await fetch(`${SUPABASE_URL}/rest/v1/portal_accounts?select=id`, {
       method: 'POST',
       headers: headers(true),
       body: JSON.stringify({ student_number: p.studentNumber || null, full_name: p.studentName, is_practice: true }),

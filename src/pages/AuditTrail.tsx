@@ -1,6 +1,7 @@
 // Audit Trail — features flowchart page 16: "Who did what and when. Every change, before and after,
 // cannot be edited." Read only: the database records every change by itself.
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { DateField } from '../components/ui/DateField';
 import { useLanguage } from '../context/LanguageContext';
 import { soundFX } from '../services/soundEngine';
 import { AuditEntry, fetchAuditPage, TABLE_WORDS, changedFields, fieldWord, showValue, whoOf, keyWord } from '../services/auditDb';
@@ -117,15 +118,15 @@ const AuditTrail: React.FC = () => {
   return (
     <main className="p-5 lg:p-6 max-w-[1440px] w-full mx-auto space-y-5 flex-1">
       {/* CLEAN EXECUTIVE AUDIT TRAIL HEADER (NO ALL-CAPS EYEBROW) */}
-      <div className="cdm-panel px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="px-1 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-lg font-bold text-[#0F172A] dark:text-white">
+          <h1 className="sr-only">
             {isTl ? 'Kasaysayan ng mga Pagbabago at Tala ng Aksyon' : 'System Audit Trail & Forensic Activity Log'}
           </h1>
-          <p className="text-xs text-[#475569] dark:text-[#94A8D0] mt-0.5">
+          <p className="text-[15px] text-[#6E6E73] dark:text-[#A1A1A6]">
             {isTl
-              ? 'Kusang itinatala ng database ang bawat pagbabago (dati at bagong value). Hindi ito maaaring i-edit o burahin (R.A. 10173).'
-              : 'Permanent append-only record of all case modifications, status updates, and user access trails.'}
+              ? 'Lahat ng pagbabago ay naitatala dito (dati at bago). Hindi ito mae-edit o mabubura.'
+              : 'Every change is saved here (old and new). It cannot be edited or deleted.'}
           </p>
         </div>
 
@@ -160,11 +161,11 @@ const AuditTrail: React.FC = () => {
           </label>
           <label className="space-y-1">
             <span className="block text-[11px] font-extrabold text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Mula' : 'From'}</span>
-            <input data-audit-filter="from" type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className={input} />
+            <DateField compact value={from} max={to || undefined} onChange={setFrom} isTl={isTl} placeholder={isTl ? 'Mula' : 'From'} ariaLabel={isTl ? 'Mula' : 'From'} />
           </label>
           <label className="space-y-1">
             <span className="block text-[11px] font-extrabold text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Hanggang' : 'To'}</span>
-            <input data-audit-filter="to" type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className={input} />
+            <DateField compact value={to} min={from || undefined} onChange={setTo} isTl={isTl} placeholder={isTl ? 'Hanggang' : 'To'} ariaLabel={isTl ? 'Hanggang' : 'To'} />
           </label>
           <label className="space-y-1 flex-1 min-w-[220px]">
             <span className="block text-[11px] font-extrabold text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Hanapin' : 'Search'}</span>

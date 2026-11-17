@@ -17,6 +17,7 @@ export interface CaseRules {
   escalateAfterMinors: number; // minors in a row that count as Serious (manuscript: 2)
   overdueDays: number; // open longer than this = overdue
   pendingSanctionDays: number; // a sanction waiting for the parent longer than this = alert
+  maxNoShows?: number; // parent summons before the case may continue without the parent (default 3, 2-5)
 }
 export interface SecuritySettings {
   autoSignOutMinutes: number;
@@ -128,11 +129,11 @@ export interface AppConfig {
 export const DEFAULTS: AppConfig = {
   loaded: false,
   officeHours: { days: ['Mon', 'Tue', 'Wed', 'Thu'], start: '08:00', end: '17:00', lunchStart: '12:00', lunchEnd: '13:00', slotMinutes: 45 },
-  caseRules: { escalateAfterMinors: 2, overdueDays: 14, pendingSanctionDays: 3 },
+  caseRules: { escalateAfterMinors: 2, overdueDays: 14, pendingSanctionDays: 3, maxNoShows: 3 },
   security: { autoSignOutMinutes: 15, pinMaxTries: 5, pinLockMinutes: 5 },
   smsTemplates: {
     notice: 'AICS Guidance: Magandang araw po. Inaanyayahan po kayo sa Parent Conference para kay {student} sa {when}. Bukas po ang guidance office Lunes-Huwebes 8AM-5PM. Salamat po.',
-    reminder: 'AICS Guidance: Paalala po, bukas {when} ang Parent Conference para kay {student} sa Guidance Room. Salamat po.',
+    reminder: 'AICS Guidance: Paalala po, sa {when} ang Parent Conference para kay {student} sa Guidance Room. Salamat po.',
     reschedule: 'AICS Guidance: Inilipat po sa {when} ang Parent Conference para kay {student}. Para sa katanungan, bukas kami Lunes-Huwebes. Salamat po.',
   },
   retention: { idImageDays: 30 },

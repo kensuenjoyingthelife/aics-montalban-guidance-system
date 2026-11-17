@@ -116,6 +116,15 @@ const FIELD_WORDS: Record<string, [string, string]> = {
   concern_type: ['Type', 'Uri'],
   reject_reason: ['Reason given', 'Ibinigay na dahilan'],
   linked_case_code: ['Linked case', 'Naka-link na kaso'],
+  case_code: ['Case no.', 'Numero ng kaso'],
+  affected_student_name: ['Student affected', 'Naapektuhan'],
+  affected_student_number: ['Student affected no.', 'No. ng naapektuhan'],
+  explanation_present: ['Who was with the student', 'Kasama ng estudyante'],
+  explanation_refused: ['Refused to explain', 'Ayaw magsalita'],
+  conference_attended_by: ['Who came', 'Sino ang dumalo'],
+  conference_minutes: ['What was agreed', 'Napagkasunduan'],
+  proceeded_without_parent: ['Continued without parent', 'Tumuloy nang wala ang magulang'],
+  sanction_end_date: ['Sanction ends', 'Matatapos ang sanction'],
   chat_status: ['Chat', 'Chat'],
   scheduled_date: ['Counselor date', 'Petsa sa counselor'],
   removed_reason: ['Reason', 'Dahilan'],
@@ -135,7 +144,11 @@ const HIDDEN = new Set([
   'clearance_percent', 'open_cases_count', 'watch_count', 'tone',
 ]);
 
-export const fieldWord = (k: string, tl: boolean) => (FIELD_WORDS[k] ? FIELD_WORDS[k][tl ? 1 : 0] : k.replace(/_/g, ' '));
+export const fieldWord = (k: string, tl: boolean) => {
+  if (FIELD_WORDS[k]) return FIELD_WORDS[k][tl ? 1 : 0];
+  const w = k.replace(/_/g, ' ');
+  return w.charAt(0).toUpperCase() + w.slice(1); // never show a raw lowercase column name
+};
 export function showValue(v: unknown, tl: boolean): string {
   if (v === null || v === undefined || v === '') return tl ? '(wala)' : '(empty)';
   if (typeof v === 'boolean') return v ? (tl ? 'Oo' : 'Yes') : tl ? 'Hindi' : 'No';

@@ -92,25 +92,26 @@ export const ConfirmChangeProvider: React.FC<{ children: React.ReactNode }> = ({
               role="dialog"
               aria-modal="true"
               aria-labelledby="confirm-change-title"
-              initial={{ scale: 0.94, opacity: 0, y: 10 }}
+              initial={{ scale: 0.96, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.96, opacity: 0, y: 6 }}
-              transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+              transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg rounded-2xl saas-card shadow-2xl border border-[#DCE5F2] dark:border-[#243B6B] overflow-hidden"
+              className="w-full max-w-lg rounded-[24px] p-1.5 bg-white/30 dark:bg-sky-400/10 border border-white/50 dark:border-sky-400/20 shadow-[0_32px_90px_-12px_rgba(4,14,32,0.55)] overflow-hidden"
             >
-              <div className="px-6 pt-5 pb-3">
-                <p className="text-[11px] font-extrabold tracking-wider uppercase text-[#687FA8] dark:text-[#89A7DF]">
-                  {isTl ? 'I-check muna bago i-save' : 'Review before saving'}
+              <div className="w-full rounded-[20px] panel-2026 overflow-hidden">
+              <div className="px-6 py-4 bg-gradient-to-r from-[#06132B] via-[#0D2658] to-[#15387E] text-white">
+                <p className="text-[10.5px] font-extrabold tracking-[0.16em] uppercase text-[#F2CE70]">
+                  {isTl ? 'KUMPIRMAHIN BAGO I-SAVE' : 'CONFIRM BEFORE SAVING'}
                 </p>
                 <h3
                   id="confirm-change-title"
-                  className="mt-1 text-lg font-extrabold text-[#0B1F4D] dark:text-white"
+                  className="mt-1 text-base sm:text-lg font-extrabold text-white tracking-tight"
                 >
                   {opts.title}
                 </h3>
                 {opts.description && (
-                  <p className="mt-1 text-[13px] font-medium text-[#4A608A] dark:text-[#94A8D0]">
+                  <p className="mt-1 text-xs font-medium text-sky-100/85">
                     {opts.description}
                   </p>
                 )}
@@ -212,6 +213,7 @@ export const ConfirmChangeProvider: React.FC<{ children: React.ReactNode }> = ({
                 >
                   {opts.confirmLabel ?? (isTl ? 'Oo, i-save' : 'Yes, save')}
                 </button>
+              </div>
               </div>
             </motion.div>
           </motion.div>

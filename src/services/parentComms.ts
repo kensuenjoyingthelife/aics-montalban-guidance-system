@@ -1,4 +1,4 @@
-import { postMail, smsApiAvailable } from './mailApi';
+import { postMail, smsApiAvailable, postSms, getSmsStatus } from './mailApi';
 // One honest way to message parents (flowchart pages 5–7).
 // - SMS always in Filipino, never the offense (manuscript).
 // - Never says "sent" unless the SMS service / Gmail really accepted it.
@@ -41,7 +41,9 @@ export function buildConferenceSms(p: {
   const when = whenShort(p.date, p.timeSlot);
   // the words come from Settings › SMS templates ({student} and {when} are filled in)
   const t = getAppConfig().smsTemplates;
-  return fillTemplate(p.kind === 'reminder' ? t.reminder : p.kind === 'reschedule' ? t.reschedule : t.notice, p.studentName, when);
+  // the reminder may go out 1-3 days before (Friday for a Monday), so never say "bukas" (tomorrow)
+  const reminder = t.reminder.replace(/bukas\s*\{when\}/i, 'sa {when}');
+  return fillTemplate(p.kind === 'reminder' ? reminder : p.kind === 'reschedule' ? t.reschedule : t.notice, p.studentName, when);
 }
 
 /** Words that must never reach a parent (offense details) */
@@ -66,8 +68,7 @@ export async function isSmsConfigured(): Promise<boolean> {
   if (smsConfiguredCache !== null) return smsConfiguredCache;
   try {
     if (!smsApiAvailable) return (smsConfiguredCache = false);
-    const r = await fetch('/api/sms-status');
-    smsConfiguredCache = Boolean((await r.json())?.configured);
+    smsConfiguredCache = await getSmsStatus();
   } catch {
     smsConfiguredCache = false;
   }
@@ -94,17 +95,7 @@ export async function sendParentMessage(p: {
   if (wantSms && !smsApiAvailable) {
     result.sms = { ok: false, code: 'not_configured', error: 'SMS is not set up yet.' };
   } else if (wantSms) {
-    try {
-      const r = await fetch('/api/send-sms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: p.phone, message: toSmsSafe(p.message) }),
-      });
-      const d = await r.json();
-      result.sms = { ok: !!d?.ok, code: String(d?.code || (r.ok ? 'sent' : 'server')), error: d?.error };
-    } catch (e) {
-      result.sms = { ok: false, code: 'network', error: e instanceof Error ? e.message : 'Network error' };
-    }
+    result.sms = await postSms(p.phone, toSmsSafe(p.message));
   }
   if (wantEmail) {
     try {

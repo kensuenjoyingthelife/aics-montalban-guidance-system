@@ -586,7 +586,7 @@ export function printDepEdCompliancePdf(opts: DepEdComplianceReportOptions): boo
     @page { size: portrait; margin: 10mm 12mm 10mm 12mm; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #0B1F4D; margin: 0; padding: 0; font-size: 11px; line-height: 1.4; }
     .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0B1F4D; padding-bottom: 8px; margin-bottom: 12px; }
-    .header-logo { width: 54px; height: 54px; object-fit: contain; }
+    .header-logo { width: 54px; height: 54px; object-fit: cover; border-radius: 50%; }
     .header-center { text-align: center; flex: 1; margin: 0 10px; }
     .deped-tag { font-size: 10px; font-weight: 800; color: #1E469B; text-transform: uppercase; letter-spacing: 0.5px; }
     .school-title { font-size: 14px; font-weight: 900; letter-spacing: 0.2px; }
@@ -617,7 +617,7 @@ export function printDepEdCompliancePdf(opts: DepEdComplianceReportOptions): boo
       <div class="school-sub">Rodriguez, Rizal Campus · Child Protection Committee &amp; Guidance Office</div>
       <div style="font-weight: 800; font-size: 11px; margin-top: 2px;">DEPED ORDER NO. 40, S. 2012 COMPLIANCE REPORT</div>
     </div>
-    <div class="badge">DO 40, S. 2012<br>CERTIFIED</div>
+    <div class="badge">QUARTERLY<br>REPORT</div>
   </div>
 
   <div class="title-banner">
@@ -649,12 +649,12 @@ export function printDepEdCompliancePdf(opts: DepEdComplianceReportOptions): boo
       <div class="kpi-val">${opts.childProtectionMetrics.interventionsProvided}</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-lbl">Whistleblower Reports</div>
+      <div class="kpi-lbl">Student reports (confidential)</div>
       <div class="kpi-val">${opts.childProtectionMetrics.whistleblowerReportsReceived}</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-lbl">Due Process Resolution Rate</div>
-      <div class="kpi-val">${opts.childProtectionMetrics.totalIncidents > 0 ? Math.round((opts.childProtectionMetrics.interventionsProvided / opts.childProtectionMetrics.totalIncidents) * 100) : 100}%</div>
+      <div class="kpi-val">${opts.childProtectionMetrics.totalIncidents > 0 ? Math.round((opts.childProtectionMetrics.interventionsProvided / opts.childProtectionMetrics.totalIncidents) * 100) + '%' : '—'}</div>
     </div>
   </div>
 
@@ -676,7 +676,7 @@ export function printDepEdCompliancePdf(opts: DepEdComplianceReportOptions): boo
   </table>
 
   <div class="legal-note">
-    <strong>DepEd DO 40, s. 2012 Mandate:</strong> This document certifies compliance with the "DepEd Child Protection Policy". All reported incidents undergo documented procedural due process, confidential intake, parent consultation, and positive behavioral intervention without administrative bias.
+    <strong>Note:</strong> This summary is generated from the Guidance Office records for the quarter shown. Numbers come only from cases logged in the system; cases withdrawn as filed in error are not counted.
   </div>
 
   <div class="sign-row">

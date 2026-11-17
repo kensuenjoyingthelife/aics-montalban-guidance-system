@@ -1,7 +1,9 @@
 // Settings — features flowchart page 17 (PIN-protected). The office sets up how the system works:
 // office days & hours (+ closed days), people's schedules, offenses & rules, SMS templates,
 // accounts & security, backup & retention. Every change: check → confirm → save → audit trail.
+import { checkPinOnServer } from '../services/staffAuth';
 import React, { useEffect, useMemo, useState } from 'react';
+import { DateField } from '../components/ui/DateField';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useConfirmChange } from '../components/ui/ConfirmChange';
@@ -177,7 +179,7 @@ const PinGate: React.FC<{ isTl: boolean; onOk: () => void }> = ({ isTl, onOk }) 
   const submit = async () => {
     if (!/^\d{6}$/.test(pin)) return setErr(isTl ? 'Ilagay ang 6 na numero ng PIN.' : 'Enter the 6-digit PIN.');
     setBusy(true);
-    const ok = await checkPin(pin);
+    const ok = (await checkPinOnServer(pin)) === '';
     setBusy(false);
     if (ok) {
       soundFX.playStepUnlock();
@@ -353,7 +355,7 @@ const OfficeSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
         <div className="grid grid-cols-1 md:grid-cols-[180px_1fr_auto] gap-2 items-end">
           <label>
             <span className={label}>{isTl ? 'Petsa' : 'Date'}</span>
-            <input type="date" data-closed-day value={day} min={todayISO()} onChange={(e) => setDay(e.target.value)} className={input} />
+            <DateField value={day} min={todayISO()} onChange={setDay} isTl={isTl} ariaLabel={isTl ? 'Petsa' : 'Date'} />
           </label>
           <label>
             <span className={label}>{isTl ? 'Dahilan' : 'Reason'}</span>
@@ -440,28 +442,34 @@ const PeopleSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
   const [sigGuidance, setSigGuidance] = useState(cfg.signatories?.guidanceAssociate || 'Maurice Enriquez');
   const [sigCounselor, setSigCounselor] = useState(cfg.signatories?.guidanceCounselor || 'Registered Guidance Counselor (RGC)');
   const [sigPrincipal, setSigPrincipal] = useState(cfg.signatories?.principal || 'School Principal');
+  const [sigGuidanceTitle, setSigGuidanceTitle] = useState(cfg.signatories?.guidanceAssociateTitle || 'Guidance Associate');
+  const [sigPrincipalTitle, setSigPrincipalTitle] = useState(cfg.signatories?.principalTitle || 'School Principal');
   const [savingSignatories, setSavingSignatories] = useState(false);
 
   useEffect(() => {
     setSigGuidance(cfg.signatories?.guidanceAssociate || 'Maurice Enriquez');
     setSigCounselor(cfg.signatories?.guidanceCounselor || 'Registered Guidance Counselor (RGC)');
     setSigPrincipal(cfg.signatories?.principal || 'School Principal');
+    setSigGuidanceTitle(cfg.signatories?.guidanceAssociateTitle || 'Guidance Associate');
+    setSigPrincipalTitle(cfg.signatories?.principalTitle || 'School Principal');
   }, [cfg.signatories]);
 
   const signatoriesChanged =
     sigGuidance !== (cfg.signatories?.guidanceAssociate || 'Maurice Enriquez') ||
     sigCounselor !== (cfg.signatories?.guidanceCounselor || 'Registered Guidance Counselor (RGC)') ||
-    sigPrincipal !== (cfg.signatories?.principal || 'School Principal');
+    sigPrincipal !== (cfg.signatories?.principal || 'School Principal') ||
+    sigGuidanceTitle !== (cfg.signatories?.guidanceAssociateTitle || 'Guidance Associate') ||
+    sigPrincipalTitle !== (cfg.signatories?.principalTitle || 'School Principal');
 
   const saveSignatories = async () => {
     setSavingSignatories(true);
     const newSignatories = {
       guidanceAssociate: sigGuidance.trim() || 'Maurice Enriquez',
-      guidanceAssociateTitle: 'Guidance Associate & Student Affairs',
+      guidanceAssociateTitle: sigGuidanceTitle.trim() || 'Guidance Associate',
       guidanceCounselor: sigCounselor.trim() || 'Registered Guidance Counselor (RGC)',
       guidanceCounselorTitle: 'Guidance Counselor & Hearing Officer',
       principal: sigPrincipal.trim() || 'School Principal',
-      principalTitle: 'School Principal & Administrative Head',
+      principalTitle: sigPrincipalTitle.trim() || 'School Principal',
     };
     const prev = cfg.signatories;
     const ok = await saveConfig('signatories', newSignatories);
@@ -501,8 +509,8 @@ const PeopleSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
             <h2 className={h2}>{isTl ? 'Mga Opisyal na Pipirma sa mga Dokumento' : 'Official Form Signatories & Approvers'}</h2>
             <p className={sub}>
               {isTl
-                ? 'Ito ang mga pangalang lalabas sa Call Slip, Summons, Kasunduan, Suspension Letter, at DepEd Compliance Reports. Madaling palitan sakaling magkaroon ng bagong tauhan.'
-                : 'Names appearing on Call Slips, Summons Letters, Behavioral Contracts, and DepEd Reports. Change here anytime staff changes.'}
+                ? 'Default na pangalan at posisyon sa lahat ng form. Pwede ring palitan sa preview bago mag-print.'
+                : 'Default names and positions on every form. You can also change them in the preview before printing.'}
             </p>
           </div>
           <span className="px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase bg-[#EEF3FC] dark:bg-[#13203B] text-[#1E469B] dark:text-[#7CB8F7] border border-[#1E469B]/30">
@@ -517,11 +525,12 @@ const PeopleSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
               type="text"
               value={sigGuidance}
               onChange={(e) => setSigGuidance(e.target.value)}
-              placeholder="e.g. Maurice Enriquez"
+              placeholder={isTl ? 'Buong pangalan' : 'Full name'}
               className={input}
             />
-            <span className="block text-[10px] text-[#4A608A] dark:text-[#94A8D0] mt-1">
-              {isTl ? 'Pumipirma sa Call Slip at Summons' : 'Signs Call Slips and Summons'}
+            <input type="text" value={sigGuidanceTitle} onChange={(e) => setSigGuidanceTitle(e.target.value)} aria-label={isTl ? 'Posisyon ng Guidance' : 'Guidance position'} placeholder={isTl ? 'Posisyon' : 'Position'} className={`${input} mt-2`} />
+            <span className="block text-[11px] text-[#6E6E73] dark:text-[#A1A1A6] mt-1">
+              {isTl ? 'Pangalan at posisyon na pipirma sa mga form' : 'Name and position that sign the forms'}
             </span>
           </label>
 
@@ -548,8 +557,9 @@ const PeopleSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
               placeholder="e.g. School Principal"
               className={input}
             />
-            <span className="block text-[10px] text-[#4A608A] dark:text-[#94A8D0] mt-1">
-              {isTl ? 'Pumipirma sa Suspension at Administrative Decisions' : 'Signs Suspensions & CPC Certifications'}
+            <input type="text" value={sigPrincipalTitle} onChange={(e) => setSigPrincipalTitle(e.target.value)} aria-label={isTl ? 'Posisyon ng Principal' : 'Principal position'} placeholder={isTl ? 'Posisyon' : 'Position'} className={`${input} mt-2`} />
+            <span className="block text-[11px] text-[#6E6E73] dark:text-[#A1A1A6] mt-1">
+              {isTl ? 'Pumipirma sa Suspension Letter at Buod ng Kaso' : 'Signs the Suspension Letter and Case Summary'}
             </span>
           </label>
         </div>
@@ -797,6 +807,8 @@ const OffensesSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
       ? isTl ? 'Ang overdue ay 3 hanggang 60 araw.' : 'Overdue must be 3 to 60 days.'
       : !((rules.pendingSanctionDays ?? 3) >= 1 && (rules.pendingSanctionDays ?? 3) <= 30)
       ? isTl ? 'Ang alert sa sanction ay 1 hanggang 30 araw.' : 'Sanction alert must be 1 to 30 days.'
+      : !((rules.maxNoShows ?? 3) >= 2 && (rules.maxNoShows ?? 3) <= 5)
+      ? isTl ? 'Ang bilang ng patawag ay 2 hanggang 5.' : 'Parent summons must be 2 to 5.'
       : '';
   const rulesChanged = JSON.stringify(rules) !== JSON.stringify(cfg.caseRules);
   const saveRules = async () => {
@@ -806,6 +818,7 @@ const OffensesSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
         { label: isTl ? 'Ilang minor sa sunod-sunod = Serious' : 'Minors in a row = Serious', before: String(cfg.caseRules.escalateAfterMinors), after: String(rules.escalateAfterMinors) },
         { label: isTl ? 'Overdue pagkatapos ng' : 'Overdue after', before: `${cfg.caseRules.overdueDays} ${isTl ? 'araw' : 'days'}`, after: `${rules.overdueDays} ${isTl ? 'araw' : 'days'}` },
         { label: isTl ? 'Alert: sanction na naghihintay' : 'Alert: sanction waiting', before: `${cfg.caseRules.pendingSanctionDays ?? 3} ${isTl ? 'araw' : 'days'}`, after: `${rules.pendingSanctionDays ?? 3} ${isTl ? 'araw' : 'days'}` },
+        { label: isTl ? 'Patawag bago tumuloy nang wala ang magulang' : 'Summons before going on without the parent', before: String(cfg.caseRules.maxNoShows ?? 3), after: String(rules.maxNoShows ?? 3) },
       ],
       note: isTl ? 'Para lang sa mga bagong kaso. Hindi binabago ang mga naitala na.' : 'Applies to new cases only. Saved cases do not change.',
       confirmLabel: isTl ? 'Oo, i-save' : 'Yes, save',
@@ -850,6 +863,10 @@ const OffensesSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
           <label>
             <span className={label}>{isTl ? 'Alert kapag ang sanction ay naghihintay sa magulang nang higit (araw)' : 'Alert when a sanction waits for the parent more than (days)'}</span>
             <input type="number" min={1} max={30} data-rule="pending" value={rules.pendingSanctionDays ?? 3} onChange={(e) => setRules({ ...rules, pendingSanctionDays: Number(e.target.value) })} className={input} />
+          </label>
+          <label>
+            <span className={label}>{isTl ? 'Ilang patawag sa magulang bago pwedeng tumuloy nang wala sila (karaniwan: 3)' : 'Parent summons before the case may go on without them (usual: 3)'}</span>
+            <input type="number" min={2} max={5} data-rule="noshows" value={rules.maxNoShows ?? 3} onChange={(e) => setRules({ ...rules, maxNoShows: Number(e.target.value) })} className={input} />
           </label>
         </div>
         {rulesBad && <p className={errText}> {rulesBad}</p>}
@@ -1399,7 +1416,7 @@ const SecuritySection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
     if (!/^\d{6}$/.test(pinNew)) return setPinErr(isTl ? 'Ang bagong PIN ay 6 na numero.' : 'The new PIN must be 6 digits.');
     if (pinNew !== pinNew2) return setPinErr(isTl ? 'Hindi pareho ang dalawang bagong PIN.' : 'The two new PINs are not the same.');
     if (/^(\d)\1{5}$/.test(pinNew) || pinNew === '123456' || pinNew === '654321') return setPinErr(isTl ? 'Masyadong madaling hulaan. Pumili ng iba.' : 'Too easy to guess. Pick another.');
-    if (!(await checkPin(pinOld))) return setPinErr(isTl ? 'Mali ang kasalukuyang PIN.' : 'The current PIN is wrong.');
+    if (!((await checkPinOnServer(pinOld)) === '')) return setPinErr(isTl ? 'Mali ang kasalukuyang PIN.' : 'The current PIN is wrong.');
     const ok = await confirmChange({
       title: isTl ? 'Palitan ang PIN?' : 'Change the PIN?',
       rows: [{ label: 'PIN', before: '••••••', after: isTl ? 'Bagong PIN' : 'New PIN' }],

@@ -151,24 +151,223 @@ function buildAicsParentNoticeEmailTemplate({
   return { subject, text, html };
 }
 
+// ---------------------------------------------------------------- server-side helpers (service role)
+const SB_URL = Deno.env.get('SUPABASE_URL') || '';
+const SB_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+const sb = (path: string, init: RequestInit = {}) =>
+  fetch(`${SB_URL}/rest/v1/${path}`, {
+    ...init,
+    headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', ...(init.headers || {}) },
+  });
+const enc = encodeURIComponent;
+
+/** Only send to people in our records (parents, staff, student accounts). Stops anyone using
+ *  the public key to spam strangers or spend the school's SMS credit. */
+async function knownEmail(email: string): Promise<boolean> {
+  const e = enc(email);
+  const checks = await Promise.all([
+    sb(`students?select=student_number&parent_email=ilike.${e}&limit=1`),
+    sb(`guidance_staff?select=id&email=ilike.${e}&limit=1`),
+    sb(`portal_accounts?select=id&email=ilike.${e}&limit=1`),
+  ]);
+  for (const r of checks) if (r.ok && ((await r.json()) as unknown[]).length) return true;
+  return false;
+}
+const phDigits = (s: string) => {
+  const d = String(s || '').replace(/\D/g, '');
+  if (/^09\d{9}$/.test(d)) return d;
+  if (/^639\d{9}$/.test(d)) return '0' + d.slice(2);
+  return '';
+};
+async function knownParentPhone(local09: string): Promise<boolean> {
+  // stored numbers may have dashes/spaces, so compare on the last 10 digits
+  const tail = local09.slice(1);
+  const r = await sb(`students?select=parent_phone&parent_phone=ilike.*${tail.slice(0, 3)}*${tail.slice(-4)}*&limit=50`);
+  if (!r.ok) return false;
+  const rows = (await r.json()) as { parent_phone: string }[];
+  return rows.some((x) => phDigits(x.parent_phone) === local09);
+}
+
+const MAX_SMS_PER_DAY = Number(Deno.env.get('SMS_DAILY_LIMIT') || 200);
+async function smsSentToday(): Promise<number> {
+  const since = new Date();
+  since.setHours(0, 0, 0, 0);
+  const r = await sb(`sms_gmail_logs?select=id&channel=eq.sms&delivery_status=eq.Sent&created_at=gte.${enc(since.toISOString())}`, {
+    headers: { Prefer: 'count=exact', Range: '0-0' },
+  });
+  const range = r.headers.get('content-range') || '';
+  return Number(range.split('/')[1] || 0) || 0;
+}
+
+async function sendPhilSms(to09: string, message: string) {
+  const token = Deno.env.get('PHILSMS_API_TOKEN') || '';
+  if (!token) return { ok: false, code: 'not_configured', error: 'No SMS service is set up yet.' };
+  const res = await fetch('https://dashboard.philsms.com/api/v3/sms/send', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      recipient: '63' + to09.slice(1),
+      sender_id: Deno.env.get('PHILSMS_SENDER_ID') || 'AICS-MNTLBN',
+      type: /[^\x00-\x7F]/.test(message) ? 'unicode' : 'plain',
+      message,
+    }),
+  });
+  const raw = await res.text();
+  let d: Record<string, unknown> = {};
+  try { d = JSON.parse(raw); } catch { d = { message: raw.slice(0, 200) }; }
+  if (res.ok && d?.status === 'success') return { ok: true, code: 'sent' };
+  return { ok: false, code: res.status === 401 || res.status === 403 ? 'auth' : 'gateway_error', error: `PhilSMS: ${d?.message || 'HTTP ' + res.status}` };
+}
+
+// ---------------------------------------------------------------- staff login + gateway (Security Part B)
+const hex = (buf: ArrayBuffer) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+const sha256 = async (s: string) => hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)));
+const OTP_ABC = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const newOtp = () => [...crypto.getRandomValues(new Uint8Array(6))].map((b) => OTP_ABC[b % OTP_ABC.length]).join('');
+async function setting<T>(key: string): Promise<T | null> {
+  const r = await sb(`app_settings?select=value&key=eq.${enc(key)}&limit=1`);
+  if (!r.ok) return null;
+  const rows = (await r.json()) as { value: T }[];
+  return rows[0]?.value ?? null;
+}
+async function security() {
+  const s = (await setting<{ pinMaxTries?: number; pinLockMinutes?: number; autoSignOutMinutes?: number }>('security')) || {};
+  return { tries: s.pinMaxTries || 5, lockMin: s.pinLockMinutes || 5, idleMin: s.autoSignOutMinutes || 15 };
+}
+async function loginState(k: string) {
+  const r = await sb(`staff_login_state?select=*&k=eq.${enc(k)}&limit=1`);
+  const row = r.ok ? ((await r.json()) as Record<string, unknown>[])[0] : undefined;
+  return (row || { k, fails: 0, locked_until: null, otp_hash: null, otp_expires_at: null, otp_tries: 0 }) as {
+    k: string; fails: number; locked_until: string | null; otp_hash: string | null; otp_expires_at: string | null; otp_tries: number;
+  };
+}
+const saveState = (k: string, patch: Record<string, unknown>) =>
+  sb('staff_login_state', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates' }, body: JSON.stringify({ k, ...patch }) });
+/** PIN check with lockout. Returns '' when OK, else an error code. */
+async function checkOfficePin(pin: string): Promise<string> {
+  const sec = await security();
+  const st = await loginState('pin');
+  if (st.locked_until && new Date(st.locked_until) > new Date()) return 'locked';
+  const rec = await setting<{ salt: string; hash: string }>('app_pin');
+  const ok = rec ? (await sha256(rec.salt + pin)) === rec.hash : pin === '123456';
+  if (ok) { await saveState('pin', { fails: 0, locked_until: null }); return ''; }
+  const fails = (st.fails || 0) + 1;
+  const lock = fails >= sec.tries;
+  await saveState('pin', { fails: lock ? 0 : fails, locked_until: lock ? new Date(Date.now() + sec.lockMin * 60000).toISOString() : null });
+  return lock ? 'locked' : 'wrong_pin';
+}
+async function staffEmailOk(email: string) {
+  const r = await sb(`guidance_staff?select=id&is_active=eq.true&email=ilike.${enc(email)}&limit=1`);
+  return r.ok && ((await r.json()) as unknown[]).length > 0;
+}
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   if (req.method !== 'POST') return json({ ok: false, error: 'Method Not Allowed' }, 405);
+  let p: Record<string, unknown>;
+  try { p = await req.json(); } catch { return json({ ok: false, error: 'Bad request' }, 400); }
+  const locale = p.locale === 'tl' ? 'tl' : 'en';
+
+  // ---- staff: PIN only (first screen). Lockout is kept on the server.
+  if (p.type === 'staff-pin') {
+    const err = await checkOfficePin(String(p.pin || ''));
+    return json(err ? { ok: false, error: err } : { ok: true });
+  }
+  // ---- SMS (installed app). Same honest codes as the dev server.
+  if (p.type === 'sms-status') {
+    return json({ configured: Boolean(Deno.env.get('PHILSMS_API_TOKEN')), provider: Deno.env.get('PHILSMS_API_TOKEN') ? 'PhilSMS' : null });
+  }
+  if (p.type === 'sms') {
+    const to = phDigits(String(p.to || ''));
+    const message = String(p.message || '').trim().slice(0, 480);
+    if (!to) return json({ ok: false, code: 'bad_number', error: 'Invalid mobile number (must be 09 + 9 digits).' });
+    if (!message) return json({ ok: false, code: 'empty', error: 'Empty message.' });
+    if (!(await knownParentPhone(to))) return json({ ok: false, code: 'unknown_number', error: 'This number is not a parent number in the records.' });
+    if ((await smsSentToday()) >= MAX_SMS_PER_DAY) return json({ ok: false, code: 'daily_limit', error: `Daily SMS limit reached (${MAX_SMS_PER_DAY}).` });
+    try { return json(await sendPhilSms(to, message)); } catch (e) { return json({ ok: false, code: 'network', error: e instanceof Error ? e.message : 'Network error' }); }
+  }
+
   const user = Deno.env.get('GMAIL_SMTP_USER') || '';
   const pass = (Deno.env.get('GMAIL_SMTP_APP_PASSWORD') || '').replace(/\s+/g, '');
   const senderName = Deno.env.get('GMAIL_SENDER_NAME') || 'AICS Montalban Guidance Office';
   if (!user || !pass) return json({ ok: false, error: 'Email is not set up on the server.' }, 500);
-  let p: Record<string, unknown>;
-  try { p = await req.json(); } catch { return json({ ok: false, error: 'Bad request' }, 400); }
-  const email = String(p.email || '').trim().toLowerCase();
-  const locale = p.locale === 'tl' ? 'tl' : 'en';
-  if (!EMAIL_RE.test(email)) return json({ ok: false, error: 'Missing valid email.' }, 400);
-  let tpl: { subject: string; html: string; text: string };
-  if (p.type === 'otp') {
+  const transport = () => nodemailer.createTransport({ host: 'smtp.gmail.com', port: 465, secure: true, auth: { user, pass } });
+
+  // ---- staff: PIN + email → the server makes the 6-character code and emails it (never made in the app)
+  if (p.type === 'staff-start') {
+    const email = String(p.email || '').trim().toLowerCase();
+    const err = await checkOfficePin(String(p.pin || ''));
+    if (err) return json({ ok: false, error: err });
+    if (!EMAIL_RE.test(email) || !(await staffEmailOk(email))) return json({ ok: false, error: 'not_staff' });
+    const code = newOtp();
+    await saveState(email, { otp_hash: await sha256(code), otp_expires_at: new Date(Date.now() + 5 * 60000).toISOString(), otp_tries: 0 });
+    const tpl = buildAicsOtpEmailTemplate({ code, recipientEmail: email, locale });
+    try {
+      await transport().sendMail({ from: `"${senderName}" <${user}>`, to: email, subject: tpl.subject, html: tpl.html, text: tpl.text });
+    } catch (e) {
+      return json({ ok: false, error: 'send_failed', detail: e instanceof Error ? e.message : '' }, 502);
+    }
+    return json({ ok: true, expiresInSec: 300 });
+  }
+  // ---- staff: check the code → session token (idle sign-out from Settings, 12 h at most)
+  if (p.type === 'staff-verify') {
+    const email = String(p.email || '').trim().toLowerCase();
     const code = String(p.code || '').trim().toUpperCase();
-    if (!/^[A-Z0-9]{6}$/.test(code)) return json({ ok: false, error: 'Missing valid 6-character code.' }, 400);
-    tpl = buildAicsOtpEmailTemplate({ code, recipientEmail: email, locale });
-  } else if (p.type === 'parent-notice') {
+    const st = await loginState(email);
+    if (!st.otp_hash || !st.otp_expires_at || new Date(st.otp_expires_at) < new Date()) return json({ ok: false, error: 'expired' });
+    if ((st.otp_tries || 0) >= 5) return json({ ok: false, error: 'too_many' });
+    if ((await sha256(code)) !== st.otp_hash) {
+      await saveState(email, { otp_tries: (st.otp_tries || 0) + 1 });
+      return json({ ok: false, error: 'wrong_code', triesLeft: 4 - (st.otp_tries || 0) });
+    }
+    await saveState(email, { otp_hash: null, otp_expires_at: null, otp_tries: 0 }); // one use only
+    // Supabase Auth: make sure the staff user exists, then hand the app a one-time sign-in token
+    const admin = (path: string, body: unknown) =>
+      fetch(`${SB_URL}/auth/v1/admin/${path}`, {
+        method: 'POST',
+        headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    await admin('users', { email, email_confirm: true }); // 422 when it already exists: fine
+    const gl = await admin('generate_link', { type: 'magiclink', email });
+    const link = gl.ok ? ((await gl.json()) as { hashed_token?: string; properties?: { hashed_token?: string } }) : {};
+    const tokenHash = link.properties?.hashed_token || link.hashed_token || '';
+    if (!tokenHash) return json({ ok: false, error: 'auth_failed' }, 502);
+    const sr = await sb(`guidance_staff?select=email,full_name,role,department,badge_code&email=ilike.${enc(email)}&limit=1`);
+    const staff = sr.ok ? ((await sr.json()) as Record<string, string>[])[0] : undefined;
+    return json({ ok: true, tokenHash, staff });
+  }
+
+  // ---- Forgot password (student portal): the code is made + saved + emailed here, never in the browser
+  if (p.type === 'portal-reset') {
+    const id = String(p.identifier || '').trim();
+    if (!id) return json({ ok: false, error: 'no_account' }, 400);
+    const q = id.includes('@') ? `email=ilike.${enc(id)}` : `student_number=eq.${enc(id)}`;
+    const r = await sb(`portal_accounts?select=id,email,status&${q}&limit=1`);
+    const acc = r.ok ? ((await r.json()) as { id: number; email: string | null; status: string }[])[0] : undefined;
+    if (!acc) return json({ ok: false, error: 'no_account' });
+    if (!acc.email) return json({ ok: false, error: 'no_email' });
+    const code = String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000));
+    const saved = await sb(`portal_accounts?id=eq.${acc.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ otp_code: code, otp_expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString() }),
+    });
+    if (!saved.ok) return json({ ok: false, error: 'save_failed' }, 500);
+    const tpl = buildAicsOtpEmailTemplate({ code, recipientEmail: acc.email, locale });
+    try {
+      await transport().sendMail({ from: `"${senderName}" <${user}>`, to: acc.email, subject: tpl.subject, html: tpl.html, text: tpl.text });
+    } catch (e) {
+      return json({ ok: false, error: e instanceof Error ? e.message : 'Send failed' }, 502);
+    }
+    const [n, d] = acc.email.split('@');
+    const masked = n.length > 2 ? `${n[0]}***${n[n.length - 1]}@${d}` : `${n[0]}***@${d}`;
+    return json({ ok: true, emailMasked: masked });
+  }
+
+  const email = String(p.email || '').trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) return json({ ok: false, error: 'Missing valid email.' }, 400);
+  if (!(await knownEmail(email))) return json({ ok: false, error: 'This email is not in the records.' }, 403);
+  let tpl: { subject: string; html: string; text: string };
+  if (p.type === 'parent-notice') {
     const message = String(p.message || '').trim().slice(0, 2000);
     if (!message) return json({ ok: false, error: 'Missing message text.' }, 400);
     tpl = buildAicsParentNoticeEmailTemplate({
@@ -181,8 +380,7 @@ Deno.serve(async (req) => {
     });
   } else return json({ ok: false, error: 'Unknown type' }, 400);
   try {
-    const t = nodemailer.createTransport({ host: 'smtp.gmail.com', port: 465, secure: true, auth: { user, pass } });
-    await t.sendMail({ from: `"${senderName}" <${user}>`, to: email, subject: tpl.subject, html: tpl.html, text: tpl.text });
+    await transport().sendMail({ from: `"${senderName}" <${user}>`, to: email, subject: tpl.subject, html: tpl.html, text: tpl.text });
     return json({ ok: true });
   } catch (e) {
     return json({ ok: false, error: e instanceof Error ? e.message : 'Send failed' }, 502);

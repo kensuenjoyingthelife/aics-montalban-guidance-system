@@ -1,14 +1,16 @@
-// One sort menu used by every list (Golden Rule 3: same words everywhere).
+// One sort control used by every list (Golden Rule 3: same words everywhere).
+// AGENTS.md §5 #1 (Hick's Law): 2–4 choices are segmented pills, not a dropdown.
 // Default is "Newest first": the newest case / student / task is on top, the oldest at the bottom.
 import React from 'react';
 
 export type SortKey = 'newest' | 'oldest' | 'name' | 'attention';
 
-const WORDS: Record<SortKey, [string, string]> = {
-  newest: ['Newest first', 'Pinakabago muna'],
-  oldest: ['Oldest first', 'Pinakaluma muna'],
-  name: ['Name A–Z', 'Pangalan A–Z'],
-  attention: ['Needs action first', 'Kailangang aksyunan muna'],
+/** [long English, long Tagalog, short English, short Tagalog] */
+const WORDS: Record<SortKey, [string, string, string, string]> = {
+  newest: ['Newest first', 'Pinakabago muna', 'Newest', 'Bago'],
+  oldest: ['Oldest first', 'Pinakaluma muna', 'Oldest', 'Luma'],
+  name: ['Name A–Z', 'Pangalan A–Z', 'A–Z', 'A–Z'],
+  attention: ['Needs action first', 'Kailangang aksyunan muna', 'Urgent', 'Urgent'],
 };
 
 /** remembers the choice per list on this computer (safe if storage is blocked) */
@@ -62,19 +64,31 @@ export const SortControl: React.FC<{
   options?: SortKey[];
   id: string;
 }> = ({ value, onChange, isTl, options = ['newest', 'oldest', 'name', 'attention'], id }) => (
-  <label className="inline-flex items-center gap-1.5 shrink-0" title={isTl ? 'Ayusin ang pagkakasunod ng listahan' : 'Change the order of the list'}>
-    <span className="text-[11px] font-extrabold text-[#4A608A] dark:text-[#94A8D0] whitespace-nowrap">{isTl ? 'Ayusin:' : 'Sort:'}</span>
-    <select
-      data-sort={id}
-      value={value}
-      onChange={(e) => onChange(e.target.value as SortKey)}
-      className="px-2.5 py-1.5 rounded-lg border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-bold text-[#0B1F4D] dark:text-white"
-    >
-      {options.map((k) => (
-        <option key={k} value={k}>
-          {WORDS[k][isTl ? 1 : 0]}
-        </option>
-      ))}
-    </select>
-  </label>
+  <div
+    role="radiogroup"
+    data-sort={id}
+    aria-label={isTl ? 'Ayusin ang listahan' : 'Sort the list'}
+    className="inline-flex items-center p-0.5 rounded-lg bg-[#EEF3F9] dark:bg-[#0E1D34] border border-[#D5E0EE] dark:border-white/10 shrink-0"
+  >
+    {options.map((k) => {
+      const on = value === k;
+      return (
+        <button
+          key={k}
+          type="button"
+          role="radio"
+          aria-checked={on}
+          title={WORDS[k][isTl ? 1 : 0]}
+          onClick={() => onChange(k)}
+          className={`px-2 py-1 rounded-md text-[11px] font-bold whitespace-nowrap transition-[background-color,color,transform] duration-150 active:scale-[0.97] ${
+            on
+              ? 'bg-white dark:bg-[#1E3250] text-[#0B1F4D] dark:text-white shadow-sm'
+              : 'text-[#52637A] dark:text-[#94A8C4] hover:text-[#0B1F4D] dark:hover:text-white'
+          }`}
+        >
+          {WORDS[k][isTl ? 3 : 2]}
+        </button>
+      );
+    })}
+  </div>
 );

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { DateField } from '../components/ui/DateField';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useConfirmChange } from '../components/ui/ConfirmChange';
@@ -40,6 +41,7 @@ import {
   parseISO,
   DAY_KEYS,
   OFFICE_DAYS,
+  officeHoursText,
 } from '../services/scheduling';
 import { buildConferenceSms, findSensitiveWords, sendParentMessage, dateTl, Channel } from '../services/parentComms';
 import { smsInfo } from '../services/smsText';
@@ -65,6 +67,8 @@ interface ParentsHubProps {
   onContactLogged?: () => void;
   /** the parent came → the case's "Parent Notified" step is done (7-step flow) */
   onConferenceAttended?: (caseCode: string) => void;
+  /** move the case back to Step 4 when the parent did not come */
+  onConferenceMissed?: (caseCode: string) => void;
   /** redirect straight into the case due process flow in Cases */
   onOpenCaseDueProcess?: (caseCode: string) => void;
 }
@@ -102,6 +106,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
   initialScheduleCase,
   initialTab,
   onConferenceAttended,
+  onConferenceMissed,
   onOpenCaseDueProcess,
 }) => {
   const { locale } = useLanguage();
@@ -334,6 +339,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
     if (!ok) return;
     setAppointments((list) => list.map((a) => (a.id === apt.id ? { ...a, status: 'Did Not Attend', noShowReason: reason } : a)));
     void updateAppointmentStatusInDb(apt.id, 'Did Not Attend', reason);
+    onConferenceMissed?.(apt.caseId);
     ensureTask({
       caseId: apt.caseId,
       category: 'Missed Conferences',
@@ -507,15 +513,15 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
   return (
     <main className="p-5 lg:p-6 max-w-[1440px] w-full mx-auto space-y-5 flex-1">
       {/* CLEAN EXECUTIVE CONTEXT HEADER (NO ALL-CAPS EYEBROW) */}
-      <div className="cdm-panel px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="px-1 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-lg font-bold text-[#0F172A] dark:text-white">
+          <h1 className="sr-only">
             {isTl ? 'Pamamahala ng mga Conference at Paalala sa Magulang' : 'Parent Conferences & Summons Management'}
           </h1>
-          <p className="text-xs text-[#475569] dark:text-[#94A8D0] mt-0.5">
+          <p className="text-[15px] text-[#6E6E73] dark:text-[#A1A1A6]">
             {isTl
-              ? 'Organisadong pagsubaybay sa bawat abiso, pagdalo ng magulang, at tala ng mga tawag.'
-              : 'Structured tracking of parent conference schedules, attendance records, and call attempts.'}
+              ? 'Mag-schedule ng conference, itala kung sino ang dumating, at mag-follow up.'
+              : 'Schedule parent conferences, mark who came, and follow up.'}
           </p>
         </div>
 
@@ -536,7 +542,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
             )}
           </div>
 
-          <div className="inline-flex p-1 rounded-xl saas-card-subtle gap-1">
+          <div className="seg-track">
           {(
             [
               ['schedule', isTl ? `Kailangang i-schedule · ${toSchedule.length}` : `To schedule · ${toSchedule.length}`, isTl ? 'Mga kasong wala pang schedule ng conference' : 'Cases that still need a conference date'],
@@ -554,7 +560,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                 setTab(id);
               }}
               className={`px-4 py-2 rounded-lg text-xs sm:text-[13px] font-semibold whitespace-nowrap transition-colors ${
-                tab === id ? 'bg-[#1E469B] text-white shadow-xs' : 'text-[#475569] dark:text-[#94A8D0] hover:text-[#0F172A] dark:hover:text-white'
+                tab === id ? 'seg-on' : 'seg-off'
               }`}
             >
               {label}
@@ -655,17 +661,17 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
               <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Mga conference' : 'Conferences'}</h2>
               <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
                 {isTl
-                  ? `${officeSummary.textTl}. Awtomatikong pinagbubukod ang mga kailangan pang ilipat.`
-                  : `${officeSummary.textEn}. Prioritizes missed appointments that need rescheduling.`}
+                  ? `Bukas ang opisina: ${officeSummary.fullTl}. Nasa itaas ang mga kailangang i-schedule ulit.`
+                  : `Office open: ${officeSummary.fullEn}. Missed ones that need a new date are on top.`}
               </p>
             </div>
-            <div className="inline-flex p-1 rounded-lg saas-card-subtle gap-1">
+            <div className="seg-track">
               {(['list', 'week', 'month'] as const).map((v) => (
                 <button
                   key={v}
                   type="button"
                   onClick={() => setCalView(v)}
-                  className={`px-3 py-1 rounded-md text-xs font-bold ${calView === v ? 'bg-[#1E469B] text-white' : 'text-[#4A608A] dark:text-[#94A8D0]'}`}
+                  className={`px-3 py-1 rounded-md text-xs font-bold ${calView === v ? 'seg-on' : 'seg-off'}`}
                 >
                   {v === 'list' ? (isTl ? 'Listahan' : 'List') : v === 'week' ? (isTl ? 'Linggo' : 'Week') : isTl ? 'Buwan' : 'Month'}
                 </button>
@@ -945,9 +951,9 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                 {isTl ? 'Lahat ng SMS at email. Hindi ito mae-edit.' : 'Every SMS and email. This list cannot be edited.'}
               </p>
             </div>
-            <div className="inline-flex p-1 rounded-lg saas-card-subtle gap-1">
+            <div className="seg-track">
               {(['all', 'problems'] as const).map((f) => (
-                <button key={f} type="button" onClick={() => setMsgFilter(f)} className={`px-3 py-1 rounded-md text-xs font-bold ${msgFilter === f ? 'bg-[#1E469B] text-white' : 'text-[#4A608A] dark:text-[#94A8D0]'}`}>
+                <button key={f} type="button" onClick={() => setMsgFilter(f)} className={`px-3 py-1 rounded-md text-xs font-bold ${msgFilter === f ? 'seg-on' : 'seg-off'}`}>
                   {f === 'all' ? `${isTl ? 'Lahat' : 'All'} · ${(smsLogs ?? []).length}` : `${isTl ? 'May problema' : 'Problems'} · ${problemMsgs.length}`}
                 </button>
               ))}
@@ -1194,13 +1200,13 @@ const ScheduleWindow: React.FC<{
     const when = `${dayTitle(d)}, ${slotLabel(s)}`;
     if (lang === 'english') {
       if (reschedule) {
-        return `AICS Guidance Office: Good day. The parent conference regarding ${c.studentName} has been rescheduled to ${when}. Our office is open Mon-Thu 8AM-5PM. Thank you.`;
+        return `AICS Guidance Office: Good day. The parent conference regarding ${c.studentName} has been rescheduled to ${when}. Our office is open ${officeHoursText(false)}. Thank you.`;
       }
       return `AICS Guidance Office: Good day. You are requested to attend a parent conference regarding ${c.studentName} on ${when} at the Guidance Office. Thank you.`;
     }
     // Taglish
     if (reschedule) {
-      return `AICS Guidance: Magandang araw po. Inilipat po sa ${when} ang Parent Conference para kay ${c.studentName}. Bukas kami Lunes-Huwebes 8AM-5PM. Salamat po.`;
+      return `AICS Guidance: Magandang araw po. Inilipat po sa ${when} ang Parent Conference para kay ${c.studentName}. Bukas kami ${officeHoursText(true)}. Salamat po.`;
     }
     return `AICS Guidance: Magandang araw po. Inaanyayahan po kayo sa Parent Conference para kay ${c.studentName} sa ${when} sa Guidance Office. Salamat po.`;
   };
@@ -1595,16 +1601,16 @@ const ScheduleWindow: React.FC<{
               {isTl ? officeSummary.fullTl : officeSummary.fullEn}
             </span>
           </div>
-          <input
-            id="conf-date"
-            type="date"
+          <DateField
+            className={dateBad ? 'ring-2 ring-rose-500 rounded-xl' : ''}
             min={todayISO()}
             value={date}
-            onChange={(e) => {
-              setDate(e.target.value);
+            isTl={isTl}
+            ariaLabel={isTl ? 'Petsa ng conference' : 'Conference date'}
+            onChange={(v) => {
+              setDate(v);
               setStart(null);
             }}
-            className={`w-full px-3 py-2 rounded-lg saas-card-subtle text-xs font-bold ${dateBad ? 'ring-2 ring-rose-500' : ''}`}
           />
           {dateBad && (
             <p className="mt-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400">
@@ -1668,7 +1674,7 @@ const ScheduleWindow: React.FC<{
                       setMsgEdited(false);
                       setMessage(autoMsg(date, start, 'taglish'));
                     }}
-                    className={`px-2.5 py-0.5 rounded text-[11px] font-bold transition-all ${msgLang === 'taglish' ? 'bg-[#1E469B] text-white shadow-xs' : 'text-[#4A608A] dark:text-[#94A8D0]'}`}
+                    className={`px-2.5 py-0.5 rounded text-[11px] font-bold transition-all ${msgLang === 'taglish' ? 'seg-on' : 'seg-off'}`}
                   >
                     Taglish (Natural)
                   </button>
@@ -1679,7 +1685,7 @@ const ScheduleWindow: React.FC<{
                       setMsgEdited(false);
                       setMessage(autoMsg(date, start, 'english'));
                     }}
-                    className={`px-2.5 py-0.5 rounded text-[11px] font-bold transition-all ${msgLang === 'english' ? 'bg-[#1E469B] text-white shadow-xs' : 'text-[#4A608A] dark:text-[#94A8D0]'}`}
+                    className={`px-2.5 py-0.5 rounded text-[11px] font-bold transition-all ${msgLang === 'english' ? 'seg-on' : 'seg-off'}`}
                   >
                     English
                   </button>

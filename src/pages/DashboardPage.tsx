@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Phone, PhoneCall, Calendar, PhoneOff, AlertTriangle, CheckCircle2, User, BookOpen, X, Info, Send, Mail, MessageSquare, RotateCcw, MapPin, Clock, ShieldCheck, FileText, Bell } from 'lucide-react';
+import { Phone, PhoneCall, Calendar, PhoneOff, AlertTriangle, CheckCircle2, User, BookOpen, X, Info, Send, Mail, MessageSquare, RotateCcw, MapPin, Clock, ShieldCheck, FileText, Bell, Plus, ChevronRight, SlidersHorizontal, Check } from 'lucide-react';
 import { PhoneInput, checkPhMobile } from '../components/ui/PhoneInput';
 import { useConfirmChange } from '../components/ui/ConfirmChange';
 import { AnimatePresence, motion } from 'framer-motion';
+import { DashboardBento } from '../components/dashboard/DashboardBento';
 import { useLanguage } from '../context/LanguageContext';
 import { soundFX } from '../services/soundEngine';
 import { DuotoneIcon } from '../components/ui/icons';
@@ -45,7 +46,7 @@ import { fetchReferrals } from '../services/referralsDb';
 import { buildQueue, ReferralRow } from '../services/referralRules';
 import { loadAppConfig, useAppConfig } from '../services/appConfig';
 import { sendParentMessage, isSmsConfigured, buildConferenceSms } from '../services/parentComms';
-import { todayISO, addDays, byDateTime } from '../services/scheduling';
+import { todayISO, addDays, byDateTime, isOfficeDay, sanctionEndingSoon } from '../services/scheduling';
 import { smsInfo } from '../services/smsText';
 import { TEXT_SIZES, TextSize, getTextSize, setTextSize, TEXT_SIZE_EVENT } from '../services/textSize';
 import {
@@ -159,8 +160,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       // storage blocked: the guide simply shows again next time
     }
   };
-  const [casesInitialTab, setCasesInitialTab] = useState<Stage3SubTab>('add-report');
-  const [casesInitialFlag, setCasesInitialFlag] = useState<'overdue' | 'waiting' | null>(null);
+  const [casesInitialTab, setCasesInitialTab] = useState<Stage3SubTab>('case-board');
+  const [casesInitialFlag, setCasesInitialFlag] = useState<'overdue' | 'waiting' | 'ending' | null>(null);
   const [casesOpenKey, setCasesOpenKey] = useState<number>(0);
   const [casesPrefill, setCasesPrefill] = useState<CasePrefill | null>(null);
 
@@ -193,6 +194,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   // Follow-Up Tasks Due state
   const [followUpTasks, setFollowUpTasks] = useState<FollowUpTaskItem[]>([]);
   const [taskFilter, setTaskFilter] = useState<'ALL' | FollowUpCategory>('ALL');
+  // Pending first (Golden Rule 4): finished tasks only show when the user asks
+  const [showDoneTasks, setShowDoneTasks] = useState<boolean>(false);
 
   // Recent Office Activity state
   const [activityLogs, setActivityLogs] = useState<OfficeActivityLog[]>([]);
@@ -238,6 +241,27 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   }, [signOutMs, onLockTerminal]);
 
   /** 8-step flow: a parent who attended the conference is notified → updates attendance and unlocks Decision */
+  /** a missed conference also moves the case back to "pick a new date" (Step 4), so both places agree */
+  const markParentNoShow = (caseCode: string) => {
+    const c = cases.find((x) => x.caseCode === caseCode);
+    if (!c || c.status === 'Resolved') return;
+    const db: Record<string, unknown> = {
+      parent_conference_status: 'No-Show',
+      status: 'Pending Reschedule',
+      step: 'Schedule Conference',
+    };
+    void updateCaseFlowInDb(caseCode, db).then((ok) => {
+      if (!ok) return;
+      setCases((prev) =>
+        prev.map((x) =>
+          x.caseCode === caseCode
+            ? { ...x, parentConferenceStatus: 'No-Show', status: 'Pending Reschedule', step: 'Schedule Conference' }
+            : x
+        )
+      );
+    });
+  };
+
   const markParentNotified = (caseCode: string) => {
     const c = cases.find((x) => x.caseCode === caseCode);
     if (!c || c.status === 'Resolved') return;
@@ -452,15 +476,43 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cases, appConfig.caseRules]);
 
+  // Only keep appointments & follow-ups linked to an existing active/closed case (prevents ghost records after case deletion)
+  const validCaseCodes = useMemo(
+    () => new Set(cases.map((c) => c.caseCode.trim().toLowerCase())),
+    [cases]
+  );
+  const validCaseStudentNames = useMemo(
+    () => new Set(cases.map((c) => c.studentName.trim().toLowerCase())),
+    [cases]
+  );
+  const activeAppointments = useMemo(
+    () =>
+      appointments.filter((a) => {
+        if (cases.length === 0) return false;
+        if (a.caseId) return validCaseCodes.has(a.caseId.trim().toLowerCase());
+        return validCaseStudentNames.has(a.studentName.trim().toLowerCase());
+      }),
+    [appointments, cases.length, validCaseCodes, validCaseStudentNames]
+  );
+  const activeFollowUpsList = useMemo(
+    () =>
+      followUpTasks.filter((t) => {
+        if (cases.length === 0) return false;
+        if (t.caseId) return validCaseCodes.has(t.caseId.trim().toLowerCase());
+        return validCaseStudentNames.has(t.studentName.trim().toLowerCase());
+      }),
+    [followUpTasks, cases.length, validCaseCodes, validCaseStudentNames]
+  );
+
   // The Dashboard shows TODAY's conferences only (other days live on the Parents page)
   const todayStr = todayISO();
   const referralsWaiting = useMemo(
-    () => (referralRows ? buildQueue(cases, appointments, referralRows).filter((q) => q.status === 'Waiting').length : 0),
-    [cases, appointments, referralRows]
+    () => (referralRows ? buildQueue(cases, activeAppointments, referralRows).filter((q) => q.status === 'Waiting').length : 0),
+    [cases, activeAppointments, referralRows]
   );
   const todayAppointments = useMemo(
-    () => appointments.filter((a) => a.date === todayStr && a.status !== 'Rescheduled'),
-    [appointments, todayStr]
+    () => activeAppointments.filter((a) => a.date === todayStr && a.status !== 'Rescheduled'),
+    [activeAppointments, todayStr]
   );
 
   // Is an SMS service connected? (never pretend a text was sent)
@@ -469,16 +521,89 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     void isSmsConfigured().then(setSmsReady);
   }, []);
 
-  // Automatic reminder one day before (flowchart page 5). Runs when the app is open.
-  const remindersTried = React.useRef<Set<string>>(new Set());
+  // Automatic reminder one day before (manuscript anchor; flowchart page 5). Runs when the app is open.
+  // "One day before" = the last OFFICE day before the conference, so a Monday conference is reminded on Friday
+  // (nobody opens the app on Sunday). If the SMS cannot go out, a "call the parent" task is made: never silent.
+  // tried today is remembered on this computer, so re-opening the app does not text the same parent again
+  const remindersTried = React.useRef<Set<string>>(
+    (() => {
+      try {
+        const raw = JSON.parse(localStorage.getItem('aics_reminders_tried_v1') || '{}');
+        return new Set<string>(raw.day === todayISO() && Array.isArray(raw.ids) ? raw.ids : []);
+      } catch {
+        return new Set<string>();
+      }
+    })()
+  );
+  const rememberTried = (id: string) => {
+    remindersTried.current.add(id);
+    try {
+      localStorage.setItem('aics_reminders_tried_v1', JSON.stringify({ day: todayISO(), ids: [...remindersTried.current] }));
+    } catch {
+      /* private window: the in-memory set still stops repeats this session */
+    }
+  };
+  const cfgLoaded = useAppConfig().loaded;
   useEffect(() => {
-    if (syncState !== 'ok' || smsReady !== true) return;
-    const tomorrow = addDays(todayStr, 1);
+    // wait for Settings so the reminder uses the office's own SMS template (not the built-in one)
+    if (syncState !== 'ok' || smsReady === null || !cfgLoaded) return;
+    let nextOffice = addDays(todayStr, 1);
+    for (let i = 0; i < 14 && !isOfficeDay(nextOffice); i++) nextOffice = addDays(nextOffice, 1);
+    // never remind about a closed or withdrawn case
+    const closedCases = new Set(cases.filter((c) => c.status === 'Resolved').map((c) => c.caseCode));
     const due = appointments.filter(
-      (a) => a.status === 'Scheduled' && a.date === tomorrow && !a.reminderSentAt && !remindersTried.current.has(a.id)
+      (a) =>
+        a.status === 'Scheduled' &&
+        !closedCases.has(a.caseId) &&
+        a.date > todayStr &&
+        a.date <= nextOffice &&
+        !a.reminderSentAt &&
+        !remindersTried.current.has(a.id)
     );
+    if (!due.length) return;
+
+    const callInstead = (a: ParentAppointmentItem, why: 'not-set-up' | 'failed') => {
+      if (followUpTasks.some((t) => !t.resolved && t.caseId === a.caseId && t.category === 'Failed SMS')) return;
+      const task: FollowUpTaskItem = {
+        id: uid('FUP'),
+        caseId: a.caseId,
+        studentName: a.studentName,
+        initials: a.initials,
+        gradeSection: a.gradeSection,
+        parentName: a.parentName,
+        parentPhone: a.parentPhone,
+        parentEmail: a.parentEmail,
+        category: 'Failed SMS',
+        reasonEn: why === 'not-set-up' ? 'Reminder not sent (SMS not set up)' : 'Reminder SMS did not go out',
+        reasonTl: why === 'not-set-up' ? 'Hindi naipadala ang paalala (wala pang SMS)' : 'Hindi naipadala ang paalalang SMS',
+        diagnosticNoteEn: `Call to remind about ${a.date} ${a.timeSlot}.`,
+        diagnosticNoteTl: `Tawagan para ipaalala ang ${a.date} ${a.timeSlot}.`,
+        attemptsCount: 0,
+        lastContactSummaryEn: 'Not contacted yet',
+        lastContactSummaryTl: 'Hindi pa natatawagan',
+        resolved: false,
+        createdAt: new Date().toISOString(),
+      };
+      setFollowUpTasks((prev) => [task, ...prev]);
+      void insertFollowUpTaskInDb(task);
+    };
+
+    // SMS not connected: say so plainly and turn each reminder into a call task
+    if (smsReady === false) {
+      due.forEach((a) => {
+        rememberTried(a.id);
+        callInstead(a, 'not-set-up');
+      });
+      triggerToast(
+        isTl
+          ? `⚠️ ${due.length} paalala ang hindi naipadala dahil wala pang SMS. Nasa "Tatawagang magulang" na sila.`
+          : `⚠️ ${due.length} reminder(s) not sent because SMS is not set up yet. They are now in "Parents to call".`
+      );
+      return;
+    }
+
     due.forEach(async (a) => {
-      remindersTried.current.add(a.id);
+      rememberTried(a.id);
       const r = await sendParentMessage({
         channel: a.parentEmail ? 'both' : 'sms',
         phone: a.parentPhone,
@@ -496,8 +621,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         setAppointments((list) => list.map((x) => (x.id === a.id ? { ...x, reminderSentAt: at } : x)));
         void updateAppointmentInDb(a.id, { reminder_sent_at: at });
       }
+      if (r.smsFailed || !r.anyDelivered) callInstead(a, 'failed');
     });
-  }, [appointments, syncState, smsReady, todayStr]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appointments, cases, syncState, smsReady, todayStr, cfgLoaded]);
 
   // Dynamic KPI Metrics computed from live state (today only)
   const attendanceStats = useMemo(() => {
@@ -518,8 +645,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   }, [todayAppointments]);
 
   const activeFollowUpCount = useMemo(
-    () => followUpTasks.filter((t) => !t.resolved).length,
-    [followUpTasks]
+    () => activeFollowUpsList.filter((t) => !t.resolved).length,
+    [activeFollowUpsList]
   );
   // "To do" = conferences still waiting for attendance + follow-ups not yet done
   const todoCount = attendanceStats.scheduled + activeFollowUpCount;
@@ -527,7 +654,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const [casesInitialOpenCaseCode, setCasesInitialOpenCaseCode] = useState<string | null>(null);
 
   /** Opens the Cases page on a given tab (used by "+ New Case" and the Open Cases card). */
-  const openCasesTab = (tab: Stage3SubTab, flag: 'overdue' | 'waiting' | null = null, prefill: CasePrefill | null = null, directCaseCode: string | null = null) => {
+  const openCasesTab = (tab: Stage3SubTab, flag: 'overdue' | 'waiting' | 'ending' | null = null, prefill: CasePrefill | null = null, directCaseCode: string | null = null) => {
     soundFX.playStepUnlock();
     setCasesPrefill(prefill);
     setCasesInitialTab(tab);
@@ -616,14 +743,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   };
   const filteredFollowUps = useMemo(() => {
     const q = quickSearch.trim().toLowerCase();
-    const list = followUpTasks.filter((t) => {
+    const list = activeFollowUpsList.filter((t) => {
       const matchesTab = taskFilter === 'ALL' || t.category === taskFilter;
+      const matchesDone = Boolean(t.resolved) === showDoneTasks;
       const matchesSearch =
         !q ||
         t.studentName.toLowerCase().includes(q) ||
         t.gradeSection.toLowerCase().includes(q) ||
         t.parentName.toLowerCase().includes(q);
-      return matchesTab && matchesSearch;
+      return matchesTab && matchesDone && matchesSearch;
     });
     return list.sort((a, b) => {
       if (taskSort === 'name') return a.studentName.localeCompare(b.studentName);
@@ -631,7 +759,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       const d = timeOf(b.createdAt) - timeOf(a.createdAt);
       return taskSort === 'oldest' ? -d : d;
     });
-  }, [followUpTasks, taskFilter, quickSearch, taskSort]);
+  }, [activeFollowUpsList, taskFilter, quickSearch, taskSort, showDoneTasks]);
+  const doneTaskCount = useMemo(() => activeFollowUpsList.filter((t) => t.resolved).length, [activeFollowUpsList]);
+  const pendingTaskCount = activeFollowUpsList.length - doneTaskCount;
 
   // ---- Real numbers from the cases and students in the system (so every number agrees) ----
   const caseDate = (c: DisciplineCaseRecord) => {
@@ -641,6 +771,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const offensesThisMonth = useMemo(() => {
     const now = new Date();
     return cases.filter((c) => {
+      if (/^withdrawn/i.test(c.decision ?? "")) return false; // withdrawn = filed in error, not an offense
       const d = caseDate(c);
       return d && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
     }).length;
@@ -849,6 +980,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       )
     );
     void updateAppointmentStatusInDb(apt.id, 'Did Not Attend', noShowReason);
+    markParentNoShow(apt.caseId);
 
     const createdTask: FollowUpTaskItem = {
       id: uid('FUP'),
@@ -916,6 +1048,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     parentEmail: string;
     scheduleText: string;
     caseCode?: string;
+    /** ready text to start from (e.g. the decision notice); default = summons notice */
+    message?: string;
   }) => {
     soundFX.playStepUnlock();
     setComposerCaseCode(params.caseCode ?? '');
@@ -928,6 +1062,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     setComposerChannel(params.parentEmail ? 'both' : 'sms');
     setComposerSchedule(params.scheduleText);
     setComposerMessage(
+      params.message ||
       buildDefaultParentMessage({
         parentName: params.parentName,
         studentName: params.studentName,
@@ -954,7 +1089,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         },
         ...(usesSms ? [{ label: 'SMS to', after: composerPhone }] : []),
         ...(usesGmail ? [{ label: 'Gmail to', after: composerEmail }] : []),
-        { label: isTl ? 'Schedule' : 'Schedule', after: composerSchedule },
+        ...(composerSchedule ? [{ label: isTl ? 'Schedule' : 'Schedule', after: composerSchedule }] : []),
         {
           label: isTl ? 'Mensahe' : 'Message',
           after: composerMessage.length > 160 ? composerMessage.slice(0, 160) + '…' : composerMessage,
@@ -1104,13 +1239,30 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     };
     void insertActivityLogInDb(newLog);
 
+    const target = callLogTarget;
     setCallLogTarget(null);
     setCallCustomNotes('');
-    triggerToast(
-      isTl
-        ? `✓ Naitala ang tawag para kay ${callLogTarget.parentName}.`
-        : `✓ Logged contact attempt for ${callLogTarget.parentName}.`
-    );
+    setCallOutcome('');
+    // Say what happened AND the obvious next step (Golden Rule 6)
+    if (callOutcome === 'Reached — asked for a new date') {
+      triggerToast(
+        isTl ? `Naitala ang tawag. Pumili na ng bagong araw para kay ${target.parentName}.` : `Call saved. Now pick a new date for ${target.parentName}.`,
+        undefined,
+        { label: isTl ? 'Pumili ng araw' : 'Pick new date', run: () => openParents('schedule', target.caseId || undefined) }
+      );
+    } else if (callOutcome === 'Wrong number') {
+      triggerToast(
+        isTl ? `Naitala ang tawag. Ayusin ang number ni ${target.parentName} sa kaso.` : `Call saved. Fix ${target.parentName}'s number in the case.`,
+        undefined,
+        { label: isTl ? 'Ayusin ang number' : 'Fix number', run: () => openCasesTab('case-board', null, null, target.caseId || null) }
+      );
+    } else {
+      triggerToast(
+        isResolved
+          ? isTl ? `Tapos na ang follow-up para kay ${target.parentName}.` : `Follow-up for ${target.parentName} is done.`
+          : isTl ? `Naitala ang tawag. Nasa listahan pa si ${target.parentName} para tawagan ulit.` : `Call saved. ${target.parentName} stays on the list to call again.`
+      );
+    }
   };
 
   // Action: Log Walk-In Parent Conference (parent came without an appointment)
@@ -1244,10 +1396,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             Left: Subtle Breadcrumbs + Clean View Title
             Right: Staff User Badge with Initials + Staff Role + Sign out link
             ================================================================== */}
-        <header className="shrink-0 h-16 px-6 lg:px-8 bg-white dark:bg-[#070E1C] border-b border-[#E2E8F0] dark:border-[#1E2E4E] flex items-center justify-between gap-4 z-30 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+        <header className="shrink-0 h-16 px-6 lg:px-8 bg-white dark:bg-[#070F1E] border-b border-[#D5E0EE] dark:border-[#1E3250] flex items-center justify-between gap-4 z-30">
           {/* Left Zone: Clean Heading */}
-          <div className="flex flex-col justify-center min-w-0">
-            <h1 className="text-lg font-bold tracking-tight text-[#0F172A] dark:text-white truncate">
+          <div className="flex items-center gap-3 min-w-0">
+            <h1 className="text-lg font-bold tracking-tight text-[#0B192C] dark:text-[#EDF4FC] truncate">
               {isTl ? activeCategory.labelTl : activeCategory.labelEn}
             </h1>
           </div>
@@ -1258,7 +1410,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             {searchHere && (
               <div className="relative hidden md:block w-64">
                 <svg
-                  className="w-3.5 h-3.5 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                  className="w-3.5 h-3.5 text-[#52637A] dark:text-[#94A8C4] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -1274,13 +1426,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   value={quickSearch}
                   onChange={(e) => setQuickSearch(e.target.value)}
                   placeholder={isTl ? 'Hanapin ang estudyante…' : 'Search student or ID…'}
-                  className="w-full pl-8 pr-7 py-1.5 rounded-[8px] bg-[#F8FAFC] dark:bg-[#0B1528] border border-[#CBD5E1] dark:border-[#223555] text-xs font-medium text-[#0F172A] dark:text-white placeholder-[#94A3B8] focus:outline-none focus:border-[#1E469B] dark:focus:border-[#7CB8F7]"
+                  className="w-full pl-8 pr-7 py-1.5 rounded-[10px] bg-[#F8FAFC] dark:bg-[#0A1526] border border-[#D5E0EE] dark:border-[#1E3250] text-xs font-medium text-[#0B192C] dark:text-[#EDF4FC] placeholder-[#52637A] dark:placeholder-[#94A8C4] focus:outline-none focus:border-[#1E469B] dark:focus:border-[#38BDF8]"
                 />
                 {quickSearch && (
                   <button
                     type="button"
                     onClick={() => setQuickSearch('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#94A3B8] hover:text-[#0F172A]"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#52637A] hover:text-[#0B192C]"
                   >
                     ✕
                   </button>
@@ -1288,33 +1440,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </div>
             )}
 
-            {/* 5-Tier Font Size Segmented Control */}
-            <div
-              className="flex items-center gap-0.5 p-0.5 rounded-[8px] bg-[#F1F5F9] dark:bg-[#0B1528] border border-[#CBD5E1] dark:border-[#223555]"
-              title={isTl ? 'Baguhin ang laki ng letra sa buong system' : 'Change font size across the whole system'}
-            >
-              <span className="text-[10px] font-bold text-[#64748B] dark:text-[#94A3B8] px-1.5 hidden sm:inline select-none">
-                A
-              </span>
-              {TEXT_SIZES.map((s) => {
-                const isActive = currentTextSize === s.id;
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => handleSetTextSize(s.id)}
-                    className={`px-1.5 py-0.5 text-[10px] font-bold rounded-[5px] transition-all select-none active:scale-95 ${
-                      isActive
-                        ? 'bg-[#1E469B] text-white shadow-xs'
-                        : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-white'
-                    }`}
-                    title={`${isTl ? s.tl : s.en} (${Math.round(s.zoom * 100)}%)`}
-                  >
-                    {s.short}
-                  </button>
-                );
-              })}
-            </div>
+            {/* Font size lives in the sidebar only (one control, not two) */}
 
             {/* Sign Out link */}
             <button
@@ -1326,13 +1452,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               title={isTl ? 'Mag-sign out' : 'Sign out'}
               className="text-xs font-semibold text-[#64748B] hover:text-rose-600 dark:text-[#94A3B8] dark:hover:text-rose-400 pl-1 transition-colors"
             >
-              Sign out
+              {isTl ? 'Mag-sign out' : 'Sign out'}
             </button>
           </div>
         </header>
 
         {/* Scrollable Content Container with Stable Gutter & Top Alignment */}
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden clean-scroll [scrollbar-gutter:stable] flex flex-col justify-start">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden clean-scroll [scrollbar-gutter:stable] flex flex-col justify-start bg-[#F5F5F7] dark:bg-transparent">
 
         {/* ==================================================================
             CENTERED MINI CONFIRMATION CARD (ANIMATED CHECK + CHECK SFX)
@@ -1545,9 +1671,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         ) : activeCategory.id === 'parents-hub' ? (
           <ParentsHub
             key={parentsKey}
-            appointments={appointments}
+            appointments={activeAppointments}
             setAppointments={setAppointments}
-            followUps={followUpTasks}
+            followUps={activeFollowUpsList}
             setFollowUps={setFollowUpTasks}
             students={students}
             setStudents={setStudents}
@@ -1557,6 +1683,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             initialScheduleCase={parentsScheduleCase}
             initialTab={parentsTab}
             onConferenceAttended={markParentNotified}
+            onConferenceMissed={markParentNoShow}
             onOpenCaseDueProcess={(caseCode) => {
               const found = cases.find((c) => c.caseCode.toLowerCase() === caseCode.toLowerCase());
               if (found) {
@@ -1749,266 +1876,43 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 </div>
               </section>
             )}
-            {/* First visit: 3 clickable steps (Golden Rule 10) */}
-            {showGettingStarted && (
-              <section
-                aria-label={isTl ? 'Paano magsimula' : 'Getting started'}
-                className="shrink-0 px-5 py-3.5 rounded-2xl border border-[#CFD9F2] dark:border-[#243B6B] bg-[#F1F5FD] dark:bg-[#12203F] flex flex-col lg:flex-row lg:items-center gap-3"
-              >
-                <p className="text-[13px] font-extrabold text-[#0B1F4D] dark:text-white shrink-0">
-                  {isTl ? 'Bago ka rito?' : 'New here?'}
-                </p>
-                <ol className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
-                  {[
-                    {
-                      n: 1,
-                      en: 'Add a case',
-                      tl: 'Bagong kaso',
-                      run: () => openCasesTab('add-report'),
-                    },
-                    {
-                      n: 2,
-                      en: 'Mark attendance',
-                      tl: 'I-mark ang dumalo',
-                      run: () => goToQueue('dash-conferences'),
-                    },
-                    {
-                      n: 3,
-                      en: 'Call missed parents',
-                      tl: 'Tawagan ang magulang',
-                      run: () => goToQueue('dash-followups'),
-                    },
-                  ].map((st) => (
-                    <li key={st.n}>
-                      <button
-                        type="button"
-                        onClick={st.run}
-                        className="btn-press w-full flex items-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-[#0F1A30] border border-[#DCE5F2] dark:border-[#1E3158] hover:border-[#2557BE] text-left text-xs font-bold text-[#0B1F4D] dark:text-white"
-                      >
-                        <span className="w-5 h-5 shrink-0 rounded-full bg-[#1E469B] text-white text-[11px] font-extrabold flex items-center justify-center">
-                          {st.n}
-                        </span>
-                        <span className="leading-snug">{isTl ? st.tl : st.en}</span>
-                        <span aria-hidden="true" className="ml-auto text-[#2557BE] dark:text-[#7CB8F7]">→</span>
-                      </button>
-                    </li>
-                  ))}
-                </ol>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setShowQuickGuideModal(true)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7] hover:underline"
-                  >
-                    {isTl ? 'Buong gabay' : 'Full guide'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={dismissGettingStarted}
-                    className="btn-press px-3 py-1.5 rounded-lg saas-card-subtle text-xs font-bold"
-                  >
-                    {isTl ? 'Sige, itago' : 'Got it, hide'}
-                  </button>
-                </div>
-              </section>
-            )}
-
-              {/*New here guide / Executive Bento Hub */}
-              {/* ================================================================
-                  CDM-PORTAL 1:1 ASYMMETRIC BENTO GRID WORKSPACE HUB (2-1-1 / 1-1-2)
-                  ================================================================ */}
-              <section className="shrink-0 space-y-3" aria-label={isTl ? 'Guidance Workspace Hub' : 'Guidance Workspace Hub'}>
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
-                  <div>
-                    <span className="portal-kicker block">
-                      {isTl ? 'AICS GUIDANCE PORTAL SERVICES' : 'AICS GUIDANCE PORTAL SERVICES'}
-                    </span>
-                    <h2 className="portal-serif-display text-2xl sm:text-3xl text-[#0B192C] dark:text-[#EDF4FC] mt-0.5">
-                      {isTl ? 'Academic & guidance workspaces in one secure place.' : 'Academic & guidance workspaces in one secure place.'}
-                    </h2>
-                  </div>
-                  <p className="text-xs text-[#52637A] dark:text-[#94A8C4] max-w-xs">
-                    {isTl
-                      ? 'Pumili ng workspace sa ibaba upang buksan ang kaso, parent conference, o student concerns.'
-                      : 'Select any workspace card below to manage cases, parent conferences, or student welfare records.'}
-                  </p>
-                </div>
-
-                <div className="portal-bento-grid">
-                  {/* Bento 1: Featured 2-Col Span — File / Manage Discipline Case */}
-                  <button
-                    type="button"
-                    onClick={() => openCasesTab('add-report')}
-                    className="btn-press portal-bento-card featured text-left !min-h-[158px] !p-5 cursor-pointer"
-                  >
-                    <div className="portal-bento-icon">
-                      <FileText className="w-5 h-5" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <span className="portal-kicker-gold block">
-                        {isTl ? '8-STEP DUE PROCESS WORKFLOW' : '8-STEP DUE PROCESS WORKFLOW'}
-                      </span>
-                      <h3 className="text-base sm:text-lg font-bold text-white">
-                        {isTl ? 'Mag-File at Mamahala ng Kaso' : 'Discipline Case Intake & Due Process'}
-                      </h3>
-                      <p className="text-xs text-white/75 leading-relaxed max-w-md">
-                        {isTl
-                          ? 'Mag-record ng bagong offense, mag-print ng Call Slip, at subaybayan ang 8-step due process.'
-                          : 'Create new incident reports, issue student call slips, and track the complete 8-stage due process workflow.'}
-                      </p>
-                    </div>
-                  </button>
-
-                  {/* Bento 2: 1-Col Matte Card — Active Cases */}
-                  <button
-                    type="button"
-                    onClick={() => openCasesTab('case-board')}
-                    className="btn-press portal-bento-card text-left !min-h-[158px] !p-5 cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="portal-bento-icon">
-                        <ShieldCheck className="w-5 h-5" />
-                      </div>
-                      <span className="font-mono text-2xl font-bold text-[#0B192C] dark:text-white">
-                        {cases.filter((c) => c.status !== 'Resolved').length}
-                      </span>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="portal-kicker block">
-                        {isTl ? 'MGA AKTIBONG KASO' : 'AUTHORIZED RECORDS'}
-                      </span>
-                      <h3 className="text-sm sm:text-base font-bold text-[#0B192C] dark:text-[#EDF4FC]">
-                        {isTl ? 'Active Cases Board' : 'Active Discipline Cases'}
-                      </h3>
-                      <p className="text-xs text-[#52637A] dark:text-[#94A8C4] leading-snug">
-                        {cases.length} {isTl ? 'kabuuang kaso sa sistema.' : 'total cases recorded in the system.'}
-                      </p>
-                    </div>
-                  </button>
-
-                  {/* Bento 3: 1-Col Matte Card — Student Masterlist */}
-                  <button
-                    type="button"
-                    onClick={() => openCasesTab('masterlist')}
-                    className="btn-press portal-bento-card text-left !min-h-[158px] !p-5 cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="portal-bento-icon">
-                        <BookOpen className="w-5 h-5" />
-                      </div>
-                      <span className="font-mono text-2xl font-bold text-[#0B192C] dark:text-white">
-                        {students.length}
-                      </span>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="portal-kicker block">
-                        {isTl ? 'OPISYAL NA MASTERLIST' : 'AUTHORIZED STUDENTS'}
-                      </span>
-                      <h3 className="text-sm sm:text-base font-bold text-[#0B192C] dark:text-[#EDF4FC]">
-                        {isTl ? 'Student Masterlist' : 'Student Masterlist'}
-                      </h3>
-                      <p className="text-xs text-[#52637A] dark:text-[#94A8C4] leading-snug">
-                        {isTl ? 'Grade 11 at Grade 12 enrolled profiles.' : 'Verified Grade 11 & 12 student directory.'}
-                      </p>
-                    </div>
-                  </button>
-
-                  {/* Bento 4: 1-Col Matte Card — Parent Conferences (Class Schedules style) */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playStepUnlock();
-                      const parentsNav = MAIN_SIDEBAR_CATEGORIES.find((c) => c.id === 'parents-hub');
-                      if (parentsNav) setActiveCategory(parentsNav);
-                    }}
-                    className="btn-press portal-bento-card text-left !min-h-[158px] !p-5 cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="portal-bento-icon">
-                        <Calendar className="w-5 h-5" />
-                      </div>
-                      <span className="font-mono text-2xl font-bold text-[#0B192C] dark:text-white">
-                        {attendanceStats.ratePercent === null ? '—' : `${attendanceStats.ratePercent}%`}
-                      </span>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="portal-kicker block">
-                        {isTl ? 'ISKEDYUL NG MAGULANG' : 'AUTHORIZED ACCOUNTS'}
-                      </span>
-                      <h3 className="text-sm sm:text-base font-bold text-[#0B192C] dark:text-[#EDF4FC]">
-                        {isTl ? 'Parent Conferences' : 'Conference Schedules'}
-                      </h3>
-                      <p className="text-xs text-[#52637A] dark:text-[#94A8C4] leading-snug">
-                        {attendanceStats.attended}/{attendanceStats.total} {isTl ? 'dumalong magulang.' : 'attended parent summons.'}
-                      </p>
-                    </div>
-                  </button>
-
-                  {/* Bento 5: 1-Col Matte Card — Follow-ups & Offenses This Month */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playToggleSwitch(true);
-                      setActiveTab('analytics');
-                    }}
-                    className="btn-press portal-bento-card text-left !min-h-[158px] !p-5 cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="portal-bento-icon">
-                        <Clock className="w-5 h-5" />
-                      </div>
-                      <span className="font-mono text-2xl font-bold text-[#0B192C] dark:text-white">
-                        {offensesThisMonth}
-                      </span>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="portal-kicker block">
-                        {isTl ? 'BUWANANG REKORD' : 'MONTHLY ANALYTICS'}
-                      </span>
-                      <h3 className="text-sm sm:text-base font-bold text-[#0B192C] dark:text-[#EDF4FC]">
-                        {isTl ? 'Offenses & Statistics' : 'Academic & Case Metrics'}
-                      </h3>
-                      <p className="text-xs text-[#52637A] dark:text-[#94A8C4] leading-snug">
-                        {activeFollowUpCount} {isTl ? 'follow-up na kailangang tawagan.' : 'pending parent follow-up calls.'}
-                      </p>
-                    </div>
-                  </button>
-
-                  {/* Bento 6: Featured 2-Col Span — Official Reports & SafeZone Concerns */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playStepUnlock();
-                      const concernsNav = MAIN_SIDEBAR_CATEGORIES.find((c) => c.id === 'support-hub');
-                      if (concernsNav) setActiveCategory(concernsNav);
-                    }}
-                    className="btn-press portal-bento-card featured text-left !min-h-[158px] !p-5 cursor-pointer"
-                  >
-                    <div className="portal-bento-icon">
-                      <MessageSquare className="w-5 h-5" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <span className="portal-kicker-gold block">
-                        {isTl ? 'SAFEZONE & PDF DOCUMENTATION' : 'SAFEZONE & OFFICIAL DOCUMENTATION'}
-                      </span>
-                      <h3 className="text-base sm:text-lg font-bold text-white">
-                        {isTl ? 'Student Concerns & Live Counseling Chat' : 'Student Concerns & Official Reports'}
-                      </h3>
-                      <p className="text-xs text-white/75 leading-relaxed max-w-md">
-                        {isTl
-                          ? 'Tugunan ang mga isinumiteng concern ng mag-aaral, makipag-chat nang pribado, at mag-download ng 1-page PDF.'
-                          : 'Review student-submitted SafeZone reports, respond via real-time counseling chat, and export 1-page official PDFs.'}
-                      </p>
-                    </div>
-                  </button>
-                </div>
-              </section>
+            {/* 2026 bento: hero (greeting + today ring + New Case) and 4 live widgets */}
+            <DashboardBento
+              isTl={isTl}
+              cases={cases.filter((c) => !/^withdrawn/i.test(c.decision ?? ""))}
+              studentCount={students.length}
+              confToday={todayAppointments.filter((a) => a.status === 'Scheduled').length}
+              confDoneToday={todayAppointments.filter((a) => a.status === 'Attended').length}
+              callsPending={pendingTaskCount}
+              callsDone={doneTaskCount}
+              overdue={alerts.overdue.length}
+              waiting={alerts.waiting.length}
+              sanctionsEnding={cases.filter((c) => sanctionEndingSoon(c)).length}
+              onSanctionsEnding={() => openCasesTab('case-board', 'ending')}
+              onOverdue={() => openCasesTab('case-board', 'overdue')}
+              onWaiting={() => openCasesTab('case-board', 'waiting')}
+              offensesThisMonth={offensesThisMonth}
+              attendance={attendanceStats}
+              onNewCase={() => openCasesTab('add-report')}
+              onStudents={() => openCasesTab('students')}
+              onOpenCases={() => openCasesTab('case-board')}
+              onStats={() => {
+                soundFX.playToggleSwitch(true);
+                setActiveTab('analytics');
+              }}
+              onConferences={() => goToQueue('dash-conferences')}
+              onCalls={() => goToQueue('dash-followups')}
+              nextUp={(() => {
+                const n = todayAppointments.filter((a) => a.status === 'Scheduled').sort(byDateTime)[0];
+                return n ? { time: n.timeSlot, text: isTl ? `Conference · ${n.studentName}` : `Parent conference · ${n.studentName}` } : null;
+              })()}
+            />
 
             {/* ================================================================
                 3. LOCKED-POSITION SaaS WORKSPACE TABS (h-[52px] shrink-0)
                 ================================================================ */}
-            <div className="shrink-0 h-[52px] flex items-center justify-between gap-4 border-b border-[#DCE5F2] dark:border-[#1E3158]">
-              <div className="inline-flex p-1 rounded-xl saas-card-subtle gap-1">
+            <div className="shrink-0 h-[52px] flex items-center justify-between gap-4">
+              <div className="inline-flex p-0.5 rounded-[10px] bg-[#E8E8ED] dark:bg-white/[0.08] gap-0.5">
                 {(
                   [
                     {
@@ -2037,10 +1941,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         soundFX.playToggleSwitch(true);
                         setActiveTab(tab.id);
                       }}
-                      className={`px-4 py-2 rounded-lg text-xs sm:text-[13px] font-bold transition-colors ${
+                      className={`px-4 py-1.5 rounded-[8px] text-[13px] font-medium transition-[background-color,color,box-shadow] duration-150 ${
                         isActive
-                          ? 'bg-[#1E469B] text-white shadow-sm'
-                          : 'text-[#4A608A] dark:text-[#94A8D0] hover:text-[#0B1F4D] dark:hover:text-white'
+                          ? 'bg-white dark:bg-[#3A3A3C] text-[#1D1D1F] dark:text-white shadow-[0_1px_3px_rgb(0_0_0/0.12)]'
+                          : 'text-[#6E6E73] dark:text-[#A1A1A6] hover:text-[#1D1D1F] dark:hover:text-white'
                       }`}
                     >
                       {isTl ? tab.labelTl : tab.labelEn}
@@ -2060,19 +1964,19 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 TAB 1: TODAY'S ACTION QUEUE (APPOINTMENTS + FOLLOW-UP CALLS)
                 ================================================================ */}
             {activeTab === 'queue' && (
-              <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+              <section className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-stretch">
                 {/* LEFT 7 COLS: Today's Parent Appointments */}
-                <div id="dash-conferences" className="xl:col-span-7 rounded-2xl saas-card overflow-hidden scroll-mt-4">
-                  <div className="px-6 py-3.5 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
-                        {isTl
-                          ? 'Iskedyul ng Parent Conference Ngayong Araw'
-                          : "Today's Scheduled Parent Conferences"}
-                      </h2>
+                <div id="dash-conferences" className="xl:col-span-7 panel-2026 overflow-hidden scroll-mt-4 flex flex-col">
+                  <div className="px-6 py-4 border-b border-black/[0.06] dark:border-white/[0.08] shrink-0 h-[112px] flex flex-col items-start justify-center gap-3">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <h2 className="text-[17px] font-semibold tracking-[-0.01em] text-[#1D1D1F] dark:text-[#F5F5F7]">
+                          {isTl ? 'Conference ngayon' : 'Conferences today'}
+                        </h2>
+                      </div>
                     </div>
 
-                    <div className="inline-flex p-1 rounded-lg saas-card-subtle gap-1">
+                    <div className="inline-flex p-0.5 rounded-[10px] bg-[#E8E8ED] dark:bg-white/[0.08] gap-0.5">
                       {(
                         [
                           { key: 'ALL', label: isTl ? 'Lahat' : 'All' },
@@ -2085,10 +1989,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                           key={f.key}
                           type="button"
                           onClick={() => setAptFilter(f.key)}
-                          className={`px-2.5 py-1 rounded-md text-xs font-bold transition-colors ${
+                          className={`px-3 py-1 rounded-[8px] text-xs font-medium transition-[background-color,color] duration-150 ${
                             aptFilter === f.key
-                              ? 'bg-[#1E469B] text-white'
-                              : 'text-[#4A608A] dark:text-[#94A8D0] hover:text-[#0B1F4D] dark:hover:text-white'
+                              ? 'bg-white dark:bg-[#3A3A3C] text-[#1D1D1F] dark:text-white shadow-[0_1px_3px_rgb(0_0_0/0.12)]'
+                              : 'text-[#6E6E73] dark:text-[#A1A1A6] hover:text-[#1D1D1F] dark:hover:text-white'
                           }`}
                         >
                           {f.label}
@@ -2097,11 +2001,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                     </div>
                   </div>
 
-                  <div className="p-4 space-y-3">
+                  <div className="p-5 space-y-3 flex-1 h-[400px] overflow-y-auto clean-scroll">
                     {visibleAppointments.length === 0 && attendedHiddenCount === 0 && (
-                      <p className="px-2 py-6 text-center text-sm font-semibold text-[#4A608A] dark:text-[#94A8D0]">
-                        {isTl ? 'Walang conference dito.' : 'No conferences here.'}
-                      </p>
+                      <div className="py-10 px-4 text-center space-y-1.5"><Calendar className="w-7 h-7 mx-auto mb-2 text-[#C7C7CC] dark:text-[#636366]" aria-hidden />
+                        <p className="text-[15px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">
+                          {isTl ? 'Walang conference ngayon' : 'No conferences today'}
+                        </p>
+                        <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">
+                          {isTl
+                            ? 'Kapag nag-schedule ka ng magulang sa isang kaso, lalabas ito dito.'
+                            : 'When you schedule a parent in a case, it shows up here.'}
+                        </p>
+                      </div>
                     )}
                     {visibleAppointments.map((apt) => {
                       const isAttended = apt.status === 'Attended';
@@ -2305,30 +2216,111 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 </div>
 
                 {/* RIGHT 5 COLS: Follow-Up Tasks Due */}
-                <div id="dash-followups" className="xl:col-span-5 rounded-2xl saas-card overflow-hidden scroll-mt-4">
-                  <div className="px-6 py-3.5 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
-                        {isTl ? 'Follow-Up Tasks Due' : 'Follow-Up Tasks Due'}
-                      </h2>
+                <div id="dash-followups" className="xl:col-span-5 panel-2026 overflow-hidden scroll-mt-4 flex flex-col">
+                  <div className="px-6 py-4 border-b border-black/[0.06] dark:border-white/[0.08] shrink-0 h-[112px] flex flex-col items-start justify-center gap-3">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <h2 className="text-[17px] font-semibold tracking-[-0.01em] text-[#1D1D1F] dark:text-[#F5F5F7]">
+                          {isTl ? 'Tatawagang magulang' : 'Parents to call'}
+                        </h2>
+                      </div>
                     </div>
 
-                    <select
-                      value={taskFilter}
-                      onChange={(e) =>
-                        setTaskFilter(e.target.value as 'ALL' | FollowUpCategory)
-                      }
-                      className="px-3 py-1.5 rounded-lg saas-card-subtle text-xs font-bold text-[#0B1F4D] dark:text-white"
-                    >
-                      <option value="ALL">{isTl ? 'Lahat ng task' : 'All tasks'}</option>
-                      <option value="Missed Conferences">{isTl ? 'Hindi dumalo' : 'Did not attend'}</option>
-                      <option value="Failed SMS">{isTl ? 'Hindi naipadala ang SMS' : 'SMS not sent'}</option>
-                      <option value="Priority Calls">{isTl ? 'Unahin' : 'Priority'}</option>
-                    </select>
-                    <SortControl id="dash-tasks" value={taskSort} onChange={setTaskSort} isTl={isTl} />
+                    <div className="w-full flex flex-wrap items-center gap-2">
+                      <div
+                        role="tablist"
+                        aria-label={isTl ? 'Ipakita ang task' : 'Show tasks'}
+                        className="flex items-center p-0.5 rounded-lg bg-[#EEF3F9] dark:bg-[#0A1526] border border-[#D5E0EE] dark:border-[#1E3250]"
+                      >
+                        {[
+                          { done: false, label: isTl ? 'Kailangan pa' : 'Pending', n: pendingTaskCount },
+                          { done: true, label: isTl ? 'Tapos na' : 'Done', n: doneTaskCount },
+                        ].map((o) => (
+                          <button
+                            key={o.label}
+                            type="button"
+                            role="tab"
+                            aria-selected={showDoneTasks === o.done}
+                            onClick={() => setShowDoneTasks(o.done)}
+                            className={`px-2.5 py-1 rounded-md text-xs font-bold whitespace-nowrap transition-colors active:scale-[0.97] ${
+                              showDoneTasks === o.done
+                                ? 'bg-white dark:bg-[#1E3250] text-[#0B192C] dark:text-white shadow-sm'
+                                : 'text-[#52637A] dark:text-[#94A8C4] hover:text-[#0B192C] dark:hover:text-white'
+                            }`}
+                          >
+                            {o.label} <span className="tabular-nums opacity-70">{o.n}</span>
+                          </button>
+                        ))}
+                      </div>
+                      {/* Filter + sort tucked into one "Filter" menu (fewer controls, Apple-style) */}
+                      <details className="relative ml-auto">
+                        <summary
+                          className={`list-none [&::-webkit-details-marker]:hidden cursor-pointer h-8 px-3 rounded-full inline-flex items-center gap-1.5 text-xs font-medium transition-colors ${
+                            taskFilter !== 'ALL'
+                              ? 'bg-[#1E469B]/10 text-[#1E469B] dark:text-[#7CB8F7]'
+                              : 'text-[#6E6E73] dark:text-[#A1A1A6] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
+                          }`}
+                        >
+                          <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden />
+                          {isTl ? 'Filter' : 'Filter'}
+                        </summary>
+                        <div className="absolute right-0 top-full mt-1.5 z-30 p-3 rounded-2xl ring-card w-max space-y-3">
+                          <div className="space-y-1.5">
+                            <p className="text-[11px] font-medium text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Uri' : 'Type'}</p>
+                            <div className="flex flex-col">
+                              {(
+                                [
+                                  ['ALL', isTl ? 'Lahat' : 'All'],
+                                  ['Missed Conferences', isTl ? 'Hindi dumalo' : 'Did not attend'],
+                                  ['Failed SMS', isTl ? 'Hindi naipadala ang SMS' : 'SMS not sent'],
+                                  ['Priority Calls', isTl ? 'Unahin' : 'Priority'],
+                                ] as const
+                              ).map(([v, l]) => (
+                                <button
+                                  key={v}
+                                  type="button"
+                                  onClick={() => setTaskFilter(v as 'ALL' | FollowUpCategory)}
+                                  className="flex items-center justify-between gap-6 px-2 py-1.5 rounded-lg text-[13px] text-left text-[#1D1D1F] dark:text-[#F5F5F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                                >
+                                  {l}
+                                  {taskFilter === v && <Check className="w-4 h-4 text-[#1E469B] dark:text-[#7CB8F7]" aria-hidden />}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            <p className="text-[11px] font-medium text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Ayos' : 'Sort'}</p>
+                            <SortControl id="dash-tasks" value={taskSort} onChange={setTaskSort} isTl={isTl} />
+                          </div>
+                        </div>
+                      </details>
+                    </div>
                   </div>
 
-                  <div className="divide-y divide-[#E2E9F5] dark:divide-[#1E3158]">
+                  <div className="divide-y divide-black/[0.06] dark:divide-white/[0.08] flex-1 h-[400px] overflow-y-auto clean-scroll">
+                    {filteredFollowUps.length === 0 && (
+                      <div className="py-10 px-6 text-center space-y-2">
+                        <p className="text-sm font-bold text-[#0B192C] dark:text-[#EDF4FC]">
+                          {showDoneTasks
+                            ? isTl ? 'Wala pang tapos na follow-up.' : 'No finished follow-ups yet.'
+                            : isTl ? 'Lahat ng follow-up ay tapos na.' : 'All follow-ups are done.'}
+                        </p>
+                        <p className="text-xs text-[#52637A] dark:text-[#94A8C4]">
+                          {isTl
+                            ? 'Lalabas dito ang mga magulang na hindi dumalo o kailangang tawagan.'
+                            : 'Parents who did not attend or need a call will show up here.'}
+                        </p>
+                        {!showDoneTasks && doneTaskCount > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setShowDoneTasks(true)}
+                            className="text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7] hover:underline"
+                          >
+                            {isTl ? `Tingnan ang ${doneTaskCount} na tapos na →` : `See ${doneTaskCount} done →`}
+                          </button>
+                        )}
+                      </div>
+                    )}
                     {filteredFollowUps.map((task) => {
                       const escalate = !task.resolved && task.attemptsCount >= 3;
                       const tone = task.resolved
@@ -2399,6 +2391,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                             {task.parentName} · <a href={`tel:${task.parentPhone.replace(/\D/g, '')}`} className="font-mono font-semibold text-[#0F172A] dark:text-white hover:underline">{task.parentPhone}</a>
                           </span>
 
+                          {/* Finished follow-ups are read-only: no Log call / Text that would silently reopen them */}
+                          {task.resolved ? (
+                            <span className="text-xs text-[#6E6E73] dark:text-[#A1A1A6] shrink-0 truncate max-w-[45%]" title={isTl ? task.lastContactSummaryTl : task.lastContactSummaryEn}>
+                              {isTl ? task.lastContactSummaryTl : task.lastContactSummaryEn}
+                            </span>
+                          ) : (
                           <div className="flex items-center gap-1.5 shrink-0">
                             <button
                               type="button"
@@ -2429,6 +2427,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                               <span>{isTl ? 'I-text' : 'Text'}</span>
                             </button>
                           </div>
+                          )}
                         </div>
                       </div>
                       );
@@ -2576,7 +2575,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                           {attendanceStats.attended}/{attendanceStats.total}
                         </span>
                         <span className="text-[10px] font-bold text-[#4A608A] dark:text-[#94A8D0]">
-                          ATTENDED
+                          {isTl ? 'DUMALO' : 'ATTENDED'}
                         </span>
                       </div>
                     </div>
@@ -2947,10 +2946,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         <div>
                           <span className="font-bold">{isTl ? CALL_OUTCOMES_TL[opt] : opt}</span>
                           <p className={`text-[10px] mt-0.5 ${isSelected ? 'text-blue-100' : 'text-[#4A608A] dark:text-slate-400'}`}>
-                            {isCome && (isTl ? 'Kukumpletuhin ang follow-up task (Resolved).' : 'Marks this follow-up task resolved.')}
-                            {isResched && (isTl ? 'Mananatiling bukas para magtakda ng bagong schedule.' : 'Keeps open; queues reschedule.')}
-                            {isNoAns && (isTl ? 'Mananatiling bukas; tatawagan muli mamaya.' : 'Increments attempt counter for retry.')}
-                            {isWrong && (isTl ? 'I-flag para suriin ang numero ng magulang.' : 'Flags contact details for staff review.')}
+                            {isCome && (isTl ? 'Tapos na ang follow-up na ito.' : 'This follow-up is done.')}
+                            {isResched && (isTl ? 'Pagkatapos i-save, pipili ka ng bagong araw.' : 'After saving, you pick the new date.')}
+                            {isNoAns && (isTl ? 'Mananatili sa listahan para tawagan ulit.' : 'Stays on the list so you can call again.')}
+                            {isWrong && (isTl ? 'Pagkatapos i-save, aayusin mo ang number sa kaso.' : 'After saving, you fix the number in the case.')}
                           </p>
                         </div>
                         <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${

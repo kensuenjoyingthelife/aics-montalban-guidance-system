@@ -1,3 +1,4 @@
+import { Paperclip, AlertTriangle, FileText, Image as ImageIcon, X } from 'lucide-react';
 // Evidence on a case: attach photos / PDFs, view them inside the app, hide with Undo.
 // Private: every view uses a link that expires after 2 minutes.
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -110,14 +111,14 @@ export const EvidencePanel: React.FC<{
     <div className="space-y-2" data-evidence>
       <div className="flex items-center justify-between gap-2">
         <p className="font-bold text-[#4A608A] dark:text-[#94A8D0]">
-          📎 {isTl ? `Evidence (${shown.length})` : `Evidence (${shown.length})`} <span className="font-normal">· {isTl ? 'pribado, sa office lang' : 'private, office only'}</span>
+          <Paperclip className="inline w-3.5 h-3.5 -mt-0.5 mr-1" aria-hidden />{shown.length} {isTl ? 'file' : shown.length === 1 ? 'file' : 'files'} · {isTl ? 'pribado, sa office lang' : 'private, office only'}
         </p>
         <button type="button" data-action="attach" onClick={() => input.current?.click()} className="px-3 py-1.5 rounded-lg saas-card-subtle text-xs font-bold whitespace-nowrap">
           + {isTl ? 'Mag-attach ng file' : 'Attach a file'}
         </button>
         <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="hidden" data-evidence-input onChange={(e) => pick(e.target.files?.[0] ?? null)} />
       </div>
-      {err && <p className="text-xs font-bold text-rose-700 dark:text-rose-300" role="alert">⚠ {err}</p>}
+      {err && <p className="text-xs font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1" role="alert"><AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden />{err}</p>}
       {file && (
         <div className="rounded-xl border border-[#1E469B] bg-[#EEF3FC] dark:bg-[#13203B] p-3 space-y-2" data-evidence-pending>
           <p className="text-xs font-extrabold text-[#0B1F4D] dark:text-white break-all">
@@ -140,7 +141,7 @@ export const EvidencePanel: React.FC<{
         {shown.map((e) => (
           <div key={e.id} data-evidence-item={e.fileName} className="rounded-xl saas-card-subtle p-2 flex gap-2 items-start">
             <button type="button" onClick={() => void open(e)} title={isTl ? 'Buksan' : 'Open'} className="w-14 h-14 shrink-0 rounded-lg overflow-hidden bg-[#E4ECFC] dark:bg-[#192D58] flex items-center justify-center text-lg">
-              {e.mime.startsWith('image/') && thumbs[e.id] ? <img src={thumbs[e.id]} alt="" className="w-full h-full object-cover" /> : e.mime === 'application/pdf' ? '📄' : '🖼'}
+              {e.mime.startsWith('image/') && thumbs[e.id] ? <img src={thumbs[e.id]} alt="" className="w-full h-full object-cover" /> : e.mime === 'application/pdf' ? <FileText className="w-5 h-5 text-[#6E6E73]" aria-hidden /> : <ImageIcon className="w-5 h-5 text-[#6E6E73]" aria-hidden />}
             </button>
             <div className="min-w-0 flex-1">
               <button type="button" onClick={() => void open(e)} className="block text-left text-xs font-extrabold text-[#1E469B] dark:text-[#7CB8F7] underline break-all">
@@ -179,7 +180,7 @@ export const EvidencePanel: React.FC<{
             <div className="flex items-center justify-between text-white mb-2">
               <p className="text-sm font-bold break-all">{view.ev.fileName}</p>
               <button type="button" onClick={() => setView(null)} aria-label={isTl ? 'Isara' : 'Close'} title={isTl ? 'Isara' : 'Close'} className="w-9 h-9 rounded-lg bg-white/15 font-bold">
-                ✕
+                <X className="w-4 h-4 mx-auto" aria-hidden />
               </button>
             </div>
             <div className="flex-1 min-h-0 flex items-center justify-center">

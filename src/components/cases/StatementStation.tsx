@@ -5,6 +5,7 @@
 // - Blocks Esc, refresh, print, back and dev keys; in Tauri it goes full screen and the window cannot be closed.
 // - Only the staff PIN unlocks it (to leave early, or after the student is done).
 // - The student sees only their own name and grade — never the offense, other students or any record.
+import { checkPinOnServer } from '../../services/staffAuth';
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { checkPin } from '../../services/appConfig';
@@ -137,7 +138,7 @@ export const StatementStation: React.FC<{
     const wait = Math.ceil((waitUntil - Date.now()) / 1000);
     if (wait > 0) return setPinErr(t(`Too many wrong tries. Wait ${wait} seconds.`, `Sobrang daming maling subok. Maghintay ng ${wait} segundo.`));
     if (!/^\d{6}$/.test(pin)) return setPinErr(t('Enter the 6-digit staff PIN.', 'Ilagay ang 6-digit na PIN ng staff.'));
-    if (await checkPin(pin)) return onClose();
+    if ((await checkPinOnServer(pin)) === '') return onClose();
     const tries = wrongTries + 1;
     setWrongTries(tries);
     setPin('');

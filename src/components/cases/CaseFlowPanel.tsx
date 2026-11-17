@@ -1,8 +1,8 @@
 // The dynamic progressive due process case flow:
 // For 1st Minor: 5 steps: Reported → Student Called → Explanation → Decision → Closed
 // For Major / 2nd Minor / Serious: 8 steps: Reported → Student Called → Explanation → Schedule Conference → Parent Conference Attendance → Decision → Follow-Up → Closed
-import React, { useMemo, useState, useEffect } from 'react';
-import { Calendar, Phone, Check, AlertTriangle, Printer, Clock, RotateCcw, ShieldCheck, FileText, Mail } from 'lucide-react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { Calendar, Phone, Check, AlertTriangle, Printer, Clock, RotateCcw, ShieldCheck, FileText, Mail, CalendarCheck2, CalendarDays, FolderOpen } from 'lucide-react';
 import type { ParentAppointmentItem } from '../../data/dashboardMockData';
 import {
   CASE_STEPS,
@@ -12,14 +12,20 @@ import {
   type DisciplineCaseRecord,
   type StudentRecord,
 } from '../../data/stage3MockData';
-import { suggestSlots, freeSlotsOn, slotLabel, todayISO, addDays, isOfficeDay, parseISO } from '../../services/scheduling';
+import { suggestSlots, freeSlotsOn, slotLabel, todayISO, addDays, isOfficeDay, parseISO, officeHoursText, daySlots, sanctionEndFrom } from '../../services/scheduling';
 import { findSensitiveWords, type Channel } from '../../services/parentComms';
+import { DateField } from '../ui/DateField';
+import { ParentContactGate, phoneProblem } from './ParentContactGate';
+import { buildFolderHtml, buildBatchCallSlipsHtml, printHtml, type FormKind } from '../../services/printForms';
+import { summonsLevel, summonsAttempt, summonsLabel, summonsMessage, maxSummons } from '../../services/summonsLadder';
 import { smsInfo } from '../../services/smsText';
-import { useAppConfig } from '../../services/appConfig';
+import { useAppConfig, getAppConfig } from '../../services/appConfig';
 
 export type FlowAction =
   | { kind: 'call' }
-  | { kind: 'explanation'; text: string }
+  | { kind: 'absent' }
+  | { kind: 'explanation'; text: string; present?: string; refused?: boolean; noticed?: boolean }
+  | { kind: 'proceed_without_parent'; reason: string }
   | {
       kind: 'schedule_conference';
       targetDate?: string;
@@ -32,11 +38,33 @@ export type FlowAction =
         rescheduleFromId?: string;
       };
     }
-  | { kind: 'conference_outcome'; how: string; conferenceStatus: 'Attended' | 'No-Show'; notes?: string }
+  | { kind: 'conference_outcome'; how: string; conferenceStatus: 'Attended' | 'No-Show'; notes?: string; attendedBy?: string }
   | { kind: 'notified'; how: string; conferenceStatus?: 'Attended' | 'No-Show' }
-  | { kind: 'decision'; decision: string; sanction: string }
+  | { kind: 'decision'; decision: string; sanction: string; sanctionEndDate?: string; principalApprovedBy?: string }
+  | { kind: 'appeal'; by: string; reason: string; result: string; note?: string }
   | { kind: 'followup'; sanctionDone?: boolean }
   | { kind: 'close'; counselingNotes?: string };
+
+/** Reminder shown when talking to the reported student: protect whoever reported (no retaliation) */
+/** after this many parent no-shows, the case may continue to the Decision without the parent */
+type MsgStyle = 'auto' | 'short';
+/** how the parent was told the decision (for the sanction to start) */
+const NOTICE_HOW: [string, string][] = [
+  ['Phone call', 'Tawag sa telepono'],
+  ['SMS / text', 'SMS / text'],
+  ['In person', 'Personal'],
+  ['Letter', 'Sulat'],
+];
+
+
+const ConfidentialHint: React.FC<{ isTl: boolean }> = ({ isTl }) => (
+  <p className="flex items-start gap-1.5 text-[11px] text-[#64748B] dark:text-[#94A8D0]">
+    <ShieldCheck className="w-3.5 h-3.5 mt-px shrink-0 text-[#1E469B] dark:text-[#7CB8F7]" aria-hidden />
+    {isTl
+      ? 'Huwag banggitin sa estudyante kung sino ang nag-report o naapektuhan.'
+      : 'Do not tell the student who reported them or who was affected.'}
+  </p>
+);
 
 export function isMinorCase(c: DisciplineCaseRecord): boolean {
   const sev = (c.severity || '').toLowerCase();
@@ -59,6 +87,35 @@ export function isMinorCase(c: DisciplineCaseRecord): boolean {
   );
 }
 
+/** short stepper labels so no step wraps to 3 lines (Golden Rule 8) */
+const SHORT_EN: Partial<Record<CaseStep, string>> = {
+  'Schedule Conference': 'Schedule',
+  'Parent Conference Attendance': 'Parent came?',
+  'Student Called': 'Student called',
+};
+
+/** the current step as one plain question/instruction (Golden Rule 6) */
+const STEP_QUESTION_EN: Partial<Record<CaseStep, string>> = {
+  'Student Called': 'Call the student to the office',
+  Explanation: "Write the student's side",
+  'Schedule Conference': 'Schedule the parent conference',
+  'Parent Conference Attendance': 'Did the parent come?',
+  'Parent Notified': 'Did the parent come?',
+  Decision: 'Decide the sanction',
+  'Follow-Up': 'Check the sanction',
+  Closed: 'Close the case',
+};
+const STEP_QUESTION_TL: Partial<Record<CaseStep, string>> = {
+  'Student Called': 'Tawagin ang estudyante sa opisina',
+  Explanation: 'Isulat ang panig ng estudyante',
+  'Schedule Conference': 'I-schedule ang conference ng magulang',
+  'Parent Conference Attendance': 'Dumating ba ang magulang?',
+  'Parent Notified': 'Dumating ba ang magulang?',
+  Decision: 'Pagpasyahan ang sanction',
+  'Follow-Up': 'Suriin ang sanction',
+  Closed: 'Isara ang kaso',
+};
+
 const STEP_TL: Record<CaseStep, string> = {
   Reported: 'Na-report',
   'Student Called': 'Tinawag ang estudyante',
@@ -74,9 +131,6 @@ const STEP_TL: Record<CaseStep, string> = {
 const HOW: [string, string][] = [
   ['Conference attended (In-Person)', 'Personal na Pagharap sa Opisina'],
   ['Online / Phone Conference', 'Online o Tawag sa Telepono'],
-  ['Parent Summons via SMS & Notice', 'SMS at Pormal na Sulat'],
-  ['Written Communication Slip', 'Opisyal na Communication Slip'],
-  ['Email Notice', 'Email Notice'],
 ];
 
 /** which steps are done, from the saved fields */
@@ -84,26 +138,23 @@ export function flowState(c: DisciplineCaseRecord) {
   const isMinor = isMinorCase(c);
   const activeSteps = isMinor ? MINOR_CASE_STEPS : MAJOR_CASE_STEPS;
   const closed = c.status === 'Resolved';
-  const isNoShowLoop = c.parentConferenceStatus === 'No-Show' && c.status === 'Pending Reschedule';
+  const isNoShowLoop = c.parentConferenceStatus === 'No-Show' && c.status === 'Pending Reschedule' && !c.proceededWithoutParent;
 
   const hasConferenceScheduled =
     !isNoShowLoop &&
     (!!c.conferenceScheduledAt ||
       c.status === 'Conference Scheduled' ||
       !!c.parentNotifiedAt ||
-      (!!c.parentConferenceStatus && c.parentConferenceStatus === 'Attended'));
+      (!!c.parentConferenceStatus && c.parentConferenceStatus === 'Attended') ||
+      !!c.proceededWithoutParent);
 
   const hasConferenceAttendance =
     !isNoShowLoop &&
     !!c.parentConferenceStatus &&
-    c.parentConferenceStatus === 'Attended';
+    (c.parentConferenceStatus === 'Attended' || !!c.proceededWithoutParent);
 
-  const hasFollowUpDone =
-    c.step === 'Follow-Up' ||
-    c.status === 'Sanction In Progress' ||
-    c.sanctionStatus === 'Active' ||
-    c.sanctionStatus === 'Done' ||
-    closed;
+  // Follow-Up is done only when the sanction is FINISHED (a running sanction keeps the case in Step 7)
+  const hasFollowUpDone = c.sanctionStatus === 'Done' || closed;
 
   const done: Record<CaseStep, boolean> = {
     Reported: true,
@@ -137,11 +188,24 @@ export const CaseFlowPanel: React.FC<{
   onOpenPrint?: (initialKind?: import('../../services/printForms').FormKind) => void;
   /** all appointments in the system to check if this case already has a live scheduled conference */
   appointments?: ParentAppointmentItem[];
+  /** other cases from the same group incident, so decisions stay fair */
+  groupCases?: DisciplineCaseRecord[];
   /** open the real Parent Conference scheduling modal in ParentsHub */
   onScheduleConference?: (caseCode: string) => void;
   /** update student's parent contact info directly from this card */
   onUpdateStudentContact?: (studentNumber: string, phone: string, email: string) => Promise<boolean>;
-}> = ({ c, student, isTl, busy, suggestedSanction, onAction, onOpenStation, onOpenPrint, appointments = [], onUpdateStudentContact }) => {
+  /** opens the parent SMS composer (safe message, no offense details) */
+  onComposeParent?: () => void;
+  /** same incident: turn "wait for every parent before deciding" on/off for all its cases */
+  onSetWaitForAll?: (on: boolean) => void;
+  /** same incident: schedule the other students' parents too (one action per case) */
+  onScheduleOthers?: (items: { c: DisciplineCaseRecord; action: FlowAction }[]) => void;
+}> = ({ c, student, isTl, busy, suggestedSanction, onAction, onOpenStation, onOpenPrint, appointments = [], groupCases = [], onUpdateStudentContact, onComposeParent, onSetWaitForAll, onScheduleOthers }) => {
+  // students in the same incident whose parent conference is not done yet (only matters when "wait for all" is on)
+  const groupWaiting = groupCases.filter(
+    (g) => g.status !== 'Resolved' && g.parentConferenceStatus !== 'Attended' && !g.proceededWithoutParent && !g.decision
+  );
+  const decisionLocked = !!c.waitForAll && groupWaiting.length > 0;
   const { done, next, activeSteps, isMinor } = useMemo(() => flowState(c), [c]);
   const cfg = useAppConfig();
 
@@ -189,6 +253,13 @@ export const CaseFlowPanel: React.FC<{
   const [schedSendNow, setSchedSendNow] = useState<boolean>(true);
   const [schedMsgLang, setSchedMsgLang] = useState<'taglish' | 'english'>('taglish');
   const [schedMsgEdited, setSchedMsgEdited] = useState<boolean>(false);
+  // the ready message gets firmer with each missed conference and with how heavy the matter is
+  const [msgStyle, setMsgStyle] = useState<MsgStyle>('auto');
+  const ladderLevel = summonsLevel(c.severity);
+  const ladderAt = summonsAttempt(c.summonsCount);
+  const ladderWhy = summonsLabel(ladderLevel, ladderAt.n, ladderAt.isLast, isTl);
+  // the date picker shows "November 18, 2026", not "11/18/2026"
+  const otherDayRef = useRef<HTMLInputElement>(null);
 
   // Editable Parent Contact State
   const [editingContact, setEditingContact] = useState<boolean>(false);
@@ -204,6 +275,8 @@ export const CaseFlowPanel: React.FC<{
   }, [student]);
 
   const freeSlots = useMemo(() => freeSlotsOn(appointments, schedDate), [appointments, schedDate]);
+  // all times of the day; taken ones stay visible (greyed) so a missing time never looks like a bug
+  const allSlots = useMemo(() => daySlots(appointments, schedDate), [appointments, schedDate]);
 
   const dayFmt = useMemo(
     () => new Intl.DateTimeFormat(isTl ? 'fil-PH' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
@@ -218,19 +291,22 @@ export const CaseFlowPanel: React.FC<{
     return isNaN(d.getTime()) ? iso : dayFmt.format(d);
   };
 
-  const buildInlineMsg = (d: string, s: number | null, lang: 'taglish' | 'english') => {
+  const buildInlineMsg = (d: string, s: number | null, lang: 'taglish' | 'english', style: MsgStyle = msgStyle) => {
     if (s === null) return '';
-    const when = `${dayTitle(d)}, ${slotLabel(s)}`;
-    if (lang === 'english') {
-      if (isReschedule) {
-        return `AICS Guidance Office: Good day. The parent conference regarding ${c.studentName} has been rescheduled to ${when}. Our office is open Mon-Thu 8AM-5PM. Thank you.`;
-      }
-      return `AICS Guidance Office: Good day. You are requested to attend a parent conference regarding ${c.studentName} on ${when} at the Guidance Office. Thank you.`;
+    const dd = parseISO(d);
+    const loc = lang === 'english' ? 'en-US' : 'fil-PH';
+    const time = slotLabel(s).split('–')[0].trim().replace(/^0/, '');
+    const first = c.studentName.split(/s+/)[0] || c.studentName;
+    if (style === 'short') {
+      // fits one SMS
+      const shortDay = isNaN(dd.getTime()) ? d : new Intl.DateTimeFormat(loc, { month: 'short', day: 'numeric' }).format(dd);
+      return lang === 'english'
+        ? `AICS Guidance: Parent conference for ${first} on ${shortDay}, ${time}, Guidance Office. Thank you.`
+        : `AICS Guidance: Parent Conference para kay ${first} sa ${shortDay}, ${time}, Guidance Office. Salamat po.`;
     }
-    if (isReschedule) {
-      return `AICS Guidance: Magandang araw po. Inilipat po sa ${when} ang Parent Conference para kay ${c.studentName}. Bukas kami Lunes-Huwebes 8AM-5PM. Salamat po.`;
-    }
-    return `AICS Guidance: Magandang araw po. Inaanyayahan po kayo sa Parent Conference para kay ${c.studentName} sa ${when} sa Guidance Office. Salamat po.`;
+    // SMS is read later by the parent: always the real date, never "Tomorrow"/"Bukas"
+    const longDay = isNaN(dd.getTime()) ? d : new Intl.DateTimeFormat(loc, { weekday: 'long', month: 'long', day: 'numeric' }).format(dd);
+    return summonsMessage({ level: ladderLevel, n: ladderAt.n, isLast: ladderAt.isLast, lang, name: c.studentName, first, when: `${longDay}, ${time}` });
   };
 
   const [schedMessage, setSchedMessage] = useState<string>(() => buildInlineMsg(schedDate, schedStart, 'taglish'));
@@ -239,7 +315,7 @@ export const CaseFlowPanel: React.FC<{
       setSchedMessage(buildInlineMsg(schedDate, schedStart, schedMsgLang));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schedDate, schedStart, schedMsgLang]);
+  }, [schedDate, schedStart, schedMsgLang, msgStyle]);
 
   const sensitiveWords = useMemo(() => findSensitiveWords(schedMessage), [schedMessage]);
   const schedDateBad = !isOfficeDay(schedDate) || schedDate < todayISO();
@@ -250,9 +326,66 @@ export const CaseFlowPanel: React.FC<{
     !busy &&
     (!schedSendNow || (schedMessage.trim().length > 5 && sensitiveWords.length === 0));
 
+  // same incident: other students who also wait for a parent conference → same day, next free times (one family per time)
+  const groupToSchedule = useMemo(
+    () => groupCases.filter((g) => g.status !== 'Resolved' && flowState(g).next === 'Schedule Conference'),
+    [groupCases]
+  );
+  const [withGroup, setWithGroup] = useState<boolean>(true);
+  const groupPlan = useMemo(() => {
+    if (schedStart === null) return [] as { g: DisciplineCaseRecord; start: number | null }[];
+    const later = freeSlots.filter((s) => s !== schedStart).sort((a, b) => (a > schedStart ? 0 : 1) - (b > schedStart ? 0 : 1) || a - b);
+    return groupToSchedule.map((g, i) => ({ g, start: later[i] ?? null }));
+  }, [groupToSchedule, freeSlots, schedStart]);
+  const msgFor = (g: DisciplineCaseRecord, d: string, s: number, lang: 'taglish' | 'english') => {
+    const dd = parseISO(d);
+    const longDay = isNaN(dd.getTime()) ? d : new Intl.DateTimeFormat(lang === 'english' ? 'en-US' : 'fil-PH', { weekday: 'long', month: 'long', day: 'numeric' }).format(dd);
+    const at = summonsAttempt(g.summonsCount);
+    return summonsMessage({ level: summonsLevel(g.severity), n: at.n, isLast: at.isLast, lang, name: g.studentName, first: g.studentName.split(/\s+/)[0], when: `${longDay}, ${slotLabel(s).split('–')[0].trim().replace(/^0/, '')}` });
+  };
+
   const [text, setText] = useState(c.explanation ?? '');
+  // due process: tell the student the complaint first (never the reporter's name)
+  const [noticed, setNoticed] = useState<boolean>(!!c.complaintNoticedAt);
+  // heavy decisions (major/grave, or suspension) need the principal's approval
+  const [approver, setApprover] = useState<string>(c.principalApprovedBy || getAppConfig().signatories?.principal || '');
+  const [approved, setApproved] = useState<boolean>(!!c.principalApprovedAt);
+  // appeal / request for reconsideration
+  const [appealOpen, setAppealOpen] = useState(false);
+  const [appealBy, setAppealBy] = useState<string>('Parent / guardian');
+  const [appealReason, setAppealReason] = useState('');
+  const [appealResult, setAppealResult] = useState<string>('Kept the decision');
+  const [appealNote, setAppealNote] = useState('');
+  const [present, setPresent] = useState<string>(c.explanationPresent ?? 'Guidance staff only');
+  const [attendedBy, setAttendedBy] = useState<string>(c.conferenceAttendedBy ?? 'Mother');
+  const [minutes, setMinutes] = useState<string>(c.conferenceMinutes ?? '');
+  const [pwpReason, setPwpReason] = useState('');
+  const [endDate, setEndDate] = useState<string>(c.sanctionEndDate ?? '');
+  const [endDays, setEndDays] = useState<number | 'other' | null>(c.sanctionEndDate ? 'other' : null);
+  const [noticeOpen, setNoticeOpen] = useState(false);
+  const [noticeHow, setNoticeHow] = useState<string>('Phone call');
+  // the next 6 office days as one-tap chips (today included when the office is open)
+  const officeDays = useMemo(() => {
+    const out: string[] = [];
+    let d = todayISO();
+    for (let i = 0; i < 30 && out.length < 6; i++) {
+      if (isOfficeDay(d)) out.push(d);
+      d = addDays(d, 1);
+    }
+    return out;
+  }, []);
+  const dayFmtShort = useMemo(
+    () => new Intl.DateTimeFormat(isTl ? 'fil-PH' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+    [isTl]
+  );
   const [how, setHow] = useState(c.parentNotifiedHow || 'Conference attended (In-Person)');
   const [parentStatus, setParentStatus] = useState<'Attended' | 'No-Show'>(c.parentConferenceStatus === 'No-Show' ? 'No-Show' : 'Attended');
+  // same incident: record the other families' attendance from here too (each saved to its own case)
+  const groupAtAttendance = useMemo(
+    () => groupCases.filter((g) => g.status !== 'Resolved' && flowState(g).next === 'Parent Conference Attendance'),
+    [groupCases]
+  );
+  const [groupAtt, setGroupAtt] = useState<Record<string, 'Attended' | 'No-Show' | null>>({});
   const [conferenceTargetDate, setConferenceTargetDate] = useState(c.conferenceTargetDate || '');
   const [counselingNotes, setCounselingNotes] = useState(c.counselingNotes ?? '');
   const [decision, setDecision] = useState(c.decision ?? '');
@@ -278,49 +411,68 @@ export const CaseFlowPanel: React.FC<{
 
   return (
     <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] space-y-3" data-case-flow>
-      {/* Stepper Grid (Adaptive 5 or 8 steps) */}
-      <ol
-        className={`grid gap-1 ${isMinor ? 'grid-cols-5' : 'grid-cols-8'}`}
-        aria-label={isTl ? 'Mga hakbang ng kaso' : 'Case steps'}
-      >
-        {activeSteps.map((s, i) => {
-          const isDone = done[s];
-          const isNext = s === next;
-          return (
-            <li
-              key={s}
-              className="flex flex-col items-center text-center min-w-0 cursor-pointer group"
-              data-step={s}
-              data-done={isDone ? '1' : '0'}
-              onClick={() => isDone && setInspectStep((prev) => (prev === s ? null : s))}
-              title={isDone ? (isTl ? 'I-click para suriin ang nakaraang tala' : 'Click to inspect previous step record') : undefined}
-            >
-              <div className="flex items-center w-full">
-                <span className={`h-0.5 flex-1 ${i === 0 ? 'opacity-0' : isDone ? 'bg-emerald-500' : 'bg-[#D3DDEE] dark:bg-[#253B66]'}`} />
-                <span
-                  className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-[11px] font-extrabold transition-all group-hover:scale-105 active:scale-[0.97] ${
-                    inspectStep === s
-                      ? 'bg-sky-600 text-white ring-4 ring-sky-400/30'
-                      : isDone
-                      ? 'bg-emerald-500 text-white'
-                      : isNext
-                      ? 'bg-[#1E469B] text-white ring-4 ring-[#1E469B]/20'
-                      : 'bg-[#E4ECFC] dark:bg-[#192D58] text-[#4A608A]'
-                  }`}
+      {/* before the parent summons: a correct mobile number is required; Gmail is asked once */}
+      {next === 'Schedule Conference' && student && onUpdateStudentContact && (
+        <ParentContactGate
+          key={student.studentNumber}
+          studentNumber={student.studentNumber}
+          studentName={c.studentName}
+          parentName={student.parentName}
+          phone={student.parentPhone || ''}
+          email={student.parentEmail || ''}
+          isTl={isTl}
+          onSave={(phone, email) => onUpdateStudentContact(student.studentNumber, phone, email)}
+        />
+      )}
+      {/* Why a 1st minor has no parent steps (no dead ends: say why) */}
+      {isMinor && (
+        <p className="text-[11px] text-[#64748B] dark:text-[#94A8D0]">
+          {isTl ? '1st minor: paalala lang, kaya walang patawag sa magulang.' : '1st minor: a reminder only, so there is no parent summons.'}
+        </p>
+      )}
+      {/* Progress (AGENTS §5 #6): one segmented line; tap a finished segment to see what was recorded */}
+      <div className="space-y-2" aria-label={isTl ? 'Mga hakbang ng kaso' : 'Case steps'}>
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">
+            {next
+              ? isTl ? `Hakbang ${stepIndex} ng ${totalSteps}` : `Step ${stepIndex} of ${totalSteps}`
+              : isTl ? 'Tapos na ang lahat ng hakbang' : 'All steps done'}
+          </p>
+        </div>
+        <ol className="flex gap-1" title={isTl ? 'Pindutin ang berdeng bahagi para makita ang naitala' : 'Tap a green part to see what was recorded'}>
+          {activeSteps.map((s) => {
+            const isDone = done[s];
+            const isNext = s === next;
+            return (
+              <li key={s} data-step={s} data-done={isDone ? '1' : '0'} className="flex-1 min-w-0">
+                <button
+                  type="button"
+                  disabled={!isDone}
+                  onClick={() => setInspectStep((prev) => (prev === s ? null : s))}
                   aria-current={isNext ? 'step' : undefined}
+                  title={`${isTl ? STEP_TL[s] : SHORT_EN[s] ?? s}${isDone && dates[s] ? ' · ' + fmt(dates[s], isTl) : ''}`}
+                  className="w-full text-left group disabled:cursor-default"
                 >
-                  {isDone ? '✓' : i + 1}
-                </span>
-                <span className={`h-0.5 flex-1 ${i === activeSteps.length - 1 ? 'opacity-0' : done[activeSteps[i + 1]] ? 'bg-emerald-500' : 'bg-[#D3DDEE] dark:bg-[#253B66]'}`} />
-              </div>
-              <span className={`mt-1 text-[10px] leading-tight font-bold ${inspectStep === s ? 'text-sky-600 dark:text-sky-400 underline' : isNext ? 'text-[#1E469B] dark:text-[#7CB8F7]' : 'text-[#4A608A] dark:text-[#94A8D0]'}`}>
-                {isTl ? STEP_TL[s] : s}
-              </span>
-              {isDone && dates[s] ? <span className="text-[9.5px] text-[#687FA8] dark:text-[#89A7DF]">{fmt(dates[s], isTl)}</span> : null}
-            </li>
-          );
-        })}
-      </ol>
+                  <span
+                    className={`block h-1.5 rounded-full transition-[opacity,transform] duration-150 ${
+                      inspectStep === s
+                        ? 'bg-sky-500'
+                        : isDone
+                        ? 'bg-emerald-500 group-hover:opacity-80'
+                        : isNext
+                        ? 'tl-done'
+                        : 'bg-black/[0.08] dark:bg-white/[0.1]'
+                    }`}
+                  />
+                  <span className={`mt-1.5 block truncate text-[11px] ${isNext ? 'font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]' : isDone ? 'text-[#6E6E73] dark:text-[#A1A1A6]' : 'text-[#AEAEB2] dark:text-[#636366]'}`}>
+                    {isTl ? STEP_TL[s] : SHORT_EN[s] ?? s}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
 
       {/* Previous Step Inspector Box */}
       {inspectStep && (
@@ -415,954 +567,1155 @@ export const CaseFlowPanel: React.FC<{
         </div>
       )}
 
-      {/* Sanction status badge */}
-      {c.sanction && (
-        <p className={`text-xs font-semibold px-3 py-2 rounded-xl border ${c.sanctionStatus === 'Pending parent notice' ? 'bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-200' : c.sanctionStatus === 'Done' ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300' : 'bg-[#EEF3FC] border-[#CBD5E1] text-[#1E469B] dark:bg-[#13203B] dark:border-[#223555] dark:text-[#7CB8F7]'}`} data-sanction-status>
-          {isTl ? 'Sanction' : 'Sanction'}: <span className="font-bold">{c.sanction}</span> ·{' '}
-          {c.sanctionStatus === 'Pending parent notice'
-            ? isTl ? 'Naghihintay — magsisimula matapos ang conference ng magulang' : 'Waiting — starts after parent conference'
-            : c.sanctionStatus === 'Done'
-            ? isTl ? 'Tapos na' : 'Completed'
-            : isTl ? 'Ginagawa na' : 'In progress'}
-        </p>
-      )}
 
       {/* Current Active Action Card */}
       {next && (
-        <div className="rounded-xl bg-white dark:bg-[#0B1527] border border-[#CBD5E1] dark:border-[#1E2E4E] p-4 space-y-3 shadow-xs" data-next-step={next}>
-          <div className="flex items-center justify-between border-b border-[#F1F5F9] dark:border-[#1E2E4E] pb-2">
-            <span className="text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7]">
-              {isTl ? 'Kasalukuyang hakbang' : 'Current step'}
-            </span>
-            <span className="px-2 py-0.5 rounded-[6px] text-xs font-semibold bg-[#F1F5F9] dark:bg-[#13203B] text-[#475569] dark:text-[#94A3B8] border border-[#CBD5E1] dark:border-[#334155]">
-              {isTl ? `Hakbang ${stepIndex} ng ${totalSteps}` : `Step ${stepIndex} of ${totalSteps}`}
-            </span>
-          </div>
+        <div className="pt-1 space-y-3" data-next-step={next}>
+          <h3 className="text-[20px] font-semibold tracking-[-0.02em] text-[#1D1D1F] dark:text-[#F5F5F7]">
+            {(isTl ? STEP_QUESTION_TL : STEP_QUESTION_EN)[next] ?? (isTl ? STEP_TL[next] : next)}
+          </h3>
 
           {next === 'Student Called' && (
-            <div className="space-y-3">
-              <div>
-                <p className="text-xs font-bold text-[#0F172A] dark:text-white">
-                  {isTl ? 'Pagpapatawag sa estudyante' : 'Summon student to Guidance'}
-                </p>
-                <p className="text-xs text-[#64748B] dark:text-[#94A8D0] mt-0.5">
-                  {isTl
-                    ? 'Mag-print ng opisyal na Call Slip para sa adviser o tawagan nang direkta.'
-                    : 'Print an official Call Slip for the classroom adviser or coordinate directly.'}
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
-                {onOpenPrint && (
+            <div className="space-y-4">
+              <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">
+                {isTl ? 'Mag-print ng call slip para sa adviser, o tawagin ang estudyante nang direkta.' : 'Print a call slip for the adviser, or call the student in directly.'}
+              </p>
+              <ConfidentialHint isTl={isTl} />
+              <div className="sticky bottom-0 z-10 -mx-1 glass-bar rounded-2xl px-3 py-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-1">
+                  {onOpenPrint && (
+                    <button type="button" onClick={() => onOpenPrint('callSlip')} className="h-11 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1.5 active:scale-[0.97] transition-transform duration-150">
+                      <Printer className="w-4 h-4" aria-hidden />
+                      {isTl ? 'I-print ang call slip' : 'Print call slip'}
+                    </button>
+                  )}
+                  {groupCases.length > 0 && (
+                    <button
+                      type="button"
+                      title={isTl ? 'Isa-isa silang kakausapin, hindi sabay-sabay' : 'Talk to them one at a time, not together'}
+                      onClick={() =>
+                        printHtml(
+                          buildBatchCallSlipsHtml(
+                            [c, ...groupCases].map((g) => ({ caseCode: g.caseCode, studentName: g.studentName, gradeSection: g.gradeSection, offenseTitle: '' })),
+                            window.location.origin
+                          )
+                        )
+                      }
+                      className="h-11 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1.5 active:scale-[0.97] transition-transform duration-150"
+                    >
+                      <Printer className="w-4 h-4" aria-hidden />
+                      {isTl ? `Lahat ng call slip (${groupCases.length + 1})` : `All call slips (${groupCases.length + 1})`}
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={() => onOpenPrint('callSlip')}
-                    className={`${btn} rounded-lg border border-[#CBD5E1] dark:border-[#253B66] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#F8FAFC] dark:hover:bg-[#13203B] flex items-center gap-1.5`}
+                    data-flow="absent"
+                    disabled={busy}
+                    onClick={() => onAction({ kind: 'absent' })}
+                    title={isTl ? 'Itatala na wala ang estudyante ngayon. Mananatili sa hakbang na ito.' : 'Records that the student was not in school today. The case stays on this step.'}
+                    className="h-11 px-4 rounded-full text-[13px] font-medium text-[#6E6E73] dark:text-[#A1A1A6] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] active:scale-[0.97] transition-transform duration-150"
                   >
-                    <span>{isTl ? 'Mag-print ng Call Slip' : 'Print Call Slip'}</span>
+                    {isTl ? 'Absent ngayon' : 'Absent today'}
                   </button>
-                )}
-                <button
-                  type="button"
-                  data-flow="call"
-                  disabled={busy}
-                  onClick={() => onAction({ kind: 'call' })}
-                  className={`${primary} rounded-lg`}
-                >
-                  {isTl ? 'Nakarating na sa opisina' : 'Mark student summoned'}
+                </div>
+                <button type="button" data-flow="call" disabled={busy} onClick={() => onAction({ kind: 'call' })} className="btn-lit h-11 px-6 text-[14px] font-semibold">
+                  {isTl ? 'Nakarating na ang estudyante' : 'Student is here'}
                 </button>
               </div>
             </div>
           )}
 
           {next === 'Explanation' && (
-            <div className="space-y-3">
-              <div>
-                <p className="text-xs font-bold text-[#0F172A] dark:text-white">
-                  {isTl ? 'Salaysay ng estudyante' : 'Student official explanation'}
-                </p>
-                <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5">
-                  {isTl ? 'I-type ang sinabi ng estudyante, o ipa-type nang direkta sa Statement Station.' : 'Type what the student explained, or let them type it via Statement Station.'}
-                </p>
+            <div className="space-y-4">
+              <ConfidentialHint isTl={isTl} />
+
+              {/* due process: a minor may have someone with them while giving a statement */}
+              <div className="space-y-2">
+                <span className="block text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Sino ang kasama ng estudyante?' : 'Who was with the student?'}</span>
+                <div className="seg-track flex-wrap">
+                  {(isTl ? ['Wala', 'Adviser', 'Magulang', 'Guidance staff lang'] : ['No one', 'Adviser', 'Parent', 'Guidance staff only']).map((w, i) => {
+                    const val = ['No one', 'Adviser', 'Parent', 'Guidance staff only'][i];
+                    return (
+                      <button key={val} type="button" onClick={() => setPresent(val)} className={`px-3.5 py-1.5 text-[13px] ${present === val ? 'seg-on' : 'seg-off'}`}>
+                        {w}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              <textarea 
-                data-flow-text 
-                value={text} 
-                onChange={(e) => setText(e.target.value.slice(0, 2000))} 
-                rows={3} 
-                className={`${input} rounded-lg leading-relaxed font-normal text-xs`} 
-                placeholder={isTl ? 'hal. Na-late po ako dahil nag-aberya ang sinakyang jeep sa San Jose…' : 'e.g. I was late due to heavy traffic along San Jose…'} 
-              />
-
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-[#F1F5F9] dark:border-[#1E2E4E]">
-                <span className="text-[11px] font-semibold text-[#64748B] dark:text-[#94A3B8]">
-                  {text.trim().length < 10 
-                    ? (isTl ? 'Kailangan ng kahit 10 letra.' : 'At least 10 characters required.') 
-                    : `${text.trim().length} / 2000 letters`}
+              <label className="block space-y-1">
+                <span className="flex items-baseline justify-between gap-2">
+                  <span className="text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Sinabi ng estudyante' : 'What the student said'}</span>
+                  <span className={`text-[12px] tabular-nums ${text.trim().length >= 10 ? 'text-emerald-700 dark:text-emerald-400' : 'text-[#8E8E93]'}`}>
+                    {text.trim().length < 10 ? `${text.trim().length} / 10 ${isTl ? 'letra (minimum)' : 'letters (minimum)'}` : `${text.trim().length} / 2000`}
+                  </span>
                 </span>
-                <div className="flex items-center gap-2">
-                  {onOpenStation && (
-                    <button 
-                      type="button" 
-                      data-flow="station" 
-                      disabled={busy} 
-                      onClick={onOpenStation} 
-                      title={isTl ? 'Bubukas ang naka-lock na screen kung saan ang estudyante mismo ang magta-type.' : 'Opens a locked screen for student direct typing.'} 
-                      className={`${btn} rounded-[6px] border border-[#CBD5E1] dark:border-[#253B66] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#F8FAFC]`}
+                <label className={`flex items-start gap-2.5 rounded-xl px-3 py-2.5 mb-2 cursor-pointer border ${noticed ? 'border-emerald-300 bg-emerald-50/60 dark:bg-emerald-950/20 dark:border-emerald-800' : 'border-amber-300 bg-amber-50/70 dark:bg-amber-950/20 dark:border-amber-800'}`}>
+                  <input type="checkbox" data-flow-noticed checked={noticed} onChange={(e) => setNoticed(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#1E469B]" />
+                  <span className="text-[13px] text-[#1D1D1F] dark:text-[#F5F5F7]">
+                    <b>{isTl ? 'Ipinaalam ko sa estudyante ang reklamo laban sa kanya' : 'I told the student what the complaint is'}</b>
+                    <span className="block text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Bago siya magpaliwanag. Huwag banggitin kung sino ang nag-report.' : 'Before they explain. Do not say who reported it.'}</span>
+                  </span>
+                </label>
+                {/* quick starters: one tap, then type the rest in the student's words */}
+                <div className="flex flex-wrap gap-1.5 pb-1">
+                  {(isTl
+                    ? ['Inamin ng estudyante ang nangyari. ', 'Hindi inamin ng estudyante. Ayon sa kanya: ', 'Bahagyang inamin. Ayon sa kanya: ']
+                    : ['The student admitted what happened. ', 'The student denied it. In their words: ', 'Partly admitted. In their words: ']
+                  ).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setText((prev) => (prev.startsWith(s) ? prev : s + prev.replace(/^(Inamin ng estudyante ang nangyari\. |Hindi inamin ng estudyante\. Ayon sa kanya: |Bahagyang inamin\. Ayon sa kanya: |The student admitted what happened\. |The student denied it\. In their words: |Partly admitted\. In their words: )/, '')))}
+                      className={`h-8 px-3 rounded-full text-[12px] transition-[background-color,transform] duration-150 active:scale-[0.97] ${
+                        text.startsWith(s) ? 'btn-lit font-semibold' : 'bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#1E469B]'
+                      }`}
                     >
-                      {isTl ? 'Ipa-type sa Estudyante' : 'Let Student Type'}
+                      {s.split('.')[0]}
+                    </button>
+                  ))}
+                  {onOpenPrint && (
+                    <button type="button" onClick={() => onOpenPrint('studentStatement')} title={isTl ? 'Blankong papel para sulat-kamay ng estudyante' : 'Blank sheet for the student to handwrite'} className="h-8 px-3 rounded-full text-[12px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1">
+                      <Printer className="w-3.5 h-3.5" aria-hidden />
+                      {isTl ? 'Papel para sulat-kamay' : 'Handwritten form'}
                     </button>
                   )}
-                  <button 
-                    type="button" 
-                    data-flow="explanation" 
-                    disabled={busy || text.trim().length < 10} 
-                    onClick={() => onAction({ kind: 'explanation', text: text.trim() })} 
-                    className={`${primary} rounded-[6px]`}
+                </div>
+                <textarea
+                  data-flow-text
+                  value={text}
+                  onChange={(e) => setText(e.target.value.slice(0, 2000))}
+                  rows={4}
+                  className={`${input} rounded-xl text-[15px] leading-relaxed`}
+                  placeholder={isTl ? 'hal. Na-late po ako dahil nag-aberya ang sinakyang jeep…' : 'e.g. I was late because the jeep broke down…'}
+                />
+              </label>
+
+              <div className="sticky bottom-0 z-10 -mx-1 glass-bar rounded-2xl px-3 py-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-1">
+                  {onOpenStation && (
+                    <button
+                      type="button"
+                      data-flow="station"
+                      disabled={busy}
+                      onClick={onOpenStation}
+                      title={isTl ? 'Bubukas ang naka-lock na screen kung saan ang estudyante mismo ang magta-type.' : 'Opens a locked screen where the student types it.'}
+                      className="h-11 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] active:scale-[0.97] transition-transform duration-150"
+                    >
+                      {isTl ? 'Ipa-type sa estudyante' : 'Let the student type it'}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    data-flow="refused"
+                    disabled={busy}
+                    onClick={() => onAction({ kind: 'explanation', text: '', refused: true, present, noticed })}
+                    title={isTl ? 'Itatala na ayaw magbigay ng pahayag ng estudyante, at tutuloy ang kaso.' : 'Records that the student chose not to give a statement. The case moves on.'}
+                    className="h-11 px-4 rounded-full text-[13px] font-medium text-[#6E6E73] dark:text-[#A1A1A6] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] active:scale-[0.97] transition-transform duration-150"
                   >
-                    {isTl ? 'I-save ang Paliwanag' : 'Save Explanation'}
+                    {isTl ? 'Ayaw magsalita' : 'Refused to explain'}
                   </button>
                 </div>
+                <button
+                  type="button"
+                  data-flow="explanation"
+                  disabled={busy || !noticed || text.trim().length < 10}
+                  title={!noticed ? (isTl ? 'I-tsek muna na naipaalam ang reklamo' : 'First tick that the complaint was explained') : undefined}
+                  onClick={() => onAction({ kind: 'explanation', text: text.trim(), present, noticed })}
+                  className="btn-lit h-11 px-6 text-[14px] font-semibold"
+                >
+                  {isTl ? 'I-save ang paliwanag' : 'Save explanation'}
+                </button>
               </div>
             </div>
           )}
 
           {/* Major Offense Step 4: Schedule Conference (Embedded Inline Scheduler) */}
           {next === 'Schedule Conference' && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <div>
-                  <p className="text-xs font-bold text-[#0F172A] dark:text-white">
-                    {isTl ? 'Patawag at iskedyul sa magulang' : 'Parent summons & conference scheduling'}
-                  </p>
-                  <p className="text-xs text-[#64748B] dark:text-[#94A8D0] mt-0.5">
+            <div className="space-y-4">
+              {/* ONE line that says what is happening + what to do (no chip pile, no alarm red for a normal no-show) */}
+              {c.parentConferenceStatus === 'No-Show' ? (
+                <div className="px-3.5 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/25 border border-amber-200 dark:border-amber-900/50 space-y-2.5">
+                  <p className="flex items-start gap-2 text-[13px] text-amber-900 dark:text-amber-200">
+                    <RotateCcw className="w-4 h-4 mt-0.5 shrink-0" aria-hidden />
                     {isTl
-                      ? 'Pumili ng bakanteng araw at oras at ipadala ang abiso nang hindi umaalis sa kasong ito.'
-                      : 'Pick a free date and time slot and send the parent summons directly inside this case.'}
+                      ? `Hindi dumating ang magulang sa ika-${c.summonsCount || 1} patawag. Pumili ng bagong araw.`
+                      : `The parent did not come to summons ${c.summonsCount || 1}. Pick a new date.`}
                   </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {(c.summonsCount || 0) > 0 && (
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-400/40">
-                      {isTl ? `Ika-${(c.summonsCount || 0) + 1} patawag` : `Summons #${(c.summonsCount || 0) + 1}`}
-                    </span>
-                  )}
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-blue-500/15 text-[#1E469B] dark:text-[#7CB8F7] border border-blue-400/30">
-                    {isTl ? 'Kailangan ang magulang' : 'Parent summons required'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Show previous No-Show notice if rescheduled */}
-              {c.parentConferenceStatus === 'No-Show' && (
-                <div className="p-3 rounded-xl border border-rose-300 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/20 flex items-start gap-2.5">
-                  <RotateCcw className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                  <div className="text-xs text-rose-950 dark:text-rose-200">
-                    <p className="font-bold">
-                      {isTl
-                        ? `Hindi sumipot (No-Show) ang magulang sa nakaraang Summons #${c.summonsCount || 1}.`
-                        : `Parent was a No-Show on previous Summons #${c.summonsCount || 1}.`}
-                    </p>
-                    <p className="text-xs text-rose-800 dark:text-rose-300 mt-0.5 leading-relaxed">
-                      {isTl
-                        ? 'Pumili ng bagong petsa at oras sa ibaba para sa susunod na patawag (Re-summons) bago mag-desisyon.'
-                        : 'Select a new date and time below to issue the next summons before rendering a decision.'}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* If an active appointment already exists and user hasn't clicked "Change date", but not in No-Show reschedule */}
-              {liveAppointment && !changeScheduleMode && !isReschedule ? (
-                <div className="p-3.5 rounded-xl border border-emerald-300 dark:border-emerald-800/80 bg-emerald-50/70 dark:bg-emerald-950/30 space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      {isTl ? 'May naka-schedule nang conference' : 'Active conference scheduled'}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setChangeScheduleMode(true)}
-                        className="text-xs font-semibold text-[#1E469B] dark:text-[#7CB8F7] hover:underline"
-                      >
-                        {isTl ? 'Palitan ang araw/oras' : 'Change date/time'}
-                      </button>
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-200/80 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200">
-                        {liveAppointment.status}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <span className="text-[#64748B] dark:text-[#94A8D0] block text-xs font-semibold">{isTl ? 'Araw at oras' : 'Date & time'}</span>
-                      <span className="font-bold text-[#0F172A] dark:text-white">{dayTitle(liveAppointment.date)} ({liveAppointment.date}) · {liveAppointment.timeSlot}</span>
-                    </div>
-                    <div>
-                      <span className="text-[#64748B] dark:text-[#94A8D0] block text-xs font-semibold">{isTl ? 'Magulang' : 'Parent contact'}</span>
-                      <span className="font-semibold text-[#0F172A] dark:text-white">{liveAppointment.parentName} ({liveAppointment.parentPhone || 'No phone'})</span>
-                    </div>
-                  </div>
-                  <div className="pt-2 border-t border-emerald-200 dark:border-emerald-900/60 flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      {onOpenPrint && (
+                  {/* After repeated no-shows the case may not stay stuck forever (due process) */}
+                  {(c.summonsCount || 0) >= maxSummons() && (
+                    <div className="pt-2.5 border-t border-amber-200 dark:border-amber-900/50 space-y-2">
+                      <label htmlFor="pwp-reason" className="block text-[12px] text-amber-900 dark:text-amber-200">
+                        {isTl
+                          ? `${c.summonsCount} beses nang hindi dumating. Pwede nang tumuloy sa Desisyon nang wala ang magulang. Dahilan:`
+                          : `${c.summonsCount} summons without the parent. You may go on to the Decision without them. Reason:`}
+                      </label>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <input
+                          id="pwp-reason"
+                          value={pwpReason}
+                          onChange={(e) => setPwpReason(e.target.value.slice(0, 300))}
+                          placeholder={isTl ? 'hal. hindi sumasagot sa tawag at text' : 'e.g. no answer to calls and texts'}
+                          className={`${input} flex-1 min-w-[220px] h-10 rounded-xl text-[13px]`}
+                        />
                         <button
                           type="button"
-                          onClick={() => onOpenPrint('callSlip')}
-                          className="btn-press px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-[#0B1527] text-xs font-semibold text-[#0F172A] dark:text-white flex items-center gap-1.5"
+                          data-flow="proceed-without-parent"
+                          disabled={busy || pwpReason.trim().length < 5}
+                          onClick={() => onAction({ kind: 'proceed_without_parent', reason: pwpReason.trim() })}
+                          className="h-10 px-4 rounded-full text-[13px] font-medium text-amber-900 dark:text-amber-100 bg-white dark:bg-white/[0.08] shadow-[0_0_0_0.5px_rgb(15_23_42/0.15)] hover:bg-amber-100/60 dark:hover:bg-white/[0.12] disabled:opacity-50 active:scale-[0.97] transition-[background-color,transform] duration-150"
                         >
-                          <Printer className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
-                          {isTl ? 'I-print ang Call Slip' : 'Print Call Slip'}
+                          {isTl ? 'Tumuloy nang wala ang magulang' : 'Continue without parent'}
                         </button>
-                      )}
-                      <span className="text-xs text-emerald-800 dark:text-emerald-300 font-medium">
-                        {isTl ? 'Pindutin ang kumpirma para tumuloy sa Step 5 (Attendance).' : 'Confirm to advance to Step 5 (Attendance).'}
-                      </span>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      data-flow="schedule-conference"
-                      disabled={busy}
-                      onClick={() => onAction({ kind: 'schedule_conference', targetDate: `${liveAppointment.date} ${liveAppointment.timeSlot}` })}
-                      className="btn-press px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs"
-                    >
-                      {isTl ? 'Kumpirmahin at magpatuloy' : 'Confirm & proceed'}
+                  )}
+                </div>
+              ) : (
+                <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">
+                  {isTl ? 'Pumili ng araw at oras para sa conference ng magulang.' : 'Pick a day and time for the parent conference.'}
+                  {(c.summonsCount || 0) > 0 && <span className="ml-1 text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? `(ika-${(c.summonsCount || 0) + 1} patawag)` : `(summons ${(c.summonsCount || 0) + 1})`}</span>}
+                </p>
+              )}
+
+              {/* already scheduled: show it calmly, with "Change" */}
+              {liveAppointment && !changeScheduleMode && !isReschedule ? (
+                <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
+                  <div className="px-4 py-3 flex items-center justify-between gap-3">
+                    <span className="flex items-center gap-2 text-[14px] font-medium text-emerald-700 dark:text-emerald-300">
+                      <CalendarCheck2 className="w-4 h-4" aria-hidden />
+                      {isTl ? 'May schedule na' : 'Conference is set'}
+                    </span>
+                    <button type="button" onClick={() => setChangeScheduleMode(true)} className="h-9 px-3 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">
+                      {isTl ? 'Palitan' : 'Change'}
                     </button>
+                  </div>
+                  <div className="px-4 py-3 flex items-center justify-between gap-3">
+                    <span className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Araw at oras' : 'Day and time'}</span>
+                    <span className="text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7]">{dayTitle(liveAppointment.date)} · {liveAppointment.timeSlot}</span>
+                  </div>
+                  <div className="px-4 py-3 flex items-center justify-between gap-3">
+                    <span className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Magulang' : 'Parent'}</span>
+                    <span className="text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7]">{liveAppointment.parentName} · {liveAppointment.parentPhone || (isTl ? 'walang number' : 'no number')}</span>
                   </div>
                 </div>
               ) : (
-                /* FULL EMBEDDED PARENT CONFERENCE SCHEDULER INSIDE STEP 4 */
-                <div className="rounded-xl border border-[#CBD5E1] dark:border-[#223555] bg-white dark:bg-[#0B1527] shadow-xs overflow-hidden divide-y divide-[#E2E8F0] dark:divide-[#1E2E4E]">
-                  {/* 1. Parent contact strip (Now Editable with instant phone / email update) */}
+                <>
+                  {/* parent contact: one calm row, Edit opens the fields */}
                   {student && (
-                    <div className="p-3 bg-[#F8FAFC] dark:bg-[#0F182C] space-y-2 text-xs">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-semibold text-[#64748B] dark:text-[#94A3B8]">{isTl ? 'Magulang:' : 'Parent:'}</span>
-                          <span className="font-bold text-[#0F172A] dark:text-white">{student.parentName || '—'}</span>
-                          {!editingContact ? (
-                            <>
-                              {student.parentPhone && (
-                                <span className="font-mono font-semibold text-[#1E469B] dark:text-[#7CB8F7]">· {student.parentPhone}</span>
-                              )}
-                              {student.parentEmail && (
-                                <span className="text-[#64748B] dark:text-[#94A3B8]">· {student.parentEmail}</span>
-                              )}
-                            </>
-                          ) : null}
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {!editingContact ? (
-                            <button
-                              type="button"
-                              onClick={() => setEditingContact(true)}
-                              className="text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7] hover:underline flex items-center gap-1"
-                            >
-                              <span>{isTl ? 'Palitan ang Contact' : 'Edit Contact'}</span>
-                            </button>
-                          ) : (
-                            <div className="flex items-center gap-1.5">
-                              <button
-                                type="button"
-                                disabled={savingContact}
-                                onClick={async () => {
-                                  if (!onUpdateStudentContact) {
-                                    setEditingContact(false);
-                                    return;
-                                  }
-                                  setSavingContact(true);
-                                  await onUpdateStudentContact(student.studentNumber, parentPhoneInput.trim(), parentEmailInput.trim());
-                                  setSavingContact(false);
-                                  setEditingContact(false);
-                                }}
-                                className="btn-press px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-xs"
-                              >
-                                {savingContact ? (isTl ? 'Inililigtas...' : 'Saving...') : (isTl ? 'I-save' : 'Save')}
-                              </button>
-                              <button
-                                type="button"
-                                disabled={savingContact}
-                                onClick={() => {
-                                  setParentPhoneInput(student.parentPhone ?? '');
-                                  setParentEmailInput(student.parentEmail ?? '');
-                                  setEditingContact(false);
-                                }}
-                                className="btn-press px-2 py-1 rounded-md border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-[11px]"
-                              >
-                                {isTl ? 'Kansela' : 'Cancel'}
-                              </button>
-                            </div>
+                    <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10">
+                      <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+                        <span className="min-w-0 text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7]">
+                          {student.parentName || '—'}
+                          {!editingContact && (
+                            <span className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">
+                              {student.parentPhone ? ` · ${student.parentPhone}` : isTl ? ' · walang number' : ' · no number'}
+                              {student.parentEmail ? ` · ${student.parentEmail}` : ''}
+                            </span>
                           )}
-
+                        </span>
+                        <span className="flex items-center gap-1">
                           {liveAppointment && changeScheduleMode && !isReschedule && !editingContact && (
-                            <button
-                              type="button"
-                              onClick={() => setChangeScheduleMode(false)}
-                              className="text-xs font-semibold text-[#1E469B] dark:text-[#7CB8F7] hover:underline ml-2"
-                            >
-                              {isTl ? 'Kanselahin ang pagpapalit' : 'Keep current schedule'}
+                            <button type="button" onClick={() => setChangeScheduleMode(false)} className="h-9 px-3 rounded-full text-[13px] text-[#6E6E73] dark:text-[#A1A1A6] hover:bg-black/[0.04]">
+                              {isTl ? 'Huwag nang palitan' : 'Keep current'}
                             </button>
                           )}
-                        </div>
+                          {!editingContact && (
+                            <button type="button" onClick={() => setEditingContact(true)} className="h-9 px-3 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">
+                              {isTl ? 'Baguhin ang contact' : 'Edit contact'}
+                            </button>
+                          )}
+                        </span>
                       </div>
-
-                      {/* Inline Contact Editor Inputs */}
                       {editingContact && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-200 dark:border-slate-800">
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate-500 mb-0.5">
-                              {isTl ? 'Mobile No. ng Magulang (09XX-XXX-XXXX)' : 'Parent Mobile Number'}
-                            </label>
-                            <input
-                              type="text"
-                              value={parentPhoneInput}
-                              onChange={(e) => setParentPhoneInput(e.target.value)}
-                              placeholder="0917-000-0000"
-                              className="w-full px-2.5 py-1.5 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-mono font-semibold"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate-500 mb-0.5">
-                              {isTl ? 'Email ng Magulang (opsyonal)' : 'Parent Email (optional)'}
-                            </label>
-                            <input
-                              type="email"
-                              value={parentEmailInput}
-                              onChange={(e) => setParentEmailInput(e.target.value)}
-                              placeholder="parent@example.com"
-                              className="w-full px-2.5 py-1.5 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-semibold"
-                            />
+                        <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <label className="block space-y-1">
+                            <span className="block text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Mobile ng magulang' : 'Parent mobile'}</span>
+                            <input type="tel" value={parentPhoneInput} onChange={(e) => setParentPhoneInput(e.target.value)} placeholder="0917-000-0000" className={`${input} h-10 rounded-xl text-[13px] tabular-nums ${phoneProblem(parentPhoneInput, isTl) ? 'border-rose-400' : ''}`} />
+                            {phoneProblem(parentPhoneInput, isTl) && <span className="block text-[12px] text-rose-700 dark:text-rose-300">{phoneProblem(parentPhoneInput, isTl)}</span>}
+                          </label>
+                          <label className="block space-y-1">
+                            <span className="block text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Email ng magulang (opsyonal)' : 'Parent email (optional)'}</span>
+                            <input type="email" value={parentEmailInput} onChange={(e) => setParentEmailInput(e.target.value)} placeholder="parent@example.com" className={`${input} h-10 rounded-xl text-[13px]`} />
+                          </label>
+                          <div className="sm:col-span-2 flex justify-end gap-2">
+                            <button
+                              type="button"
+                              disabled={savingContact}
+                              onClick={() => {
+                                setParentPhoneInput(student.parentPhone ?? '');
+                                setParentEmailInput(student.parentEmail ?? '');
+                                setEditingContact(false);
+                              }}
+                              className="h-9 px-4 rounded-full text-[13px] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04]"
+                            >
+                              {isTl ? 'Huwag na' : 'Cancel'}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={savingContact || !!phoneProblem(parentPhoneInput, isTl) || (!!parentEmailInput.trim() && !/^[^s@]+@[^s@]+.[^s@]{2,}$/.test(parentEmailInput.trim()))}
+                              onClick={async () => {
+                                if (!onUpdateStudentContact) {
+                                  setEditingContact(false);
+                                  return;
+                                }
+                                setSavingContact(true);
+                                await onUpdateStudentContact(student.studentNumber, parentPhoneInput.trim(), parentEmailInput.trim());
+                                setSavingContact(false);
+                                setEditingContact(false);
+                              }}
+                              className="btn-lit h-9 px-4 text-[13px] font-semibold"
+                            >
+                              {savingContact ? (isTl ? 'Sine-save…' : 'Saving…') : isTl ? 'I-save ang contact' : 'Save contact'}
+                            </button>
                           </div>
                         </div>
                       )}
                     </div>
                   )}
 
-                  {/* 2. Slot Selection Section */}
-                  <div className="p-3.5 space-y-3">
-                    <div className="space-y-1.5">
-                      <span className="block text-xs font-bold text-[#0F172A] dark:text-white">
-                        {isTl ? 'Mungkahing bakanteng oras (1-click pumili):' : 'Suggested free times (1-click select):'}
-                      </span>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5" data-inline-suggestions>
-                        {suggestions.length === 0 && (
-                          <span className="text-xs text-[#64748B] col-span-3">{isTl ? 'Pumili ng araw sa ibaba.' : 'Pick a date below.'}</span>
-                        )}
-                        {suggestions.map((s) => {
-                          const isSelected = s.date === schedDate && s.start === schedStart;
+                  {/* DAY chips (next office days) + TIME pills — no dropdown, no repeated "Tomorrow" */}
+                  <div className="space-y-2.5">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Araw' : 'Day'}</span>
+                      <span className="text-[12px] text-[#8E8E93]">{isTl ? 'Bukas ang opisina' : 'Office open'}: {officeHoursText(isTl)}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2" data-inline-suggestions>
+                      {officeDays.map((d) => {
+                        const on = d === schedDate;
+                        const free = freeSlotsOn(appointments, d).length;
+                        const dt = parseISO(d);
+                        return (
+                          <button
+                            key={d}
+                            type="button"
+                            disabled={free === 0}
+                            onClick={() => {
+                              setSchedDate(d);
+                              setSchedStart(freeSlotsOn(appointments, d)[0] ?? null); // one tap = earliest free time
+                            }}
+                            className={`min-w-[64px] h-14 px-3 rounded-2xl flex flex-col items-center justify-center transition-[background-color,box-shadow,transform] duration-150 active:scale-[0.97] disabled:opacity-40 ${
+                              on
+                                ? 'btn-lit'
+                                : 'bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#1E469B] dark:hover:border-[#5B8DEF]'
+                            }`}
+                          >
+                            <span className={`text-[11px] ${on ? 'text-white/80' : 'text-[#8E8E93]'}`}>{dayFmtShort.format(dt).split(' ')[0]}</span>
+                            <span className="text-[16px] font-semibold tabular-nums leading-tight">{dt.getDate()}</span>
+                          </button>
+                        );
+                      })}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const el = otherDayRef.current;
+                          if (!el) return;
+                          try {
+                            el.showPicker();
+                          } catch {
+                            el.focus();
+                          }
+                        }}
+                        className={`relative h-14 px-4 rounded-2xl border border-dashed flex items-center gap-2 text-[13px] active:scale-[0.97] transition-transform duration-150 ${!officeDays.includes(schedDate) ? 'border-[#1E469B] text-[#1E469B] dark:text-[#7CB8F7]' : 'border-[#C7C7CC] dark:border-white/20 text-[#6E6E73] dark:text-[#A1A1A6]'}`}
+                      >
+                        <CalendarDays className="w-4 h-4" aria-hidden />
+                        <span className="text-left leading-tight">
+                          <span className="block text-[11px] opacity-80">{isTl ? 'Ibang araw' : 'Other day'}</span>
+                          <span className="block font-medium">
+                            {new Intl.DateTimeFormat(isTl ? 'fil-PH' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(parseISO(schedDate))}
+                          </span>
+                        </span>
+                        <input
+                          ref={otherDayRef}
+                          id="inline-conf-date"
+                          type="date"
+                          tabIndex={-1}
+                          min={todayISO()}
+                          value={schedDate}
+                          onChange={(e) => {
+                            if (!e.target.value) return;
+                            setSchedDate(e.target.value);
+                            setSchedStart(freeSlotsOn(appointments, e.target.value)[0] ?? null);
+                          }}
+                          aria-label={isTl ? 'Pumili ng ibang araw' : 'Pick another day'}
+                          className="absolute inset-0 opacity-0 pointer-events-none"
+                        />
+                      </button>
+                    </div>
+
+                    <span className="block text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7] pt-1">{isTl ? 'Oras (45 minuto)' : 'Time (45 minutes)'}</span>
+                    {schedDateBad ? (
+                      <p className="text-[13px] text-rose-700 dark:text-rose-300">{isTl ? 'Sarado ang opisina sa araw na ito. Pumili ng ibang araw.' : 'The office is closed that day. Pick another day.'}</p>
+                    ) : freeSlots.length === 0 ? (
+                      <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Puno na ang araw na ito. Pumili ng ibang araw.' : 'This day is full. Pick another day.'}</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={isTl ? 'Oras' : 'Time'}>
+                        {allSlots.filter((x) => x.state !== 'past').map(({ start: s, state, who }) => {
+                          const on = s === schedStart;
+                          if (state === 'taken') {
+                            return (
+                              <span
+                                key={s}
+                                title={isTl ? `May naka-schedule na: magulang ni ${who}` : `Already booked: parent of ${who}`}
+                                className="h-11 px-4 rounded-full inline-flex flex-col items-center justify-center leading-none bg-black/[0.03] dark:bg-white/[0.04] border border-dashed border-[#D2D2D7] dark:border-white/10 text-[#AEAEB2] dark:text-[#636366] cursor-not-allowed select-none"
+                              >
+                                <span className="text-[13px] tabular-nums line-through decoration-1">{slotLabel(s).split('–')[0].trim().replace(/^0/, '')}</span>
+                                <span className="text-[10px] mt-0.5">{isTl ? 'May naka-schedule' : 'Booked'}</span>
+                              </span>
+                            );
+                          }
                           return (
                             <button
-                              key={s.date + s.start}
+                              key={s}
                               type="button"
-                              onClick={() => {
-                                setSchedDate(s.date);
-                                setSchedStart(s.start);
-                              }}
-                              className={`btn-press px-2.5 py-2 rounded-lg border text-xs font-semibold text-center transition-all ${
-                                isSelected
-                                  ? 'bg-[#1E469B] border-[#1E469B] text-white shadow-xs ring-2 ring-[#1E469B]/20'
-                                  : 'bg-[#F8FAFC] dark:bg-[#0F182C] border-[#CBD5E1] dark:border-[#253B66] text-[#0F172A] dark:text-white hover:border-[#1E469B]'
+                              role="radio"
+                              aria-checked={on}
+                              onClick={() => setSchedStart(s)}
+                              className={`h-11 px-4 rounded-full text-[14px] tabular-nums transition-[background-color,transform] duration-150 active:scale-[0.97] ${
+                                on
+                                  ? 'btn-lit font-semibold'
+                                  : 'bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#1E469B] dark:hover:border-[#5B8DEF]'
                               }`}
                             >
-                              <span className="block font-bold">{dayTitle(s.date)}</span>
-                              <span className="block text-[11px] opacity-90 mt-0.5">{s.label.split('–')[0].trim()}</span>
+                              {slotLabel(s).split('–')[0].trim().replace(/^0/, '')}
                             </button>
                           );
                         })}
                       </div>
-                    </div>
-
-                    {/* Manual Date & Slot Override */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-[#F1F5F9] dark:border-[#1E2E4E] text-xs">
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <label className="font-semibold text-[#0F172A] dark:text-white" htmlFor="inline-conf-date">
-                            {isTl ? 'O pumili ng ibang araw' : 'Or select another day'}
-                          </label>
-                          <span className="text-[11px] text-[#64748B] dark:text-[#94A8D0]">
-                            Mon–Thu 8AM–5PM
-                          </span>
-                        </div>
-                        <input
-                          id="inline-conf-date"
-                          type="date"
-                          min={todayISO()}
-                          value={schedDate}
-                          onChange={(e) => {
-                            setSchedDate(e.target.value);
-                            setSchedStart(null);
-                          }}
-                          className={`w-full px-3 py-1.5 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-semibold text-[#0F172A] dark:text-white ${
-                            schedDateBad ? 'ring-2 ring-rose-500' : ''
-                          }`}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block font-semibold text-[#0F172A] dark:text-white mb-1" htmlFor="inline-conf-time">
-                          {isTl ? 'Oras ng Conference (45 mins)' : 'Conference Time Slot (45 mins)'}
-                        </label>
-                        <select
-                          id="inline-conf-time"
-                          value={schedStart ?? ''}
-                          onChange={(e) => setSchedStart(e.target.value === '' ? null : Number(e.target.value))}
-                          disabled={schedDateBad}
-                          className="w-full px-3 py-1.5 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-semibold text-[#0F172A] dark:text-white"
-                        >
-                          <option value="">
-                            {schedDateBad
-                              ? '—'
-                              : freeSlots.length
-                              ? isTl ? 'Pumili ng oras' : 'Select time slot'
-                              : isTl ? 'Puno na ang araw na ito' : 'This day is fully booked'}
-                          </option>
-                          {freeSlots.map((s) => (
-                            <option key={s} value={s}>
-                              {slotLabel(s)}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
+                    )}
                   </div>
 
-                  {/* 3. Notice Dispatch & Message Section */}
-                  <div className="p-3.5 bg-[#F8FAFC]/60 dark:bg-[#0F182C]/60 space-y-2.5">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <label className="inline-flex items-center gap-2 text-xs font-bold text-[#0F172A] dark:text-white cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={schedSendNow}
-                          onChange={(e) => setSchedSendNow(e.target.checked)}
-                          className="w-4 h-4 rounded accent-[#1E469B]"
-                        />
-                        {isTl ? 'Magpadala ng abiso sa magulang' : 'Dispatch notice to parent'}
+                  {onScheduleOthers && groupToSchedule.length > 0 && schedStart !== null && (
+                    <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10">
+                      <label className="px-4 py-3 flex items-start gap-2.5 cursor-pointer select-none">
+                        <input type="checkbox" checked={withGroup} onChange={(e) => setWithGroup(e.target.checked)} className="mt-0.5 w-5 h-5 rounded-md accent-[#1E469B]" />
+                        <span>
+                          <span className="block text-[14px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">
+                            {isTl ? `Isabay ang ${groupToSchedule.length} pang magulang sa parehong insidente` : `Also schedule ${groupToSchedule.length} more parent(s) from the same incident`}
+                          </span>
+                          <span className="block text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">
+                            {isTl ? 'Parehong araw, magkakasunod na oras. Hiwalay ang bawat pamilya at hiwalay ang SMS.' : 'Same day, one after another. Each family meets separately and gets its own SMS.'}
+                          </span>
+                        </span>
                       </label>
-
-                      {schedSendNow && (
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {(['sms', 'gmail', 'both'] as Channel[]).map((ch) => (
-                            <button
-                              key={ch}
-                              type="button"
-                              disabled={ch !== 'sms' && !student?.parentEmail}
-                              onClick={() => setSchedChannel(ch)}
-                              className={`px-2.5 py-1 rounded-md text-xs font-semibold border transition-all ${
-                                schedChannel === ch
-                                  ? 'bg-[#1E469B] border-[#1E469B] text-white shadow-xs'
-                                  : 'bg-white dark:bg-[#0B1527] border-[#CBD5E1] dark:border-[#253B66] text-[#475569] dark:text-[#94A8D0]'
-                              }`}
-                            >
-                              {ch === 'sms' ? 'SMS' : ch === 'gmail' ? 'Email' : 'SMS + Email'}
-                            </button>
+                      {withGroup && (
+                        <ul className="border-t border-black/[0.06] dark:border-white/[0.06] divide-y divide-black/[0.06] dark:divide-white/[0.06]">
+                          {groupPlan.map(({ g, start }) => (
+                            <li key={g.caseCode} className="px-4 py-2.5 flex items-center justify-between gap-3 text-[14px]">
+                              <span className="text-[#1D1D1F] dark:text-[#F5F5F7]">{g.studentName}</span>
+                              {start === null ? (
+                                <span className="text-[12px] text-rose-700 dark:text-rose-300">{isTl ? 'Wala nang bakanteng oras, i-schedule nang hiwalay' : 'No free time left, schedule separately'}</span>
+                              ) : (
+                                <span className="h-7 px-3 rounded-full inline-flex items-center bg-[#1E469B]/10 text-[#1E469B] dark:bg-[#7CB8F7]/15 dark:text-[#7CB8F7] text-[13px] font-semibold tabular-nums">
+                                  {slotLabel(start).split('–')[0].trim().replace(/^0/, '')}
+                                </span>
+                              )}
+                            </li>
                           ))}
-                          <div className="inline-flex rounded-md border border-[#CBD5E1] dark:border-[#253B66] p-0.5 bg-white dark:bg-[#0B1527]">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSchedMsgLang('taglish');
-                                setSchedMsgEdited(false);
-                                setSchedMessage(buildInlineMsg(schedDate, schedStart, 'taglish'));
-                              }}
-                              className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                                schedMsgLang === 'taglish' ? 'bg-[#1E469B] text-white' : 'text-[#475569] dark:text-[#94A8D0]'
-                              }`}
-                            >
-                              Taglish
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSchedMsgLang('english');
-                                setSchedMsgEdited(false);
-                                setSchedMessage(buildInlineMsg(schedDate, schedStart, 'english'));
-                              }}
-                              className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                                schedMsgLang === 'english' ? 'bg-[#1E469B] text-white' : 'text-[#475569] dark:text-[#94A8D0]'
-                              }`}
-                            >
-                              English
-                            </button>
-                          </div>
-                        </div>
+                        </ul>
                       )}
                     </div>
+                  )}
 
+                  {/* notice to the parent: how to send + a suggested message, always visible */}
+                  <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10">
+                    <label className="px-4 py-3 flex items-center gap-2.5 text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] cursor-pointer select-none border-b border-black/[0.06] dark:border-white/[0.06]">
+                      <input type="checkbox" checked={schedSendNow} onChange={(e) => setSchedSendNow(e.target.checked)} className="w-5 h-5 rounded-md accent-[#1E469B]" />
+                      <span className="font-medium">{isTl ? 'Ipadala ang patawag sa magulang' : 'Send the summons to the parent'}</span>
+                    </label>
                     {schedSendNow && (
-                      <div className="space-y-1">
-                        <textarea
-                          rows={3}
-                          value={schedMessage}
-                          onChange={(e) => {
-                            setSchedMessage(e.target.value);
-                            setSchedMsgEdited(true);
-                          }}
-                          className={`w-full px-3 py-2 rounded-lg border bg-white dark:bg-[#0B1527] text-xs font-medium text-[#0F172A] dark:text-white leading-relaxed resize-y ${
-                            sensitiveWords.length ? 'border-rose-500 ring-1 ring-rose-500' : 'border-[#CBD5E1] dark:border-[#253B66]'
-                          }`}
-                        />
-                        {sensitiveWords.length > 0 ? (
-                          <p className="text-xs font-semibold text-rose-600 dark:text-rose-400">
-                            {isTl
-                              ? `Bawal ang detalye ng offense sa mensahe ("${sensitiveWords.join('", "')}"). `
-                              : `No offense details allowed ("${sensitiveWords.join('", "')}"). `}
-                            <button
-                              type="button"
-                              className="underline font-bold"
-                              onClick={() => {
-                                setSchedMsgEdited(false);
-                                setSchedMessage(buildInlineMsg(schedDate, schedStart, schedMsgLang));
-                              }}
+                      <div className="px-4 py-4 space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <span className="block text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Paano ipapadala' : 'Send by'}</span>
+                            <div className="seg-track w-full">
+                              {(['both', 'sms', 'gmail'] as Channel[]).map((ch) => (
+                                <button
+                                  key={ch}
+                                  type="button"
+                                  disabled={ch !== 'sms' && !student?.parentEmail}
+                                  title={ch !== 'sms' && !student?.parentEmail ? (isTl ? 'Walang email ang magulang' : 'The parent has no email') : undefined}
+                                  onClick={() => setSchedChannel(ch)}
+                                  className={`flex-1 px-3 py-2 text-[13px] disabled:opacity-40 ${schedChannel === ch ? 'seg-on' : 'seg-off'}`}
+                                >
+                                  {ch === 'sms' ? 'SMS' : ch === 'gmail' ? 'Email' : 'SMS + Email'}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            <span className="block text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Wika' : 'Language'}</span>
+                            <div className="seg-track w-full">
+                              {(['taglish', 'english'] as const).map((lg) => (
+                                <button
+                                  key={lg}
+                                  type="button"
+                                  onClick={() => {
+                                    setSchedMsgLang(lg);
+                                    setSchedMsgEdited(false);
+                                    setSchedMessage(buildInlineMsg(schedDate, schedStart, lg));
+                                  }}
+                                  className={`flex-1 px-3 py-2 text-[13px] ${schedMsgLang === lg ? 'seg-on' : 'seg-off'}`}
+                                >
+                                  {lg === 'taglish' ? 'Tagalog' : 'English'}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <span className="flex flex-wrap items-center gap-2">
+                            <span className="text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Mungkahing mensahe' : 'Suggested message'}</span>
+                            {/* why this message: level of the matter + which summons (no offense words shown to the parent) */}
+                            <span
+                              title={isTl ? 'Kusang pinili ng system. Pwede mong baguhin ang mensahe.' : 'Picked by the system. You can still edit the message.'}
+                              className={`inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-[11px] font-semibold ${
+                                ladderLevel === 'urgent'
+                                  ? 'bg-gradient-to-r from-rose-500/15 to-orange-500/15 text-rose-700 dark:text-rose-300'
+                                  : ladderLevel === 'high'
+                                  ? 'bg-gradient-to-r from-amber-500/15 to-orange-400/15 text-amber-800 dark:text-amber-300'
+                                  : 'bg-gradient-to-r from-[#1E469B]/10 to-sky-500/10 text-[#1E469B] dark:text-[#7CB8F7]'
+                              }`}
                             >
-                              {isTl ? 'Ibalik sa ligtas na mensahe' : 'Restore safe message'}
+                              <span className={`w-1.5 h-1.5 rounded-full ${ladderLevel === 'urgent' ? 'bg-rose-500' : ladderLevel === 'high' ? 'bg-amber-500' : 'bg-[#1E469B] dark:bg-[#7CB8F7]'}`} aria-hidden />
+                              {ladderWhy}
+                            </span>
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {(
+                              [
+                                ['auto', isTl ? 'Mungkahi' : 'Suggested', isTl ? 'Kusang pinili ayon sa bigat at sa bilang ng patawag' : 'Picked for you from how heavy it is and the summons count'],
+                                ['short', isTl ? 'Maikli' : 'Short', isTl ? 'Kasya sa 1 SMS' : 'Fits in 1 SMS'],
+                              ] as const
+                            ).map(([k, label, hint]) => (
+                              <button
+                                key={k}
+                                type="button"
+                                title={hint}
+                                aria-pressed={msgStyle === k && !schedMsgEdited}
+                                onClick={() => {
+                                  setMsgStyle(k);
+                                  setSchedMsgEdited(false);
+                                  setSchedMessage(buildInlineMsg(schedDate, schedStart, schedMsgLang, k));
+                                }}
+                                className={`h-10 px-4 rounded-full text-[13px] transition-[background-color,transform] duration-150 active:scale-[0.97] ${
+                                  msgStyle === k && !schedMsgEdited
+                                    ? 'btn-lit font-semibold'
+                                    : 'bg-white dark:bg-[#0A1526] border border-[#DDE3EC] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#1E469B]'
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <label className="block space-y-1">
+                          <span className="flex items-baseline justify-between gap-2">
+                            <span className="text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Mensahe (pwedeng baguhin)' : 'Message (you can edit it)'}</span>
+                            <span className="text-[11px] text-[#8E8E93] tabular-nums">
+                              {(() => {
+                                const info = smsInfo(schedMessage);
+                                return isTl ? `${info.length} letra · ${info.parts} SMS` : `${info.length} characters · ${info.parts} SMS`;
+                              })()}
+                            </span>
+                          </span>
+                          <textarea
+                            rows={3}
+                            value={schedMessage}
+                            onChange={(e) => {
+                              setSchedMessage(e.target.value);
+                              setSchedMsgEdited(true);
+                            }}
+                            className={`w-full px-3 py-2.5 rounded-xl border bg-white dark:bg-[#0A1526] text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] leading-relaxed resize-y ${
+                              sensitiveWords.length ? 'border-rose-500 ring-1 ring-rose-500' : 'border-[#DDE3EC] dark:border-white/10'
+                            }`}
+                          />
+                        </label>
+                        {sensitiveWords.length > 0 ? (
+                          <p className="text-[12px] text-rose-700 dark:text-rose-300">
+                            {isTl ? `Bawal ang detalye ng offense sa mensahe ("${sensitiveWords.join('", "')}"). ` : `No offense details allowed ("${sensitiveWords.join('", "')}"). `}
+                            <button type="button" className="underline font-medium" onClick={() => { setSchedMsgEdited(false); setSchedMessage(buildInlineMsg(schedDate, schedStart, schedMsgLang)); }}>
+                              {isTl ? 'Ibalik sa ligtas na mensahe' : 'Restore the safe message'}
                             </button>
                           </p>
                         ) : (
-                          <p className="text-[11px] text-[#64748B] dark:text-[#94A8D0]">
-                            {(() => {
-                              const info = smsInfo(schedMessage);
-                              return isTl
-                                ? `${info.length} letra · ${info.parts} SMS · RA 10173 compliant (walang detalye ng offense)`
-                                : `${info.length} characters · ${info.parts} SMS · RA 10173 compliant (no offense details)`;
-                            })()}
-                          </p>
+                          <p className="text-[12px] text-[#8E8E93]">{isTl ? 'Walang detalye ng offense. Isang araw bago ang conference, kusa ring may paalala.' : 'No offense details. A reminder also goes out the office day before.'}</p>
                         )}
                       </div>
                     )}
                   </div>
-
-                  {/* 4. Action Bar */}
-                  <div className="p-3 bg-white dark:bg-[#0B1527] flex flex-wrap items-center justify-between gap-2">
-                    {onOpenPrint ? (
-                      <button
-                        type="button"
-                        onClick={() => onOpenPrint('callSlip')}
-                        className="btn-press px-3 py-1.5 rounded-lg border border-[#CBD5E1] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-semibold text-[#0F172A] dark:text-white hover:border-[#1E469B] flex items-center gap-1.5"
-                      >
-                        <Printer className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
-                        {isTl ? 'Mag-print ng Call Slip / Summons' : 'Print Call Slip / Summons'}
-                      </button>
-                    ) : <span />}
-
-                    <button
-                      type="button"
-                      data-flow="schedule-conference-inline"
-                      disabled={!canSaveInlineSched || schedStart === null}
-                      onClick={() => {
-                        if (schedStart === null) return;
-                        const slotStr = slotLabel(schedStart);
-                        onAction({
-                          kind: 'schedule_conference',
-                          targetDate: `${dayTitle(schedDate)} · ${slotStr}`,
-                          inlineSchedule: {
-                            date: schedDate,
-                            timeSlot: slotStr,
-                            sendNow: schedSendNow,
-                            channel: schedChannel,
-                            message: schedMessage.trim(),
-                            rescheduleFromId: liveAppointment?.id,
-                          },
-                        });
-                        setChangeScheduleMode(false);
-                      }}
-                      className="btn-press px-4 py-2 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold disabled:opacity-50 shadow-xs"
-                    >
-                      {schedStart === null
-                        ? isTl ? 'Pumili muna ng oras' : 'Pick a time first'
-                        : isReschedule || changeScheduleMode
-                        ? isTl ? 'I-save ang bagong schedule at tumuloy sa Step 5' : 'Save new schedule & proceed to Step 5'
-                        : isTl ? 'I-schedule ang conference at tumuloy sa Step 5' : 'Schedule conference & proceed to Step 5'}
-                    </button>
-                  </div>
-                </div>
+                </>
               )}
+
+              {/* the ONE main action, always visible at the bottom (AGENTS §5 #13 #18 #25) */}
+              <div className="sticky bottom-0 z-10 -mx-1 glass-bar rounded-2xl px-3 py-3 flex flex-wrap items-center justify-between gap-2">
+                {onOpenPrint && ladderAt.isLast && ladderAt.n > 1 ? (
+                  <button type="button" onClick={() => onOpenPrint('parentLetter')} title={isTl ? 'Pormal na sulat sa magulang. Ibibigay sa estudyante o adviser. Walang detalye ng offense.' : 'Formal letter to the parent, sent through the student or adviser. No offense details.'} className="h-11 px-4 rounded-full text-[13px] font-semibold text-[#1E469B] dark:text-[#7CB8F7] bg-[#1E469B]/[0.08] dark:bg-white/[0.08] hover:bg-[#1E469B]/[0.14] inline-flex items-center gap-1.5 active:scale-[0.97] transition-transform duration-150">
+                    <Printer className="w-4 h-4" aria-hidden />
+                    {isTl ? 'I-print ang sulat sa magulang' : 'Print the parent letter'}
+                  </button>
+                ) : onOpenPrint ? (
+                  <button type="button" onClick={() => onOpenPrint('conference')} title={isTl ? 'Form para sa conference ng magulang (pipirmahan sa pagdinig)' : 'Form for the parent conference (signed at the meeting)'} className="h-11 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1.5 active:scale-[0.97] transition-transform duration-150">
+                    <Printer className="w-4 h-4" aria-hidden />
+                    {isTl ? 'I-print ang conference form' : 'Print conference form'}
+                  </button>
+                ) : (
+                  <span />
+                )}
+                {liveAppointment && !changeScheduleMode && !isReschedule ? (
+                  <button
+                    type="button"
+                    data-flow="schedule-conference"
+                    disabled={busy}
+                    onClick={() => onAction({ kind: 'schedule_conference', targetDate: `${liveAppointment.date} ${liveAppointment.timeSlot}` })}
+                    className="btn-lit btn-lit-green h-11 px-6 text-[14px] font-semibold"
+                  >
+                    {isTl ? 'Kumpirmahin ang schedule' : 'Confirm schedule'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    data-flow="schedule-conference-inline"
+                    disabled={!canSaveInlineSched || schedStart === null}
+                    onClick={() => {
+                      if (schedStart === null) return;
+                      const slotStr = slotLabel(schedStart);
+                      onAction({
+                        kind: 'schedule_conference',
+                        targetDate: `${dayTitle(schedDate)} · ${slotStr}`,
+                        inlineSchedule: {
+                          date: schedDate,
+                          timeSlot: slotStr,
+                          sendNow: schedSendNow,
+                          channel: schedChannel,
+                          message: schedMessage.trim(),
+                          rescheduleFromId: liveAppointment?.id,
+                        },
+                      });
+                      if (onScheduleOthers && withGroup && groupPlan.length) {
+                        onScheduleOthers(
+                          groupPlan
+                            .filter((x) => x.start !== null)
+                            .map(({ g, start }) => {
+                              const slot = slotLabel(start as number);
+                              return {
+                                c: g,
+                                action: {
+                                  kind: 'schedule_conference' as const,
+                                  targetDate: `${dayTitle(schedDate)} · ${slot}`,
+                                  inlineSchedule: { date: schedDate, timeSlot: slot, sendNow: schedSendNow, channel: schedChannel, message: msgFor(g, schedDate, start as number, schedMsgLang) },
+                                },
+                              };
+                            })
+                        );
+                      }
+                      setChangeScheduleMode(false);
+                    }}
+                    className="btn-lit h-11 px-6 text-[14px] font-semibold"
+                  >
+                    {schedStart === null
+                      ? isTl ? 'Pumili muna ng oras' : 'Pick a time first'
+                      : isTl
+                      ? `I-schedule: ${dayFmtShort.format(parseISO(schedDate))}, ${slotLabel(schedStart).split('–')[0].trim().replace(/^0/, '')}`
+                      : `Schedule for ${dayFmtShort.format(parseISO(schedDate))}, ${slotLabel(schedStart).split('–')[0].trim().replace(/^0/, '')}`}
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
           {/* Major Offense Step 5: Conference Attendance Hearing (Attended vs No-Show / Reschedule) */}
           {(next === 'Parent Conference Attendance' || next === 'Parent Notified') && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <div>
-                  <p className="text-xs font-bold text-[#0F172A] dark:text-white">
-                    {isTl ? 'Pagharap ng magulang' : 'Parent conference attendance'}
-                  </p>
-                  <p className="text-xs text-[#64748B] dark:text-[#94A8D0] mt-0.5">
-                    {isTl
-                      ? 'I-record kung dumalo o hindi sumipot ang magulang upang makapagpatuloy sa pormal na proseso.'
-                      : 'Record whether the parent attended or was a no-show to determine due process progression.'}
-                  </p>
-                </div>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-400/30">
-                  {isTl ? 'Pagpapatotoo' : 'Verification'}
-                </span>
-              </div>
-
-              {/* Attendance Choice */}
-              <div className="rounded-xl border border-[#CBD5E1] dark:border-[#223555] bg-white dark:bg-[#0B1527] shadow-xs overflow-hidden divide-y divide-[#E2E8F0] dark:divide-[#1E2E4E]">
-                <div className="p-3.5 space-y-2.5">
-                  <span className="text-xs font-bold text-[#0F172A] dark:text-white block">
-                    {isTl ? 'Dumalo ba ang magulang sa itinakdang conference?' : 'Did the parent attend the scheduled conference?'}
-                  </span>
-                  <div className="grid grid-cols-2 gap-2.5">
+            <div className="space-y-4">
+              {/* two big, clear answers (AGENTS §5 #16 zero-click choices, #17 big targets) */}
+              <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label={isTl ? 'Dumating ba ang magulang?' : 'Did the parent come?'}>
+                {(
+                  [
+                    ['Attended', isTl ? 'Dumating' : 'Came', isTl ? 'Susunod: Desisyon' : 'Next: Decision', Check, 'emerald'],
+                    ['No-Show', isTl ? 'Hindi dumating' : 'Did not come', isTl ? 'Pipili ng bagong araw' : 'Pick a new date next', RotateCcw, 'amber'],
+                  ] as const
+                ).map(([k, title, sub, Ic, tone]) => {
+                  const on = parentStatus === k;
+                  return (
                     <button
+                      key={k}
                       type="button"
-                      onClick={() => setParentStatus('Attended')}
-                      className={`btn-press p-3 rounded-xl text-xs font-bold border flex flex-col sm:flex-row items-center justify-center gap-2 transition-all ${
-                        parentStatus === 'Attended'
-                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs ring-2 ring-emerald-600/20'
-                          : 'bg-[#F8FAFC] dark:bg-[#0F182C] border-[#CBD5E1] dark:border-[#253B66] text-[#0F172A] dark:text-white hover:border-emerald-600'
+                      role="radio"
+                      aria-checked={on}
+                      onClick={() => setParentStatus(k)}
+                      className={`min-h-[76px] px-4 py-3 rounded-2xl border-2 flex items-center gap-3 text-left transition-[border-color,background-color,transform] duration-150 active:scale-[0.98] ${
+                        on
+                          ? tone === 'emerald'
+                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30'
+                            : 'border-amber-500 bg-amber-50 dark:bg-amber-950/30'
+                          : 'border-[#DDE3EC] dark:border-white/10 bg-white dark:bg-[#0F1B2E] hover:border-[#AEB8C8]'
                       }`}
                     >
-                      <Check className="w-4 h-4 shrink-0" />
-                      <span>{isTl ? 'Dumalo ang Magulang' : 'Parent Attended'}</span>
+                      <span className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${on ? (tone === 'emerald' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white') : 'bg-[#F5F5F7] dark:bg-white/[0.08] text-[#6E6E73] dark:text-[#A1A1A6]'}`}>
+                        <Ic className="w-5 h-5" aria-hidden />
+                      </span>
+                      <span>
+                        <span className="block text-[15px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">{title}</span>
+                        <span className="block text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{sub}</span>
+                      </span>
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setParentStatus('No-Show')}
-                      className={`btn-press p-3 rounded-xl text-xs font-bold border flex flex-col sm:flex-row items-center justify-center gap-2 transition-all ${
-                        parentStatus === 'No-Show'
-                          ? 'bg-amber-600 text-white border-amber-600 shadow-xs ring-2 ring-amber-600/20'
-                          : 'bg-[#F8FAFC] dark:bg-[#0F182C] border-[#CBD5E1] dark:border-[#253B66] text-[#0F172A] dark:text-white hover:border-amber-600'
-                      }`}
-                    >
-                      <RotateCcw className="w-4 h-4 shrink-0" />
-                      <span>{isTl ? 'Hindi Sumipot (No-Show)' : 'Did Not Show Up'}</span>
-                    </button>
-                  </div>
-
-                  <div className="p-2.5 rounded-lg bg-[#F8FAFC] dark:bg-[#0F182C] border border-[#E2E8F0] dark:border-[#1E2E4E]">
-                    {parentStatus === 'No-Show' ? (
-                      <p className="text-xs text-amber-800 dark:text-amber-300 font-semibold leading-relaxed flex items-center gap-2">
-                        <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-600" />
-                        <span>{isTl
-                          ? 'Babalik sa Step 4 para magtakda ng susunod na patawag (Re-summons). Naka-lock ang desisyon.'
-                          : 'Will cycle back to Step 4 to issue the next summons. Sanction decision remains locked.'}</span>
-                      </p>
-                    ) : (
-                      <p className="text-xs text-emerald-800 dark:text-emerald-300 font-semibold leading-relaxed flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
-                        <span>{isTl
-                          ? 'Nakaharap ang magulang. Ma-unlock ang Step 6 (Desisyon) pagka-save.'
-                          : 'Parent attended the hearing. Step 6 (Decision) will unlock upon saving.'}</span>
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Hearing Method */}
-                <div className="p-3.5 bg-[#F8FAFC]/50 dark:bg-[#0F182C]/50 space-y-2">
-                  <span className="text-xs font-bold text-[#0F172A] dark:text-white block">
-                    {isTl ? 'Paraan ng komunikasyon / pagdinig:' : 'Hearing / communication method:'}
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {HOW.map(([en, tl]) => (
-                      <button 
-                        key={en} 
-                        type="button" 
-                        data-how={en} 
-                        aria-pressed={how === en} 
-                        onClick={() => setHow(en)} 
-                        className={`btn-press px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                          how === en 
-                            ? 'bg-[#1E469B] text-white border-[#1E469B] shadow-xs' 
-                            : 'border-[#CBD5E1] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-[#475569] dark:text-[#94A3B8] hover:border-[#1E469B]'
-                        }`}
-                      >
-                        {isTl ? tl : en}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Action Bar */}
-                <div className="p-3 bg-white dark:bg-[#0B1527] flex items-center justify-between flex-wrap gap-2">
-                  <span className="text-xs text-[#64748B] dark:text-[#94A3B8]">
-                    {isTl
-                      ? 'I-save ang tala upang umusad ang kaso.'
-                      : 'Save attendance record to proceed.'}
-                  </span>
-                  <button
-                    type="button"
-                    data-flow="conference-outcome"
-                    disabled={busy || !how}
-                    onClick={() => onAction({ kind: 'conference_outcome', how, conferenceStatus: parentStatus })}
-                    className={`btn-press px-4 py-2 rounded-lg text-xs font-bold text-white shadow-xs transition-all flex items-center gap-1.5 ${
-                      parentStatus === 'No-Show'
-                        ? 'bg-amber-600 hover:bg-amber-700'
-                        : 'bg-emerald-600 hover:bg-emerald-700'
-                    }`}
-                  >
-                    {parentStatus === 'No-Show' ? (
-                      <>
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        <span>{isTl ? 'I-save: No-Show & Bumalik sa Summons' : 'Save: No-Show & Re-Summons'}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Check className="w-3.5 h-3.5" />
-                        <span>{isTl ? 'I-save: Dumalo ang Magulang' : 'Save: Parent Attended'}</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {next === 'Decision' && (
-            <div className="space-y-3" data-decision-box>
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <p className="text-xs font-bold text-[#0F172A] dark:text-white">
-                  {isTl ? 'Hatol at desisyon' : 'Case decision & ruling'}
-                </p>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-400/30">
-                  {isTl ? 'Pormal na hatol' : 'Official ruling'}
-                </span>
+                  );
+                })}
               </div>
 
-              {/* 1-Click Quick Decision Chips */}
-              <div className="space-y-1.5">
-                <span className="text-xs font-semibold text-[#475569] dark:text-[#94A8D0] block">
-                  {isTl ? 'Mabilisang pagpili:' : 'Quick resolution presets:'}
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                  {[
-                    {
-                      labelEn: 'Confirmed violation',
-                      labelTl: 'Napatunayang lumabag',
-                      descEn: isMinor
-                        ? `Confirmed minor infraction of ${c.offenseTitleEn}. Issued official verbal reminder and guidance counseling.`
-                        : `Found responsible for ${c.offenseTitleEn} after conference with student and parent.`,
-                      descTl: isMinor
-                        ? `Napatunayang may paglabag sa ${c.offenseTitleTl}. Nabigyan ng paalala at guidance counseling.`
-                        : `Napatunayang may pananagutan sa ${c.offenseTitleTl} matapos dinggin ang panig kasama ang magulang.`
-                    },
-                    {
-                      labelEn: 'Amicable settlement',
-                      labelTl: 'Nagkasundo',
-                      descEn: 'Parties reached mutual understanding and signed an amicable agreement with restitution.',
-                      descTl: 'Nagkasundo ang magkabilang panig at pumirma ng kasunduan ng pagbabati at paumanhin.'
-                    },
-                    {
-                      labelEn: 'First warning with undertaking',
-                      labelTl: 'Unang babala at kasunduan',
-                      descEn: 'First offense with remorse: issued official warning and signed behavioral pledge.',
-                      descTl: 'Unang paglabag na may pagsisisi: binigyan ng pormal na babala at lumagda sa behavioral pledge.'
-                    },
-                    {
-                      labelEn: 'Cleared / misunderstanding',
-                      labelTl: 'Naipaliwanag / walang pananagutan',
-                      descEn: 'Case clarified as misunderstanding; student acted in defense or cleared of wrongdoing.',
-                      descTl: 'Naipaliwanag na walang malisyosong intensyon o napagkamalan lamang; abswelto ang estudyante.'
-                    }
-                  ].map((preset, idx) => (
+              <div className="space-y-2">
+                <span className="block text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Paano nakausap' : 'How you met'}</span>
+                <div className="flex flex-wrap gap-2">
+                  {HOW.map(([en, tl]) => (
                     <button
-                      key={idx}
+                      key={en}
                       type="button"
-                      onClick={() => setDecision(isTl ? preset.descTl : preset.descEn)}
-                      className={`text-left p-2 rounded-lg border text-xs transition-[border-color,background-color] active:scale-[0.98] ${
-                        decision === (isTl ? preset.descTl : preset.descEn)
-                          ? 'border-[#1E469B] bg-sky-50 dark:bg-sky-950/40 text-[#1E469B] dark:text-[#7CB8F7] font-bold shadow-xs'
-                          : 'border-slate-200 dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-slate-700 dark:text-slate-300 hover:border-slate-400'
+                      data-how={en}
+                      aria-pressed={how === en}
+                      onClick={() => setHow(en)}
+                      className={`h-10 px-4 rounded-full text-[13px] transition-[background-color,transform] duration-150 active:scale-[0.97] ${
+                        how === en ? 'btn-lit font-semibold' : 'bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#1E469B]'
                       }`}
                     >
-                      <div className="font-semibold text-xs leading-snug">
-                        {isTl ? preset.labelTl : preset.labelEn}
-                      </div>
+                      {isTl ? tl : en}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <label className="block">
-                <span className="block text-xs font-semibold text-[#475569] dark:text-[#94A8D0] mb-1">
-                  {isTl ? 'Opisyal na hatol' : 'Official decision'}
-                </span>
-                <input
-                  data-flow-decision
-                  value={decision}
-                  onChange={(e) => setDecision(e.target.value.slice(0, 300))}
-                  placeholder={
-                    isTl
-                      ? isMinor
-                        ? `hal. Napatunayang lumabag sa ${c.offenseTitleTl}; binigyan ng pormal na pangaral at babala.`
-                        : `hal. Napatunayang lumabag sa ${c.offenseTitleTl} matapos ang pagdinig kasama ang magulang.`
-                      : isMinor
-                      ? `e.g. Confirmed minor infraction of ${c.offenseTitleEn}; issued official reminder.`
-                      : `e.g. Confirmed violation of ${c.offenseTitleEn} after conference with student and parent.`
-                  }
-                  className={input}
-                />
-              </label>
+              {/* conference record: who came + what was agreed (a hearing record, not counseling notes) */}
+              {parentStatus === 'Attended' && (
+                <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 p-4 space-y-3">
+                  <div className="space-y-2">
+                    <span className="block text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Sino ang dumalo?' : 'Who came?'}</span>
+                    <div className="seg-track flex-wrap">
+                      {(['Mother', 'Father', 'Guardian', 'Both parents'] as const).map((w) => (
+                        <button key={w} type="button" onClick={() => setAttendedBy(w)} className={`px-3.5 py-1.5 text-[13px] ${attendedBy === w ? 'seg-on' : 'seg-off'}`}>
+                          {isTl ? { Mother: 'Nanay', Father: 'Tatay', Guardian: 'Guardian', 'Both parents': 'Nanay at Tatay' }[w] : w}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <label htmlFor="conf-minutes" className="block space-y-1">
+                    <span className="block text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Napagkasunduan (opsyonal)' : 'What was agreed (optional)'}</span>
+                    <textarea
+                      id="conf-minutes"
+                      value={minutes}
+                      onChange={(e) => setMinutes(e.target.value.slice(0, 1000))}
+                      rows={2}
+                      className={`${input} rounded-xl text-[14px] leading-relaxed`}
+                      placeholder={isTl ? 'hal. Pumayag ang magulang sa sanction; babantayan ang pagpasok nang maaga.' : 'e.g. Parent agreed to the sanction; will make sure the student comes on time.'}
+                    />
+                  </label>
+                </div>
+              )}
 
-              <label className="block">
-                <span className="block text-xs font-semibold text-[#475569] dark:text-[#94A8D0] mb-1">
-                  {isTl ? 'Sanction (mula sa Handbook — puwedeng baguhin)' : 'Sanction (Handbook standard — editable)'}
-                </span>
-                <input
-                  data-flow-sanction
-                  value={sanction}
-                  onChange={(e) => setSanction(e.target.value.slice(0, 300))}
-                  className={input}
-                />
-              </label>
+              {onScheduleOthers && groupAtAttendance.length > 0 && (
+                <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
+                  <p className="px-4 py-2.5 text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">
+                    {isTl ? 'Ibang pamilya sa parehong insidente: itala rin dito (opsyonal)' : 'Other families from the same incident: record them here too (optional)'}
+                  </p>
+                  {groupAtAttendance.map((g) => {
+                    const v = groupAtt[g.caseCode] ?? null;
+                    return (
+                      <div key={g.caseCode} className="px-4 py-2.5 flex items-center justify-between gap-3">
+                        <span className="text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7]">{g.studentName}</span>
+                        <div className="seg-track p-0.5 inline-flex" role="radiogroup" aria-label={g.studentName}>
+                          {([
+                            [null, isTl ? 'Hindi pa' : 'Not yet'],
+                            ['Attended', isTl ? 'Dumating' : 'Came'],
+                            ['No-Show', isTl ? 'Hindi dumating' : 'Did not come'],
+                          ] as ['Attended' | 'No-Show' | null, string][]).map(([k, lbl]) => (
+                            <button
+                              key={String(k)}
+                              type="button"
+                              role="radio"
+                              aria-checked={v === k}
+                              onClick={() => setGroupAtt((m) => ({ ...m, [g.caseCode]: k }))}
+                              className={`px-3 py-1.5 text-[12px] ${v === k ? 'seg-on' : 'seg-off'}`}
+                            >
+                              {lbl}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
-              <div className="flex justify-end pt-1">
+              <div className="sticky bottom-0 z-10 -mx-1 glass-bar rounded-2xl px-3 py-3 flex flex-wrap items-center justify-between gap-2">
+                <span className="px-1 text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">
+                  {parentStatus === 'No-Show' ? (isTl ? 'Babalik sa Step 4 para sa bagong araw.' : 'Goes back to Step 4 for a new date.') : isTl ? 'Susunod ang Desisyon.' : 'The Decision is next.'}
+                </span>
+                <button
+                  type="button"
+                  data-flow="conference-outcome"
+                  disabled={busy || !how}
+                  onClick={() => {
+                    onAction({
+                      kind: 'conference_outcome',
+                      how,
+                      conferenceStatus: parentStatus,
+                      attendedBy: parentStatus === 'Attended' ? attendedBy : undefined,
+                      notes: parentStatus === 'Attended' ? minutes.trim() : undefined,
+                    });
+                    const others = groupAtAttendance.filter((g) => groupAtt[g.caseCode]);
+                    if (onScheduleOthers && others.length) {
+                      onScheduleOthers(
+                        others.map((g) => ({
+                          c: g,
+                          action: { kind: 'conference_outcome' as const, how: 'Conference attended (In-Person)', conferenceStatus: groupAtt[g.caseCode] as 'Attended' | 'No-Show' },
+                        }))
+                      );
+                    }
+                  }}
+                  className={`btn-lit ${parentStatus === 'Attended' ? 'btn-lit-green' : ''} h-11 px-6 text-[14px] font-semibold`}
+                >
+                  {parentStatus === 'No-Show' ? (isTl ? 'I-save: hindi dumating' : 'Save: did not come') : isTl ? 'I-save: dumating ang magulang' : 'Save: parent came'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {next === 'Decision' && (
+            <div className="space-y-4" data-decision-box>
+              <div className="space-y-2">
+                <span className="block text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Pumili ng desisyon' : 'Pick a decision'}</span>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    {
+                      labelEn: 'Confirmed violation',
+                      labelTl: 'Napatunayang lumabag',
+                      descEn: isMinor
+                        ? `Confirmed minor infraction of ${c.offenseTitleEn}. Gave an official verbal reminder.`
+                        : `Found responsible for ${c.offenseTitleEn} after hearing the student and the parent.`,
+                      descTl: isMinor
+                        ? `Napatunayang may paglabag sa ${c.offenseTitleTl}. Binigyan ng pormal na paalala.`
+                        : `Napatunayang may pananagutan sa ${c.offenseTitleTl} matapos dinggin ang estudyante at magulang.`,
+                    },
+                    {
+                      labelEn: 'Settled (agreement)',
+                      labelTl: 'Nagkasundo',
+                      descEn: 'Both sides reached an understanding and signed a written agreement (Kasunduan).',
+                      descTl: 'Nagkasundo ang magkabilang panig at pumirma ng Kasunduan.',
+                    },
+                    {
+                      labelEn: 'First warning',
+                      labelTl: 'Unang babala',
+                      descEn: 'First offense: gave an official warning; the student promised to follow school rules.',
+                      descTl: 'Unang paglabag: binigyan ng pormal na babala; nangakong susunod sa patakaran.',
+                    },
+                    {
+                      labelEn: 'Cleared',
+                      labelTl: 'Walang pananagutan',
+                      descEn: 'Found to be a misunderstanding; the student is cleared.',
+                      descTl: 'Napatunayang hindi pagkakaunawaan; walang pananagutan ang estudyante.',
+                    },
+                  ].map((preset, idx) => {
+                    const v = isTl ? preset.descTl : preset.descEn;
+                    const on = decision === v;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setDecision(v)}
+                        aria-pressed={on}
+                        className={`h-10 px-4 rounded-full text-[13px] transition-[background-color,transform] duration-150 active:scale-[0.97] ${
+                          on ? 'btn-lit font-semibold' : 'bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#1E469B]'
+                        }`}
+                      >
+                        {isTl ? preset.labelTl : preset.labelEn}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 p-4 space-y-3">
+                <label className="block space-y-1">
+                  <span className="block text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Desisyon' : 'Decision'}</span>
+                  <textarea
+                    data-flow-decision
+                    rows={2}
+                    value={decision}
+                    onChange={(e) => setDecision(e.target.value.slice(0, 300))}
+                    placeholder={isTl ? `hal. Napatunayang lumabag sa ${c.offenseTitleTl}.` : `e.g. Confirmed violation of ${c.offenseTitleEn}.`}
+                    className={`${input} rounded-xl text-[14px] leading-relaxed`}
+                  />
+                </label>
+                <label className="block space-y-1">
+                  <span className="flex items-baseline justify-between gap-2">
+                    <span className="text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">Sanction</span>
+                    <span className="text-[11px] text-[#8E8E93]">{isTl ? 'Galing sa Handbook, pwedeng baguhin' : 'From the Handbook, you can edit it'}</span>
+                  </span>
+                  <input data-flow-sanction value={sanction} onChange={(e) => setSanction(e.target.value.slice(0, 300))} className={`${input} h-11 rounded-xl text-[14px]`} />
+                </label>
+                {/* how long: one tap; the system counts school days only (weekends and closed days skipped) */}
+                <div className="space-y-1.5">
+                  <span className="flex items-baseline justify-between gap-2">
+                    <span className="text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Gaano katagal ang sanction? (opsyonal)' : 'How long is the sanction? (optional)'}</span>
+                    <span className="text-[11px] text-[#8E8E93]">{isTl ? 'May paalala isang araw bago matapos' : 'You get a reminder the day before it ends'}</span>
+                  </span>
+                  <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label={isTl ? 'Haba ng sanction' : 'Sanction length'}>
+                    {([
+                      [null, isTl ? 'Walang petsa' : 'No end date'],
+                      [1, isTl ? '1 araw' : '1 day'],
+                      [3, isTl ? '3 araw' : '3 days'],
+                      [5, isTl ? '1 linggo' : '1 week'],
+                      [10, isTl ? '2 linggo' : '2 weeks'],
+                      ['other', isTl ? 'Ibang petsa' : 'Pick a date'],
+                    ] as [number | 'other' | null, string][]).map(([k, lbl]) => {
+                      const on = endDays === k;
+                      return (
+                        <button
+                          key={String(k)}
+                          type="button"
+                          role="radio"
+                          aria-checked={on}
+                          onClick={() => {
+                            setEndDays(k);
+                            if (k === null) setEndDate('');
+                            else if (typeof k === 'number') setEndDate(sanctionEndFrom(k));
+                          }}
+                          className={`h-10 px-4 rounded-full text-[13px] transition-[background-color,transform] duration-150 active:scale-[0.97] ${
+                            on ? 'btn-lit font-semibold' : 'bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#1E469B]'
+                          }`}
+                        >
+                          {lbl}
+                        </button>
+                      );
+                    })}
+                    {endDays === 'other' && (
+                      <DateField compact className="w-[200px]" value={endDate} min={todayISO()} onChange={setEndDate} isTl={isTl} ariaLabel={isTl ? 'Huling araw' : 'Last day'} />
+                    )}
+                  </div>
+                  {endDate && (
+                    <p className="text-[12px] text-[#1E469B] dark:text-[#7CB8F7]">
+                      {isTl ? 'Huling araw ng sanction: ' : 'Last day of the sanction: '}
+                      <b>{new Intl.DateTimeFormat(isTl ? 'fil-PH' : 'en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(parseISO(endDate))}</b>
+                      {typeof endDays === 'number' && <span className="text-[#8E8E93]">{isTl ? ' · bilang lang ang may pasok' : ' · school days only'}</span>}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {(summonsLevel(c.severity) === 'urgent' || /suspen/i.test(sanction)) && (
+                <div className={`rounded-2xl border p-4 space-y-2.5 ${approved && approver.trim() ? 'border-emerald-300 dark:border-emerald-800' : 'border-amber-300 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/15'}`}>
+                  <p className="text-[13px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Kailangan ng pag-apruba ng Principal' : 'Needs the Principal’s approval'}</p>
+                  <p className="text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Mabigat na offense o suspension: aprubado muna ng Principal bago simulan.' : 'Major offense or suspension: the Principal approves it before it starts.'}</p>
+                  <input data-flow-approver value={approver} onChange={(e) => setApprover(e.target.value.slice(0, 80))} placeholder={isTl ? 'Pangalan ng Principal' : 'Principal’s name'} className={`${input} h-10 rounded-xl text-[14px]`} />
+                  <label className="flex items-center gap-2 text-[13px] text-[#1D1D1F] dark:text-[#F5F5F7] cursor-pointer">
+                    <input type="checkbox" data-flow-approved checked={approved} onChange={(e) => setApproved(e.target.checked)} className="w-4 h-4 accent-[#1E469B]" />
+                    {isTl ? 'Inaprubahan ng Principal ang desisyong ito' : 'The Principal approved this decision'}
+                  </label>
+                </div>
+              )}
+
+              {/* Same incident, other students: keep decisions fair */}
+              {groupCases.length > 0 && (
+                <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
+                  <p className="px-4 py-2.5 text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Ibang estudyante sa parehong insidente (para pantay)' : 'Other students in the same incident (to keep it fair)'}</p>
+                  {onSetWaitForAll && (
+                    <label className="px-4 py-3 flex items-start gap-3 cursor-pointer">
+                      <input type="checkbox" checked={!!c.waitForAll} disabled={busy} onChange={(e) => onSetWaitForAll(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#1E469B]" />
+                      <span>
+                        <span className="block text-[14px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Hintayin ang lahat bago magdesisyon' : 'Wait for everyone before deciding'}</span>
+                        <span className="block text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">
+                          {isTl ? 'Kapag naka-off, pwedeng mauna ang estudyanteng dumating ang magulang.' : 'When off, a student whose parent came can go first.'}
+                        </span>
+                      </span>
+                    </label>
+                  )}
+                  {groupCases.map((g) => (
+                    <div key={g.caseCode} className="px-4 py-2.5 flex items-center justify-between gap-3">
+                      <span className="min-w-0">
+                        <span className="block text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7]">{g.studentName}</span>
+                        <span className="block text-[12px] text-[#6E6E73] dark:text-[#A1A1A6] line-clamp-2" title={g.explanation || ''}>
+                          {g.explanationRefused ? (isTl ? 'Tumangging magpaliwanag' : 'Chose not to explain') : g.explanation ? `"${g.explanation}"` : isTl ? 'Wala pang paliwanag' : 'No explanation yet'}
+                        </span>
+                      </span>
+                      <span className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6] text-right shrink-0">{g.sanction || (isTl ? 'wala pang desisyon' : 'no decision yet')}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="sticky bottom-0 z-10 -mx-1 glass-bar rounded-2xl px-3 py-3 flex flex-wrap items-center justify-between gap-2">
+                <span className="px-1 text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">
+                  {decisionLocked ? (isTl ? `Naghihintay pa: ${groupWaiting.map((g) => g.studentName.split(' ')[0]).join(', ')}` : `Still waiting for: ${groupWaiting.map((g) => g.studentName.split(' ')[0]).join(', ')}`) : c.parentNotifiedAt ? (isTl ? 'Magsisimula agad ang sanction.' : 'The sanction starts right away.') : isTl ? 'Maghihintay ang sanction hanggang malaman ng magulang.' : 'The sanction waits until the parent is told.'}
+                </span>
                 <button
                   type="button"
                   data-flow="decision"
-                  disabled={busy || decision.trim().length < 3 || sanction.trim().length < 3}
-                  onClick={() => onAction({ kind: 'decision', decision: decision.trim(), sanction: sanction.trim() })}
-                  className={`${primary} active:scale-[0.97]`}
+                  disabled={busy || decisionLocked || decision.trim().length < 3 || sanction.trim().length < 3 || ((summonsLevel(c.severity) === 'urgent' || /suspen/i.test(sanction)) && !(approved && approver.trim()))}
+                  onClick={() => onAction({ kind: 'decision', decision: decision.trim(), sanction: sanction.trim(), sanctionEndDate: endDate || undefined, principalApprovedBy: (summonsLevel(c.severity) === 'urgent' || /suspen/i.test(sanction)) && approved ? approver.trim() : undefined })}
+                  className="btn-lit h-11 px-6 text-[14px] font-semibold"
                 >
-                  {isTl ? 'I-save ang desisyon' : 'Save decision & sanction'}
+                  {isTl ? 'I-save ang desisyon' : 'Save decision'}
                 </button>
               </div>
             </div>
           )}
 
           {next === 'Follow-Up' && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <div>
-                  <p className="text-xs font-bold text-[#0F172A] dark:text-white">
-                    {isTl ? 'Pagsubaybay sa sanction' : 'Sanction monitoring'}
-                  </p>
-                  <p className="text-xs text-[#64748B] dark:text-[#94A8D0]">
-                    {isTl ? `Sanction: ${c.sanction || 'Formative Intervention'}` : `Sanction: ${c.sanction || 'Formative Intervention'}`}
-                  </p>
+            <div className="space-y-4">
+              <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
+                <div className="px-4 py-3 flex items-center justify-between gap-3">
+                  <span className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">Sanction</span>
+                  <span className="text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] text-right">{c.sanction || '—'}</span>
                 </div>
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${c.sanctionStatus === 'Done' ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300'}`}>
-                  {c.sanctionStatus === 'Done' ? (isTl ? 'Natapos na' : 'Completed') : (isTl ? 'Ginagawa pa' : 'In progress')}
-                </span>
+                <div className="px-4 py-3 flex items-center justify-between gap-3">
+                  <span className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Matatapos' : 'Ends'}</span>
+                  <span className="text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7]">{c.sanctionEndDate ? fmt(c.sanctionEndDate, isTl) : '—'}</span>
+                </div>
+                <div className="px-4 py-3 flex items-center justify-between gap-3">
+                  <span className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Katayuan' : 'Status'}</span>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${c.sanctionStatus === 'Done' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200' : c.sanctionStatus === 'Pending parent notice' ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200' : 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200'}`}>
+                    {c.sanctionStatus === 'Done' ? (isTl ? 'Tapos na' : 'Done') : c.sanctionStatus === 'Pending parent notice' ? (isTl ? 'Naghihintay sa magulang' : 'Waiting for the parent') : isTl ? 'Ginagawa pa' : 'Being served'}
+                  </span>
+                </div>
               </div>
-
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#13203B] border border-slate-200 dark:border-white/10 space-y-2">
-                <span className="text-xs font-semibold text-[#475569] dark:text-[#94A8D0] block">
-                  {isTl ? 'Katayuan ng sanction:' : 'Sanction status:'}
-                </span>
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    data-flow="followup-start"
-                    disabled={busy || c.sanctionStatus === 'Pending parent notice'}
-                    onClick={() => onAction({ kind: 'followup', sanctionDone: false })}
-                    className="btn-press px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0B1527] text-xs font-semibold text-slate-800 dark:text-slate-200 hover:border-[#1E469B]"
-                  >
-                    {isTl ? 'Nagsimula / ginagawa pa' : 'Serving / in progress'}
-                  </button>
-                  <button
-                    type="button"
-                    data-flow="followup-done"
-                    disabled={busy || c.sanctionStatus === 'Pending parent notice'}
-                    onClick={() => onAction({ kind: 'followup', sanctionDone: true })}
-                    className="btn-press px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs"
-                  >
-                    <Check className="w-3.5 h-3.5" />
-                    {isTl ? 'Nakumpleto na ang sanction' : 'Sanction completed'}
-                  </button>
+              {/* The sanction waits until the parent knows the decision. This is where that gets recorded (no dead end). */}
+              {c.sanctionStatus === 'Pending parent notice' && (
+                <div className="rounded-2xl bg-amber-50 dark:bg-amber-950/25 border border-amber-200 dark:border-amber-900/50 p-4 space-y-3" data-parent-notice>
+                  <div>
+                    <p className="text-[15px] font-semibold text-amber-950 dark:text-amber-100">{isTl ? 'Ipaalam sa magulang ang desisyon' : 'Let the parent know the decision'}</p>
+                    <p className="text-[13px] text-amber-900 dark:text-amber-200">{isTl ? 'Magsisimula lang ang sanction kapag alam na ng magulang.' : 'The sanction starts only after the parent is told.'}</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <span className="block text-[12px] text-amber-900 dark:text-amber-200">{isTl ? 'Paano naipaalam?' : 'How was the parent told?'}</span>
+                    <div className="flex flex-wrap gap-2">
+                      {NOTICE_HOW.map(([en, tl]) => (
+                        <button
+                          key={en}
+                          type="button"
+                          aria-pressed={noticeHow === en}
+                          onClick={() => setNoticeHow(en)}
+                          className={`h-10 px-4 rounded-full text-[13px] transition-[background-color,transform] duration-150 active:scale-[0.97] ${
+                            noticeHow === en ? 'btn-lit font-semibold' : 'bg-white dark:bg-white/[0.08] text-[#1D1D1F] dark:text-[#F5F5F7] shadow-[0_0_0_0.5px_rgb(15_23_42/0.15)] hover:bg-amber-100/60 dark:hover:bg-white/[0.12]'
+                          }`}
+                        >
+                          {isTl ? tl : en}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    {onComposeParent && noticeHow === 'SMS / text' && (
+                      <button type="button" onClick={onComposeParent} className="h-10 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] bg-white dark:bg-white/[0.08] shadow-[0_0_0_0.5px_rgb(15_23_42/0.15)] hover:bg-white/80 active:scale-[0.97] transition-[background-color,transform] duration-150">
+                        {isTl ? 'Isulat ang SMS (walang detalye ng offense)' : 'Write the SMS (no offense details)'}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      data-flow="notified"
+                      disabled={busy || !noticeHow}
+                      onClick={() => onAction({ kind: 'notified', how: noticeHow, conferenceStatus: c.parentConferenceStatus === 'No-Show' ? 'No-Show' : 'Attended' })}
+                      className="btn-lit h-10 px-5 text-[13px] font-semibold"
+                    >
+                      {isTl ? 'Alam na ng magulang, simulan ang sanction' : 'Parent told, start the sanction'}
+                    </button>
+                  </div>
                 </div>
+              )}
+              <div className="sticky bottom-0 z-10 -mx-1 glass-bar rounded-2xl px-3 py-3 flex flex-wrap items-center justify-end gap-2">
+                <button
+                  type="button"
+                  data-flow="followup-start"
+                  disabled={busy || c.sanctionStatus === 'Pending parent notice'}
+                  onClick={() => onAction({ kind: 'followup', sanctionDone: false })}
+                  className="h-11 px-5 rounded-full text-[14px] font-medium text-[#1E469B] dark:text-[#7CB8F7] bg-white/80 dark:bg-white/[0.06] shadow-[0_0_0_0.5px_rgb(15_23_42/0.12)] hover:bg-white dark:hover:bg-white/[0.1] disabled:opacity-50 active:scale-[0.97] transition-[background-color,transform] duration-150"
+                >
+                  {isTl ? 'Ginagawa pa' : 'Still serving'}
+                </button>
+                <button
+                  type="button"
+                  data-flow="followup-done"
+                  disabled={busy || c.sanctionStatus === 'Pending parent notice'}
+                  onClick={() => onAction({ kind: 'followup', sanctionDone: true })}
+                  className="btn-lit btn-lit-green h-11 px-6 text-[14px] font-semibold inline-flex items-center gap-1.5"
+                >
+                  <Check className="w-4 h-4" aria-hidden />
+                  {isTl ? 'Tapos na ang sanction' : 'Sanction done'}
+                </button>
               </div>
             </div>
           )}
 
           {next === 'Closed' && (
-            <div className="space-y-3">
-              {/* Executive Due Process & Sanction Compliance Summary Card */}
-              <div className="rounded-xl border border-emerald-300 dark:border-emerald-800/80 bg-emerald-50/60 dark:bg-emerald-950/20 p-3.5 space-y-2.5">
-                <div className="flex items-center justify-between border-b border-emerald-200 dark:border-emerald-900/40 pb-2">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
-                      {isTl ? 'Buod ng pagsunod sa due process' : 'Due process & compliance summary'}
-                    </span>
+            <div className="space-y-4">
+              {/* summary from the REAL record (no invented text) */}
+              <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
+                {[
+                  [
+                    isTl ? 'Panig ng estudyante' : "Student's side",
+                    c.explanationRefused ? (isTl ? 'Ayaw magbigay ng pahayag' : 'Chose not to give a statement') : c.explanation ? (isTl ? 'Naisulat' : 'Written') : '—',
+                  ],
+                  ...(!isMinor
+                    ? [[
+                        isTl ? 'Magulang' : 'Parent',
+                        c.proceededWithoutParent
+                          ? isTl ? 'Hindi dumating; tumuloy nang wala' : 'Did not come; went on without'
+                          : c.parentConferenceStatus === 'Attended'
+                          ? isTl ? `Dumating${c.conferenceAttendedBy ? ` (${c.conferenceAttendedBy})` : ''}` : `Came${c.conferenceAttendedBy ? ` (${c.conferenceAttendedBy})` : ''}`
+                          : '—',
+                      ]]
+                    : []),
+                  [isTl ? 'Desisyon' : 'Decision', c.decision || '—'],
+                  ['Sanction', c.sanction ? `${c.sanction}${c.sanctionStatus === 'Done' ? (isTl ? ' · tapos na' : ' · done') : ''}` : '—'],
+                ].map(([k, v]) => (
+                  <div key={k} className="px-4 py-3 flex items-start justify-between gap-4">
+                    <span className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6] shrink-0">{k}</span>
+                    <span className="text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] text-right">{v}</span>
                   </div>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-600 text-white">
-                    {isTl ? 'Kumpleto ang mga hakbang' : 'Ready for closure'}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-                  <div className="p-2.5 rounded-lg bg-white/90 dark:bg-[#0B1527] border border-emerald-200/80 dark:border-emerald-950">
-                    <span className="text-xs font-semibold text-[#64748B] dark:text-[#94A8D0] block">
-                      {isTl ? '1. Salaysay ng estudyante' : '1. Student statement'}
-                    </span>
-                    <span className="font-bold text-[#0F172A] dark:text-white block mt-0.5">
-                      {c.explanation ? (isTl ? 'Nakasulat at naitala' : 'Filed & verified') : (isTl ? 'Naitala' : 'Acknowledged')}
-                    </span>
-                  </div>
-
-                  {!isMinor && (
-                    <div className="p-2.5 rounded-lg bg-white/90 dark:bg-[#0B1527] border border-emerald-200/80 dark:border-emerald-950">
-                      <span className="text-xs font-semibold text-[#64748B] dark:text-[#94A8D0] block">
-                        {isTl ? '2. Pagharap ng magulang' : '2. Parent hearing'}
-                      </span>
-                      <span className="font-bold text-[#0F172A] dark:text-white block mt-0.5">
-                        {c.parentConferenceStatus === 'Attended'
-                          ? (isTl ? `Dumalo (${c.summonsCount || 1} patawag)` : `Attended (${c.summonsCount || 1} summons)`)
-                          : (isTl ? 'Naabisuhan' : 'Hearing held')}
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="p-2.5 rounded-lg bg-white/90 dark:bg-[#0B1527] border border-emerald-200/80 dark:border-emerald-950">
-                    <span className="text-xs font-semibold text-[#64748B] dark:text-[#94A8D0] block">
-                      {isMinor ? (isTl ? '2. Sanction' : '2. Sanction') : (isTl ? '3. Sanction' : '3. Sanction')}
-                    </span>
-                    <span className="font-bold text-[#0F172A] dark:text-white block truncate mt-0.5">
-                      {c.sanction || (isTl ? 'Babala at counseling' : 'Warning & counseling')}
-                    </span>
-                  </div>
-                </div>
+                ))}
               </div>
-
-              <div>
-                <p className="text-xs font-bold text-[#0F172A] dark:text-white">
-                  {isTl ? 'Tala ng counseling bago isara ang kaso:' : 'Counseling notes before closure:'}
-                </p>
-                <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5">
-                  {isTl
-                    ? 'Itala ang naging pagbabago sa asal ng estudyante, kasunduan sa guidance, at patunay na natapos ang sanction.'
-                    : 'Record student behavioral progress, counseling agreements, and verified sanction completion.'}
-                </p>
-              </div>
-              <textarea
-                value={counselingNotes}
-                onChange={(e) => setCounselingNotes(e.target.value.slice(0, 1500))}
-                rows={2}
-                className={`${input} rounded-lg text-xs leading-relaxed`}
-                placeholder={isTl ? 'hal. Nakausap si Mark; nagpakita ng pagsisisi, nangakong hindi na magdadala ng vape, at maayos na nag-community service nang 3 araw sa library.' : 'e.g. Student showed remorse, signed behavioral pledge, and completed 3 days campus service.'}
-              />
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#F1F5F9] dark:border-[#1E2E4E]">
-                <div className="flex items-center gap-2">
-                  {onOpenPrint && (
-                    <button
-                      type="button"
-                      onClick={() => onOpenPrint('caseResolutionSummary')}
-                      className="btn-press px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0B1527] text-xs font-semibold text-[#0F172A] dark:text-white hover:border-[#1E469B] flex items-center gap-1.5"
-                    >
-                      <Printer className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
-                      <span>{isTl ? 'I-print ang buod ng kaso' : 'Print resolution summary'}</span>
-                    </button>
-                  )}
-                  <span className="text-xs font-medium text-[#64748B] dark:text-[#94A3B8]">
-                    {counselingNotes.trim().length < 5
-                      ? (isTl ? 'Maglagay ng maikling tala ng counseling bago isara.' : 'Enter brief counseling notes before closing.')
-                      : (isTl ? 'Handa nang isara nang opisyal' : 'Ready for formal case resolution')}
-                  </span>
-                </div>
+              <label className="block space-y-1">
+                <span className="block text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Tala sa pagsara (opsyonal)' : 'Closing note (optional)'}</span>
+                <textarea
+                  value={counselingNotes}
+                  onChange={(e) => setCounselingNotes(e.target.value.slice(0, 1500))}
+                  rows={2}
+                  className={`${input} rounded-xl text-[14px] leading-relaxed`}
+                  placeholder={isTl ? 'hal. Natapos ang sanction noong Nob 20; kinumpirma ng adviser.' : 'e.g. Sanction finished on Nov 20; confirmed by the adviser.'}
+                />
+              </label>
+              <div className="sticky bottom-0 z-10 -mx-1 glass-bar rounded-2xl px-3 py-3 flex flex-wrap items-center justify-between gap-2">
+                <button
+                  type="button"
+                  title={isTl ? 'Buod, conference form at kasunduan, sabay-sabay i-print para sa folder' : 'Summary, conference form and kasunduan in one print, for the folder'}
+                  onClick={() => {
+                    const kinds: FormKind[] = ['caseResolutionSummary'];
+                    if (c.parentConferenceStatus === 'Attended') kinds.push('conference');
+                    if (c.decision) kinds.push('kasunduan');
+                    printHtml(buildFolderHtml(kinds, { c, stu: student }, window.location.origin));
+                  }}
+                  className="h-11 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1.5 active:scale-[0.97] transition-transform duration-150"
+                >
+                  <FolderOpen className="w-4 h-4" aria-hidden />
+                  {isTl ? 'I-print ang folder' : 'Print the folder'}
+                </button>
+                {onOpenPrint ? (
+                  <button type="button" onClick={() => onOpenPrint('caseResolutionSummary')} className="h-11 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1.5 active:scale-[0.97] transition-transform duration-150">
+                    <Printer className="w-4 h-4" aria-hidden />
+                    {isTl ? 'I-print ang buod' : 'Print summary'}
+                  </button>
+                ) : (
+                  <span />
+                )}
                 <button
                   type="button"
                   data-flow="close"
                   disabled={busy}
                   onClick={() => onAction({ kind: 'close', counselingNotes: counselingNotes.trim() })}
-                  className={`${btn} bg-emerald-600 text-white shadow-xs hover:bg-emerald-700 active:scale-[0.97] flex items-center gap-1.5`}
+                  className="btn-lit btn-lit-green h-11 px-6 text-[14px] font-semibold inline-flex items-center gap-1.5"
                 >
-                  <Check className="w-3.5 h-3.5" />
-                  <span>{isTl ? 'Isara ang kaso (Resolved)' : 'Close case (Resolved)'}</span>
+                  <Check className="w-4 h-4" aria-hidden />
+                  {isTl ? 'Isara ang kaso' : 'Close the case'}
                 </button>
               </div>
             </div>
@@ -1370,76 +1723,46 @@ export const CaseFlowPanel: React.FC<{
         </div>
       )}
 
-      {/* Structured Student's Official Explanation Card (Clean & Formatted) */}
-      {c.explanation && done.Explanation && (
-        <div className="rounded-xl border border-[#CBD5E1] dark:border-[#1E2E4E] bg-white dark:bg-[#0C1527] overflow-hidden shadow-xs mt-3">
-          <div className="px-4 py-2 bg-[#F8FAFC] dark:bg-[#0E1A33] border-b border-[#E2E8F0] dark:border-[#1E2E4E] flex items-center justify-between">
-            <span className="text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7]">
-              {isTl ? 'Opisyal na paliwanag ng estudyante' : 'Student official explanation'}
-            </span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-              {isTl ? 'Naitala' : 'Verified'}
-            </span>
-          </div>
-
-          <div className="p-3.5 space-y-2 text-xs">
-            <div className="space-y-0.5">
-              <span className="block text-xs font-semibold text-[#64748B] dark:text-[#94A8D0]">
-                {isTl ? 'Pangalan ng estudyante' : 'Student name'}
+      {/* appeal / request for reconsideration: after a decision, before the case is closed */}
+      {c.decidedAt && c.status !== 'Resolved' && (
+        <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10">
+          {c.appealRequestedAt ? (
+            <div className="px-4 py-3 text-[13px] text-[#1D1D1F] dark:text-[#F5F5F7]">
+              <b>{isTl ? 'May apela' : 'Appeal recorded'}</b> · {c.appealBy} · {fmt(c.appealRequestedAt, isTl)}
+              <span className="block text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">
+                {isTl ? 'Dahilan' : 'Reason'}: {c.appealReason} · {isTl ? 'Resulta' : 'Result'}: <b>{c.appealResult}</b>{c.appealNote ? ` · ${c.appealNote}` : ''}
               </span>
-              <p className="text-xs font-bold text-[#0F172A] dark:text-white">
-                {c.studentName} {c.studentNumber ? `· ID #${c.studentNumber}` : ''} ({c.gradeSection})
-              </p>
             </div>
-
-            <div className="space-y-0.5 pt-1.5 border-t border-[#F1F5F9] dark:border-[#1E2E4E]">
-              <span className="block text-xs font-semibold text-[#64748B] dark:text-[#94A8D0]">
-                {isTl ? 'Salaysay / paliwanag' : 'Statement'}
-              </span>
-              <div className="p-3 rounded-lg bg-[#F8FAFC] dark:bg-[#0A1224] border border-[#E2E8F0] dark:border-[#1E2E4E] text-xs leading-relaxed text-[#0F172A] dark:text-slate-100 whitespace-pre-line font-medium">
-                {c.explanation}
+          ) : !appealOpen ? (
+            <button type="button" onClick={() => setAppealOpen(true)} className="w-full px-4 py-3 text-left text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.03] dark:hover:bg-white/[0.04] rounded-2xl">
+              {isTl ? 'Humiling ng muling pagsusuri (apela) ang magulang o estudyante?' : 'Did the parent or student ask for a review (appeal)?'}
+            </button>
+          ) : (
+            <div className="p-4 space-y-3">
+              <p className="text-[14px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Itala ang apela' : 'Record the appeal'}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {[['Parent / guardian', 'Magulang'], ['Student', 'Estudyante']].map(([en, tl]) => (
+                  <button key={en} type="button" onClick={() => setAppealBy(en)} className={`h-8 px-3 rounded-full text-[12px] ${appealBy === en ? 'btn-lit font-semibold' : 'border border-[#DDE3EC] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7]'}`}>{isTl ? tl : en}</button>
+                ))}
+              </div>
+              <textarea value={appealReason} onChange={(e) => setAppealReason(e.target.value.slice(0, 1000))} rows={2} placeholder={isTl ? 'Ano ang dahilan ng apela?' : 'Why are they appealing?'} className={`${input} rounded-xl text-[14px]`} />
+              <div className="flex flex-wrap gap-1.5">
+                {[['Kept the decision', 'Pinanatili ang desisyon'], ['Changed the sanction', 'Binago ang parusa'], ['Withdrawn', 'Binawi ang parusa']].map(([en, tl]) => (
+                  <button key={en} type="button" onClick={() => setAppealResult(en)} className={`h-8 px-3 rounded-full text-[12px] ${appealResult === en ? 'btn-lit font-semibold' : 'border border-[#DDE3EC] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7]'}`}>{isTl ? tl : en}</button>
+                ))}
+              </div>
+              <input value={appealNote} onChange={(e) => setAppealNote(e.target.value.slice(0, 300))} placeholder={isTl ? 'Tala (opsyonal), hal. bagong parusa' : 'Note (optional), e.g. the new sanction'} className={`${input} h-10 rounded-xl text-[14px]`} />
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => setAppealOpen(false)} className="h-9 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04]">{isTl ? 'Huwag na' : 'Cancel'}</button>
+                <button type="button" disabled={busy || appealReason.trim().length < 5} onClick={() => onAction({ kind: 'appeal', by: appealBy, reason: appealReason.trim(), result: appealResult, note: appealNote.trim() || undefined })} className="btn-lit h-9 px-5 text-[13px] font-semibold disabled:opacity-40">
+                  {isTl ? 'I-save ang apela' : 'Save appeal'}
+                </button>
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
-      {/* Summons & Reschedule History Tracker (For Case Documentation & Closure PDF) */}
-      {(c.summonsCount || 0) > 0 || c.parentConferenceStatus === 'No-Show' ? (
-        <div className="rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/40 dark:bg-amber-950/20 overflow-hidden shadow-xs mt-3">
-          <div className="px-4 py-2 bg-amber-100/60 dark:bg-amber-900/40 border-b border-amber-200 dark:border-amber-900/60 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <RotateCcw className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-              <span className="text-xs font-bold text-amber-950 dark:text-amber-200">
-                {isTl ? 'Kasaysayan ng mga Patawag sa Magulang (Summons Record)' : 'Parent Summons & Attendance History'}
-              </span>
-            </div>
-            <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-amber-200/80 dark:bg-amber-800/60 text-amber-950 dark:text-amber-100">
-              {c.summonsCount || 1} {isTl ? 'Patawag' : 'Summons'} {c.parentConferenceStatus === 'No-Show' ? `(${c.summonsCount || 1} No-Show)` : ''}
-            </span>
-          </div>
-
-          <div className="p-3 text-xs space-y-2">
-            <p className="text-[#64748B] dark:text-amber-300 font-medium leading-relaxed">
-              {isTl
-                ? `Ang kasong ito ay may naitalang ${c.summonsCount || 1} patawag sa magulang. Naitatala ang bawat hindi pagsipot (No-Show) alinsunod sa DepEd Order No. 40 para sa pormal na buod ng saradong kaso.`
-                : `This case has recorded ${c.summonsCount || 1} parent summons. Each no-show event is preserved under DepEd Order No. 40 due process guidelines for the final closed case report.`}
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-amber-200/60 dark:border-amber-900/40">
-              <div className="p-2 rounded-lg bg-white/80 dark:bg-[#0B1527] border border-amber-200 dark:border-amber-900/50">
-                <span className="text-[#64748B] dark:text-[#94A8D0] block text-[11px] font-semibold">{isTl ? 'Huling Patawag (Summons)' : 'Latest Summons'}</span>
-                <span className="font-bold text-[#0F172A] dark:text-white">Summons #{c.summonsCount || 1} · {c.conferenceTargetDate || 'Scheduled'}</span>
-              </div>
-              <div className="p-2 rounded-lg bg-white/80 dark:bg-[#0B1527] border border-amber-200 dark:border-amber-900/50">
-                <span className="text-[#64748B] dark:text-[#94A8D0] block text-[11px] font-semibold">{isTl ? 'Katayuan ng Magulang' : 'Parent Status'}</span>
-                <span className={`font-bold ${c.parentConferenceStatus === 'No-Show' ? 'text-rose-600 dark:text-rose-400' : c.parentConferenceStatus === 'Attended' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600'}`}>
-                  {c.parentConferenceStatus || 'Pending Hearing'}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 };

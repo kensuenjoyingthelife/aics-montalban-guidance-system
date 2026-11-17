@@ -135,3 +135,60 @@ export function freeSlotsOn(appointments: ParentAppointmentItem[], date: string,
 /** Sort conferences by day then time */
 export const byDateTime = (a: ParentAppointmentItem, b: ParentAppointmentItem) =>
   a.date.localeCompare(b.date) || slotStart(a.timeSlot) - slotStart(b.timeSlot);
+
+const DAY_TL: Record<string, string> = { Sun: 'Linggo', Mon: 'Lunes', Tue: 'Martes', Wed: 'Miyerkules', Thu: 'Huwebes', Fri: 'Biyernes', Sat: 'Sabado' };
+/** "Mon-Thu 8AM-5PM" / "Lunes-Huwebes 8AM-5PM" from the office hours in Settings (never hard-coded) */
+export function officeHoursText(tl: boolean): string {
+  const first = OFFICE_DAYS[0] ?? 'Mon';
+  const last = OFFICE_DAYS[OFFICE_DAYS.length - 1] ?? 'Thu';
+  const d = (k: string) => (tl ? DAY_TL[k] ?? k : k);
+  const h = (min: number) => {
+    const hr = Math.floor(min / 60);
+    const m = min % 60;
+    const h12 = ((hr + 11) % 12) + 1;
+    return `${h12}${m ? ':' + String(m).padStart(2, '0') : ''}${hr < 12 ? 'AM' : 'PM'}`;
+  };
+  const start = SLOT_STARTS[0] ?? 480;
+  const end = (SLOT_STARTS[SLOT_STARTS.length - 1] ?? 960) + SLOT_MINUTES;
+  return `${d(first)}-${d(last)} ${h(start)}-${h(end)}`;
+}
+
+/** Every slot of one day with why it can't be picked (for the time picker: taken slots stay visible, greyed) */
+export function daySlots(
+  appointments: ParentAppointmentItem[],
+  date: string,
+  ignoreId?: string
+): { start: number; state: 'free' | 'taken' | 'past'; who?: string }[] {
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  return SLOT_STARTS.map((start) => {
+    if (date === todayISO() && start <= nowMin + 30) return { start, state: 'past' as const };
+    const a = appointments.find((x) => x.id !== ignoreId && x.date === date && holdsSlot(x) && slotStart(x.timeSlot) === start);
+    return a ? { start, state: 'taken' as const, who: a.studentName } : { start, state: 'free' as const };
+  });
+}
+
+/** The next office day after `fromISO` (Friday → Monday) */
+export function nextOfficeDay(fromISO: string = todayISO()): string {
+  let d = addDays(fromISO, 1);
+  let guard = 0;
+  while (!isOfficeDay(d) && guard++ < 30) d = addDays(d, 1);
+  return d;
+}
+
+/** a sanction that ends by the next office day: remind the office (Friday already shows Monday's) */
+export const sanctionEndingSoon = (c: { status: string; sanctionStatus?: string | null; sanctionEndDate?: string | null }): boolean =>
+  c.status !== 'Resolved' && c.sanctionStatus === 'Active' && !!c.sanctionEndDate && c.sanctionEndDate <= nextOfficeDay();
+
+/** Last day of a sanction that runs `days` school days, starting the next office day (weekends/closed days skipped) */
+export function sanctionEndFrom(days: number, fromISO: string = todayISO()): string {
+  let d = addDays(fromISO, 1);
+  let guard = 0;
+  while (!isOfficeDay(d) && guard++ < 30) d = addDays(d, 1);
+  let left = Math.max(1, days) - 1;
+  while (left > 0 && guard++ < 120) {
+    d = addDays(d, 1);
+    if (isOfficeDay(d)) left--;
+  }
+  return d;
+}

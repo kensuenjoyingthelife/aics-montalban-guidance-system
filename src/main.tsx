@@ -1,6 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { installStaffAuthFetch } from './services/staffAuth';
+
+// every database request from the staff app carries the signed-in staff token (Supabase Auth)
+installStaffAuthFetch();
 // fonts are bundled with the app (works offline and inside Tauri)
 import '@fontsource/inter/400.css';
 import '@fontsource/inter/500.css';
@@ -17,6 +21,17 @@ import { applyTextSize } from './services/textSize';
 
 // apply the saved text size before the first paint (no jump)
 applyTextSize();
+
+// AGENTS.md §3.2: weak school laptops / phones get instant (no-animation) UI
+try {
+  const nav = navigator as Navigator & { deviceMemory?: number };
+  const weak = (nav.hardwareConcurrency ?? 8) <= 2 || (nav.deviceMemory ?? 8) <= 2;
+  if (weak || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.documentElement.classList.add('lite');
+  }
+} catch {
+  /* old WebView: keep defaults */
+}
 
 // Register Service Worker for PWA Offline & Background Notifications
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {

@@ -274,19 +274,19 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
   return (
     <main className="p-5 lg:p-6 max-w-[1440px] w-full mx-auto space-y-5 flex-1">
       {/* CLEAN EXECUTIVE REPORTS HUB HEADER (NO ALL-CAPS EYEBROW) */}
-      <div className="cdm-panel px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="px-1 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-lg font-bold text-[#0F172A] dark:text-white">
+          <h1 className="sr-only">
             {isTl ? 'Mga Ulat at Estadistika ng Guidance Office' : 'Guidance Incident Reports & Statistical Analytics'}
           </h1>
-          <p className="text-xs text-[#475569] dark:text-[#94A8D0] mt-0.5">
+          <p className="text-[15px] text-[#6E6E73] dark:text-[#A1A1A6]">
             {isTl
-              ? 'Buwanang tala ng mga kaso, rate ng pagdalo ng magulang, at mga ulat para sa pamunuan ng paaralan.'
-              : 'Official incident summaries, monthly offense breakdowns, and parent conference analytics.'}
+              ? 'Tingnan kung paano ang mga kaso, at mag-print ng report.'
+              : 'See how cases are going, and print reports.'}
           </p>
         </div>
 
-        <div className="inline-flex flex-wrap p-1 rounded-xl saas-card-subtle gap-1" role="tablist">
+        <div className="seg-track flex-wrap" role="tablist">
           {tabs.map(([id, label, tip]) => (
             <button
               key={id}
@@ -300,7 +300,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                 setTab(id);
               }}
               className={`px-4 py-2 rounded-lg text-xs sm:text-[13px] font-semibold whitespace-nowrap transition-colors ${
-                tab === id ? 'bg-[#1E469B] text-white shadow-xs' : 'text-[#475569] dark:text-[#94A8D0] hover:text-[#0F172A] dark:hover:text-white'
+                tab === id ? 'seg-on' : 'seg-off'
               }`}
             >
               {label}
@@ -314,9 +314,9 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
         <>
           <div className={`${card} p-4 flex flex-wrap items-center justify-between gap-3`}>
             <div className="flex flex-wrap items-center gap-2">
-              <div className="inline-flex p-1 rounded-xl saas-card-subtle gap-1">
+              <div className="seg-track">
                 {(['month', 'week'] as const).map((u) => (
-                  <button key={u} type="button" data-unit={u} onClick={() => setUnit(u)} className={`${btn} ${unit === u ? 'bg-[#1E469B] text-white' : 'text-[#4A608A] dark:text-[#94A8D0]'}`}>
+                  <button key={u} type="button" data-unit={u} onClick={() => setUnit(u)} className={`${btn} ${unit === u ? 'seg-on' : 'seg-off'}`}>
                     {u === 'month' ? (isTl ? 'Bawat buwan (6 buwan)' : 'By month (6 months)') : isTl ? 'Bawat linggo (8 linggo)' : 'By week (8 weeks)'}
                   </button>
                 ))}
@@ -334,7 +334,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
               [
                 ['new', isTl ? 'Bagong kaso' : 'New cases', cur.newCases, prev?.newCases ?? null, 'bad-up', ''],
                 ['solved', isTl ? 'Naayos na kaso' : 'Cases solved', cur.solved, prev?.solved ?? null, 'good-up', ''],
-                ['att', isTl ? 'Dumalo ang magulang' : 'Parent attendance', cur.attendanceRate, prev?.attendanceRate ?? null, 'good-up', '%'],
+                ['att', unit === 'week' ? (isTl ? 'Pagdalo ngayong linggo' : 'Attendance this week') : (isTl ? 'Pagdalo ngayong buwan' : 'Attendance this month'), cur.attendanceRate, prev?.attendanceRate ?? null, 'good-up', '%'],
                 ['days', isTl ? 'Araw bago maisara' : 'Days to close', cur.avgDaysToClose, prev?.avgDaysToClose ?? null, 'good-down', ''],
               ] as [string, string, number | null, number | null, 'bad-up' | 'good-up' | 'good-down', string][]
             ).map(([id, title, v, pv, kindOf, suf]) => {
@@ -428,7 +428,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
         <>
           <div className={`${card} p-4 flex flex-wrap items-center justify-between gap-3`}>
             <div className="flex flex-wrap items-center gap-2">
-              <div className="inline-flex p-1 rounded-xl saas-card-subtle gap-1">
+              <div className="seg-track">
                 {(['week', 'month', 'sy'] as PeriodKind[]).map((k) => (
                   <button
                     key={k}
@@ -438,7 +438,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                       setKind(k);
                       setRef(new Date());
                     }}
-                    className={`${btn} ${kind === k ? 'bg-[#1E469B] text-white' : 'text-[#4A608A] dark:text-[#94A8D0]'}`}
+                    className={`${btn} ${kind === k ? 'seg-on' : 'seg-off'}`}
                   >
                     {k === 'week' ? (isTl ? 'Linggo' : 'Week') : k === 'month' ? (isTl ? 'Buwan' : 'Month') : 'School year'}
                   </button>
@@ -456,9 +456,9 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
             </div>
             <div className="flex items-center gap-2">
               <span className={sub}>{isTl ? 'Ayon sa' : 'By'}</span>
-              <div className="inline-flex p-1 rounded-xl saas-card-subtle gap-1">
+              <div className="seg-track">
                 {(['type', 'level', 'grade'] as GroupKind[]).map((g) => (
-                  <button key={g} type="button" data-group={g} onClick={() => setGroup(g)} className={`${btn} ${group === g ? 'bg-[#1E469B] text-white' : 'text-[#4A608A] dark:text-[#94A8D0]'}`}>
+                  <button key={g} type="button" data-group={g} onClick={() => setGroup(g)} className={`${btn} ${group === g ? 'seg-on' : 'seg-off'}`}>
                     {g === 'type' ? (isTl ? 'Uri' : 'Type') : g === 'level' ? (isTl ? 'Antas' : 'Level') : 'Grade'}
                   </button>
                 ))}
@@ -619,19 +619,28 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                   const qNum = Math.floor(curMonth / 3) + 1;
                   const quarterNames = ['Q1 (Jan - Mar)', 'Q2 (Apr - Jun)', 'Q3 (Jul - Sep)', 'Q4 (Oct - Dec)'];
                   const qLabel = `${quarterNames[qNum - 1]} ${curYear}`;
-                  const sYear = `S.Y. ${curYear} - ${curYear + 1}`;
+                  // PH school year starts in June: Jan–May belongs to the year that started last June
+                  const syStart = curMonth >= 5 ? curYear : curYear - 1;
+                  const sYear = `S.Y. ${syStart} - ${syStart + 1}`;
+                  // only this quarter, and never the cases withdrawn as filed in error
+                  const qStart = new Date(curYear, (qNum - 1) * 3, 1);
+                  const qEnd = new Date(curYear, qNum * 3, 1);
+                  const qCases = cases.filter((c) => {
+                    const d = new Date(`${c.incidentDate}T00:00:00`);
+                    return d >= qStart && d < qEnd && !/^withdrawn/i.test(c.decision ?? '');
+                  });
 
                   const ok = await confirm({
-                    title: isTl ? 'I-generate ang DepEd DO 40 Compliance PDF?' : 'Generate DepEd DO 40 Compliance PDF?',
+                    title: isTl ? 'I-generate ang Quarterly Report (PDF)?' : 'Generate the Quarterly Report (PDF)?',
                     description: isTl
-                      ? `I-eexport ang opisyal na quarterly child protection report para sa DepEd audit.`
-                      : `Export official quarterly child protection compliance document for DepEd audit.`,
+                      ? `Buod ng mga kaso ngayong quarter, mula sa tunay na records.`
+                      : `A summary of this quarter's cases, from the real records.`,
                     rows: [
                       { label: isTl ? 'Quarter' : 'Quarter', after: qLabel },
                       { label: isTl ? 'School Year' : 'School Year', after: sYear },
-                      { label: isTl ? 'Kabuuang Kaso' : 'Total Cases Evaluated', after: String(cases.length) },
+                      { label: isTl ? 'Mga kaso ngayong quarter' : 'Cases this quarter', after: String(qCases.length) },
                     ],
-                    confirmLabel: isTl ? 'I-export ang DepEd Report' : 'Export DepEd Report',
+                    confirmLabel: isTl ? 'I-export ang report' : 'Export report',
                     tone: 'success',
                   });
                   if (!ok) return;
@@ -639,7 +648,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                   soundFX.playStepUnlock();
 
                   // Filter child protection relevant cases
-                  const cpCases = cases.map((c) => ({
+                  const cpCases = qCases.map((c) => ({
                     code: c.caseCode,
                     date: c.incidentDate,
                     studentName: c.studentName,
@@ -649,33 +658,34 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                     status: c.status,
                   }));
 
-                  const bullying = cases.filter((c) => /bullying|harass|away|fight/i.test(c.offenseTitleEn)).length;
-                  const substance = cases.filter((c) => /vape|smoking|sigarilyo|alcohol|substance/i.test(c.offenseTitleEn)).length;
-                  const discrimination = cases.filter((c) => /discrimination|gender|slur/i.test(c.offenseTitleEn)).length;
-                  const resolved = cases.filter((c) => c.status === 'Resolved' || !!c.closedAt).length;
+                  const bullying = qCases.filter((c) => /bullying|harass|away|fight/i.test(c.offenseTitleEn)).length;
+                  const substance = qCases.filter((c) => /vape|smoking|sigarilyo|alcohol|substance/i.test(c.offenseTitleEn)).length;
+                  const discrimination = qCases.filter((c) => /discrimination|gender|slur/i.test(c.offenseTitleEn)).length;
+                  const resolved = qCases.filter((c) => c.status === 'Resolved' || !!c.closedAt).length;
 
                   printDepEdCompliancePdf({
                     quarter: qLabel,
                     schoolYear: sYear,
                     cases: cpCases,
                     childProtectionMetrics: {
-                      totalIncidents: cases.length,
+                      totalIncidents: qCases.length,
                       bullyingCases: bullying,
                       substanceCases: substance,
                       discriminationCases: discrimination,
-                      interventionsProvided: resolved || cases.length,
-                      whistleblowerReportsReceived: cases.filter((c) => c.reportedBy?.toLowerCase().includes('anonymous') || c.reportedBy?.toLowerCase().includes('whistleblower')).length || 2,
+                      // real numbers only: 0 stays 0
+                      interventionsProvided: resolved,
+                      whistleblowerReportsReceived: qCases.filter((c) => /student report|confidential/i.test(c.reportedBy ?? '')).length,
                     },
-                    guidanceStaffName: config.signatories?.guidanceAssociate || 'Maurice Enriquez',
+                    guidanceStaffName: config.signatories?.guidanceAssociate || '________________________',
                     counselorName: config.signatories?.guidanceCounselor || 'Registered Guidance Counselor (RGC)',
                     principalName: config.signatories?.principal || 'School Principal',
                   });
                 }}
                 className={`${btn} px-4 py-2 border border-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 active:scale-[0.97] transition-all inline-flex items-center gap-1.5 shadow-sm`}
-                title="Department of Education DO 40, s. 2012 Compliance Report"
+                title={isTl ? 'Buod ng mga kaso ngayong quarter' : 'Summary of this quarter\'s cases'}
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>{isTl ? 'DepEd DO 40 Report (PDF)' : 'DepEd DO 40 Compliance (PDF)'}</span>
+                <span>{isTl ? 'Quarterly Report (PDF)' : 'Quarterly Report (PDF)'}</span>
               </button>
               <button
                 type="button"

@@ -616,6 +616,23 @@ export async function fetchStage3Data(): Promise<DbStage3Snapshot | null> {
       conferenceScheduledAt: r.conference_scheduled_at ? String(r.conference_scheduled_at) : null,
       conferenceTargetDate: r.conference_target_date ? String(r.conference_target_date) : null,
       counselingNotes: r.counseling_notes ? String(r.counseling_notes) : undefined,
+      affectedStudentNumber: r.affected_student_number ? String(r.affected_student_number) : undefined,
+      affectedStudentName: r.affected_student_name ? String(r.affected_student_name) : undefined,
+      explanationPresent: r.explanation_present ? String(r.explanation_present) : undefined,
+      explanationRefused: Boolean(r.explanation_refused),
+      conferenceAttendedBy: r.conference_attended_by ? String(r.conference_attended_by) : undefined,
+      conferenceMinutes: r.conference_minutes ? String(r.conference_minutes) : undefined,
+      proceededWithoutParent: Boolean(r.proceeded_without_parent),
+      waitForAll: Boolean(r.wait_for_all),
+      complaintNoticedAt: r.complaint_noticed_at ?? null,
+      principalApprovedBy: r.principal_approved_by ?? null,
+      principalApprovedAt: r.principal_approved_at ?? null,
+      appealRequestedAt: r.appeal_requested_at ?? null,
+      appealBy: r.appeal_by ?? null,
+      appealReason: r.appeal_reason ?? null,
+      appealResult: r.appeal_result ?? null,
+      appealNote: r.appeal_note ?? null,
+      sanctionEndDate: r.sanction_end_date ? String(r.sanction_end_date) : null,
       // column if it exists, otherwise the marker saved in the notes (see insertDisciplineCaseInDb)
       incidentCode: r.incident_code
         ? String(r.incident_code)
@@ -646,6 +663,10 @@ export async function insertDisciplineCaseInDb(
     step: caseItem.step ?? 'Reported',
   };
   if (caseItem.incidentCode) row.incident_code = caseItem.incidentCode;
+  if (caseItem.affectedStudentNumber) {
+    row.affected_student_number = caseItem.affectedStudentNumber;
+    row.affected_student_name = caseItem.affectedStudentName ?? null;
+  }
   const post = (body: Record<string, unknown>) =>
     fetch(`${SUPABASE_URL}/rest/v1/discipline_cases`, {
       method: 'POST',
@@ -968,3 +989,61 @@ export async function deleteDisciplineCaseInDb(caseCode: string): Promise<boolea
   }
 }
 
+
+
+/** highest case number ever logged (even for cases that were later deleted), so numbers are never reused */
+export async function fetchHighestCaseNumberEver(): Promise<number> {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/office_activity_logs?select=tag&tag=like.CASE-2*&limit=100000`,
+      { headers: getHeaders() }
+    );
+    if (!res.ok) return 0;
+    const rows = (await res.json()) as { tag: string }[];
+    // compare as NUMBERS (text order puts CASE-2026-999 after CASE-2026-1000); only real CASE-YYYY-N codes count
+    let max = 0;
+    for (const r of rows) {
+      const m = /^CASE-d{4}-(d+)$/.exec(String(r.tag || ''));
+      if (m) max = Math.max(max, Number(m[1]));
+    }
+    return max;
+  } catch {
+    return 0;
+  }
+}
+
+/** Statement of a reporter / affected student / witness (office only). Cannot be edited or deleted. */
+export interface CaseStatement {
+  id: string;
+  caseCode: string;
+  incidentCode?: string | null;
+  personName: string;
+  role: 'reporter' | 'affected' | 'witness';
+  statement: string;
+  createdAt: string;
+}
+export async function fetchCaseStatements(caseCode: string, incidentCode?: string | null): Promise<CaseStatement[] | null> {
+  try {
+    const filter = incidentCode
+      ? `or=(case_code.eq.${encodeURIComponent(caseCode)},incident_code.eq.${encodeURIComponent(incidentCode)})`
+      : `case_code=eq.${encodeURIComponent(caseCode)}`;
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/case_statements?${filter}&order=created_at.asc`, { headers: getHeaders() });
+    if (!res.ok) return null;
+    const rows = (await res.json()) as any[];
+    return rows.map((r) => ({ id: r.id, caseCode: r.case_code, incidentCode: r.incident_code, personName: r.person_name, role: r.role, statement: r.statement, createdAt: r.created_at }));
+  } catch {
+    return null;
+  }
+}
+export async function insertCaseStatement(s: Omit<CaseStatement, 'id' | 'createdAt'>): Promise<boolean> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/case_statements`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ case_code: s.caseCode, incident_code: s.incidentCode || null, person_name: s.personName, role: s.role, statement: s.statement }),
+    });
+    return reportWrite(res, 'insertCaseStatement');
+  } catch {
+    return reportWrite(null, 'insertCaseStatement');
+  }
+}

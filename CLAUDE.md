@@ -51,3 +51,19 @@ update is requested, do not change code without asking.
 6-digit PIN + 6-character email OTP, lockout, auto sign-out, audit trail that cannot be edited,
 SMS in Filipino, reminder one day before, desktop pages as in
 `AICS-SYSTEM-FEATURES-FLOWCHART-UPDATED.pdf`.
+
+## Hardware & software requirements LOCK (manuscript Ch. 3, set by the user 2026-11-17)
+
+The system must stay inside this list. **Before building anything that needs hardware or software NOT on it
+(new library, service, cloud feature, device, OS), STOP and tell the user first: "Lagpas ito sa requirements
+ng manuscript, bawal na." Do not build it unless the user says to and the manuscript list is updated too.**
+
+- Hardware: Windows 10/11 64-bit PC (Core i3, 4 GB RAM, 500 MB free), statement station (same PC or a 2nd
+  Windows PC/tablet with keyboard), 1366×768 display, keyboard + mouse, printer (A4/short bond), student's
+  Android 7.0+ (API 24) phone with camera (or a browser device with camera), internet.
+- Software: Windows 10/11, Tauri 2 + WebView2, React + TypeScript, Vite, Tailwind CSS, Framer Motion + Lucide,
+  read-excel-file (CSV = own parser), jsPDF + html2canvas, Supabase (PostgreSQL, Auth, RLS, Storage, Edge Functions),
+  PhilSMS API, Gmail SMTP (via Edge Function), Vercel (portal website), Capacitor 8, Chrome/Edge/Firefox/Safari,
+  Android 7.0 (API 24)+, Node.js 22.12+, Rust + MS C++ Build Tools, Android Studio + JDK 21, Git + GitHub.
+- Supabase Auth ADDED by the user on 2026-11-17 (security #1). The manuscript must be updated too (see
+  memory supabase-auth-manuscript). Still NOT in the list: Supabase Realtime, Supabase Cron (pg_cron).

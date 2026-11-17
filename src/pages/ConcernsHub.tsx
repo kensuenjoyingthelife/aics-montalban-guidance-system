@@ -50,7 +50,21 @@ import {
   Target,
   Camera,
   CheckCheck,
+  Wind,
+  Zap,
+  Shirt,
+  IdCard,
+  Smartphone,
+  Hammer,
+  MessageSquareWarning,
+  Users as UsersIcon,
+  Clock as ClockIcon,
+  MoreHorizontal,
+  Check,
+  BadgeCheck,
+  Quote,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 export type ConcernsTab = 'reports' | 'chats' | 'accounts';
 
@@ -84,6 +98,28 @@ const REJECT_REASONS = [
 const btn = 'px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap';
 const card = 'rounded-2xl saas-card overflow-hidden';
 const sub = 'text-xs text-[#4A608A] dark:text-[#94A8D0]';
+
+/** the name on the account (reporter); for a "report for a friend" the concern's studentName is the friend */
+function reporterNameOf(c: ConcernItem): string {
+  const m = c.submittedBy.match(/^Report for Friend by (.+?) \(/) ?? c.submittedBy.match(/^Self-Report: (.+)$/);
+  return (m ? m[1] : c.studentName).trim();
+}
+
+/** one gradient color + icon per kind of report, so the list can be read at a glance */
+type Tone = 'amber' | 'violet' | 'rose' | 'blue' | 'teal' | 'slate';
+function typeTheme(type: string): { tone: Tone; Icon: LucideIcon } {
+  const t = (type || '').toLowerCase();
+  if (/vap|smok|sigarilyo|alcohol|alak/.test(t)) return { tone: 'amber', Icon: Wind };
+  if (/bully|harass|tease|asar/.test(t)) return { tone: 'violet', Icon: UsersIcon };
+  if (/fight|away|sakit|hurt|weapon|matalim/.test(t)) return { tone: 'rose', Icon: Zap };
+  if (/late|tard|cutting|truan|takas|absent/.test(t)) return { tone: 'blue', Icon: ClockIcon };
+  if (/uniform|dress|hair|gupit/.test(t)) return { tone: 'teal', Icon: Shirt };
+  if (/\bid\b|school id/.test(t)) return { tone: 'teal', Icon: IdCard };
+  if (/phone|gadget|cellphone/.test(t)) return { tone: 'blue', Icon: Smartphone };
+  if (/vandal|sira|damage/.test(t)) return { tone: 'rose', Icon: Hammer };
+  return { tone: 'slate', Icon: MessageSquareWarning };
+}
+
 
 function officeOpenNow(): boolean {
   const d = new Date();
@@ -143,6 +179,21 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
       (c.studentNumber && studentByNo.get(c.studentNumber)) || studentByName.get(c.studentName.trim().toLowerCase()),
     [studentByNo, studentByName]
   );
+
+  /** the name on the account (the reporter). For a "report for a friend", studentName is the friend. */
+  const reporterName = (c: ConcernItem): string => {
+    const m = c.submittedBy.match(/^Report for Friend by (.+?) \(/) ?? c.submittedBy.match(/^Self-Report: (.+)$/);
+    return (m ? m[1] : c.studentName).trim();
+  };
+  /** words of a name, so "SANTOS, ETHAN N." and "Ethan Noble Santos" compare fairly */
+  const nameWords = (n: string) => n.toLowerCase().replace(/[^a-zñ\s]/g, ' ').split(/\s+/).filter((w) => w.length > 1);
+  /** student no. found, but the account name shares no last/first name with the masterlist: borrowed or fake account */
+  const nameMismatch = (c: ConcernItem): boolean => {
+    const s = c.studentNumber ? studentByNo.get(c.studentNumber) : undefined;
+    if (!s) return false;
+    const a = new Set(nameWords(reporterName(c)));
+    return !nameWords(s.fullName).some((w) => a.has(w));
+  };
 
   const list = concerns ?? [];
   const waiting = useMemo(
@@ -340,9 +391,13 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
     return <span className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold ${cls}`}>{isTl ? tl : en}</span>;
   };
   const matchPill = (c: ConcernItem) =>
-    matchOf(c) ? (
+    matchOf(c) && !nameMismatch(c) ? (
       <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200" title={isTl ? 'Tugma sa masterlist ng mga naka-enroll' : 'Matches the enrollment masterlist'}>
         {isTl ? 'Nasa masterlist' : 'In masterlist'}
+      </span>
+    ) : nameMismatch(c) ? (
+      <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200" title={isTl ? 'Tugma ang student no., pero iba ang pangalan sa masterlist' : 'The student no. matches, but the name in the masterlist is different'}>
+        {isTl ? 'Hindi tugma ang pangalan' : 'Name does not match'}
       </span>
     ) : (
       <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200" title={isTl ? 'Walang ganitong estudyante sa masterlist — baka fake account' : 'No such student in the masterlist — may be a fake account'}>
@@ -359,7 +414,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
   return (
     <main className="p-5 lg:p-6 max-w-[1440px] w-full mx-auto space-y-4 flex-1">
       <div className="shrink-0 min-h-[54px] flex flex-wrap items-center justify-between gap-3 border-b border-[#DCE5F2] dark:border-[#1E3158] pb-2">
-        <div className="inline-flex flex-wrap p-1 rounded-xl saas-card-subtle gap-1" role="tablist">
+        <div className="seg-track flex-wrap" role="tablist">
           {tabs.map(([id, label, tip]) => (
             <button
               key={id}
@@ -373,7 +428,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
                 setTab(id);
               }}
               className={`px-4 py-2 rounded-lg text-xs sm:text-[13px] font-bold whitespace-nowrap transition-colors ${
-                tab === id ? 'bg-[#1E469B] text-white shadow-sm' : 'text-[#4A608A] dark:text-[#94A8D0] hover:text-[#0B1F4D] dark:hover:text-white'
+                tab === id ? 'seg-on' : 'seg-off'
               }`}
             >
               {label}
@@ -403,119 +458,110 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
         </div>
       )}
 
-      {/* urgent first (visual only — not an emergency alarm) */}
-      {urgentWaiting.length > 0 && tab === 'reports' && (
-        <div role="note" className="px-4 py-3 rounded-xl bg-rose-600 text-white flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm font-extrabold">
-            <span className="inline-block w-2 h-2 rounded-full bg-white mr-2 align-middle animate-pulse" />
-            {isTl
-              ? `${urgentWaiting.length} URGENT na concern ("Nangyayari ngayon") — basahin muna ito.`
-              : `${urgentWaiting.length} URGENT concern(s) ("Happening now") — read these first.`}
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setFilter('waiting');
-              setSelectedId(urgentWaiting[0].id);
-            }}
-            className={`${btn} bg-white text-rose-700`}
-          >
-            {isTl ? 'Buksan ang una' : 'Open the first one'}
-          </button>
-        </div>
-      )}
-
-      {/* ================= SUBMITTED REPORTS ================= */}
+      {/* ================= SUBMITTED REPORTS (Mail-style: list + reading pane) ================= */}
       {tab === 'reports' && (
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-3 items-stretch h-[calc(100dvh/var(--app-zoom,1)-245px)] min-h-[520px]" data-concern-grid>
-          <section className={`${card} flex flex-col min-h-0`}>
-            <div className="p-2 border-b border-[#DCE5F2] dark:border-[#1E3158] grid grid-cols-4 gap-1">
-              {(
-                [
-                  ['waiting', isTl ? `Waiting (${waiting.length})` : `Waiting (${waiting.length})`],
-                  ['approved', `Approved (${list.filter((c) => c.status === 'Approved').length})`],
-                  ['rejected', `Rejected (${list.filter((c) => c.status === 'Rejected').length})`],
-                  ['all', isTl ? `All (${list.length})` : `All (${list.length})`],
-                ] as const
-              ).map(([id, label]) => (
+        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-4 items-stretch h-[calc(100dvh/var(--app-zoom,1)-210px)] min-h-[520px]" data-concern-grid>
+          <section className="row-card !rounded-[20px] !p-0 !transform-none hover:!bg-white dark:hover:!bg-[#0F1B2E] hover:!border-[#DDE3EC] dark:hover:!border-white/10 flex flex-col min-h-0 overflow-hidden">
+            <div className="p-3 border-b border-black/[0.06] dark:border-white/[0.08] space-y-2">
+              <div className="seg-track w-full">
+                {(
+                  [
+                    ['waiting', isTl ? 'Naghihintay' : 'Waiting', waiting.length],
+                    ['approved', isTl ? 'Na-approve' : 'Approved', list.filter((c) => c.status === 'Approved').length],
+                    ['rejected', isTl ? 'Tinanggihan' : 'Rejected', list.filter((c) => c.status === 'Rejected').length],
+                    ['all', isTl ? 'Lahat' : 'All', list.length],
+                  ] as const
+                ).map(([id, label, n]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    data-concern-filter={id}
+                    onClick={() => {
+                      setFilter(id);
+                      setLimit(PAGE);
+                      setSelectedId(null);
+                    }}
+                    className={`flex-1 px-2 py-1.5 text-xs whitespace-nowrap ${filter === id ? 'seg-on' : 'seg-off'}`}
+                  >
+                    {label} <span className="tabular-nums opacity-70">{n}</span>
+                  </button>
+                ))}
+              </div>
+              {urgentWaiting.length > 0 && (
                 <button
-                  key={id}
                   type="button"
-                  data-concern-filter={id}
                   onClick={() => {
-                    setFilter(id);
-                    setLimit(PAGE);
-                    setSelectedId(null);
+                    setFilter('waiting');
+                    setSelectedId(urgentWaiting[0].id);
                   }}
-                  className={`py-1.5 px-1 rounded-lg text-center text-[11px] font-bold transition-all truncate ${
-                    filter === id
-                      ? 'bg-[#1E469B] text-white shadow-xs'
-                      : 'bg-white dark:bg-[#0D182E] border border-slate-200 dark:border-[#1E3158] text-[#4A608A] dark:text-[#94A8D0] hover:border-[#1E469B]'
-                  }`}
-                  title={label}
+                  className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-left"
                 >
-                  {label}
+                  <span className="urgent-pill">{isTl ? `${urgentWaiting.length} urgent` : `${urgentWaiting.length} urgent`}</span>
+                  <span className="text-[12px] text-rose-800 dark:text-rose-200">{isTl ? 'Basahin muna ang mga ito →' : 'Read these first →'}</span>
                 </button>
-              ))}
+              )}
             </div>
-            <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1.5 bg-[#F4F7FC] dark:bg-[#0B1527]">
+
+            <div className="flex-1 min-h-0 overflow-y-auto clean-scroll p-2 space-y-1">
               {concerns === null && !loadError && <p className={`${sub} p-6 text-center`}>{isTl ? 'Kinukuha ang mga concern…' : 'Loading concerns…'}</p>}
               {concerns !== null && shown.length === 0 && (
-                <div className="p-6 text-center space-y-1">
-                  <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
-                    {filter === 'waiting' ? (isTl ? ' Walang naghihintay na concern.' : ' No concerns waiting.') : isTl ? 'Wala pang laman dito.' : 'Nothing here yet.'}
+                <div className="px-6 py-12 text-center space-y-1.5">
+                  <span className="w-11 h-11 mx-auto rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 flex items-center justify-center"><Check className="w-5 h-5" aria-hidden /></span>
+                  <p className="text-[15px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">
+                    {filter === 'waiting' ? (isTl ? 'Wala nang naghihintay' : 'All caught up') : isTl ? 'Wala pang laman dito' : 'Nothing here yet'}
                   </p>
-                  <p className={sub}>
-                    {isTl
-                      ? 'Dito lalabas ang mga concern na ipinadala ng estudyante mula sa website o Android app.'
-                      : 'Concerns that students send from the website or Android app will appear here.'}
+                  <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">
+                    {isTl ? 'Dito lalabas ang mga report mula sa website o app ng estudyante.' : 'Reports students send from the website or app show up here.'}
                   </p>
                 </div>
               )}
-              {shown.slice(0, limit).map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  data-concern-row={c.code}
-                  onClick={() => setSelectedId(c.id)}
-                  className={`w-full text-left rounded-xl p-3 border transition-all ${
-                    selectedId === c.id
-                      ? 'bg-white dark:bg-[#13203B] border-[#1E469B] dark:border-[#7CB8F7] ring-1 ring-[#1E469B]/30 shadow-xs'
-                      : c.urgent && c.status === 'Pending'
-                      ? 'bg-rose-50/80 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800'
-                      : 'bg-white dark:bg-[#0F1A30] border-[#D3DDEE] dark:border-[#253B66] hover:border-[#1E469B]/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <StudentGenderAvatar fullName={c.studentName} size="sm" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-1">
-                        <p className="text-xs font-black text-[#0B1F4D] dark:text-white truncate">
-                          {c.studentName}
-                        </p>
-                        <span className="text-[10px] text-[#4A608A] dark:text-[#94A8D0] whitespace-nowrap">{when(c.createdAt)}</span>
-                      </div>
-                      <p className="text-[11px] font-semibold text-[#4A608A] dark:text-[#94A8D0] truncate mt-0.5">{c.type || (isTl ? 'Walang uri' : 'No type')}</p>
-                    </div>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {c.urgent && c.status === 'Pending' && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white">URGENT</span>
-                    )}
-                    {statusPill(c)}
-                    {matchPill(c)}
-                  </div>
-                </button>
-              ))}
+              {shown.slice(0, limit).map((c) => {
+                const th = typeTheme(c.type);
+                const Icon = th.Icon;
+                const on = selectedId === c.id;
+                const preview = parseIncidentData(c.whatHappened, c.who).cleanNarrative.replace(/\s+/g, ' ').trim();
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    data-concern-row={c.code}
+                    onClick={() => setSelectedId(c.id)}
+                    aria-current={on ? 'true' : undefined}
+                    className={`w-full text-left rounded-2xl px-3 py-2.5 flex gap-3 transition-colors ${
+                      on ? 'bg-[#1E469B]/[0.08] dark:bg-[#5B8DEF]/[0.14] ring-1 ring-[#1E469B]/30 dark:ring-[#5B8DEF]/40' : 'hover:bg-black/[0.035] dark:hover:bg-white/[0.05]'
+                    }`}
+                  >
+                    <span className="relative shrink-0 mt-0.5">
+                      <span className={`tile-grad tile-${th.tone} w-10 h-10`}><Icon className="w-5 h-5 relative z-[1]" aria-hidden /></span>
+                      {c.status === 'Pending' && <span className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#2563EB]" title={isTl ? 'Hindi pa nade-desisyunan' : 'Not decided yet'} />}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-baseline justify-between gap-2">
+                        <span className="text-[14px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7] truncate">{c.studentName}</span>
+                        <span className="text-[11px] text-[#8E8E93] whitespace-nowrap">{when(c.createdAt)}</span>
+                      </span>
+                      <span className="block text-[13px] text-[#1D1D1F] dark:text-[#E5E5EA] truncate">{c.type || (isTl ? 'Walang uri' : 'No type')}</span>
+                      <span className="block text-[12px] text-[#6E6E73] dark:text-[#A1A1A6] line-clamp-1">{preview || '—'}</span>
+                      {(c.urgent && c.status === 'Pending') || nameMismatch(c) || c.status !== 'Pending' ? (
+                        <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                          {c.urgent && c.status === 'Pending' && <span className="urgent-pill">{isTl ? 'Urgent' : 'Urgent'}</span>}
+                          {nameMismatch(c) && <span className="px-2 py-px rounded-full text-[10.5px] font-semibold bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">{isTl ? 'Iba ang pangalan' : 'Name differs'}</span>}
+                          {c.status !== 'Pending' && statusPill(c)}
+                        </span>
+                      ) : null}
+                    </span>
+                  </button>
+                );
+              })}
               {shown.length > limit && (
-                <button type="button" onClick={() => setLimit((n) => n + PAGE)} className={`${btn} w-full saas-card-subtle`}>
+                <button type="button" onClick={() => setLimit((n) => n + PAGE)} className="w-full h-9 rounded-full text-xs font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04]">
                   {isTl ? `Ipakita pa (${shown.length - limit} pa)` : `Show more (${shown.length - limit} more)`}
                 </button>
               )}
             </div>
           </section>
 
-          <section className={`${card} flex flex-col min-h-0`}>
+          <section className="row-card !rounded-[20px] !p-0 !transform-none hover:!bg-white dark:hover:!bg-[#0F1B2E] hover:!border-[#DDE3EC] dark:hover:!border-white/10 flex flex-col min-h-0 overflow-hidden">
             {!selected ? (
               <div className="p-10 text-center">
                 <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Pumili ng concern sa kaliwa.' : 'Pick a concern on the left.'}</p>
@@ -525,7 +571,8 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
               <ConcernDetail
                 c={selected}
                 isTl={isTl}
-                match={matchOf(selected)}
+                match={matchOf(selected) && !nameMismatch(selected) ? matchOf(selected) : undefined}
+                numberFound={!!(selected.studentNumber && studentByNo.get(selected.studentNumber))}
                 account={selected.accountId != null ? accountById.get(selected.accountId) : undefined}
                 when={when}
                 statusPill={statusPill(selected)}
@@ -589,10 +636,13 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
                           concernCode: selected.code,
                           place: selected.where || '',
                           witnesses: selected.witnesses || '',
-                          reportedBy: selected.studentName || 'Student Reporter',
-                          notes: `[FROM STUDENT CONCERN REPORT ${selected.code}]\nReporter / Complainant: ${selected.studentName} (ID: ${selected.studentNumber || '—'})\nWhen: ${selected.when || 'Not specified'}\nWhere: ${selected.where || 'Not specified'}\nWitnesses: ${selected.witnesses || 'None'}\nNarrative:\n${selected.whatHappened || ''}`.slice(0, 2000),
+                          // the reporter stays confidential: only the concern code goes on the case
+                          reportedBy: `Student report (confidential) · ${selected.code}`,
+                          notes: `[FROM STUDENT CONCERN REPORT ${selected.code}]\nWhen: ${selected.when || 'Not specified'}\nWhere: ${selected.where || 'Not specified'}\nWitnesses: ${selected.witnesses || 'None'}\nNarrative:\n${selected.whatHappened || ''}`.slice(0, 2000),
                           search: firstName,
                           policyCode: matchedPolicyCode,
+                          // affected student: the friend in a "report for a friend", otherwise the reporter
+                          affectedStudentNumber: matchOf(selected) && !nameMismatch(selected) ? matchOf(selected)?.studentNumber : undefined,
                         });
                       }
                     : undefined
@@ -768,6 +818,8 @@ const ConcernDetail: React.FC<{
   c: ConcernItem;
   isTl: boolean;
   match?: StudentRecord;
+  /** the student no. exists in the masterlist (even if the name differs) */
+  numberFound: boolean;
   account?: PortalAccount;
   when: (s: string) => string;
   statusPill: React.ReactNode;
@@ -779,8 +831,21 @@ const ConcernDetail: React.FC<{
   onOpenChat: () => void;
   onOpenCase?: (code: string) => void;
   onCreateCase?: () => void;
-}> = ({ c, isTl, match, account, when, statusPill, matchPill, busy, onApprove, onReject, onDeactivate, onOpenChat, onOpenCase, onCreateCase }) => {
+}> = ({ c, isTl, match, numberFound, account, when, statusPill, matchPill, busy, onApprove, onReject, onDeactivate, onOpenChat, onOpenCase, onCreateCase }) => {
   const none = isTl ? 'Hindi sinagot' : 'Not answered';
+  // keyboard: A = approve, R = reject (only while waiting, never while typing in a box)
+  useEffect(() => {
+    if (c.status !== 'Pending') return;
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement;
+      if (e.ctrlKey || e.metaKey || e.altKey || /INPUT|TEXTAREA|SELECT/.test(t.tagName) || t.isContentEditable) return;
+      if (document.querySelector('[data-confirm-open], [role="dialog"]')) return;
+      if (e.key === 'a' || e.key === 'A') { e.preventDefault(); onApprove(); }
+      if (e.key === 'r' || e.key === 'R') { e.preventDefault(); onReject(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [c.status, onApprove, onReject]);
   const [view, setView] = useState<{ src: string; label: string } | null>(null);
   useEffect(() => {
     if (!view) return;
@@ -822,354 +887,242 @@ const ConcernDetail: React.FC<{
   const idLabel = isTl ? 'Student ID' : 'Student ID';
 
   return (
-    <div data-concern-detail={c.code} className="h-full flex flex-col">
-      <div className="px-5 py-3 border-b border-[#DCE5F2] dark:border-[#1E3158] space-y-1">
-        <div className="flex flex-wrap items-center gap-1.5">
-          {c.urgent && c.status === 'Pending' && <span className="px-2 py-0.5 rounded-full text-[10.5px] font-extrabold bg-rose-600 text-white">URGENT · {isTl ? 'Nangyayari ngayon' : 'Happening now'}</span>}
-          {statusPill}
-          {matchPill}
-          {c.confidential && (
-            <span className="px-2 py-0.5 rounded-full text-[10.5px] font-extrabold bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200" title={isTl ? 'Gustong ilihim ng estudyante ang concern na ito' : 'The student asked to keep this private'}>
-              {isTl ? 'Confidential' : 'Confidential'}
-            </span>
-          )}
-        </div>
-        <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white break-words">{c.type || (isTl ? 'Concern' : 'Concern')}</h2>
-        <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
-          {c.code} · {isTl ? 'Ipinadala' : 'Sent'} {when(c.createdAt)}
-        </p>
-      </div>
-
-      <div className="flex-1 min-h-0 p-3 grid grid-cols-1 md:grid-cols-[250px_1fr] gap-3 bg-[#F4F7FC] dark:bg-[#0B1527]">
-        {/* ---------- LEFT: COMPLAINANT (REPORTING STUDENT) - COMPACT PROFILE ---------- */}
-        <section className={cardBox} data-concern-student>
-          <div className="px-3 py-2 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-center justify-between bg-slate-50/60 dark:bg-[#0B1527]/60">
-            <span className="text-[10px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7] flex items-center gap-1">
-              <User className="w-3.5 h-3.5 text-slate-400" />
-              <span>{isTl ? 'Nagsumbong' : 'Reporting Student'}</span>
-            </span>
-            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-              {isTl ? 'Verified' : 'Verified'}
-            </span>
-          </div>
-
-          <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-2 clean-scroll" data-student-scroll>
-            {/* Primary Profile Identity */}
-            <div className="p-2.5 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs flex items-center gap-2.5">
-              <StudentGenderAvatar fullName={c.studentName} size="md" />
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-black text-[#0B1F4D] dark:text-white leading-tight truncate" title={c.studentName}>
-                  {c.studentName}
-                </p>
-                <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-                  <span className="text-[10px] font-mono font-bold text-[#1E469B] dark:text-[#7CB8F7]">
-                    #{c.studentNumber || '—'}
-                  </span>
-                  <span className="text-[10px] text-[#4A608A] dark:text-[#94A8D0]">
-                    · {c.gradeSection || '—'}
-                  </span>
+    <div data-concern-detail={c.code} className="h-full flex flex-col min-h-0">
+      {(() => {
+        const th = typeTheme(c.type);
+        const Icon = th.Icon;
+        const parsed = parseIncidentData(c.whatHappened, c.who);
+        const decided = c.status !== 'Pending';
+        // where the report is: Sent → Reviewing → Decided → Case
+        const stage = c.status === 'Pending' ? 2 : c.status === 'Rejected' ? 3 : c.linkedCaseCode ? 4 : 3;
+        const steps = isTl
+          ? ['Ipinadala', 'Sinusuri', c.status === 'Rejected' ? 'Tinanggihan' : 'Na-approve', 'Kaso']
+          : ['Sent', 'Reviewing', c.status === 'Rejected' ? 'Rejected' : 'Approved', 'Case'];
+        const forFriend = !!c.submittedBy && /^report for friend/i.test(c.submittedBy.trim());
+        const checks: { ok: boolean; en: string; tl: string }[] = [
+          { ok: numberFound, en: numberFound ? 'Student no. is in the masterlist' : 'Student no. is not in the masterlist', tl: numberFound ? 'Nasa masterlist ang student no.' : 'Wala sa masterlist ang student no.' },
+          { ok: !!match, en: match ? 'Name matches the masterlist' : 'Name does not match the masterlist', tl: match ? 'Tugma ang pangalan sa masterlist' : 'Hindi tugma ang pangalan sa masterlist' },
+          { ok: !!account?.email, en: account?.email ? 'Has a verified email' : 'No email on the account', tl: account?.email ? 'May email ang account' : 'Walang email ang account' },
+        ];
+        const allOk = checks.every((x) => x.ok);
+        const row = 'px-4 py-3 flex items-start justify-between gap-4';
+        const lab = 'text-[13px] text-[#6E6E73] dark:text-[#A1A1A6] shrink-0';
+        const val = 'text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] text-right break-words min-w-0';
+        return (
+          <>
+            {/* header with a whisper of the category color */}
+            <div className={`hero-tint hero-${th.tone} px-6 pt-5 pb-4 border-b border-black/[0.06] dark:border-white/[0.08]`}>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3.5 min-w-0">
+                  <span className={`tile-grad tile-${th.tone} w-12 h-12 shrink-0`}><Icon className="w-6 h-6 relative z-[1]" aria-hidden /></span>
+                  <div className="min-w-0">
+                    <h2 className="text-[22px] leading-tight font-semibold tracking-[-0.02em] text-[#1D1D1F] dark:text-[#F5F5F7] break-words">
+                      {c.type || (isTl ? 'Concern' : 'Concern')}
+                    </h2>
+                    <p className="mt-1 text-[13px] text-[#6E6E73] dark:text-[#A1A1A6] flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="font-mono">{c.code}</span>
+                      <span>·</span>
+                      <span>{isTl ? 'Ipinadala' : 'Sent'} {when(c.createdAt)}</span>
+                      {c.confidential && (
+                        <span className="px-2 py-px rounded-full text-[11px] font-medium bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200" title={isTl ? 'Gustong ilihim ng estudyante' : 'The student asked to keep this private'}>
+                          {isTl ? 'Confidential' : 'Confidential'}
+                        </span>
+                      )}
+                      {c.urgent && c.status === 'Pending' && <span className="urgent-pill">{isTl ? 'Urgent · nangyayari ngayon' : 'Urgent · happening now'}</span>}
+                    </p>
+                  </div>
                 </div>
+                {/* rare actions live in ••• */}
+                <details className="relative shrink-0">
+                  <summary
+                    aria-label={isTl ? 'Iba pa' : 'More'}
+                    title={isTl ? 'Iba pa' : 'More'}
+                    className="list-none [&::-webkit-details-marker]:hidden cursor-pointer w-9 h-9 rounded-full bg-white/80 dark:bg-white/[0.08] shadow-[0_0_0_0.5px_rgb(15_23_42/0.12)] flex items-center justify-center text-[#6E6E73] dark:text-[#A1A1A6] hover:bg-white dark:hover:bg-white/[0.14]"
+                  >
+                    <MoreHorizontal className="w-4 h-4" aria-hidden />
+                  </summary>
+                  <div className="absolute right-0 top-full mt-2 z-30 p-1.5 ring-card w-[260px]">
+                    {account && account.status !== 'Deactivated' ? (
+                      <button
+                        type="button"
+                        data-action="deactivate"
+                        onClick={onDeactivate}
+                        className="w-full flex items-start gap-2.5 px-3 py-2.5 rounded-xl text-left hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                      >
+                        <Ban className="w-4 h-4 mt-0.5 text-rose-600 shrink-0" aria-hidden />
+                        <span>
+                          <span className="block text-[13px] font-medium text-rose-700 dark:text-rose-300">{isTl ? 'I-block ang fake account' : 'Block fake account'}</span>
+                          <span className="block text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Para sa account na hindi totoong estudyante' : 'For an account that is not a real student'}</span>
+                        </span>
+                      </button>
+                    ) : (
+                      <p className="px-3 py-2.5 text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{account?.status === 'Deactivated' ? (isTl ? 'Naka-block na ang account.' : 'This account is already blocked.') : isTl ? 'Walang ibang gagawin.' : 'Nothing else to do here.'}</p>
+                    )}
+                  </div>
+                </details>
+              </div>
+
+              {/* timeline: where this report is */}
+              <div className="mt-4 grid grid-cols-4 gap-1.5" aria-label={isTl ? 'Nasaan na ang report' : 'Where this report is'}>
+                {steps.map((s, i) => (
+                  <div key={s} className="space-y-1">
+                    <div className={`h-1 rounded-full ${i < stage ? (c.status === 'Rejected' && i === 2 ? 'bg-rose-500' : c.status === 'Pending' && i === 1 ? 'tl-done opacity-40 animate-pulse' : 'tl-done') : 'bg-black/[0.08] dark:bg-white/[0.1]'}`} />
+                    <p className={`text-[11px] ${i < stage ? 'text-[#1D1D1F] dark:text-[#F5F5F7] font-medium' : 'text-[#8E8E93]'}`}>{s}</p>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Masterlist Verification Mini-Card */}
-            <div className="p-2 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs space-y-1">
-              <p className="text-[9px] font-extrabold uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0] flex items-center gap-1">
-                <FileText className="w-3 h-3 text-slate-400" />
-                <span>{isTl ? 'Registrar Masterlist' : 'Masterlist Match'}</span>
-              </p>
-              {match ? (
-                <div className="p-1.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+            <div className="flex-1 min-h-0 overflow-y-auto clean-scroll px-6 py-5 space-y-5 bg-[#F5F5F7] dark:bg-[#0A1526]">
+              {/* Is this account real? */}
+              <div className={`rounded-2xl border p-4 ${allOk ? 'bg-emerald-50/70 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-900/50' : 'bg-amber-50/80 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/50'}`} data-concern-student>
+                <div className="flex items-center gap-3">
+                  <StudentGenderAvatar fullName={reporterNameOf(c)} size="md" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-bold text-emerald-900 dark:text-emerald-200 truncate">
-                      {match.fullName}
+                    <p className="text-[14px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7] truncate">
+                      {reporterNameOf(c)} <span className="font-normal text-[#6E6E73] dark:text-[#A1A1A6]">#{c.studentNumber || '—'}</span>
                     </p>
-                    <p className="text-[9.5px] text-emerald-700 dark:text-emerald-300">
-                      {match.gradeSection} · SHS
+                    <p className="text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">
+                      {forFriend ? (isTl ? `Nag-report para sa kaibigan: ${c.studentName}` : `Reported for a friend: ${c.studentName}`) : isTl ? 'Ang nag-report' : 'The student who reported'}
                     </p>
                   </div>
+                  {allOk ? (
+                    <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-emerald-700 dark:text-emerald-300"><BadgeCheck className="w-4 h-4" aria-hidden />{isTl ? 'Totoong account' : 'Looks real'}</span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-amber-800 dark:text-amber-200"><AlertTriangle className="w-4 h-4" aria-hidden />{isTl ? 'I-check muna' : 'Check first'}</span>
+                  )}
                 </div>
-              ) : (
-                <div className="p-1.5 rounded-lg bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 flex items-center gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                  <p className="text-[10.5px] font-bold text-rose-800 dark:text-rose-200 leading-tight">
-                    {isTl ? 'Wala sa masterlist' : 'Not verified in masterlist'}
+                <ul className="mt-3 grid sm:grid-cols-3 gap-2">
+                  {checks.map((x) => (
+                    <li key={x.en} className="flex items-start gap-1.5 text-[12px] text-[#1D1D1F] dark:text-[#E5E5EA]">
+                      {x.ok ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden /> : <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" aria-hidden />}
+                      {isTl ? x.tl : x.en}
+                    </li>
+                  ))}
+                </ul>
+                {!allOk && (
+                  <p className="mt-2.5 text-[12px] text-amber-900 dark:text-amber-200">
+                    {isTl
+                      ? 'Baka hiram o pekeng account ito. Kausapin muna ang estudyante bago i-approve.'
+                      : 'This may be a borrowed or fake account. Talk to the student before approving.'}
                   </p>
+                )}
+              </div>
+
+              {/* the story is the hero */}
+              <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 p-5">
+                <p className="text-[12px] font-medium text-[#6E6E73] dark:text-[#A1A1A6] mb-2">{isTl ? 'Ano ang nangyari' : 'What happened'}</p>
+                <div className="flex gap-3">
+                  <Quote className="w-6 h-6 text-[#1E469B]/30 dark:text-[#7CB8F7]/40 shrink-0 -scale-x-100" aria-hidden />
+                  <p className="text-[17px] leading-relaxed text-[#1D1D1F] dark:text-[#F5F5F7] whitespace-pre-wrap break-words">{parsed.cleanNarrative || (isTl ? 'Walang naisulat.' : 'Nothing written.')}</p>
                 </div>
-              )}
-            </div>
+                {parsed.evidencePhotos.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-2.5">
+                    {parsed.evidencePhotos.map((imgSrc, pIdx) => (
+                      <button
+                        key={pIdx}
+                        type="button"
+                        onClick={() => setView({ src: imgSrc, label: `${isTl ? 'Litrato' : 'Photo'} ${pIdx + 1}` })}
+                        title={isTl ? 'Pindutin para palakihin' : 'Press to enlarge'}
+                        className="relative group w-28 h-20 rounded-xl overflow-hidden ring-1 ring-black/10 dark:ring-white/10 hover:ring-2 hover:ring-[#1E469B] transition-shadow"
+                      >
+                        <img src={imgSrc} alt={`${isTl ? 'Litrato' : 'Photo'} ${pIdx + 1}`} loading="lazy" className="w-full h-full object-cover" />
+                        <span className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"><Maximize2 className="w-4 h-4" aria-hidden /></span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-            {/* Contact Details Mini-Card */}
-            <div className="p-2 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs space-y-1">
-              <p className="text-[9px] font-extrabold uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0] flex items-center gap-1">
-                <Phone className="w-3 h-3 text-slate-400" />
-                <span>{isTl ? 'Contact Details' : 'Contact Details'}</span>
-              </p>
-
-              <div className="space-y-1 text-xs">
-                <div className="px-2 py-1 rounded-lg bg-slate-50 dark:bg-[#0B1527] border border-slate-100 dark:border-white/5 flex items-center justify-between">
-                  <span className="text-[9px] font-bold text-[#4A608A] dark:text-[#94A8D0]">Email</span>
-                  <span className="text-[10.5px] font-bold text-[#0B1F4D] dark:text-white truncate max-w-[140px]" title={account?.email || '—'}>
+              {/* details as one grouped list */}
+              <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
+                <div className={row}>
+                  <span className={lab}>{isTl ? 'Inireklamo' : 'Student reported'}</span>
+                  <span className={val}>
+                    {parsed.respondentName}
+                    {parsed.respondentDetails && <span className="block text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{parsed.respondentDetails}</span>}
+                  </span>
+                </div>
+                <div className={row}>
+                  <span className={lab}>{isTl ? 'Kailan · Saan' : 'When · Where'}</span>
+                  <span className={val}>{c.when || none} · {c.where || none}</span>
+                </div>
+                <div className={row}>
+                  <span className={lab}>{isTl ? 'Mga saksi' : 'Witnesses'}</span>
+                  <span className={val}>{c.witnesses || (isTl ? 'Wala' : 'None')}</span>
+                </div>
+                <div className={row}>
+                  <span className={lab}>{isTl ? 'Contact ng nag-report' : 'Reporter contact'}</span>
+                  <span className={val}>
                     {account?.email || '—'}
+                    {account?.contactNumber && <span className="block text-[12px] text-[#6E6E73] dark:text-[#A1A1A6] tabular-nums">{account.contactNumber}</span>}
                   </span>
                 </div>
-
-                <div className="px-2 py-1 rounded-lg bg-slate-50 dark:bg-[#0B1527] border border-slate-100 dark:border-white/5 flex items-center justify-between">
-                  <span className="text-[9px] font-bold text-[#4A608A] dark:text-[#94A8D0]">Mobile</span>
-                  <span className="text-[10.5px] font-mono font-bold text-[#0B1F4D] dark:text-white truncate max-w-[140px]" title={account?.contactNumber || '—'}>
-                    {account?.contactNumber || '—'}
-                  </span>
-                </div>
+                {c.status === 'Rejected' && (
+                  <div className={row}>
+                    <span className={lab}>{isTl ? 'Dahilan ng pag-reject' : 'Reason for rejecting'}</span>
+                    <span className={`${val} text-rose-700 dark:text-rose-300`}>{c.rejectReason || '—'}</span>
+                  </div>
+                )}
+                {c.linkedCaseCode && (
+                  <div className={row}>
+                    <span className={lab}>{isTl ? 'Naka-link na kaso' : 'Linked case'}</span>
+                    {onOpenCase ? (
+                      <button type="button" onClick={() => onOpenCase(c.linkedCaseCode)} className="text-[14px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:underline">
+                        {c.linkedCaseCode} →
+                      </button>
+                    ) : (
+                      <span className={val}>{c.linkedCaseCode}</span>
+                    )}
+                  </div>
+                )}
               </div>
-
-              {c.submittedBy && !/^self-report/i.test(c.submittedBy.trim()) && (
-                <div className="p-1.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 mt-1">
-                  <p className="text-[8.5px] font-extrabold text-amber-800 dark:text-amber-300 uppercase">
-                    {isTl ? 'Uri ng Pagpasa' : 'Submission Type'}
-                  </p>
-                  <p className="text-[10.5px] font-bold text-amber-900 dark:text-amber-100">
-                    {c.submittedBy}
-                  </p>
-                </div>
+              {c.truthful && (
+                <p className="px-1 text-[12px] text-[#6E6E73] dark:text-[#A1A1A6] flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" aria-hidden />
+                  {isTl ? 'Nangako ang estudyante na totoo ang report.' : 'The student promised the report is true.'}
+                </p>
               )}
             </div>
 
-            {account?.status === 'Deactivated' && (
-              <div className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-[10.5px] font-bold text-rose-700">
-                {isTl ? 'Naka-block ang account.' : 'Account is blocked.'}
+            {/* frosted action bar: the next step only */}
+            <div className="glass-bar px-6 py-3.5 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">
+                {c.status === 'Pending'
+                  ? isTl ? 'Basahin, tapos magdesisyon. (A = approve, R = reject)' : 'Read, then decide. (A = approve, R = reject)'
+                  : c.status === 'Approved' && !c.linkedCaseCode
+                  ? isTl ? 'Na-approve. Susunod: gawan ng kaso kung kailangan.' : 'Approved. Next: open a case if needed.'
+                  : isTl ? 'Tapos na ang desisyon sa report na ito.' : 'This report is decided.'}
+              </p>
+              <div className="flex items-center gap-2">
+                {c.status === 'Pending' ? (
+                  <>
+                    <button type="button" disabled={busy} data-action="reject" onClick={onReject} className="h-10 px-5 rounded-full text-[14px] font-medium text-rose-700 dark:text-rose-300 bg-white/80 dark:bg-white/[0.06] shadow-[0_0_0_0.5px_rgb(15_23_42/0.12)] hover:bg-rose-50 dark:hover:bg-rose-950/30 disabled:opacity-50 active:scale-[0.97] transition">
+                      {isTl ? 'I-reject' : 'Reject'}
+                    </button>
+                    <button type="button" disabled={busy} data-action="approve" onClick={onApprove} className="btn-lit btn-lit-green h-10 px-6 text-[14px] font-semibold">
+                      {isTl ? 'I-approve' : 'Approve'}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {(c.chatStatus === 'Open' || c.chatStatus === 'Closed') && (
+                      <button type="button" onClick={onOpenChat} className="h-10 px-5 rounded-full text-[14px] font-medium text-[#1E469B] dark:text-[#7CB8F7] bg-white/80 dark:bg-white/[0.06] shadow-[0_0_0_0.5px_rgb(15_23_42/0.12)] hover:bg-white dark:hover:bg-white/[0.1] active:scale-[0.97] transition">
+                        {c.chatStatus === 'Open' ? (isTl ? 'Buksan ang chat' : 'Open chat') : isTl ? 'Tingnan ang chat' : 'View chat'}
+                      </button>
+                    )}
+                    {c.status === 'Approved' && !c.linkedCaseCode && onCreateCase && (
+                      <button type="button" data-action="create-case-always" onClick={onCreateCase} className="btn-lit h-10 px-6 text-[14px] font-semibold">
+                        {isTl ? 'Gumawa ng kaso' : 'Create case'}
+                      </button>
+                    )}
+                  </>
+                )}
               </div>
-            )}
-          </div>
-
-          {account && account.status !== 'Deactivated' && (
-            <div className="p-2 border-t border-[#DCE5F2] dark:border-[#1E3158]">
-              <button
-                type="button"
-                data-action="deactivate"
-                onClick={onDeactivate}
-                className={`${btn} px-2.5 py-1 text-[11px] saas-card-subtle text-rose-700 dark:text-rose-300 w-full`}
-                title={isTl ? 'Para sa account na hindi totoong estudyante' : 'For accounts that are not real students'}
-              >
-                {isTl ? 'I-block ang fake account' : 'Block fake account'}
-              </button>
             </div>
-          )}
-        </section>
-
-        {/* ---------- RIGHT: the report (Organized High-Clarity Mini Cards) ---------- */}
-        <section className={cardBox} data-concern-report>
-          <div className="px-4 py-2 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-center justify-between bg-slate-50/60 dark:bg-[#0B1527]/60">
-            <span className="text-[10px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7] flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5 text-slate-400" />
-              <span>{isTl ? 'Mga Tala ng Insidente' : 'Incident Details & Record'}</span>
-            </span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-400/20">
-              {c.code}
-            </span>
-          </div>
-
-          <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2 clean-scroll">
-            {(() => {
-              const parsed = parseIncidentData(c.whatHappened, c.who);
-              return (
-                <>
-                  {/* CARD 1: RESPONDENT CARD (Aligned & Clean) */}
-                  <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-2.5 shadow-xs space-y-2">
-                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-1.5">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
-                        {isTl ? 'Inirereklamo (Respondent)' : 'Respondent'}
-                      </span>
-
-                      {onCreateCase && (
-                        <button
-                          type="button"
-                          data-action="create-case-always"
-                          onClick={onCreateCase}
-                          className="px-2.5 py-1 rounded-lg bg-[#1E469B] hover:bg-[#16377E] active:scale-[0.97] text-white text-[10px] font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer"
-                          title={isTl ? 'Gumawa ng pormal na kaso para sa inirereklamo' : 'Create case for respondent'}
-                        >
-                          <span>+</span>
-                          <span>{isTl ? 'Gumawa ng Kaso' : 'Create Case'}</span>
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="rounded-lg bg-slate-50/80 dark:bg-[#0B1527]/80 px-2.5 py-2 border border-slate-200/60 dark:border-white/5">
-                        <p className="text-[9px] font-black uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
-                          {isTl ? 'Pangalan' : 'Student Name'}
-                        </p>
-                        <p className="text-xs font-normal text-[#0B1F4D] dark:text-slate-200 mt-0.5 truncate" title={parsed.respondentName}>
-                          {parsed.respondentName}
-                        </p>
-                      </div>
-
-                      <div className="rounded-lg bg-slate-50/80 dark:bg-[#0B1527]/80 px-2.5 py-2 border border-slate-200/60 dark:border-white/5">
-                        <p className="text-[9px] font-black uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
-                          {isTl ? 'Section / Palatandaan' : 'Section / Attributes'}
-                        </p>
-                        <p className="text-xs font-normal text-[#0B1F4D] dark:text-slate-200 mt-0.5 truncate" title={parsed.respondentDetails || none}>
-                          {parsed.respondentDetails || none}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* COMPACT METRIC STRIP: WHEN · LOCATION · WITNESSES (Pantay na pantay, Bold Labels, Regular Text) */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="p-2.5 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs">
-                      <p className="text-[9px] font-black uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
-                        {isTl ? 'Kailan' : 'When'}
-                      </p>
-                      <p className="text-xs font-normal text-[#0B1F4D] dark:text-slate-200 mt-1 truncate" title={c.when || none}>
-                        {c.when || none}
-                      </p>
-                    </div>
-
-                    <div className="p-2.5 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs">
-                      <p className="text-[9px] font-black uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
-                        {isTl ? 'Saan' : 'Where'}
-                      </p>
-                      <p className="text-xs font-normal text-[#0B1F4D] dark:text-slate-200 mt-1 truncate" title={c.where || none}>
-                        {c.where || none}
-                      </p>
-                    </div>
-
-                    <div className="p-2.5 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] shadow-xs">
-                      <p className="text-[9px] font-black uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
-                        {isTl ? 'Mga Saksi' : 'Witnesses'}
-                      </p>
-                      <p className="text-xs font-normal text-[#0B1F4D] dark:text-slate-200 mt-1 truncate" title={c.witnesses || none}>
-                        {c.witnesses || (isTl ? 'Wala' : 'None')}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* NARRATIVE STATEMENT (Pantay, Bold Label, Regular Answer) */}
-                  <div className="rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0D182E] p-3 shadow-xs space-y-2">
-                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-1.5">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
-                        {isTl ? 'Salaysay ng Pangyayari (Statement)' : 'Narrative Statement'}
-                      </span>
-                      {parsed.reporterType && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-                          {parsed.reporterType}
-                        </span>
-                      )}
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-slate-50/80 dark:bg-[#0B1527]/80 border border-slate-200/60 dark:border-white/5">
-                      <p className="text-xs leading-relaxed text-[#0B1F4D] dark:text-slate-200 font-normal whitespace-pre-wrap">
-                        {parsed.cleanNarrative}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* EVIDENCE PHOTOS CARD (Photos of injuries, damages, vape/contraband, screenshots) */}
-                  {parsed.evidencePhotos.length > 0 && (
-                    <div className="rounded-xl border border-rose-200 dark:border-rose-900/60 bg-gradient-to-br from-rose-50/40 via-white to-orange-50/20 dark:from-[#2A1018] dark:to-[#0B1527] p-2 shadow-xs space-y-1.5">
-                      <div className="flex items-center justify-between border-b border-rose-100 dark:border-rose-900/40 pb-1">
-                        <span className="text-[9.5px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-300 flex items-center gap-1">
-                          <Camera className="w-3 h-3 text-rose-500" />
-                          <span>{isTl ? 'Kalakip na Ebidensya' : 'Photo Evidence'}</span>
-                        </span>
-                        <span className="text-[9px] font-black px-1.5 py-0.2 rounded-full bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-400/30">
-                          {parsed.evidencePhotos.length} {isTl ? 'Litrato' : 'Photos'}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 pt-0.5">
-                        {parsed.evidencePhotos.map((imgSrc, pIdx) => (
-                          <button
-                            key={pIdx}
-                            type="button"
-                            onClick={() => setView({ src: imgSrc, label: `Ebidensya ${pIdx + 1}` })}
-                            title={isTl ? 'Pindutin para palakihin ang ebidensya' : 'Enlarge evidence'}
-                            className="relative group rounded-lg overflow-hidden border border-rose-300 dark:border-rose-800 aspect-video bg-black/10 hover:ring-2 hover:ring-rose-500/40 transition-all cursor-pointer shadow-xs active:scale-[0.97]"
-                          >
-                            <img src={imgSrc} alt={`Evidence ${pIdx + 1}`} className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold">
-                              <span className='flex items-center gap-1'><Maximize2 className='w-3 h-3' /><span>{isTl ? 'Palakihin' : 'Zoom'}</span></span>
-                            </div>
-                            <span className="absolute bottom-1 left-1 px-1 py-0.2 rounded text-[8px] font-black bg-black/70 text-white">
-                              {pIdx + 1}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* TRUTHFULNESS & DATA PRIVACY BANNER */}
-                  <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20">
-                    <span className="text-[9.5px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                      <span>
-                        {c.truthful
-                          ? (isTl ? 'Sertipikadong totoo ang salaysay (RA 10173 Protected).' : 'Student certified truthful under RA 10173.')
-                          : (isTl ? 'Walang pormal na pangako.' : 'Uncertified submission.')}
-                      </span>
-                    </span>
-                    <span className="text-[8.5px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-                      VERIFIED
-                    </span>
-                  </div>
-
-                  {/* REJECTION OR CASE LINK NOTICES */}
-                  {c.status === 'Rejected' && (
-                    <div className="rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 p-2">
-                      <p className="text-[9px] font-black uppercase text-rose-800 dark:text-rose-300">
-                        {isTl ? 'Dahilan ng Pag-reject' : 'Rejection Reason'}
-                      </p>
-                      <p className="text-xs font-semibold text-rose-900 dark:text-rose-100 mt-0.5">
-                        {c.rejectReason || '—'}
-                      </p>
-                    </div>
-                  )}
-
-                  {c.status === 'Approved' && c.linkedCaseCode && (
-                    <div className="p-2 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 flex items-center justify-between">
-                      <span className="text-xs text-[#0B1F4D] dark:text-white font-medium">
-                        {isTl ? 'Naka-link sa Kaso:' : 'Linked Case:'}
-                      </span>
-                      {onOpenCase ? (
-                        <button
-                          type="button"
-                          onClick={() => onOpenCase(c.linkedCaseCode)}
-                          className="px-2.5 py-0.5 rounded bg-[#1E469B] text-white text-xs font-black shadow-xs hover:bg-[#16377E] active:scale-[0.97]"
-                        >
-                          {c.linkedCaseCode} ↗
-                        </button>
-                      ) : (
-                        <span className="font-extrabold text-[#1E469B] dark:text-[#7CB8F7] text-xs">
-                          {c.linkedCaseCode}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </>
-              );
-            })()}
-          </div>
-          {(c.status === 'Pending' || c.chatStatus === 'Open' || c.chatStatus === 'Closed') && (
-            <div className={`${cardFoot} justify-end`}>
-              {c.status === 'Pending' ? (
-                <>
-                  <button type="button" disabled={busy} data-action="reject" onClick={onReject} className={`${btn} px-3.5 py-2 text-xs saas-card-subtle text-rose-700 dark:text-rose-300 active:scale-[0.97]`}>
-                    {isTl ? 'I-reject' : 'Reject'}
-                  </button>
-                  <button type="button" disabled={busy} data-action="approve" onClick={onApprove} className={`${btn} px-4 py-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 active:scale-[0.97]`}>
-                    {isTl ? 'I-approve' : 'Approve'}
-                  </button>
-                </>
-              ) : (
-                <button type="button" onClick={onOpenChat} className={`${btn} px-4 py-2 text-xs bg-[#1E469B] text-white active:scale-[0.97]`}>
-                  {c.chatStatus === 'Open' ? (isTl ? 'Buksan ang chat' : 'Open the chat') : isTl ? 'Tingnan ang chat (sarado)' : 'View chat (closed)'}
-                </button>
-              )}
-            </div>
-          )}
-        </section>
-      </div>
+          </>
+        );
+      })()}
 
       {view &&
         createPortal(
@@ -1527,6 +1480,7 @@ const ChatsView: React.FC<{
 // drawn once per new message — typing in the box does not redraw the chat
 const Bubbles = React.memo(function Bubbles({ msgs, showAll, studentName, when }: { msgs: ConcernMessage[]; showAll: boolean; studentName: string; when: (s: string) => string }) {
   const visible = showAll ? msgs : msgs.slice(-SHOW_MSGS);
+  const isTl = useLanguage().locale === 'tl';
   return (
     <>
       {visible.map((m) => (
@@ -1537,7 +1491,7 @@ const Bubbles = React.memo(function Bubbles({ msgs, showAll, studentName, when }
               <div className="flex items-center gap-1">
                 <span>{when(m.createdAt)}</span>
                 {m.sender === 'office' && (
-                  <span className="inline-flex items-center gap-0.5 text-sky-200" title="Delivered & Seen">
+                  <span className="inline-flex items-center gap-0.5 text-sky-200" title={isTl ? 'Naipadala at nakita' : 'Delivered and seen'}>
                     <CheckCheck className="w-3 h-3 text-sky-300" />
                     <span className="text-[9px] font-sans font-black tracking-wider uppercase">Seen</span>
                   </span>
@@ -1554,7 +1508,14 @@ const Bubbles = React.memo(function Bubbles({ msgs, showAll, studentName, when }
 
 // DEV only — lets us try the page before the student portal exists
 const PracticeButton: React.FC<{ students: StudentRecord[]; onDone: (ok: boolean) => void }> = ({ students, onDone }) => (
-  <div className="flex gap-1.5">
+  <details className="relative">
+    <summary
+      title="Practice data (dev server only)"
+      className="list-none [&::-webkit-details-marker]:hidden cursor-pointer h-9 px-3 rounded-full text-[12px] font-medium text-[#8E8E93] border border-dashed border-[#C7C7CC] dark:border-white/20 hover:text-[#1D1D1F] dark:hover:text-white"
+    >
+      Dev
+    </summary>
+    <div className="absolute right-0 top-full mt-2 z-30 p-1.5 ring-card w-[240px] flex flex-col">
     <button
       type="button"
       data-action="practice-concern"
@@ -1572,9 +1533,9 @@ const PracticeButton: React.FC<{ students: StudentRecord[]; onDone: (ok: boolean
           })
         );
       }}
-      className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-slate-500 border border-dashed border-slate-400"
+      className="w-full text-left px-3 py-2 rounded-xl text-[13px] text-[#1D1D1F] dark:text-[#F5F5F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
     >
-      + Practice concern (dev only)
+      + Practice concern
     </button>
     <button
       type="button"
@@ -1592,11 +1553,12 @@ const PracticeButton: React.FC<{ students: StudentRecord[]; onDone: (ok: boolean
           })
         )
       }
-      className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-slate-500 border border-dashed border-slate-400"
+      className="w-full text-left px-3 py-2 rounded-xl text-[13px] text-[#1D1D1F] dark:text-[#F5F5F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
     >
-      + Practice fake account (dev only)
+      + Practice fake account
     </button>
-  </div>
+    </div>
+  </details>
 );
 
 export default ConcernsHub;
