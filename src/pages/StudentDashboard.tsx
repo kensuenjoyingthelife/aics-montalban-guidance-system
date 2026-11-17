@@ -32,7 +32,7 @@ import {
 import { WavyBackground } from '../components/auth/WavyBackground';
 import { SoundTogglePill, soundFX } from '../services/soundEngine';
 import { notificationService } from '../services/notificationService';
-import { SkyThemePill } from '../context/ThemeContext';
+import { SkyThemePill, useTheme } from '../context/ThemeContext';
 import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
 import { StudentPortalUser } from '../services/studentAuthService';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../services/supabaseClient';
@@ -67,7 +67,9 @@ interface StudentConcernHistory {
 }
 
 export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSignOut }) => {
-  const { locale } = useLanguage();
+  const { locale, setLocale } = useLanguage();
+  const { theme, toggleThemeWithAura } = useTheme();
+  const [soundOn, setSoundOn] = useState<boolean>(() => soundFX.isEnabled());
   const isTl = locale === 'tl';
 
   const [activeTab, setActiveTab] = useState<'submit' | 'history' | 'chat'>('submit');
@@ -644,245 +646,95 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       </header>
 
       {/* Right Drawer Navigation (Native CSS for 100% reliable clicks on mobile) */}
+      {/* Menu: iOS Settings-style sheet (follows light/dark). The 3 sections already live in the tabs. */}
       {isMenuOpen && (
-        <div className="fixed inset-0 z-[99990] flex justify-end">
-          {/* Backdrop */}
-          <div
-            onClick={() => setIsMenuOpen(false)}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-          />
-
-          {/* Right Drawer Panel */}
-          <div
-            className="relative h-full w-[290px] sm:w-[340px] bg-[#071330] border-l border-white/15 z-[99995] flex flex-col justify-between shadow-2xl p-5 overflow-y-auto"
+        <div className="fixed inset-0 z-[99990] flex justify-end" role="dialog" aria-modal="true" aria-label={isTl ? 'Menu' : 'Menu'}>
+          <div onClick={() => setIsMenuOpen(false)} className="fixed inset-0 bg-black/30 backdrop-blur-[2px]" />
+          <motion.div
+            initial={{ x: 24, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+            className="relative h-full w-[min(360px,92vw)] sd-sheet z-[99995] flex flex-col overflow-y-auto"
           >
-            <div className="space-y-6">
-              {/* Drawer Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-white/10">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0"><Compass className="w-4 h-4" /></div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-white">
-                      AICS KALANG BA
-                    </h3>
-                    <p className="text-[10px] text-sky-300/70 font-semibold truncate max-w-[170px]">
-                      {user.fullName}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFX.playBackspace();
-                    setIsMenuOpen(false);
-                  }}
-                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+            <div className="flex items-center justify-between px-5 pt-5 pb-2">
+              <p className="text-[22px] font-bold tracking-tight text-[#1D1D1F] dark:text-white">{isTl ? 'Menu' : 'Menu'}</p>
+              <button type="button" onClick={() => setIsMenuOpen(false)} aria-label={isTl ? 'Isara' : 'Close'} className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.06] dark:bg-white/[0.12] text-[#6E6E73] dark:text-[#A1A1A6] active:scale-[0.97] transition-transform duration-150">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* who is signed in */}
+            <div className="mx-4 mt-2 sd-list p-4 flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full sd-hero text-white flex items-center justify-center text-[16px] font-semibold shrink-0">
+                {user.fullName.split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join('')}
               </div>
-
-              {/* Primary Features Navigation */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-semibold text-slate-400 block px-1">
-                  {isTl ? 'Pangunahing Aksyon' : 'Main Features'}
-                </label>
-
-                {/* 1. Report Concern */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFX.playToggleSwitch(true);
-                    setActiveTab('submit');
-                    setIsMenuOpen(false);
-                  }}
-                  className={`w-full p-3 rounded-2xl flex items-center justify-between transition-all cursor-pointer ${
-                    activeTab === 'submit'
-                      ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-lg ring-1 ring-sky-300'
-                      : 'bg-white/5 hover:bg-white/10 text-slate-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <FileEdit className="w-4 h-4 text-sky-400" />
-                    <div className="text-left">
-                      <p className="text-xs font-semibold">
-                        {isTl ? 'Report Concern' : 'Report Concern'}
-                      </p>
-                      <p className="text-[10px] text-sky-200/70">
-                        {isTl ? 'Magsumite ng insidente' : 'Submit confidential incident'}
-                      </p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 opacity-50" />
-                </button>
-
-                {/* 2. My Reports */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFX.playToggleSwitch(true);
-                    setActiveTab('history');
-                    void fetchMyHistory();
-                    setIsMenuOpen(false);
-                  }}
-                  className={`w-full p-3 rounded-2xl flex items-center justify-between transition-all cursor-pointer ${
-                    activeTab === 'history'
-                      ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-lg ring-1 ring-sky-300'
-                      : 'bg-white/5 hover:bg-white/10 text-slate-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <FolderArchive className="w-4 h-4 text-amber-400" />
-                    <div className="text-left">
-                      <p className="text-xs font-semibold">
-                        {isTl ? 'My Reports' : 'My Reports'}
-                      </p>
-                      <p className="text-[10px] text-sky-200/70">
-                        {isTl ? 'Subaybayan ang aksyon' : 'Track case resolutions'}
-                      </p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 opacity-50" />
-                </button>
-
-                {/* 3. Guidance Chat */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFX.playToggleSwitch(true);
-                    setActiveTab('chat');
-                    setIsMenuOpen(false);
-                  }}
-                  className={`w-full p-3 rounded-2xl flex items-center justify-between transition-all cursor-pointer ${
-                    activeTab === 'chat'
-                      ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-lg ring-1 ring-sky-300'
-                      : 'bg-white/5 hover:bg-white/10 text-slate-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <MessageSquare className="w-4 h-4 text-emerald-400" />
-                    <div className="text-left">
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-xs font-semibold">
-                          {isTl ? 'Guidance Chat' : 'Guidance Chat'}
-                        </p>
-                        {history.some((c) => c.chatStatus === 'Open') && (
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                        )}
-                      </div>
-                      <p className="text-[10px] text-sky-200/70">
-                        {isTl ? '1-on-1 counselor live chat' : '1-on-1 private counselor chat'}
-                      </p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 opacity-50" />
-                </button>
-              </div>
-
-              {/* System Settings & Toggles Cluster */}
-              <div className="space-y-3 pt-4 border-t border-white/10">
-                <label className="text-[10px] font-semibold text-slate-400 block px-1">
-                  {isTl ? 'Hitsura at Wika' : 'Display & Preferences'}
-                </label>
-
-                {/* Theme Switcher Row */}
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
-                  <span className="text-xs font-bold text-slate-300">
-                    {isTl ? 'Dark / Light Mode' : 'Sky Theme (Dark/Light)'}
-                  </span>
-                  <SkyThemePill />
-                </div>
-
-                {/* Language Switcher Row */}
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
-                  <span className="text-xs font-bold text-slate-300">
-                    {isTl ? 'Wika (EN / TL)' : 'Language (EN / TL)'}
-                  </span>
-                  <LocaleSwitchPill />
-                </div>
-
-                {/* Notifications Toggle Row */}
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
-                  <div className="flex items-center gap-2">
-                    {notificationsEnabled ? (
-                      <Bell className="w-4 h-4 text-emerald-400" />
-                    ) : (
-                      <BellOff className="w-4 h-4 text-slate-400" />
-                    )}
-                    <span className="text-xs font-bold text-slate-300">
-                      {isTl ? 'Phone Notification' : 'Push Notification'}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const next = !notificationsEnabled;
-                      if (next) {
-                        const granted = await notificationService.requestPermission();
-                        setNotificationsEnabled(granted);
-                        if (granted) {
-                          soundFX.playToggleSwitch(true);
-                          void notificationService.sendDiscreetNotification(
-                            'AICS Kalang Ba',
-                            isTl
-                              ? 'Aktibo na ang phone notifications para sa iyong mga reports!'
-                              : 'Phone notifications are now enabled for your reports!'
-                          );
-                        } else {
-                          soundFX.playError();
-                        }
-                      } else {
-                        soundFX.playToggleSwitch(false);
-                        notificationService.setEnabled(false);
-                        setNotificationsEnabled(false);
-                      }
-                    }}
-                    className={`btn-press px-2.5 py-1 rounded-full text-[11px] font-semibold cursor-pointer transition-all ${
-                      notificationsEnabled
-                        ? 'bg-emerald-500 text-white shadow-sm'
-                        : 'bg-white/10 text-slate-400'
-                    }`}
-                  >
-                    {notificationsEnabled ? (isTl ? 'Bukas' : 'ON') : (isTl ? 'Naka-off' : 'OFF')}
-                  </button>
-                </div>
-
-                {/* Sound FX Toggle Row */}
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
-                  <span className="text-xs font-bold text-slate-300">
-                    {isTl ? 'Audio & Sound FX' : 'Audio FX'}
-                  </span>
-                  <SoundTogglePill />
-                </div>
-
-                {/* Install App on Phone / Desktop Button */}
-                <button
-                  type="button"
-                  onClick={handleInstallClick}
-                  className="btn-press w-full p-3 rounded-xl sd-primary text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all"
-                >
-                  <Download className="w-4 h-4 shrink-0" />
-                  <span>{isTl ? 'I-install ang App sa Telepono / PC' : 'Install App to Phone / PC'}</span>
-                </button>
-
-                {/* User Guide Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFX.playToggleSwitch(true);
-                    setShowMobileTour(true);
-                    setIsMenuOpen(false);
-                  }}
-                  className="w-full p-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-200 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <HelpCircle className="w-4 h-4" />
-                  <span>{isTl ? 'Buksan ang Gabay sa Paggamit' : 'Open User Guide Tour'}</span>
-                </button>
+              <div className="min-w-0">
+                <p className="text-[16px] font-semibold text-[#1D1D1F] dark:text-white truncate">{user.fullName}</p>
+                <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6] truncate">{[user.gradeSection, user.studentNumber].filter(Boolean).join(' · ')}</p>
               </div>
             </div>
 
-            {/* Drawer Footer: Safe Sign Out */}
-            <div className="pt-4 border-t border-white/10 space-y-2">
+            {/* display */}
+            <p className="sd-list-title">{isTl ? 'Itsura' : 'Display'}</p>
+            <div className="mx-4 sd-list divide-y divide-black/[0.06] dark:divide-white/[0.08]">
+              <div className="sd-row">
+                <span className="sd-row-label">{isTl ? 'Tema' : 'Appearance'}</span>
+                <div className="seg-track p-0.5">
+                  {([['light', isTl ? 'Light' : 'Light'], ['dark', isTl ? 'Dark' : 'Dark']] as const).map(([k, l]) => (
+                    <button key={k} type="button" onClick={(e) => theme !== k && toggleThemeWithAura(e)} className={`h-7 px-3 text-[13px] ${theme === k ? 'seg-on' : 'seg-off'}`}>{l}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="sd-row">
+                <span className="sd-row-label">{isTl ? 'Wika' : 'Language'}</span>
+                <div className="seg-track p-0.5">
+                  {([['en', 'English'], ['tl', 'Taglish']] as const).map(([k, l]) => (
+                    <button key={k} type="button" onClick={() => setLocale(k)} className={`h-7 px-3 text-[13px] ${locale === k ? 'seg-on' : 'seg-off'}`}>{l}</button>
+                  ))}
+                </div>
+              </div>
+              <label className="sd-row cursor-pointer">
+                <span className="sd-row-label">{isTl ? 'Mga tunog' : 'Sounds'}</span>
+                <input type="checkbox" className="sd-switch" checked={soundOn} onChange={(e) => { soundFX.setEnabled(e.target.checked); setSoundOn(e.target.checked); }} />
+              </label>
+              <label className="sd-row cursor-pointer">
+                <span className="sd-row-label">{isTl ? 'Notification sa phone' : 'Notifications'}</span>
+                <input
+                  type="checkbox"
+                  className="sd-switch"
+                  checked={notificationsEnabled}
+                  onChange={async (e) => {
+                    if (e.target.checked) {
+                      const granted = await notificationService.requestPermission();
+                      setNotificationsEnabled(granted);
+                      if (granted) void notificationService.sendDiscreetNotification('AICS Kalang Ba', isTl ? 'Bukas na ang notifications para sa iyong mga report.' : 'Notifications are on for your reports.');
+                    } else {
+                      notificationService.setEnabled(false);
+                      setNotificationsEnabled(false);
+                    }
+                  }}
+                />
+              </label>
+            </div>
+
+            {/* app */}
+            <p className="sd-list-title">{isTl ? 'App' : 'App'}</p>
+            <div className="mx-4 sd-list divide-y divide-black/[0.06] dark:divide-white/[0.08]">
+              <button type="button" onClick={handleInstallClick} className="sd-row w-full text-left">
+                <span className="flex items-center gap-3"><span className="w-7 h-7 rounded-lg tile-grad tile-blue text-white flex items-center justify-center"><Download className="w-4 h-4" /></span><span className="sd-row-label">{isTl ? 'I-install ang app' : 'Install the app'}</span></span>
+                <ChevronRight className="w-4 h-4 text-[#C7C7CC]" />
+              </button>
+              <button type="button" onClick={() => { setIsMenuOpen(false); setShowMobileTour(true); }} className="sd-row w-full text-left">
+                <span className="flex items-center gap-3"><span className="w-7 h-7 rounded-lg tile-grad tile-teal text-white flex items-center justify-center"><HelpCircle className="w-4 h-4" /></span><span className="sd-row-label">{isTl ? 'Gabay sa paggamit' : 'How to use'}</span></span>
+                <ChevronRight className="w-4 h-4 text-[#C7C7CC]" />
+              </button>
+              <button type="button" onClick={() => window.location.reload()} className="sd-row w-full text-left">
+                <span className="flex items-center gap-3"><span className="w-7 h-7 rounded-lg tile-grad tile-slate text-white flex items-center justify-center"><RefreshCw className="w-4 h-4" /></span><span className="sd-row-label">{isTl ? 'I-refresh' : 'Refresh'}</span></span>
+                <ChevronRight className="w-4 h-4 text-[#C7C7CC]" />
+              </button>
+            </div>
+
+            <div className="mx-4 mt-6 sd-list">
               <button
                 type="button"
                 onClick={() => {
@@ -890,16 +742,14 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   setIsMenuOpen(false);
                   onSignOut();
                 }}
-                className="btn-press w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-semibold text-xs shadow-lg shadow-rose-950/40 border border-rose-400/40 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                className="sd-row w-full !justify-center gap-2 text-[15px] font-medium text-[#FF3B30]"
               >
                 <LogOut className="w-4 h-4" />
-                <span>{isTl ? 'Sign Out sa Portal' : 'Sign Out of Portal'}</span>
+                {isTl ? 'Mag-sign out' : 'Sign out'}
               </button>
-              <p className="text-[10px] text-center text-slate-400 font-medium">
-                AICS Montalban · RA 10173 Protected
-              </p>
             </div>
-          </div>
+            <p className="mt-auto px-6 py-5 text-[12px] text-center text-[#8E8E93]">{isTl ? 'Pribado at protektado (RA 10173)' : 'Private and protected (RA 10173)'}</p>
+          </motion.div>
         </div>
       )}
 
