@@ -885,7 +885,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35 }}
             className={`w-full ${
-              mode === 'register' ? 'max-w-5xl xl:max-w-6xl' : 'max-w-[430px]'
+              mode === 'register' ? 'max-w-5xl xl:max-w-6xl' : mode === 'forgot' ? 'max-w-[540px]' : 'max-w-[430px]'
             } cosmic-glass-card p-4 sm:p-7 sm:py-8 space-y-5 sm:space-y-6 relative z-10 order-2 lg:order-none`}
           >
           {/* ====================================================
