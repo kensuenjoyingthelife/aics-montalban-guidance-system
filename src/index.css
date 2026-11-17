@@ -2211,106 +2211,53 @@ html.lite .urgent-pill::before { animation: none; }
 }
 
 /* =============================================================================
-   STUDENT DASHBOARD (web + mobile) — Apple UI, same feel as the desktop app:
-   mesh-gradient canvas, frosted-glass header and cards, segmented tabs, calm sentence-case labels.
-   Scoped to .portal-apple so the sign-in screens are untouched.
+   STUDENT DASHBOARD (web + mobile) — same surfaces as the desktop app (AGENTS.md §2):
+   #F5F5F7 canvas, white cards with a 0.5px hairline and a soft wide shadow, quiet grouped panels,
+   one Apple-blue primary, iOS bottom tab bar on phones.
    ============================================================================= */
-:root.dark .portal-apple.student-portal-canvas {
-  background:
-    radial-gradient(900px 520px at 12% -5%, rgba(56, 189, 248, 0.22), transparent 60%),
-    radial-gradient(760px 520px at 100% 20%, rgba(129, 140, 248, 0.22), transparent 60%),
-    radial-gradient(900px 600px at 50% 110%, rgba(30, 70, 155, 0.45), transparent 60%),
-    #070F24 !important;
+:root .sd-canvas.student-portal-canvas, :root.dark .sd-canvas.student-portal-canvas, :root:not(.dark) .sd-canvas.student-portal-canvas { background: #F5F5F7 !important; color: #1D1D1F !important; }
+:root.dark .sd-canvas.student-portal-canvas { background: #0B1220 !important; color: #F5F5F7 !important; }
+.sd-header { background: rgba(245, 245, 247, 0.8); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-bottom: 0.5px solid rgba(0, 0, 0, 0.1); }
+:root.dark .sd-header { background: rgba(11, 18, 32, 0.78); border-bottom-color: rgba(255, 255, 255, 0.1); }
+.sd-tabbar { background: rgba(249, 249, 249, 0.86); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-top: 0.5px solid rgba(0, 0, 0, 0.12); }
+:root.dark .sd-tabbar { background: rgba(18, 26, 44, 0.86); border-top-color: rgba(255, 255, 255, 0.1); }
+.sd-card { background: #FFFFFF !important; border: 0.5px solid rgba(0, 0, 0, 0.08) !important; border-radius: 20px !important; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 28px -12px rgba(0, 0, 0, 0.12) !important; color: #1D1D1F; backdrop-filter: none !important; }
+:root.dark .sd-card { background: #141C2E !important; border-color: rgba(255, 255, 255, 0.08) !important; box-shadow: 0 8px 28px -12px rgba(0, 0, 0, 0.6) !important; color: #F5F5F7; }
+.sd-group { background: #F5F5F7 !important; border: 0 !important; border-radius: 16px !important; box-shadow: none !important; }
+:root.dark .sd-group { background: rgba(255, 255, 255, 0.05) !important; }
+.sd-note { background: rgba(10, 132, 255, 0.07) !important; border: 0 !important; }
+:root.dark .sd-note { background: rgba(10, 132, 255, 0.12) !important; }
+.sd-primary { background: #0A84FF !important; box-shadow: 0 6px 16px -6px rgba(10, 132, 255, 0.55) !important; border: 0 !important; }
+.sd-primary:hover { background: #0071E3 !important; }
+.sd-bubble-me { background: #0A84FF !important; color: #FFFFFF !important; }
+/* text inside the dashboard: real Apple greys instead of navy on blue */
+.sd-canvas .card-title-text { color: #1D1D1F !important; }
+.sd-canvas .card-subtitle-text { color: #6E6E73 !important; }
+:root.dark .sd-canvas .card-title-text { color: #F5F5F7 !important; }
+:root.dark .sd-canvas .card-subtitle-text { color: #A1A1A6 !important; }
+.sd-canvas main input:not([type='checkbox']):not([type='radio']):not([type='file']), .sd-canvas main select, .sd-canvas main textarea {
+  border-radius: 12px !important; border: 0.5px solid rgba(0, 0, 0, 0.12) !important; background: #FFFFFF !important; color: #1D1D1F !important; box-shadow: none !important;
 }
-:root:not(.dark) .portal-apple.student-portal-canvas {
-  background:
-    radial-gradient(900px 520px at 10% -10%, rgba(125, 211, 252, 0.55), transparent 60%),
-    radial-gradient(760px 520px at 100% 15%, rgba(199, 210, 254, 0.7), transparent 60%),
-    radial-gradient(900px 600px at 50% 115%, rgba(191, 219, 254, 0.8), transparent 60%),
-    #F5F7FB !important;
-  color: #1D1D1F !important;
+:root.dark .sd-canvas main input:not([type='checkbox']):not([type='radio']):not([type='file']), :root.dark .sd-canvas main select, :root.dark .sd-canvas main textarea {
+  border-color: rgba(255, 255, 255, 0.12) !important; background: rgba(255, 255, 255, 0.06) !important; color: #F5F5F7 !important;
 }
-/* header: floating frosted capsule */
-.portal-apple .student-portal-header {
-  margin: 10px auto 0;
-  width: calc(100% - 20px);
-  max-width: 1120px;
-  border-radius: 22px !important;
-  border: 1px solid rgba(255, 255, 255, 0.55) !important;
-  background: rgba(255, 255, 255, 0.62) !important;
-  backdrop-filter: blur(22px) saturate(180%);
-  -webkit-backdrop-filter: blur(22px) saturate(180%);
-  box-shadow: 0 10px 30px -12px rgba(15, 23, 42, 0.25) !important;
-}
-:root.dark .portal-apple .student-portal-header {
-  border-color: rgba(255, 255, 255, 0.12) !important;
-  background: rgba(15, 27, 54, 0.55) !important;
-  box-shadow: 0 10px 34px -12px rgba(0, 0, 0, 0.6) !important;
-}
-/* cards: frosted glass with a soft light edge */
-.portal-apple .cosmic-glass-card {
-  border-radius: 28px !important;
-  border: 1px solid rgba(255, 255, 255, 0.7) !important;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.62)) !important;
-  backdrop-filter: blur(26px) saturate(180%);
-  -webkit-backdrop-filter: blur(26px) saturate(180%);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 24px 60px -24px rgba(30, 70, 155, 0.35) !important;
-  color: #1D1D1F;
-}
-:root.dark .portal-apple .cosmic-glass-card {
-  border-color: rgba(255, 255, 255, 0.12) !important;
-  background: linear-gradient(180deg, rgba(30, 44, 80, 0.62), rgba(15, 27, 54, 0.55)) !important;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 24px 60px -24px rgba(0, 0, 0, 0.7) !important;
-  color: #F5F5F7;
-}
-/* inner boxes (tabs track, sections): quiet grouped panels */
-.portal-apple .register-section-card {
-  border-radius: 20px !important;
-  border: 1px solid rgba(15, 23, 42, 0.06) !important;
-  background: rgba(118, 118, 128, 0.08) !important;
-  box-shadow: none !important;
-}
-:root.dark .portal-apple .register-section-card {
-  border-color: rgba(255, 255, 255, 0.07) !important;
-  background: rgba(255, 255, 255, 0.05) !important;
-}
-/* labels: calm sentence case instead of shouting ALL CAPS */
-.portal-apple main label.uppercase,
-.portal-apple main span.uppercase,
-.portal-apple main h3.uppercase {
-  text-transform: none !important;
-  letter-spacing: -0.005em !important;
-  font-weight: 600 !important;
-  font-size: 13px !important;
-}
-/* fields: soft filled inputs, blue focus ring */
-.portal-apple main input:not([type='checkbox']):not([type='radio']):not([type='file']),
-.portal-apple main select,
-.portal-apple main textarea {
-  border-radius: 14px !important;
-  border: 1px solid rgba(15, 23, 42, 0.1) !important;
-  background: rgba(255, 255, 255, 0.85) !important;
-  color: #1D1D1F !important;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-:root.dark .portal-apple main input:not([type='checkbox']):not([type='radio']):not([type='file']),
-:root.dark .portal-apple main select,
-:root.dark .portal-apple main textarea {
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  background: rgba(0, 0, 0, 0.28) !important;
-  color: #F5F5F7 !important;
-}
-.portal-apple main input:focus,
-.portal-apple main select:focus,
-.portal-apple main textarea:focus {
-  outline: none !important;
-  border-color: #0A84FF !important;
-  box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.18) !important;
-}
-/* buttons: every button gets the gentle Apple press */
-.portal-apple main button { transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease; }
-.portal-apple main button:active { transform: scale(0.97); }
-/* light mode: keep small chips and step dots readable on the white glass */
-:root:not(.dark) .portal-apple main .text-sky-300 { color: #0369A1 !important; }
-:root:not(.dark) .portal-apple main .bg-white\/20,
-:root:not(.dark) .portal-apple main .bg-white\/10 { background-color: rgba(15, 23, 42, 0.12) !important; }
+.sd-canvas main input:focus, .sd-canvas main select:focus, .sd-canvas main textarea:focus { outline: none !important; border-color: #0A84FF !important; box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.16) !important; }
+.sd-canvas main button { transition: transform 150ms ease, background-color 150ms ease; }
+.sd-canvas main button:active { transform: scale(0.97); }
+/* dashboard text + chips in Apple greys/blue (light mode was navy-on-blue and washed out) */
+.sd-canvas .register-section-title { color: #1D1D1F !important; }
+:root.dark .sd-canvas .register-section-title { color: #F5F5F7 !important; }
+:root:not(.dark) .sd-canvas main .text-sky-300 { color: #0A84FF !important; }
+:root:not(.dark) .sd-canvas main .bg-sky-500\/20 { background-color: rgba(10, 132, 255, 0.1) !important; border-color: transparent !important; }
+:root:not(.dark) .sd-canvas main .bg-white\/20, :root:not(.dark) .sd-canvas main .bg-white\/10 { background-color: rgba(0, 0, 0, 0.12) !important; }
+/* stronger than the portal's :root:not(.dark) colors */
+:root:not(.dark) .sd-canvas .card-title-text, :root:not(.dark) .sd-canvas .register-section-title { color: #1D1D1F !important; }
+:root:not(.dark) .sd-canvas .card-subtitle-text, :root:not(.dark) .sd-canvas .student-footer { color: #6E6E73 !important; }
+:root.dark .sd-canvas .card-title-text, :root.dark .sd-canvas .register-section-title { color: #F5F5F7 !important; }
+:root.dark .sd-canvas .card-subtitle-text, :root.dark .sd-canvas .student-footer { color: #A1A1A6 !important; }
+/* the page behind the dashboard uses the same canvas color (no dark strip under the footer) */
+html:has(.sd-canvas), body:has(.sd-canvas) { background: #F5F5F7 !important; }
+html.dark:has(.sd-canvas), html.dark:has(.sd-canvas) body { background: #0B1220 !important; }
+.sd-bubble-office { background: #FFFFFF !important; color: #1D1D1F !important; border: 0 !important; box-shadow: 0 1px 1px rgba(0, 0, 0, 0.06) !important; }
+:root.dark .sd-bubble-office { background: #2A3348 !important; color: #F5F5F7 !important; }
+.sd-bubble-office *, .sd-bubble-me * { font-weight: 500; }

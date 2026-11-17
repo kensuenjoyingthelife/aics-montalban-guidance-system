@@ -602,78 +602,32 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   };
 
   return (
-    <div className="min-h-[100dvh] w-full relative flex flex-col justify-start overflow-x-hidden font-sans select-none student-portal-canvas portal-apple bg-[#F4F8FD] dark:bg-[#05112B] text-slate-900 dark:text-white transition-colors duration-150">
-      <WavyBackground />
-
+    <div className="min-h-[100dvh] w-full relative flex flex-col justify-start overflow-x-hidden font-sans select-none student-portal-canvas sd-canvas bg-[#F5F5F7] dark:bg-[#0B1220] text-slate-900 dark:text-white transition-colors duration-150">
       {/* Top Navigation Bar - Clean, Organized & Non-Congested Header */}
-      <header className="relative z-20 w-full px-3 sm:px-8 py-2.5 sm:py-3.5 border-b border-sky-200/60 dark:border-white/10 student-portal-header bg-white/95 dark:bg-[#0B1E48]/95 backdrop-blur-md safe-area-top shadow-xs">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-          {/* Left Brand & Identification */}
-          <div className="flex items-center gap-2.5 sm:gap-3.5">
-            <img
-              src="/aics-logo.jpg"
-              alt="AICS Logo"
-              className="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover ring-2 ring-sky-300 dark:ring-white/40 bg-white p-0.5 shadow-xl shrink-0"
-            />
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-xs sm:text-base font-extrabold tracking-tight text-[#0B1F4D] dark:text-white uppercase truncate">
-                  AICS KALANG BA
-                </h1>
-                <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-                  ACTIVE
-                </span>
-              </div>
-              <p className="text-[10px] sm:text-xs text-[#1E469B] dark:text-[#9BCBFF] font-medium truncate">
-                {isTl ? 'Ligtas at Kumpidensyal na Portal' : 'Safe & Confidential Concern Reporting'}
-              </p>
+      <header className="sticky top-0 z-30 w-full sd-header safe-area-top">
+        <div className="max-w-3xl mx-auto h-14 px-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <img src="/aics-logo.jpg" alt="AICS" className="w-8 h-8 rounded-full object-cover bg-white shrink-0" />
+            <div className="min-w-0 leading-tight">
+              <p className="text-[15px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7] truncate">AICS Kalang Ba</p>
+              <p className="text-[12px] text-[#6E6E73] dark:text-[#A1A1A6] truncate">{user.fullName}</p>
             </div>
           </div>
-
-          {/* Right Action Bar & Drawer Toggle */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Quick Install Button on Top Header */}
-            <button
-              type="button"
-              onClick={handleInstallClick}
-              title={isTl ? 'I-install ang app' : 'Install app'}
-              className="btn-press p-2 sm:px-3 sm:py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md flex items-center gap-1.5 font-bold text-xs cursor-pointer transition-all"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">{isTl ? 'I-install' : 'Install'}</span>
-            </button>
-
-            {/* Quick Refresh Page Button */}
-            <button
-              type="button"
-              onClick={() => {
-                soundFX.playToggleSwitch(true);
-                window.location.reload();
-              }}
-              title={isTl ? 'I-refresh ang pahina' : 'Refresh page'}
-              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-sky-100 hover:bg-sky-200 dark:bg-white/10 dark:hover:bg-white/20 text-[#0B1F4D] dark:text-sky-200 border border-sky-300/70 dark:border-white/20 shadow-sm flex items-center gap-1.5 font-bold text-xs cursor-pointer transition-all"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{isTl ? 'Refresh' : 'Refresh'}</span>
-            </button>
-
-            {/* Desktop Emergency SOS Quick-Exit Pill */}
+          <div className="flex items-center gap-2 shrink-0">
             <div className="hidden md:block">
               <QuickExitButton onTrigger={onSignOut} />
             </div>
-
-            {/* Right Menu Drawer Trigger Button */}
             <button
               type="button"
               onClick={() => {
                 soundFX.playToggleSwitch(true);
                 setIsMenuOpen(true);
               }}
-              className="btn-press px-3 py-2 rounded-xl bg-[#1E469B] hover:bg-[#2557BE] text-white border border-sky-300 dark:border-sky-400/40 shadow-lg flex items-center gap-2 font-bold text-xs cursor-pointer"
-              aria-label="Open Navigation Menu"
+              aria-label={isTl ? 'Buksan ang menu' : 'Open menu'}
+              title={isTl ? 'Menu' : 'Menu'}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-[#1D1D1F] dark:text-[#F5F5F7] bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] active:scale-[0.97] transition-[transform,background-color] duration-150"
             >
-              <Menu className="w-4 h-4 text-sky-200" />
-              <span className="hidden sm:inline">{isTl ? 'Menu' : 'Menu'}</span>
+              <Menu className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -698,7 +652,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0"><Compass className="w-4 h-4" /></div>
                   <div>
-                    <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">
+                    <h3 className="text-sm font-semibold text-white">
                       AICS KALANG BA
                     </h3>
                     <p className="text-[10px] text-sky-300/70 font-semibold truncate max-w-[170px]">
@@ -720,7 +674,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
               {/* Primary Features Navigation */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block px-1">
+                <label className="text-[10px] font-semibold text-slate-400 block px-1">
                   {isTl ? 'Pangunahing Aksyon' : 'Main Features'}
                 </label>
 
@@ -741,7 +695,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   <div className="flex items-center gap-3">
                     <FileEdit className="w-4 h-4 text-sky-400" />
                     <div className="text-left">
-                      <p className="text-xs font-black">
+                      <p className="text-xs font-semibold">
                         {isTl ? 'Report Concern' : 'Report Concern'}
                       </p>
                       <p className="text-[10px] text-sky-200/70">
@@ -770,7 +724,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   <div className="flex items-center gap-3">
                     <FolderArchive className="w-4 h-4 text-amber-400" />
                     <div className="text-left">
-                      <p className="text-xs font-black">
+                      <p className="text-xs font-semibold">
                         {isTl ? 'My Reports' : 'My Reports'}
                       </p>
                       <p className="text-[10px] text-sky-200/70">
@@ -799,7 +753,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                     <MessageSquare className="w-4 h-4 text-emerald-400" />
                     <div className="text-left">
                       <div className="flex items-center gap-1.5">
-                        <p className="text-xs font-black">
+                        <p className="text-xs font-semibold">
                           {isTl ? 'Guidance Chat' : 'Guidance Chat'}
                         </p>
                         {history.some((c) => c.chatStatus === 'Open') && (
@@ -817,7 +771,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
               {/* System Settings & Toggles Cluster */}
               <div className="space-y-3 pt-4 border-t border-white/10">
-                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block px-1">
+                <label className="text-[10px] font-semibold text-slate-400 block px-1">
                   {isTl ? 'Hitsura at Wika' : 'Display & Preferences'}
                 </label>
 
@@ -873,7 +827,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                         setNotificationsEnabled(false);
                       }
                     }}
-                    className={`btn-press px-2.5 py-1 rounded-full text-[11px] font-black cursor-pointer transition-all ${
+                    className={`btn-press px-2.5 py-1 rounded-full text-[11px] font-semibold cursor-pointer transition-all ${
                       notificationsEnabled
                         ? 'bg-emerald-500 text-white shadow-sm'
                         : 'bg-white/10 text-slate-400'
@@ -895,7 +849,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 <button
                   type="button"
                   onClick={handleInstallClick}
-                  className="btn-press w-full p-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all"
+                  className="btn-press w-full p-3 rounded-xl sd-primary text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all"
                 >
                   <Download className="w-4 h-4 shrink-0" />
                   <span>{isTl ? 'I-install ang App sa Telepono / PC' : 'Install App to Phone / PC'}</span>
@@ -926,7 +880,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   setIsMenuOpen(false);
                   onSignOut();
                 }}
-                className="btn-press w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-extrabold text-xs shadow-lg shadow-rose-950/40 border border-rose-400/40 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                className="btn-press w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-semibold text-xs shadow-lg shadow-rose-950/40 border border-rose-400/40 flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
                 <span>{isTl ? 'Sign Out sa Portal' : 'Sign Out of Portal'}</span>
@@ -964,63 +918,33 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       </AnimatePresence>
 
       {/* Main Workspace Area (Clean Responsive Vertical Flow: Compact Spacing on Mobile) */}
-      <main className="relative z-20 flex-1 max-w-4xl w-full mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6 pb-20 sm:pb-8">
+      <main className="relative z-20 flex-1 max-w-3xl w-full mx-auto px-4 pt-4 sm:px-6 space-y-5 pb-28 md:pb-10">
         {/* Navigation Tabs (Hidden on Mobile < 768px because everything is neatly in the Right Menu Drawer) */}
-        <div className="hidden md:flex items-center justify-between border-b border-sky-200/60 dark:border-white/10 pb-3 flex-wrap gap-2">
-          <div className="inline-flex p-1 rounded-2xl register-section-card gap-1.5 flex-wrap">
-            <button
-              type="button"
-              onClick={() => {
-                soundFX.playToggleSwitch(true);
-                setActiveTab('submit');
-              }}
-              className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors cursor-pointer ${
-                activeTab === 'submit'
-                  ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-md'
-                  : 'card-subtitle-text hover:opacity-100 opacity-80'
-              }`}
-            >
-              <span className="flex items-center gap-1.5"><FileEdit className="w-4 h-4" /><span>{isTl ? 'Mag-report ng Concern' : 'Report Concern'}</span></span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                soundFX.playToggleSwitch(true);
-                setActiveTab('history');
-                void fetchMyHistory();
-              }}
-              className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors cursor-pointer ${
-                activeTab === 'history'
-                  ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-md'
-                  : 'card-subtitle-text hover:opacity-100 opacity-80'
-              }`}
-            >
-              <span className="flex items-center gap-1.5"><FolderArchive className="w-4 h-4" /><span>{isTl ? 'Aking mga Reports' : 'My Reports'}</span></span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                soundFX.playToggleSwitch(true);
-                setActiveTab('chat');
-              }}
-              className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors flex items-center gap-1.5 cursor-pointer ${
-                activeTab === 'chat'
-                  ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white shadow-md'
-                  : 'card-subtitle-text hover:opacity-100 opacity-80'
-              }`}
-            >
-              <span className="flex items-center gap-1.5"><MessageSquare className="w-4 h-4" /><span>{isTl ? 'Kausapin ang Guidance' : 'Guidance Chat'}</span></span>
-              {history.some((c) => c.chatStatus === 'Open') && (
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              )}
-            </button>
+        <div className="hidden md:flex justify-center pt-2">
+          <div className="seg-track p-1" role="tablist">
+            {([
+              ['submit', FileEdit, isTl ? 'Mag-report' : 'Report'],
+              ['history', FolderArchive, isTl ? 'Aking mga Report' : 'My Reports'],
+              ['chat', MessageSquare, isTl ? 'Chat' : 'Chat'],
+            ] as const).map(([k, Icon, label]) => (
+              <button
+                key={k}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === k}
+                onClick={() => {
+                  soundFX.playToggleSwitch(true);
+                  setActiveTab(k);
+                  if (k === 'history') void fetchMyHistory();
+                }}
+                className={`h-9 px-5 text-[14px] inline-flex items-center gap-2 ${activeTab === k ? 'seg-on' : 'seg-off'}`}
+              >
+                <Icon className="w-4 h-4" />
+                {label}
+                {k === 'chat' && history.some((c) => c.chatStatus === 'Open') && <span className="w-1.5 h-1.5 rounded-full bg-[#30D158]" />}
+              </button>
+            ))}
           </div>
-
-          <span className="text-[11px] font-semibold card-subtitle-text">
-            RA 10173 Data Privacy Protected
-          </span>
         </div>
 
         {/* TAB 1: SUBMIT REPORT (Compact, Responsive Padding) */}
@@ -1028,21 +952,21 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl sm:rounded-3xl cosmic-glass-card p-4 sm:p-7 space-y-4 sm:space-y-6 shadow-xl"
+            className="rounded-2xl sm:rounded-3xl sd-card p-4 sm:p-7 space-y-4 sm:space-y-6 shadow-xl"
           >
             {/* Form Header & Progress Tracker */}
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/30 text-[10px] font-black uppercase tracking-wider">
+                    <span className="px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/30 text-[10px] font-semibold">
                       Page {formStep} of 3
                     </span>
                     <span className="text-[11px] text-emerald-400 font-bold flex items-center gap-1">
                       <Shield className="w-3.5 h-3.5" /> RA 10173 Protected
                     </span>
                   </div>
-                  <h2 className="text-base sm:text-xl font-extrabold card-title-text mt-1">
+                  <h2 className="text-base sm:text-xl font-semibold card-title-text mt-1">
                     {formStep === 1 && (isTl ? '1. Category ng Insidente & Para Kanino' : '1. Incident Category & Scope')}
                     {formStep === 2 && (isTl ? '2. Inirereklamong Estudyante (Respondent) & Detalye' : '2. Reported Student (Respondent) & Incident Details')}
                     {formStep === 3 && (isTl ? '3. Salaysay, Konteksto & Pagsumite' : '3. Narrative Context & Submission')}
@@ -1073,20 +997,20 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
             </div>
 
                         {/* AICS Guidance Operational Hours Announcement */}
-            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-sky-500/10 via-blue-500/10 to-indigo-500/10 border border-sky-400/30 flex items-start gap-3">
-              <div className="w-7 h-7 rounded-xl bg-sky-500/20 text-sky-600 dark:text-sky-300 flex items-center justify-center shrink-0 font-extrabold text-sm">
+            <div className="p-3.5 rounded-2xl sd-note flex items-start gap-3">
+              <div className="w-7 h-7 rounded-xl bg-sky-500/20 text-sky-600 dark:text-sky-300 flex items-center justify-center shrink-0 font-semibold text-sm">
                 ⏰
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-black text-[#0B1F4D] dark:text-white uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-[#1D1D1F] dark:text-white">
                     {isTl ? 'AICS Guidance Office Schedule' : 'AICS Guidance Office Hours'}
                   </span>
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
                     {isTl ? 'Bukas: Lunes - Huwebes' : 'Open: Monday - Thursday'}
                   </span>
                 </div>
-                <p className="text-[11px] text-[#1E469B] dark:text-[#9BCBFF] font-medium mt-0.5">
+                <p className="text-[11px] text-[#6E6E73] dark:text-[#9BCBFF] font-medium mt-0.5">
                   {isTl
                     ? 'Lunes hanggang Huwebes (8:00 AM – 5:00 PM). Ang mga isinumiteng report tuwing Biyernes o weekend ay agad na rerepasuhin pagsapit ng Lunes ng umaga.'
                     : 'Monday to Thursday (8:00 AM – 5:00 PM). Reports submitted on Fridays or weekends will be immediately attended to first thing Monday morning.'}
@@ -1113,7 +1037,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 >
                   {/* Category Selector */}
                   <div className="space-y-2">
-                    <label className="text-xs font-extrabold register-section-title uppercase tracking-wider block">
+                    <label className="text-xs font-semibold register-section-title block">
                       {isTl ? 'A. Piliin ang Uri ng Concern' : 'A. Select Incident / Concern Category'} *
                     </label>
                     <select
@@ -1175,8 +1099,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   </div>
 
                   {/* SINO ANG MAGREREPORT: SARILI O PARA SA KAIBIGAN */}
-                  <div className="p-4 sm:p-5 rounded-2xl register-section-card space-y-4">
-                    <label className="text-xs font-extrabold register-section-title uppercase tracking-wider block">
+                  <div className="p-4 sm:p-5 rounded-2xl sd-group space-y-4">
+                    <label className="text-xs font-semibold register-section-title block">
                       {isTl ? 'B. Para kanino ang report na ito?' : 'B. Who is this report for?'} *
                     </label>
 
@@ -1189,16 +1113,16 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                         }}
                         className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 cursor-pointer ${
                           reportingRole === 'self'
-                            ? 'bg-blue-600/15 dark:bg-blue-600/25 border-[#1E469B] dark:border-blue-400 shadow-md ring-1 ring-[#1E469B] dark:ring-blue-400'
+                            ? 'bg-[#0A84FF]/[0.07] dark:bg-[#0A84FF]/20 border-[#0A84FF] ring-1 ring-[#0A84FF]'
                             : 'bg-white dark:bg-white/5 border-slate-300 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'
                         }`}
                       >
                         <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-600 dark:text-sky-300 flex items-center justify-center shrink-0"><User className="w-4 h-4" /></div>
                         <div>
-                          <p className="text-xs font-extrabold text-[#0B1F4D] dark:text-white">
+                          <p className="text-xs font-semibold text-[#1D1D1F] dark:text-white">
                             {isTl ? 'Para sa Sarili Ko' : 'For Myself (Self-Report)'}
                           </p>
-                          <p className="text-[11px] text-[#1E469B] dark:text-sky-200/80 mt-0.5">
+                          <p className="text-[11px] text-[#6E6E73] dark:text-sky-200/80 mt-0.5">
                             {isTl ? 'Ako mismo ang nakaranas o may concern' : 'I personally experienced or have this concern'}
                           </p>
                         </div>
@@ -1212,16 +1136,16 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                         }}
                         className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 cursor-pointer ${
                           reportingRole === 'peer'
-                            ? 'bg-blue-600/15 dark:bg-blue-600/25 border-[#1E469B] dark:border-blue-400 shadow-md ring-1 ring-[#1E469B] dark:ring-blue-400'
+                            ? 'bg-[#0A84FF]/[0.07] dark:bg-[#0A84FF]/20 border-[#0A84FF] ring-1 ring-[#0A84FF]'
                             : 'bg-white dark:bg-white/5 border-slate-300 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'
                         }`}
                       >
                         <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 flex items-center justify-center shrink-0"><Users className="w-4 h-4" /></div>
                         <div>
-                          <p className="text-xs font-extrabold text-[#0B1F4D] dark:text-white">
+                          <p className="text-xs font-semibold text-[#1D1D1F] dark:text-white">
                             {isTl ? 'Para sa Aking Kaibigan / Kaklase' : 'For a Friend / Classmate'}
                           </p>
-                          <p className="text-[11px] text-[#1E469B] dark:text-sky-200/80 mt-0.5">
+                          <p className="text-[11px] text-[#6E6E73] dark:text-sky-200/80 mt-0.5">
                             {isTl ? 'Irereport ko ang nangyari sa aking kaibigan' : 'Reporting an incident that happened to my friend'}
                           </p>
                         </div>
@@ -1272,7 +1196,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                         soundFX.playToggleSwitch(true);
                         setFormStep(2);
                       }}
-                      className="btn-press px-6 py-3 rounded-xl bg-gradient-to-r from-[#1E469B] to-[#2557BE] hover:from-[#18387D] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-blue-950/40 flex items-center gap-2"
+                      className="btn-press px-6 py-3 rounded-xl sd-primary text-white text-xs sm:text-sm font-semibold shadow-lg shadow-blue-950/40 flex items-center gap-2"
                     >
                       <span>{isTl ? 'Pumunta sa Hakbang 2' : 'Next: Bully & Suspect Info'}</span>
                       <ChevronRight className="w-4 h-4" />
@@ -1290,8 +1214,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   animate={{ opacity: 1, x: 0 }}
                   className="space-y-5"
                 >
-                  <div className="p-4 sm:p-5 rounded-2xl register-section-card space-y-4">
-                    <label className="text-xs font-extrabold register-section-title uppercase tracking-wider block">
+                  <div className="p-4 sm:p-5 rounded-2xl sd-group space-y-4">
+                    <label className="text-xs font-semibold register-section-title block">
                       {isTl ? 'Kilala mo ba ang Inirereklamong Estudyante (Respondent)?' : 'Do you know the Reported Student (Respondent)?'} *
                     </label>
 
@@ -1310,7 +1234,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                           }}
                           className={`px-3 py-3 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer ${
                             knowsSuspect === opt.id
-                              ? 'bg-blue-600/15 dark:bg-blue-600/25 border-[#1E469B] dark:border-blue-400 text-[#0B1F4D] dark:text-white shadow-sm ring-1 ring-[#1E469B] dark:ring-blue-400'
+                              ? 'bg-[#0A84FF]/[0.07] dark:bg-[#0A84FF]/20 border-[#0A84FF] text-[#1D1D1F] dark:text-white ring-1 ring-[#0A84FF] dark:ring-blue-400'
                               : 'bg-white dark:bg-white/5 border-slate-300 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10'
                           }`}
                         >
@@ -1397,7 +1321,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                         soundFX.playToggleSwitch(true);
                         setFormStep(3);
                       }}
-                      className="btn-press px-6 py-3 rounded-xl bg-gradient-to-r from-[#1E469B] to-[#2557BE] hover:from-[#18387D] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-blue-950/40 flex items-center gap-2"
+                      className="btn-press px-6 py-3 rounded-xl sd-primary text-white text-xs sm:text-sm font-semibold shadow-lg shadow-blue-950/40 flex items-center gap-2"
                     >
                       <span>{isTl ? 'Pumunta sa Hakbang 3' : 'Next: Salaysay & Review'}</span>
                       <ChevronRight className="w-4 h-4" />
@@ -1417,7 +1341,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 >
                   {/* Narrative of what happened */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-extrabold register-section-title uppercase tracking-wider block">
+                    <label className="text-xs font-semibold register-section-title block">
                       {isTl ? 'Salaysay ng Pangyayari (What Happened)' : 'Incident Narrative (What Happened)'} *
                     </label>
                     <textarea
@@ -1477,14 +1401,14 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   </div>
 
                   {/* PHOTO & PHYSICAL EVIDENCE ATTACHMENT CARD */}
-                  <div className="p-4 rounded-2xl register-section-card space-y-3 border border-sky-300/40 dark:border-sky-800/40 bg-sky-50/40 dark:bg-[#0B1527]/60">
+                  <div className="p-4 rounded-2xl sd-group space-y-3 border border-sky-300/40 dark:border-sky-800/40 bg-sky-50/40 dark:bg-[#0B1527]/60">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-lg bg-[#1E469B] text-white flex items-center justify-center shrink-0 shadow-xs">
                           <Camera className="w-3.5 h-3.5" />
                         </div>
                         <div>
-                          <label className="text-xs font-black uppercase tracking-wider text-[#0B1F4D] dark:text-white block">
+                          <label className="text-xs font-semibold text-[#1D1D1F] dark:text-white block">
                             {isTl ? 'Mag-attach ng Litrato o Ebidensya (Opsyonal)' : 'Attach Photo Evidence (Optional)'}
                           </label>
                           <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
@@ -1522,7 +1446,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                             <Camera className="w-5 h-5" />
                           </div>
                           <div className="min-w-0 text-left">
-                            <p className="text-xs font-black text-[#0B1F4D] dark:text-white leading-tight">
+                            <p className="text-xs font-semibold text-[#1D1D1F] dark:text-white leading-tight">
                               {evidencePhotos.length === 0
                                 ? (isTl ? 'Picturan Agad (Camera)' : 'Take Photo (Camera)')
                                 : (isTl ? 'Kumuha Pa ng Litrato (Camera)' : 'Take Another Photo (Camera)')}
@@ -1542,11 +1466,11 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                             onChange={handleEvidenceUpload}
                             className="hidden"
                           />
-                          <div className="w-9 h-9 rounded-xl bg-blue-500/20 text-[#1E469B] dark:text-sky-300 flex items-center justify-center shrink-0">
+                          <div className="w-9 h-9 rounded-xl bg-blue-500/20 text-[#6E6E73] dark:text-sky-300 flex items-center justify-center shrink-0">
                             <ImageIcon className="w-5 h-5" />
                           </div>
                           <div className="min-w-0 text-left">
-                            <p className="text-xs font-black text-[#0B1F4D] dark:text-white leading-tight">
+                            <p className="text-xs font-semibold text-[#1D1D1F] dark:text-white leading-tight">
                               {evidencePhotos.length === 0
                                 ? (isTl ? 'Pumili sa Gallery / Files' : 'Select Photos / Gallery')
                                 : (isTl ? 'Magdagdag Pa mula Gallery' : 'Add More from Gallery')}
@@ -1563,7 +1487,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                     {evidencePhotos.length > 0 && (
                       <div className="pt-2">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-[11px] font-black uppercase tracking-wider text-[#0B1F4D] dark:text-white">
+                          <span className="text-[11px] font-semibold text-[#1D1D1F] dark:text-white">
                             {isTl ? 'Mga Na-attach na Litrato' : 'Attached Photos'} ({evidencePhotos.length}/10)
                           </span>
                           <span className="text-[10px] text-[#4A608A] dark:text-[#94A8D0]">
@@ -1582,7 +1506,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
-                              <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-black/60 text-white">
+                              <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-black/60 text-white">
                                 #{idx + 1}
                               </span>
                             </div>
@@ -1603,7 +1527,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                         className="w-4 h-4 rounded accent-[#1E469B] mt-0.5"
                       />
                       <div>
-                        <span className="font-extrabold text-[#1E469B] dark:text-[#7CB8F7] block">
+                        <span className="font-semibold text-[#6E6E73] dark:text-[#7CB8F7] block">
                           {isTl
                             ? 'Isumite bilang Anonymous Whistleblower (DepEd DO 40, s. 2012)'
                             : 'Submit as Anonymous Whistleblower (DepEd DO 40, s. 2012)'}
@@ -1670,7 +1594,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                     <button
                       type="submit"
                       disabled={submitting || !truthfulAck || !whatHappened.trim()}
-                      className="btn-press w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-emerald-950/40 border border-emerald-400/40 disabled:opacity-45 transition-all flex items-center justify-center gap-2"
+                      className="btn-press w-full sm:w-auto px-8 py-3.5 rounded-xl sd-primary text-white text-xs sm:text-sm font-semibold shadow-lg shadow-emerald-950/40 border border-emerald-400/40 disabled:opacity-45 transition-all flex items-center justify-center gap-2"
                     >
                       {submitting ? (
                         <span>{isTl ? 'Isinusumite ang Report...' : 'Submitting Report...'}</span>
@@ -1693,11 +1617,11 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-3xl cosmic-glass-card p-6 sm:p-8 space-y-4 shadow-2xl"
+            className="rounded-3xl sd-card p-6 sm:p-8 space-y-4 shadow-2xl"
           >
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg sm:text-xl font-extrabold card-title-text">
+                <h2 className="text-lg sm:text-xl font-semibold card-title-text">
                   {isTl ? 'Aking mga Naipasa na Concern Reports' : 'My Submitted Concern Reports'}
                 </h2>
                 <p className="text-xs card-subtitle-text">
@@ -1720,9 +1644,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 {isTl ? 'Kinukuha ang iyong mga reports...' : 'Loading your reports...'}
               </div>
             ) : history.length === 0 ? (
-              <div className="p-10 rounded-2xl register-section-card text-center space-y-2">
+              <div className="p-10 rounded-2xl sd-group text-center space-y-2">
                 <div className="w-12 h-12 mx-auto rounded-2xl bg-sky-500/10 text-sky-500 flex items-center justify-center"><FileText className="w-6 h-6" /></div>
-                <p className="text-sm font-extrabold register-label">
+                <p className="text-sm font-semibold register-label">
                   {isTl ? 'Wala ka pang naisusumiteng concern report.' : 'You have not submitted any concern reports yet.'}
                 </p>
                 <p className="text-xs card-subtitle-text max-w-sm mx-auto">
@@ -1740,14 +1664,14 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-extrabold text-[#1E469B] dark:text-[#7CB8F7]">
+                        <span className="font-mono text-xs font-semibold text-[#6E6E73] dark:text-[#7CB8F7]">
                           {item.referralCode}
                         </span>
-                        <span className="text-xs font-extrabold register-label">
+                        <span className="text-xs font-semibold register-label">
                           · {item.category}
                         </span>
                         {item.urgency === 'Urgent' && (
-                          <span className="px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-600 dark:text-rose-300 text-[10px] font-extrabold border border-rose-500/40">
+                          <span className="px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-600 dark:text-rose-300 text-[10px] font-semibold border border-rose-500/40">
                             URGENT
                           </span>
                         )}
@@ -1760,7 +1684,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
                     <div className="shrink-0 flex items-center gap-2">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-extrabold border ${
+                        className={`px-3 py-1 rounded-full text-xs font-semibold border ${
                           item.status === 'Resolved' || item.status === 'Approved'
                             ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border-emerald-400/40'
                             : item.status === 'In Counseling'
@@ -1792,12 +1716,12 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-3xl cosmic-glass-card p-4 sm:p-6 space-y-4 shadow-2xl"
+            className="rounded-3xl sd-card p-4 sm:p-6 space-y-4 shadow-2xl"
           >
             {/* Chat Header & Selector */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-white/10 dark:border-white/10 gap-3">
               <div>
-                <h2 className="text-lg sm:text-xl font-extrabold card-title-text flex items-center gap-2">
+                <h2 className="text-lg sm:text-xl font-semibold card-title-text flex items-center gap-2">
                   <MessageSquare className="w-3.5 h-3.5" />
                   <span>{isTl ? 'Kumpidensyal na Chat sa Guidance Office' : 'Confidential Guidance Office Chat'}</span>
                 </h2>
@@ -1832,9 +1756,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
             {/* Chat Body */}
             {!selectedChatConcern ? (
-              <div className="p-10 rounded-2xl register-section-card text-center space-y-2">
+              <div className="p-10 rounded-2xl sd-group text-center space-y-2">
                 <div className="w-12 h-12 mx-auto rounded-2xl bg-sky-500/10 text-sky-500 flex items-center justify-center"><MessageSquare className="w-6 h-6" /></div>
-                <p className="text-sm font-extrabold register-label">
+                <p className="text-sm font-semibold register-label">
                   {isTl ? 'Walang aktibong chat session.' : 'No active chat session.'}
                 </p>
                 <p className="text-xs card-subtitle-text max-w-sm mx-auto">
@@ -1848,7 +1772,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 {/* Chat Topic Banner */}
                 <div className="p-3 rounded-2xl register-inner-card flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-extrabold text-[#1E469B] dark:text-[#7CB8F7]">
+                    <span className="font-mono font-semibold text-[#6E6E73] dark:text-[#7CB8F7]">
                       {selectedChatConcern.referralCode}
                     </span>
                     <span className="font-bold register-label truncate max-w-[220px] sm:max-w-md">
@@ -1856,7 +1780,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                     </span>
                   </div>
                   <span
-                    className={`px-2.5 py-0.5 rounded-full font-extrabold text-[11px] ${
+                    className={`px-2.5 py-0.5 rounded-full font-semibold text-[11px] ${
                       selectedChatConcern.chatStatus === 'Open'
                         ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-400/30'
                         : 'bg-slate-500/20 text-slate-600 dark:text-slate-300 border border-slate-400/30'
@@ -1869,7 +1793,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 </div>
 
                 {/* Message Stream */}
-                <div className="h-[380px] sm:h-[440px] overflow-y-auto p-4 rounded-2xl register-section-card space-y-3">
+                <div className="h-[380px] sm:h-[440px] overflow-y-auto p-4 rounded-2xl sd-group space-y-3">
                   {loadingMessages ? (
                     <div className="h-full flex items-center justify-center text-xs card-subtitle-text">
                       Loading messages...
@@ -1897,18 +1821,18 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                           <div
                             className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed shadow-sm ${
                               isStudent
-                                ? 'bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white rounded-br-xs'
-                                : 'register-inner-card border register-label rounded-bl-xs'
+                                ? 'sd-bubble-me rounded-br-md'
+                                : 'sd-bubble-office rounded-bl-md'
                             }`}
                           >
-                            <div className="flex items-center justify-between gap-3 text-[10px] font-extrabold pb-1 opacity-80 border-b border-white/10 dark:border-white/10 mb-1">
+                            <div className="flex items-center justify-between gap-3 text-[10px] font-semibold pb-1 opacity-80 border-b border-white/10 dark:border-white/10 mb-1">
                               <span>{isStudent ? 'Ikaw (Student)' : 'AICS Guidance Office'}</span>
                               <div className="flex items-center gap-1.5 font-mono">
                                 <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                 {isStudent && (
                                   <span className="inline-flex items-center gap-0.5 text-sky-200" title={isTl ? 'Binasa ng Guidance Office' : 'Seen by Guidance Office'}>
                                     <CheckCheck className="w-3 h-3 text-sky-300" />
-                                    <span className="text-[9px] uppercase tracking-wider font-sans font-black">{isTl ? 'Seen' : 'Seen'}</span>
+                                    <span className="text-[9px] font-sans font-semibold">{isTl ? 'Seen' : 'Seen'}</span>
                                   </span>
                                 )}
                               </div>
@@ -1940,7 +1864,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                     <button
                       type="submit"
                       disabled={!chatInputText.trim() || sendingMsg}
-                      className="btn-press px-5 sm:px-6 py-3 rounded-2xl bg-gradient-to-r from-[#1E469B] to-[#2557BE] hover:opacity-95 text-white font-extrabold text-xs sm:text-sm shadow-lg disabled:opacity-40 transition-all flex items-center gap-1.5"
+                      className="btn-press px-5 sm:px-6 py-3 rounded-2xl sd-primary text-white font-semibold text-xs sm:text-sm shadow-lg disabled:opacity-40 transition-all flex items-center gap-1.5"
                     >
                       {sendingMsg ? (
                         <span>...</span>
@@ -1960,7 +1884,32 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       </main>
 
       {/* Footer (Messenger-Style Clean: hidden on mobile phones so keyboard never pushes or squishes it) */}
-      <footer className="relative z-20 py-3 text-center text-xs card-subtitle-text mt-auto student-footer hidden sm:block">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 sd-tabbar" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} aria-label={isTl ? 'Mga seksyon' : 'Sections'}>
+        <div className="grid grid-cols-3 h-16">
+          {([
+            ['submit', FileEdit, isTl ? 'Mag-report' : 'Report'],
+            ['history', FolderArchive, isTl ? 'Mga Report' : 'My Reports'],
+            ['chat', MessageSquare, 'Chat'],
+          ] as const).map(([k, Icon, label]) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => {
+                soundFX.playToggleSwitch(true);
+                setActiveTab(k);
+                if (k === 'history') void fetchMyHistory();
+              }}
+              className={`relative flex flex-col items-center justify-center gap-1 text-[11px] font-medium active:scale-[0.97] transition-transform duration-150 ${activeTab === k ? 'text-[#0A84FF]' : 'text-[#8E8E93]'}`}
+            >
+              <Icon className="w-6 h-6" strokeWidth={activeTab === k ? 2.2 : 1.75} />
+              {label}
+              {k === 'chat' && history.some((c) => c.chatStatus === 'Open') && <span className="absolute top-2.5 right-[calc(50%-18px)] w-2 h-2 rounded-full bg-[#30D158]" />}
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      <footer className="relative z-20 py-3 text-center text-xs card-subtitle-text mt-auto student-footer hidden md:block">
         AICS Montalban Student Guidance Office · All submissions are strictly confidential (RA 10173 Protected)
       </footer>
 
@@ -1993,14 +1942,14 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 </svg>
               </div>
 
-              <h3 className="text-xl font-extrabold text-white">Report Submitted Successfully!</h3>
+              <h3 className="text-xl font-semibold text-white">Report Submitted Successfully!</h3>
               <p className="text-xs text-[#9BCBFF]/80">
                 Natanggap na ng AICS Guidance Office ang iyong confidential concern report.
               </p>
 
               <div className="p-3.5 rounded-xl bg-black/40 border border-white/15 text-center">
                 <span className="text-[11px] text-white/60 block">Reference Tracking Code:</span>
-                <span className="font-mono text-base font-extrabold text-emerald-300">
+                <span className="font-mono text-base font-semibold text-emerald-300">
                   {submittedConcernCode}
                 </span>
               </div>
@@ -2012,7 +1961,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   setSubmittedConcernCode(null);
                   setActiveTab('history');
                 }}
-                className="btn-press w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-extrabold text-xs shadow-lg"
+                className="btn-press w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold text-xs shadow-lg"
               >
                 Tingnan sa Aking Reports List →
               </button>

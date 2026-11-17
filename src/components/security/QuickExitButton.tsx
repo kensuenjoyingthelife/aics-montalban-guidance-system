@@ -63,8 +63,8 @@ export const QuickExitButton: React.FC<QuickExitButtonProps> = ({ onTrigger, cla
 
   // Update physical DOM position instantly via hardware-accelerated transform
   const applyTransform = useCallback((x: number, y: number, withTransition = false) => {
+    currentPosRef.current = { x, y }; // remember it even before the ball is on screen
     if (!ballRef.current) return;
-    currentPosRef.current = { x, y };
     ballRef.current.style.transition = withTransition
       ? 'transform 0.28s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.2s ease'
       : 'none';
@@ -103,6 +103,13 @@ export const QuickExitButton: React.FC<QuickExitButtonProps> = ({ onTrigger, cla
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, [applyTransform, getBounds]);
+
+  // the ball appears only after isMobile turns true: place it then (it used to stay at the top-left, over the header)
+  useEffect(() => {
+    if (!isMobile) return;
+    const raf = requestAnimationFrame(() => applyTransform(currentPosRef.current.x, currentPosRef.current.y, false));
+    return () => cancelAnimationFrame(raf);
+  }, [isMobile, applyTransform]);
 
   const executeEmergencyExit = useCallback(async () => {
     try {
