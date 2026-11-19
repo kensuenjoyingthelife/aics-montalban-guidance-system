@@ -202,10 +202,10 @@ export const ImportScanModal: React.FC<Props> = ({
                 />
               </span>
               <div className="min-w-0 leading-tight">
-                <p className="text-[13px] font-extrabold text-[#0B1F4D] dark:text-white">
+                <p className="text-[13px] font-extrabold text-[#1D1D1F] dark:text-white">
                   {isTl ? 'AICS Guidance Office' : 'AICS Guidance Office'}
                 </p>
-                <p className="text-[11px] font-semibold text-[#4A608A] dark:text-[#94A8D0]">
+                <p className="text-[11px] font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">
                   {isTl ? 'Masterlist Scanner · Montalban' : 'Masterlist Scanner · Montalban'}
                 </p>
               </div>
@@ -221,10 +221,10 @@ export const ImportScanModal: React.FC<Props> = ({
             </div>
 
             <div className="px-6 pb-2">
-              <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#2557BE] dark:text-[#7CB8F7] truncate">
+              <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#007AFF] dark:text-[#409CFF] truncate">
                 {fileName}
               </p>
-              <h3 id="import-scan-title" className="mt-0.5 text-lg font-extrabold text-[#0B1F4D] dark:text-white" aria-live="polite">
+              <h3 id="import-scan-title" className="mt-0.5 text-lg font-extrabold text-[#1D1D1F] dark:text-white" aria-live="polite">
                 {headline}
               </h3>
 
@@ -233,7 +233,7 @@ export const ImportScanModal: React.FC<Props> = ({
                 <div className="relative flex-1 h-2.5 rounded-full bg-[#DCE5F2] dark:bg-[#1E3158] overflow-hidden">
                   <div
                     className={`h-full rounded-full bg-gradient-to-r transition-[width] duration-200 ease-out ${
-                      phase === 'done' ? 'from-emerald-500 to-emerald-400' : 'from-[#1E469B] to-[#4E92DF]'
+                      phase === 'done' ? 'from-emerald-500 to-emerald-400' : 'from-[#007AFF] to-[#4E92DF]'
                     }`}
                     style={{ width: `${percent}%` }}
                   />
@@ -241,13 +241,13 @@ export const ImportScanModal: React.FC<Props> = ({
                     <div className="import-scan absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/70 dark:via-white/25 to-transparent" />
                   )}
                 </div>
-                <span className="w-10 text-right text-xs font-mono font-bold text-[#2557BE] dark:text-[#7CB8F7]">{percent}%</span>
+                <span className="w-10 text-right text-xs font-mono font-bold text-[#007AFF] dark:text-[#409CFF]">{percent}%</span>
               </div>
 
               {/* Phase 2: live row reader */}
               {(phase === 'rows' || (phase !== 'reading' && total > 0)) && (
-                <div className="mt-3 px-3.5 py-2.5 rounded-xl bg-[#F6F9FE] dark:bg-[#0E1A33] border border-[#E2E9F5] dark:border-[#1E3158]">
-                  <div className="flex items-center justify-between text-[11px] font-bold text-[#687FA8] dark:text-[#89A7DF]">
+                <div className="mt-3 px-3.5 py-2.5 rounded-xl bg-[#F5F5F7] dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A]">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-[#6E6E73] dark:text-[#A1A1A6]">
                     <span>
                       {(analysis?.sourceLabels[rowIndex] ?? '').replace(/\brow (\d+)$/, isTl ? 'Row $1 sa Excel' : 'Excel row $1')}
                     </span>
@@ -257,7 +257,7 @@ export const ImportScanModal: React.FC<Props> = ({
                   </div>
                   {current && (
                     <div className="mt-1 flex items-center gap-3 min-w-0">
-                      <span className="w-8 h-8 shrink-0 rounded-full bg-[#E4ECFC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#AFCBFA] text-[11px] font-extrabold flex items-center justify-center">
+                      <span className="w-8 h-8 shrink-0 rounded-full bg-[#EAF3FF] dark:bg-[#2C2C2E] text-[#007AFF] dark:text-[#AFCBFA] text-[11px] font-extrabold flex items-center justify-center">
                         {(current.fullName || '?')
                           .split(' ')
                           .filter(Boolean)
@@ -267,10 +267,10 @@ export const ImportScanModal: React.FC<Props> = ({
                           .toUpperCase()}
                       </span>
                       <div className="min-w-0">
-                        <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white truncate">
+                        <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white truncate">
                           {current.fullName || (isTl ? '(walang pangalan)' : '(no name)')}
                         </p>
-                        <p className="text-[11px] font-semibold text-[#4A608A] dark:text-[#94A8D0] truncate font-mono">
+                        <p className="text-[11px] font-semibold text-[#6E6E73] dark:text-[#A1A1A6] truncate font-mono">
                           {current.studentNumber || '—'} · {current.gradeSection || '—'} · {current.parentPhone || '—'}
                         </p>
                       </div>
@@ -288,7 +288,7 @@ export const ImportScanModal: React.FC<Props> = ({
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.18 }}
-                      className="flex items-start gap-2.5 text-[13px] font-semibold text-[#0B1F4D] dark:text-white"
+                      className="flex items-start gap-2.5 text-[13px] font-semibold text-[#1D1D1F] dark:text-white"
                     >
                       <span className={`mt-0.5 w-4.5 h-4.5 min-w-[18px] min-h-[18px] rounded-full text-[10px] font-extrabold flex items-center justify-center ${toneClass[f.tone]}`}>
                         {toneIcon[f.tone]}
@@ -320,18 +320,18 @@ export const ImportScanModal: React.FC<Props> = ({
             <div className="h-3" />
             </div>
 
-            <div className="shrink-0 px-6 py-4 flex items-center justify-end gap-2 min-h-[64px] bg-[#F6F9FE] dark:bg-[#0E1A33] border-t border-[#E2E9F5] dark:border-[#1E3158]">
+            <div className="shrink-0 px-6 py-4 flex items-center justify-end gap-2 min-h-[64px] bg-[#F5F5F7] dark:bg-[#1C1C1E] border-t border-[#E5E5EA] dark:border-[#38383A]">
               {phase === 'done' ? (
                 <button
                   ref={continueRef}
                   type="button"
                   onClick={onContinue}
-                  className="btn-press px-5 py-2.5 rounded-xl bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-extrabold shadow-sm"
+                  className="btn-press px-5 py-2.5 rounded-xl bg-[#007AFF] hover:bg-[#0062CC] text-white text-xs font-extrabold shadow-sm"
                 >
                   {isTl ? 'Tingnan ang resulta →' : 'See the results →'}
                 </button>
               ) : (
-                <p className="text-xs font-semibold text-[#687FA8] dark:text-[#89A7DF]">
+                <p className="text-xs font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">
                   {isTl ? 'Sandali lang, binabasa pa…' : 'Please wait, still reading…'}
                 </p>
               )}

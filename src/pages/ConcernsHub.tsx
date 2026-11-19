@@ -21,6 +21,10 @@ import {
   fetchMessages,
   fetchMessagesAfter,
   fetchLastMessages,
+  ChatState,
+  fetchChatState,
+  markChatSeen,
+  setChatTyping,
   sendMessage,
   fetchAccounts,
   setAccountStatus,
@@ -95,9 +99,9 @@ const REJECT_REASONS = [
   ['This was already reported. We are already handling it.', 'Naipadala na ito dati. Inaasikaso na namin ito.'],
 ] as const;
 
-const btn = 'px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap';
+const btn = 'px-3.5 py-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap';
 const card = 'rounded-2xl saas-card overflow-hidden';
-const sub = 'text-xs text-[#4A608A] dark:text-[#94A8D0]';
+const sub = 'text-xs text-[#6E6E73] dark:text-[#A1A1A6]';
 
 /** the name on the account (reporter); for a "report for a friend" the concern's studentName is the friend */
 function reporterNameOf(c: ConcernItem): string {
@@ -413,7 +417,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
 
   return (
     <main className="p-5 lg:p-6 max-w-[1440px] w-full mx-auto space-y-4 flex-1">
-      <div className="shrink-0 min-h-[54px] flex flex-wrap items-center justify-between gap-3 border-b border-[#DCE5F2] dark:border-[#1E3158] pb-2">
+      <div className="shrink-0 min-h-[54px] flex flex-wrap items-center justify-between gap-3 border-b border-[#E5E5EA] dark:border-[#38383A] pb-2">
         <div className="seg-track flex-wrap" role="tablist">
           {tabs.map(([id, label, tip]) => (
             <button
@@ -528,7 +532,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
                     onClick={() => setSelectedId(c.id)}
                     aria-current={on ? 'true' : undefined}
                     className={`w-full text-left rounded-2xl px-3 py-2.5 flex gap-3 transition-colors ${
-                      on ? 'bg-[#1E469B]/[0.08] dark:bg-[#5B8DEF]/[0.14] ring-1 ring-[#1E469B]/30 dark:ring-[#5B8DEF]/40' : 'hover:bg-black/[0.035] dark:hover:bg-white/[0.05]'
+                      on ? 'bg-[#007AFF]/[0.08] dark:bg-[#5B8DEF]/[0.14] ring-1 ring-[#007AFF]/30 dark:ring-[#5B8DEF]/40' : 'hover:bg-black/[0.035] dark:hover:bg-white/[0.05]'
                     }`}
                   >
                     <span className="relative shrink-0 mt-0.5">
@@ -554,7 +558,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
                 );
               })}
               {shown.length > limit && (
-                <button type="button" onClick={() => setLimit((n) => n + PAGE)} className="w-full h-9 rounded-full text-xs font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04]">
+                <button type="button" onClick={() => setLimit((n) => n + PAGE)} className="w-full h-9 rounded-full text-xs font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04]">
                   {isTl ? `Ipakita pa (${shown.length - limit} pa)` : `Show more (${shown.length - limit} more)`}
                 </button>
               )}
@@ -564,7 +568,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
           <section className="row-card !rounded-[20px] !p-0 !transform-none hover:!bg-white dark:hover:!bg-[#0F1B2E] hover:!border-[#DDE3EC] dark:hover:!border-white/10 flex flex-col min-h-0 overflow-hidden">
             {!selected ? (
               <div className="p-10 text-center">
-                <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Pumili ng concern sa kaliwa.' : 'Pick a concern on the left.'}</p>
+                <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">{isTl ? 'Pumili ng concern sa kaliwa.' : 'Pick a concern on the left.'}</p>
                 <p className={sub}>{isTl ? 'Babasahin mo rito ang buong detalye bago mag-approve o mag-reject.' : 'Read the full details here before you approve or reject.'}</p>
               </div>
             ) : (
@@ -694,20 +698,20 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
       {/* ================= BLOCKED ACCOUNTS ================= */}
       {tab === 'accounts' && (
         <section className={card}>
-          <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158]">
-            <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Mga naka-block na account' : 'Blocked accounts'}</h2>
+          <div className="px-6 py-4 border-b border-[#E5E5EA] dark:border-[#38383A]">
+            <h2 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">{isTl ? 'Mga naka-block na account' : 'Blocked accounts'}</h2>
             <p className={sub}>{isTl ? 'Hindi makakapag-sign in o makakapagpadala ng concern ang mga account na ito.' : 'These accounts cannot sign in or send concerns.'}</p>
           </div>
-          <div className="p-4 space-y-2 bg-[#F4F7FC] dark:bg-[#0B1527]">
+          <div className="p-4 space-y-2 bg-[#F5F5F7] dark:bg-[#1C1C1E]">
             {blocked.length === 0 && (
               <p className="py-8 text-center text-sm font-bold text-emerald-700 dark:text-emerald-400">
                 {isTl ? 'Walang naka-block na account.' : 'No blocked accounts.'}
               </p>
             )}
             {blocked.slice(0, limit).map((a) => (
-              <div key={a.id} className="rounded-xl bg-white dark:bg-[#0F1A30] border border-[#D3DDEE] dark:border-[#253B66] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+              <div key={a.id} className="rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                  <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">
                     {a.fullName} {a.studentNumber && <span className={sub}>· {a.studentNumber}</span>}
                   </p>
                   <p className={sub}>{a.deactivatedReason || (isTl ? 'Walang dahilan' : 'No reason given')}</p>
@@ -747,8 +751,8 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
 // ---------------------------------------------------------------------------
 const Field: React.FC<{ label: string; value: string; empty: string }> = ({ label, value, empty }) => (
   <div>
-    <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#4A608A] dark:text-[#94A8D0]">{label}</p>
-    <p className={`text-sm whitespace-pre-wrap break-words ${value ? 'text-[#0B1F4D] dark:text-white' : 'italic text-[#4A608A] dark:text-[#94A8D0]'}`}>
+    <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#6E6E73] dark:text-[#A1A1A6]">{label}</p>
+    <p className={`text-sm whitespace-pre-wrap break-words ${value ? 'text-[#1D1D1F] dark:text-white' : 'italic text-[#6E6E73] dark:text-[#A1A1A6]'}`}>
       {value || empty}
     </p>
   </div>
@@ -859,11 +863,11 @@ const ConcernDetail: React.FC<{
     return () => window.removeEventListener('keydown', onKey, true);
   }, [view]);
 
-  const cardBox = 'rounded-2xl border border-[#DCE5F2] dark:border-[#1E3158] bg-white dark:bg-[#0F1A30] flex flex-col min-h-0';
-  const cardHead = 'px-4 py-2.5 border-b border-[#DCE5F2] dark:border-[#1E3158] text-[11px] font-extrabold uppercase tracking-wide text-[#4A608A] dark:text-[#94A8D0]';
-  const cardFoot = 'mt-auto px-4 py-3 border-t border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center gap-2';
-  const lab = 'text-[10px] font-extrabold uppercase tracking-wide text-[#4A608A] dark:text-[#94A8D0]';
-  const val = 'text-[13px] leading-snug text-[#0B1F4D] dark:text-white break-words';
+  const cardBox = 'rounded-2xl border border-[#E5E5EA] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] flex flex-col min-h-0';
+  const cardHead = 'px-4 py-2.5 border-b border-[#E5E5EA] dark:border-[#38383A] text-[11px] font-extrabold uppercase tracking-wide text-[#6E6E73] dark:text-[#A1A1A6]';
+  const cardFoot = 'mt-auto px-4 py-3 border-t border-[#E5E5EA] dark:border-[#38383A] flex flex-wrap items-center gap-2';
+  const lab = 'text-[10px] font-extrabold uppercase tracking-wide text-[#6E6E73] dark:text-[#A1A1A6]';
+  const val = 'text-[13px] leading-snug text-[#1D1D1F] dark:text-white break-words';
 
   const Photo = (p: { src: string; label: string; w: string; h: string; testId: string; fit: 'cover' | 'contain' }) =>
     p.src ? (
@@ -872,14 +876,14 @@ const ConcernDetail: React.FC<{
         data-concern-photo={p.testId}
         onClick={() => setView({ src: p.src, label: p.label })}
         title={isTl ? 'Pindutin para palakihin' : 'Press to enlarge'}
-        className={`${p.w} ${p.h} shrink-0 rounded-xl overflow-hidden border border-[#C9D6EC] dark:border-[#253B66] bg-[#EEF3FC] dark:bg-[#0B1527] hover:ring-4 hover:ring-[#1E469B]/20`}
+        className={`${p.w} ${p.h} shrink-0 rounded-xl overflow-hidden border border-[#E5E5EA] dark:border-[#38383A] bg-[#EAF3FF] dark:bg-[#1C1C1E] hover:ring-4 hover:ring-[#007AFF]/20`}
       >
         <img src={p.src} alt={p.label} loading="lazy" className={`w-full h-full ${p.fit === 'cover' ? 'object-cover' : 'object-contain'}`} />
       </button>
     ) : (
-      <div data-concern-photo-missing={p.testId} className={`${p.w} ${p.h} shrink-0 rounded-xl border-2 border-dashed border-[#C9D6EC] dark:border-[#253B66] bg-[#F4F7FC] dark:bg-[#0B1527] flex flex-col items-center justify-center text-center px-2`}>
+      <div data-concern-photo-missing={p.testId} className={`${p.w} ${p.h} shrink-0 rounded-xl border-2 border-dashed border-[#E5E5EA] dark:border-[#38383A] bg-[#F5F5F7] dark:bg-[#1C1C1E] flex flex-col items-center justify-center text-center px-2`}>
         <ImageIcon className="w-5 h-5 text-sky-400" />
-        <span className="text-[10.5px] font-bold text-[#4A608A] dark:text-[#94A8D0] leading-tight">{isTl ? `Walang ${p.label.toLowerCase()}` : `No ${p.label.toLowerCase()}`}</span>
+        <span className="text-[10.5px] font-bold text-[#6E6E73] dark:text-[#A1A1A6] leading-tight">{isTl ? `Walang ${p.label.toLowerCase()}` : `No ${p.label.toLowerCase()}`}</span>
       </div>
     );
 
@@ -973,7 +977,7 @@ const ConcernDetail: React.FC<{
               </div>
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto clean-scroll px-6 py-5 space-y-5 bg-[#F5F5F7] dark:bg-[#0A1526]">
+            <div className="flex-1 min-h-0 overflow-y-auto clean-scroll px-6 py-5 space-y-5 bg-[#F5F5F7] dark:bg-[#1C1C1E]">
               {/* Is this account real? */}
               <div className={`rounded-2xl border p-4 ${allOk ? 'bg-emerald-50/70 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-900/50' : 'bg-amber-50/80 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/50'}`} data-concern-student>
                 <div className="flex items-center gap-3">
@@ -1010,10 +1014,10 @@ const ConcernDetail: React.FC<{
               </div>
 
               {/* the story is the hero */}
-              <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 p-5">
+              <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 p-5">
                 <p className="text-[12px] font-medium text-[#6E6E73] dark:text-[#A1A1A6] mb-2">{isTl ? 'Ano ang nangyari' : 'What happened'}</p>
                 <div className="flex gap-3">
-                  <Quote className="w-6 h-6 text-[#1E469B]/30 dark:text-[#7CB8F7]/40 shrink-0 -scale-x-100" aria-hidden />
+                  <Quote className="w-6 h-6 text-[#007AFF]/30 dark:text-[#409CFF]/40 shrink-0 -scale-x-100" aria-hidden />
                   <p className="text-[17px] leading-relaxed text-[#1D1D1F] dark:text-[#F5F5F7] whitespace-pre-wrap break-words">{parsed.cleanNarrative || (isTl ? 'Walang naisulat.' : 'Nothing written.')}</p>
                 </div>
                 {parsed.evidencePhotos.length > 0 && (
@@ -1024,7 +1028,7 @@ const ConcernDetail: React.FC<{
                         type="button"
                         onClick={() => setView({ src: imgSrc, label: `${isTl ? 'Litrato' : 'Photo'} ${pIdx + 1}` })}
                         title={isTl ? 'Pindutin para palakihin' : 'Press to enlarge'}
-                        className="relative group w-28 h-20 rounded-xl overflow-hidden ring-1 ring-black/10 dark:ring-white/10 hover:ring-2 hover:ring-[#1E469B] transition-shadow"
+                        className="relative group w-28 h-20 rounded-xl overflow-hidden ring-1 ring-black/10 dark:ring-white/10 hover:ring-2 hover:ring-[#007AFF] transition-shadow"
                       >
                         <img src={imgSrc} alt={`${isTl ? 'Litrato' : 'Photo'} ${pIdx + 1}`} loading="lazy" className="w-full h-full object-cover" />
                         <span className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"><Maximize2 className="w-4 h-4" aria-hidden /></span>
@@ -1035,7 +1039,7 @@ const ConcernDetail: React.FC<{
               </div>
 
               {/* details as one grouped list */}
-              <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
+              <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
                 <div className={row}>
                   <span className={lab}>{isTl ? 'Inireklamo' : 'Student reported'}</span>
                   <span className={val}>
@@ -1068,7 +1072,7 @@ const ConcernDetail: React.FC<{
                   <div className={row}>
                     <span className={lab}>{isTl ? 'Naka-link na kaso' : 'Linked case'}</span>
                     {onOpenCase ? (
-                      <button type="button" onClick={() => onOpenCase(c.linkedCaseCode)} className="text-[14px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:underline">
+                      <button type="button" onClick={() => onOpenCase(c.linkedCaseCode)} className="text-[14px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:underline">
                         {c.linkedCaseCode} →
                       </button>
                     ) : (
@@ -1107,7 +1111,7 @@ const ConcernDetail: React.FC<{
                 ) : (
                   <>
                     {(c.chatStatus === 'Open' || c.chatStatus === 'Closed') && (
-                      <button type="button" onClick={onOpenChat} className="h-10 px-5 rounded-full text-[14px] font-medium text-[#1E469B] dark:text-[#7CB8F7] bg-white/80 dark:bg-white/[0.06] shadow-[0_0_0_0.5px_rgb(15_23_42/0.12)] hover:bg-white dark:hover:bg-white/[0.1] active:scale-[0.97] transition">
+                      <button type="button" onClick={onOpenChat} className="h-10 px-5 rounded-full text-[14px] font-medium text-[#007AFF] dark:text-[#409CFF] bg-white/80 dark:bg-white/[0.06] shadow-[0_0_0_0.5px_rgb(15_23_42/0.12)] hover:bg-white dark:hover:bg-white/[0.1] active:scale-[0.97] transition">
                         {c.chatStatus === 'Open' ? (isTl ? 'Buksan ang chat' : 'Open chat') : isTl ? 'Tingnan ang chat' : 'View chat'}
                       </button>
                     )}
@@ -1130,7 +1134,7 @@ const ConcernDetail: React.FC<{
             <img src={view.src} alt={view.label} className="max-w-[90vw] max-h-[80vh] object-contain rounded-xl bg-white" />
             <div className="flex items-center gap-3">
               <span className="text-sm font-bold text-white">{view.label} · {c.studentName}</span>
-              <button type="button" onClick={() => setView(null)} className="px-4 py-2 rounded-lg bg-white text-[#0B1F4D] text-xs font-extrabold">
+              <button type="button" onClick={() => setView(null)} className="px-4 py-2 rounded-lg bg-white text-[#1D1D1F] text-xs font-extrabold">
                 {isTl ? 'Isara (Esc)' : 'Close (Esc)'}
               </button>
             </div>
@@ -1152,10 +1156,10 @@ const Modal: React.FC<{ title: string; onClose: () => void; children: React.Reac
   }, [onClose]);
   return createPortal(
     <div className="fixed inset-0 z-[80] !m-0 bg-black/50 flex items-center justify-center p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div role="dialog" aria-modal="true" aria-label={title} className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#0F1A30] border border-[#D3DDEE] dark:border-[#253B66] shadow-2xl">
-        <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-center justify-between">
-          <h3 className="text-base font-bold text-[#0F172A] dark:text-white">{title}</h3>
-          <button type="button" onClick={onClose} aria-label="Close" className="w-8 h-8 rounded-lg flex items-center justify-center text-[#475569] hover:bg-slate-100 dark:hover:bg-slate-800">
+      <div role="dialog" aria-modal="true" aria-label={title} className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A] shadow-2xl">
+        <div className="px-6 py-4 border-b border-[#E5E5EA] dark:border-[#38383A] flex items-center justify-between">
+          <h3 className="text-base font-bold text-[#1D1D1F] dark:text-white">{title}</h3>
+          <button type="button" onClick={onClose} aria-label="Close" className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6E6E73] hover:bg-slate-100 dark:hover:bg-slate-800">
             ✕
           </button>
         </div>
@@ -1179,14 +1183,14 @@ const ApproveWindow: React.FC<{
     <Modal title={isTl ? `I-approve ang concern ni ${c.studentName}` : `Approve ${c.studentName}'s concern`} onClose={onCancel}>
       <div className="p-6 space-y-4">
         <div className="space-y-1.5">
-          <label htmlFor="link-case" className="text-xs font-extrabold text-[#0B1F4D] dark:text-white">
+          <label htmlFor="link-case" className="text-xs font-extrabold text-[#1D1D1F] dark:text-white">
             {isTl ? 'I-link sa kaso (opsyonal)' : 'Link to a case (optional)'}
           </label>
           <select
             id="link-case"
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-xl border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-sm text-[#0B1F4D] dark:text-white"
+            className="w-full px-3 py-2.5 rounded-xl border border-[#E5E5EA] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] text-sm text-[#1D1D1F] dark:text-white"
           >
             <option value="">{isTl ? 'Huwag i-link' : 'Do not link'}</option>
             {studentCases.map((k) => (
@@ -1195,17 +1199,17 @@ const ApproveWindow: React.FC<{
               </option>
             ))}
           </select>
-          <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+          <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
             {studentCases.length === 0
               ? isTl ? 'Wala pang kaso para dito. Pagkatapos mag-approve, pindutin ang "＋ Gumawa ng kaso para sa isinumbong" sa report.' : 'No case yet. After approving, press "＋ Record a case for the reported student" in the report.'
               : isTl ? 'Hindi makikita ng estudyante ang kaso — sa office lang ito.' : 'The student never sees the case — it is for the office only.'}
           </p>
         </div>
-        <p className="text-xs text-[#0B1F4D] dark:text-white rounded-xl saas-card-subtle p-3">
+        <p className="text-xs text-[#1D1D1F] dark:text-white rounded-xl saas-card-subtle p-3">
           {isTl ? 'Magbubukas ng chat at magpapadala ng unang mensahe: "Natanggap na po ng Guidance Office ang iyong concern…"' : 'A chat opens with a first message: "The Guidance Office has received your concern…"'}
         </p>
       </div>
-      <div className="px-6 py-4 border-t border-[#DCE5F2] dark:border-[#1E3158] flex justify-end gap-2">
+      <div className="px-6 py-4 border-t border-[#E5E5EA] dark:border-[#38383A] flex justify-end gap-2">
         <button type="button" onClick={onCancel} className={`${btn} px-4 py-2.5 saas-card-subtle`}>
           {isTl ? 'Kanselahin' : 'Cancel'}
         </button>
@@ -1225,20 +1229,20 @@ const RejectWindow: React.FC<{ c: ConcernItem; isTl: boolean; busy: boolean; onC
   return (
     <Modal title={isTl ? `I-reject ang concern ni ${c.studentName}` : `Reject ${c.studentName}'s concern`} onClose={onCancel}>
       <div className="p-6 space-y-3">
-        <p className="text-xs font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Bakit? Makikita ito ng estudyante.' : 'Why? The student will see this.'}</p>
+        <p className="text-xs font-extrabold text-[#1D1D1F] dark:text-white">{isTl ? 'Bakit? Makikita ito ng estudyante.' : 'Why? The student will see this.'}</p>
         {REJECT_REASONS.map(([en, tl], i) => (
-          <label key={i} className={`flex gap-2 items-start rounded-xl border px-3 py-2 cursor-pointer text-sm ${preset === i ? 'border-[#1E469B] bg-[#EEF3FC] dark:bg-[#13203B]' : 'border-[#D3DDEE] dark:border-[#253B66]'}`}>
+          <label key={i} className={`flex gap-2 items-start rounded-xl border px-3 py-2 cursor-pointer text-sm ${preset === i ? 'border-[#007AFF] bg-[#EAF3FF] dark:bg-[#2C2C2E]' : 'border-[#E5E5EA] dark:border-[#38383A]'}`}>
             <input type="radio" name="reject" checked={preset === i} onChange={() => setPreset(i)} className="mt-1" />
-            <span className="text-[#0B1F4D] dark:text-white">
+            <span className="text-[#1D1D1F] dark:text-white">
               {tl}
-              {!isTl && <span className="block text-xs text-[#4A608A] dark:text-[#94A8D0]">{en}</span>}
+              {!isTl && <span className="block text-xs text-[#6E6E73] dark:text-[#A1A1A6]">{en}</span>}
             </span>
           </label>
         ))}
-        <label className={`flex gap-2 items-start rounded-xl border px-3 py-2 text-sm ${preset === null ? 'border-[#1E469B]' : 'border-[#D3DDEE] dark:border-[#253B66]'}`}>
+        <label className={`flex gap-2 items-start rounded-xl border px-3 py-2 text-sm ${preset === null ? 'border-[#007AFF]' : 'border-[#E5E5EA] dark:border-[#38383A]'}`}>
           <input type="radio" name="reject" checked={preset === null} onChange={() => setPreset(null)} className="mt-1" />
           <span className="flex-1 space-y-1">
-            <span className="text-[#0B1F4D] dark:text-white">{isTl ? 'Ibang dahilan:' : 'Other reason:'}</span>
+            <span className="text-[#1D1D1F] dark:text-white">{isTl ? 'Ibang dahilan:' : 'Other reason:'}</span>
             <textarea
               value={own}
               onChange={(e) => {
@@ -1247,13 +1251,13 @@ const RejectWindow: React.FC<{ c: ConcernItem; isTl: boolean; busy: boolean; onC
               }}
               rows={3}
               placeholder={isTl ? 'Isulat nang malinaw at magalang…' : 'Write it clearly and politely…'}
-              className="w-full px-3 py-2 rounded-lg border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-sm text-[#0B1F4D] dark:text-white leading-relaxed"
+              className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] text-sm text-[#1D1D1F] dark:text-white leading-relaxed"
             />
             {tooShort && <span className="block text-xs font-bold text-rose-700 dark:text-rose-300">{isTl ? 'Masyadong maikli. Ipaliwanag nang kaunti pa (10+ letra).' : 'Too short. Explain a little more (10+ letters).'}</span>}
           </span>
         </label>
       </div>
-      <div className="px-6 py-4 border-t border-[#DCE5F2] dark:border-[#1E3158] flex justify-end gap-2">
+      <div className="px-6 py-4 border-t border-[#E5E5EA] dark:border-[#38383A] flex justify-end gap-2">
         <button type="button" onClick={onCancel} className={`${btn} px-4 py-2.5 saas-card-subtle`}>
           {isTl ? 'Kanselahin' : 'Cancel'}
         </button>
@@ -1295,6 +1299,8 @@ const ChatsView: React.FC<{
   const [chatLimit, setChatLimit] = useState(PAGE);
   const endRef = useRef<HTMLDivElement>(null);
   const activeId = active?.id ?? null;
+  const [chatState, setChatState] = useState<ChatState | null>(null);
+  const lastTypingPing = useRef(0);
 
   useEffect(() => {
     if (activeId == null) return;
@@ -1321,10 +1327,13 @@ const ChatsView: React.FC<{
     void first();
     // new replies from the student: check every 4 s while this chat is on screen
     const t = window.setInterval(() => {
-      if (document.visibilityState === 'visible') void load();
-    }, 4000);
+      if (document.visibilityState !== 'visible') return;
+      void load();
+      void fetchChatState(activeId).then((st) => { if (alive) setChatState(st); });
+    }, 2000);
     return () => {
       alive = false;
+      setChatState(null);
       window.clearInterval(t);
     };
   }, [activeId]);
@@ -1333,6 +1342,7 @@ const ChatsView: React.FC<{
     if (!msgs || activeId == null) return;
     const last = msgs[msgs.length - 1];
     if (last) onSeen(activeId, last.id);
+    if (msgs.some((m) => m.sender === 'student') && document.visibilityState === 'visible') void markChatSeen(activeId, 'office');
     endRef.current?.scrollIntoView({ block: 'end' });
   }, [msgs, activeId, onSeen]);
 
@@ -1351,7 +1361,7 @@ const ChatsView: React.FC<{
   if (chats.length === 0)
     return (
       <section className={`${card} p-10 text-center`}>
-        <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Wala pang chat.' : 'No chats yet.'}</p>
+        <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">{isTl ? 'Wala pang chat.' : 'No chats yet.'}</p>
         <p className={sub}>{isTl ? 'Magbubukas ang chat kapag in-approve mo ang isang concern sa "Mga concern".' : 'A chat opens when you approve a concern in "Submitted reports".'}</p>
       </section>
     );
@@ -1360,7 +1370,7 @@ const ChatsView: React.FC<{
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(280px,360px)_1fr] gap-4 items-start">
       <section className={card}>
-        <div className="max-h-[calc(100vh-240px)] min-h-[300px] overflow-y-auto p-2 space-y-1.5 bg-[#F4F7FC] dark:bg-[#0B1527]">
+        <div className="max-h-[calc(100vh-240px)] min-h-[300px] overflow-y-auto p-2 space-y-1.5 bg-[#F5F5F7] dark:bg-[#1C1C1E]">
           {(active && chats.indexOf(active) >= chatLimit ? [...chats.slice(0, chatLimit), active] : chats.slice(0, chatLimit)).map((c) => {
             const lm = lastMsg.get(c.id);
             const isNew = unread(c);
@@ -1371,11 +1381,11 @@ const ChatsView: React.FC<{
                 data-chat-row={c.code}
                 onClick={() => setChatId(c.id)}
                 className={`w-full text-left rounded-xl px-3 py-2.5 border ${
-                  active?.id === c.id ? 'bg-white dark:bg-[#13203B] border-[#1E469B] dark:border-[#7CB8F7]' : 'bg-white dark:bg-[#0F1A30] border-[#D3DDEE] dark:border-[#253B66]'
+                  active?.id === c.id ? 'bg-white dark:bg-[#2C2C2E] border-[#007AFF] dark:border-[#0A84FF]' : 'bg-white dark:bg-[#1C1C1E] border-[#E5E5EA] dark:border-[#38383A]'
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white truncate">
+                  <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white truncate">
                     {isNew && <span className="inline-block w-2 h-2 rounded-full bg-rose-500 mr-1.5 align-middle" title={isTl ? 'Bagong reply' : 'New reply'} />}
                     {c.studentName}
                   </p>
@@ -1383,7 +1393,7 @@ const ChatsView: React.FC<{
                     {c.chatStatus === 'Open' ? (isTl ? 'Bukas' : 'Open') : isTl ? 'Sarado' : 'Closed'}
                   </span>
                 </div>
-                <p className="text-xs text-[#4A608A] dark:text-[#94A8D0] truncate">
+                <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6] truncate">
                   {lm ? `${lm.sender === 'office' ? (isTl ? 'Ikaw: ' : 'You: ') : ''}${lm.body}` : c.type}
                 </p>
               </button>
@@ -1399,9 +1409,9 @@ const ChatsView: React.FC<{
 
       {active && (
         <section className={`${card} flex flex-col`} data-chat-thread={active.code}>
-          <div className="px-5 py-3 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-2">
+          <div className="px-5 py-3 border-b border-[#E5E5EA] dark:border-[#38383A] flex flex-wrap items-center justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-base font-extrabold text-[#0B1F4D] dark:text-white">{active.studentName}</p>
+              <p className="text-base font-extrabold text-[#1D1D1F] dark:text-white">{active.studentName}</p>
               <p className={sub}>
                 {active.type} · {active.code}
               </p>
@@ -1418,7 +1428,7 @@ const ChatsView: React.FC<{
               ? isTl ? 'Bukas ang office ngayon (Lunes–Biyernes, 8:00 AM–5:00 PM). Makikita ng estudyante ang mensahe mo bilang "Guidance Office".' : 'The office is open now (Mon–Fri, 8:00 AM–5:00 PM). The student sees your messages as "Guidance Office".'
               : isTl ? 'Sarado ang office ngayon. Makikita ng estudyante na sasagot kayo sa susunod na oras ng opisina.' : 'The office is closed now. The student is told you will reply during office hours.'}
           </p>
-          <div className="h-[calc(100dvh/var(--app-zoom,1)-430px)] min-h-[260px] overflow-y-auto px-5 py-4 space-y-2 bg-[#F4F7FC] dark:bg-[#0B1527]">
+          <div className="h-[calc(100dvh/var(--app-zoom,1)-430px)] min-h-[260px] overflow-y-auto px-5 py-4 space-y-2 bg-[#F5F5F7] dark:bg-[#1C1C1E]">
             {msgs === null && <p className={`${sub} text-center`}>{isTl ? 'Kinukuha ang mga mensahe…' : 'Loading messages…'}</p>}
             {msgs && msgs.length > SHOW_MSGS && !showAll && (
               <button type="button" onClick={() => setShowAll(true)} className={`${btn} mx-auto block saas-card-subtle`}>
@@ -1426,15 +1436,25 @@ const ChatsView: React.FC<{
               </button>
             )}
             {msgs && msgs.length === 0 && <p className={`${sub} text-center`}>{isTl ? 'Wala pang mensahe.' : 'No messages yet.'}</p>}
-            {msgs && <Bubbles msgs={msgs} showAll={showAll} studentName={active.studentName} when={when} />}
+            {msgs && <Bubbles msgs={msgs} showAll={showAll} studentName={active.studentName} when={when} seenUpTo={chatState?.officeSeenUpTo ?? 0} />}
+            {chatState?.studentTyping && active.chatStatus === 'Open' && (
+              <p className="text-xs font-bold text-[#6E6E73] dark:text-[#A1A1A6]" aria-live="polite">{active.studentName} {isTl ? 'ay nagta-type...' : 'is typing...'}</p>
+            )}
             <div ref={endRef} />
           </div>
           {active.chatStatus === 'Open' ? (
-            <div className="p-3 border-t border-[#DCE5F2] dark:border-[#1E3158] flex gap-2 items-end">
+            <div className="p-3 border-t border-[#E5E5EA] dark:border-[#38383A] flex gap-2 items-end">
               <textarea
                 value={text}
                 aria-label={isTl ? 'Isulat ang mensahe' : 'Write a message'}
-                onChange={(e) => setText(e.target.value.slice(0, 2000))}
+                onChange={(e) => {
+                  setText(e.target.value.slice(0, 2000));
+                  const now = Date.now();
+                  if (active && e.target.value.trim() && now - lastTypingPing.current > 2500) {
+                    lastTypingPing.current = now;
+                    void setChatTyping(active.id, 'office');
+                  }
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -1443,14 +1463,14 @@ const ChatsView: React.FC<{
                 }}
                 rows={2}
                 placeholder={isTl ? 'Isulat ang mensahe… (Enter = ipadala, Shift+Enter = bagong linya)' : 'Write a message… (Enter = send, Shift+Enter = new line)'}
-                className="flex-1 px-3 py-2 rounded-xl border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-sm text-[#0B1F4D] dark:text-white leading-relaxed resize-none"
+                className="flex-1 px-3 py-2 rounded-xl border border-[#E5E5EA] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] text-sm text-[#1D1D1F] dark:text-white leading-relaxed resize-none"
               />
-              <button type="button" data-action="send" disabled={!text.trim() || sending} onClick={() => void send()} className={`${btn} px-5 py-2.5 bg-[#1E469B] text-white disabled:opacity-50`}>
+              <button type="button" data-action="send" disabled={!text.trim() || sending} onClick={() => void send()} className={`${btn} px-5 py-2.5 bg-[#007AFF] text-white disabled:opacity-50`}>
                 {sending ? (isTl ? 'Ipinapadala…' : 'Sending…') : isTl ? 'Ipadala' : 'Send'}
               </button>
             </div>
           ) : (
-            <p className="px-5 py-3 border-t border-[#DCE5F2] dark:border-[#1E3158] text-xs font-bold text-[#4A608A] dark:text-[#94A8D0]">
+            <p className="px-5 py-3 border-t border-[#E5E5EA] dark:border-[#38383A] text-xs font-bold text-[#6E6E73] dark:text-[#A1A1A6]">
               {isTl ? 'Sarado na ang chat na ito' : 'This chat is closed'}
               {active.chatClosedAt ? ` (${when(active.chatClosedAt)})` : ''}. {isTl ? 'Nakatago pa rin ang lahat ng mensahe.' : 'All messages are kept.'}
             </p>
@@ -1478,24 +1498,29 @@ const ChatsView: React.FC<{
 };
 
 // drawn once per new message — typing in the box does not redraw the chat
-const Bubbles = React.memo(function Bubbles({ msgs, showAll, studentName, when }: { msgs: ConcernMessage[]; showAll: boolean; studentName: string; when: (s: string) => string }) {
+const Bubbles = React.memo(function Bubbles({ msgs, showAll, studentName, when, seenUpTo }: { msgs: ConcernMessage[]; showAll: boolean; studentName: string; when: (s: string) => string; seenUpTo: number }) {
   const visible = showAll ? msgs : msgs.slice(-SHOW_MSGS);
   const isTl = useLanguage().locale === 'tl';
   return (
     <>
       {visible.map((m) => (
         <div key={m.id} className={`flex ${m.sender === 'office' ? 'justify-end' : 'justify-start'}`}>
-          <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words ${m.sender === 'office' ? 'bg-[#1E469B] text-white rounded-br-md' : 'bg-white dark:bg-[#13203B] text-[#0B1F4D] dark:text-white border border-[#D3DDEE] dark:border-[#253B66] rounded-bl-md'}`}>
-            <div className={`flex items-center justify-between gap-2 text-[11px] font-extrabold mb-0.5 ${m.sender === 'office' ? 'text-white/80' : 'text-[#4A608A] dark:text-[#94A8D0]'}`}>
+          <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words ${m.sender === 'office' ? 'bg-[#007AFF] text-white rounded-br-md' : 'bg-white dark:bg-[#2C2C2E] text-[#1D1D1F] dark:text-white border border-[#E5E5EA] dark:border-[#38383A] rounded-bl-md'}`}>
+            <div className={`flex items-center justify-between gap-2 text-[11px] font-extrabold mb-0.5 ${m.sender === 'office' ? 'text-white/80' : 'text-[#6E6E73] dark:text-[#A1A1A6]'}`}>
               <span>{m.sender === 'office' ? 'Guidance Office' : studentName}</span>
               <div className="flex items-center gap-1">
                 <span>{when(m.createdAt)}</span>
-                {m.sender === 'office' && (
-                  <span className="inline-flex items-center gap-0.5 text-sky-200" title={isTl ? 'Naipadala at nakita' : 'Delivered and seen'}>
+                {m.sender === 'office' && (seenUpTo >= m.id ? (
+                  <span className="inline-flex items-center gap-0.5 text-sky-200" title={isTl ? 'Nakita na ng estudyante' : 'The student has seen it'}>
                     <CheckCheck className="w-3 h-3 text-sky-300" />
-                    <span className="text-[9px] font-sans font-black tracking-wider uppercase">Seen</span>
+                    <span className="text-[9px] font-sans font-black tracking-wider uppercase">{isTl ? 'Nakita na' : 'Seen'}</span>
                   </span>
-                )}
+                  ) : (
+                  <span className="inline-flex items-center gap-0.5 text-sky-200" title={isTl ? 'Naipadala' : 'Sent'}>
+                    <Check className="w-3 h-3 text-sky-300" />
+                    <span className="text-[9px] font-sans font-black tracking-wider uppercase">{isTl ? 'Naipadala' : 'Sent'}</span>
+                  </span>
+                  ))}
               </div>
             </div>
             {m.body}

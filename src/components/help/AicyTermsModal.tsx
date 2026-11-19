@@ -73,10 +73,10 @@ export const AicyTermsModal: React.FC<AicyTermsModalProps> = ({
       onClick={(e) => e.stopPropagation()}
     >
       <div
-        className="w-full max-w-2xl bg-white dark:bg-[#0B1527] border-2 border-[#1E469B]/40 dark:border-sky-500/30 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200 pointer-events-auto"
+        className="w-full max-w-2xl bg-white dark:bg-[#1C1C1E] border-2 border-[#007AFF]/40 dark:border-sky-500/30 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200 pointer-events-auto"
       >
         {/* Header */}
-        <div className="px-5 py-4 bg-gradient-to-r from-[#1E469B] via-[#16377E] to-[#0B1F4D] text-white flex items-center justify-between border-b border-sky-400/20">
+        <div className="px-5 py-4 bg-gradient-to-r from-[#007AFF] via-[#16377E] to-[#0B1F4D] text-white flex items-center justify-between border-b border-sky-400/20">
           <div className="flex items-center gap-3">
             {/* 3D EVE-Style Head Ball (Terms Header) */}
             <div className="w-11 h-11 rounded-full mascot-shell-head flex items-center justify-center p-1 overflow-hidden shadow-inner shrink-0 border border-white/20">
@@ -115,13 +115,13 @@ export const AicyTermsModal: React.FC<AicyTermsModalProps> = ({
         {/* Scrollable Content Container */}
         <div
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 clean-scroll bg-[#F8FAFC] dark:bg-[#070D1B]"
+          className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 clean-scroll bg-[#F5F5F7] dark:bg-[#070D1B]"
         >
           {/* Important Notice Callout */}
           <div className="p-3.5 rounded-xl border border-sky-200 dark:border-sky-900/60 bg-sky-50/70 dark:bg-sky-950/30 flex items-start gap-3">
-            <Info className="w-5 h-5 text-[#1E469B] dark:text-[#7CB8F7] shrink-0 mt-0.5" />
-            <div className="text-xs leading-relaxed text-[#0B1F4D] dark:text-sky-200">
-              <p className="font-extrabold text-[12.5px] text-[#1E469B] dark:text-[#7CB8F7]">
+            <Info className="w-5 h-5 text-[#007AFF] dark:text-[#409CFF] shrink-0 mt-0.5" />
+            <div className="text-xs leading-relaxed text-[#1D1D1F] dark:text-sky-200">
+              <p className="font-extrabold text-[12.5px] text-[#007AFF] dark:text-[#409CFF]">
                 Mandatory Notice for Guidance Personnel
               </p>
               <p className="mt-0.5 font-medium">
@@ -131,21 +131,21 @@ export const AicyTermsModal: React.FC<AicyTermsModalProps> = ({
           </div>
 
           {/* CARD 1: Purpose of Aicy AI */}
-          <div className="p-3.5 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0F1A30] shadow-xs space-y-1.5">
-            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
-              <Cpu className="w-4 h-4 text-[#1E469B] dark:text-[#7CB8F7]" />
+          <div className="p-3.5 rounded-xl border border-slate-200 dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] shadow-xs space-y-1.5">
+            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[#007AFF] dark:text-[#409CFF]">
+              <Cpu className="w-4 h-4 text-[#007AFF] dark:text-[#409CFF]" />
               <span>1. System Purpose: Guidance Assistant & Workflow Navigator</span>
             </div>
             <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
               <strong>Aicy AI</strong> is designed exclusively as an <strong>intelligent assistant</strong> to help Guidance Office staff navigate institutional workflows, locate portal modules, adhere to Standard Operating Procedures (SOPs), and streamline administrative management.
             </p>
-            <p className="text-[11.5px] text-[#4A608A] dark:text-[#94A8D0] font-semibold bg-slate-50 dark:bg-[#0B1527] p-2 rounded-lg border border-slate-100 dark:border-white/5">
+            <p className="text-[11.5px] text-[#6E6E73] dark:text-[#A1A1A6] font-semibold bg-slate-50 dark:bg-[#1C1C1E] p-2 rounded-lg border border-slate-100 dark:border-white/5">
               Examples of supported inquiries: "How do I schedule a parent conference?", "Where can I view the student masterlist?", "How do I generate an official incident slip?".
             </p>
           </div>
 
           {/* CARD 2: Zero Data Leakage & Technical Proofs */}
-          <div className="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-white dark:bg-[#0F1A30] shadow-xs space-y-2">
+          <div className="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-white dark:bg-[#1C1C1E] shadow-xs space-y-2">
             <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
               <Lock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>2. Zero Data Ingestion & Technical Architecture Proofs</span>
@@ -182,7 +182,7 @@ export const AicyTermsModal: React.FC<AicyTermsModalProps> = ({
           </div>
 
           {/* CARD 3: Human Authority & Accountability */}
-          <div className="p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-white dark:bg-[#0F1A30] shadow-xs space-y-1.5">
+          <div className="p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-white dark:bg-[#1C1C1E] shadow-xs space-y-1.5">
             <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
               <UserCheck className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               <span>3. Human-in-the-Loop Authority & Disciplinary Accountability</span>
@@ -193,9 +193,9 @@ export const AicyTermsModal: React.FC<AicyTermsModalProps> = ({
           </div>
 
           {/* CARD 4: Data Privacy Act (RA 10173) & Legal Compliance */}
-          <div className="p-3.5 rounded-xl border border-slate-200 dark:border-[#1E3158] bg-white dark:bg-[#0F1A30] shadow-xs space-y-1.5">
-            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
-              <ShieldCheck className="w-4 h-4 text-[#1E469B] dark:text-[#7CB8F7]" />
+          <div className="p-3.5 rounded-xl border border-slate-200 dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] shadow-xs space-y-1.5">
+            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[#007AFF] dark:text-[#409CFF]">
+              <ShieldCheck className="w-4 h-4 text-[#007AFF] dark:text-[#409CFF]" />
               <span>4. Full Compliance with RA 10173 (Data Privacy Act of 2012)</span>
             </div>
             <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
@@ -205,7 +205,7 @@ export const AicyTermsModal: React.FC<AicyTermsModalProps> = ({
         </div>
 
         {/* Footer Acceptance Section */}
-        <div className="p-4 bg-slate-50 dark:bg-[#0B1527] border-t border-slate-200 dark:border-[#1E3158] space-y-3">
+        <div className="p-4 bg-slate-50 dark:bg-[#1C1C1E] border-t border-slate-200 dark:border-[#38383A] space-y-3">
           <label className="flex items-start gap-2.5 cursor-pointer select-none">
             <input
               type="checkbox"
@@ -214,15 +214,15 @@ export const AicyTermsModal: React.FC<AicyTermsModalProps> = ({
                 setAgreedCheck(e.target.checked);
                 soundFX.playToggleSwitch(e.target.checked);
               }}
-              className="mt-0.5 w-4 h-4 rounded text-[#1E469B] border-slate-300 focus:ring-[#1E469B] cursor-pointer"
+              className="mt-0.5 w-4 h-4 rounded text-[#007AFF] border-slate-300 focus:ring-[#007AFF] cursor-pointer"
             />
-            <span className="text-xs font-bold text-[#0B1F4D] dark:text-white leading-tight">
+            <span className="text-xs font-bold text-[#1D1D1F] dark:text-white leading-tight">
               I have read, understood, and accept these operational terms. I confirm as Guidance Personnel that AI serves strictly as an assistive tool, and our office retains full accountability for all official actions.
             </span>
           </label>
 
           <div className="flex items-center justify-between gap-3 pt-1">
-            <p className="text-[11px] text-[#64748B] dark:text-[#94A8D0] font-medium">
+            <p className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6] font-medium">
               Ready to initialize assistant.
             </p>
 
@@ -230,7 +230,7 @@ export const AicyTermsModal: React.FC<AicyTermsModalProps> = ({
               <button
                 type="button"
                 onClick={onDecline}
-                className="px-4 py-2 rounded-xl text-xs font-bold saas-card-subtle text-[#4A608A] dark:text-[#94A8D0] hover:text-[#0B1F4D] active:scale-[0.97] transition-all"
+                className="px-4 py-2 rounded-xl text-xs font-bold saas-card-subtle text-[#6E6E73] dark:text-[#A1A1A6] hover:text-[#1D1D1F] active:scale-[0.97] transition-all"
               >
                 Decline
               </button>
@@ -238,7 +238,7 @@ export const AicyTermsModal: React.FC<AicyTermsModalProps> = ({
                 type="button"
                 disabled={!agreedCheck}
                 onClick={handleAccept}
-                className="px-5 py-2 rounded-xl text-xs font-black bg-[#1E469B] hover:bg-[#16377E] text-white disabled:opacity-40 disabled:cursor-not-allowed shadow-sm active:scale-[0.97] transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2 rounded-xl text-xs font-black bg-[#007AFF] hover:bg-[#0062CC] text-white disabled:opacity-40 disabled:cursor-not-allowed shadow-sm active:scale-[0.97] transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>Accept & Proceed</span>

@@ -20,6 +20,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       const saved = localStorage.getItem(THEME_STORAGE_KEY);
       if (saved === 'dark' || saved === 'light') return saved;
+      // first visit on the website (big screen, not the APK): follow the PC setting. Phone and APK: dark, as before.
+      const bigScreen = window.matchMedia?.('(min-width: 1024px)').matches && !/Android|iPhone|iPad/i.test(navigator.userAgent);
+      if (bigScreen && window.matchMedia?.('(prefers-color-scheme: light)').matches) return 'light';
     } catch {
       // ignore
     }
@@ -82,7 +85,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return;
     }
 
-    spawnAuraRing(x, y);
+    // website login: one clean crossfade of the whole screen (day <-> night picture), no circle
+    const crossfade = document.documentElement.classList.contains('theme-xfade');
+    if (!crossfade) spawnAuraRing(x, y);
 
     const maxRadius = Math.hypot(
       Math.max(x, window.innerWidth - x),
@@ -102,6 +107,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       transition.ready
         .then(() => {
+          if (crossfade) {
+            document.documentElement.animate(
+              { opacity: [0, 1] },
+              { duration: (navigator.hardwareConcurrency || 8) <= 4 ? 500 : 850, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', pseudoElement: '::view-transition-new(root)' }
+            );
+            return;
+          }
           document.documentElement.animate(
             {
               clipPath: [
@@ -135,7 +147,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           activeVT = null;
           root.classList.remove('theme-fading');
         }
-      }, 1200);
+      }, crossfade ? 1600 : 1200);
     } catch {
       setTheme(nextTheme);
       root.classList.remove('theme-fading');

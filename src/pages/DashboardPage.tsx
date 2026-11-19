@@ -90,8 +90,11 @@ const plainTimeAgo = (s: string, isTl: boolean) =>
 
 /** Sort order: what still needs the staff first. */
 const CALL_WILL_COME = 'Reached — will come to the conference';
-const CALL_OUTCOMES = [CALL_WILL_COME, 'Reached — asked for a new date', 'No answer', 'Wrong number'];
+const CALL_STUDENT = 'Told the student to tell the parent';
+const CALL_NEW_DATE = 'Reached — asked for a new date';
+const CALL_OUTCOMES = [CALL_WILL_COME, CALL_NEW_DATE, 'No answer', 'Wrong number', CALL_STUDENT];
 const CALL_OUTCOMES_TL: Record<string, string> = {
+  [CALL_STUDENT]: 'Ipinatawag ang estudyante para sabihan ang magulang',
   [CALL_WILL_COME]: 'Nakausap — darating sa conference',
   'Reached — asked for a new date': 'Nakausap — humiling ng ibang araw',
   'No answer': 'Walang sumagot',
@@ -102,6 +105,7 @@ const CALL_TO_CONTACT_RESULT: Record<string, string> = {
   'Reached — asked for a new date': 'Reached – asked to reschedule',
   'No answer': 'No answer',
   'Wrong number': 'Wrong number',
+  [CALL_STUDENT]: 'Left a message',
 };
 const NO_SHOW_REASONS_DASH = ['Busy at work', 'Did not get the message', 'Sick / emergency', 'Forgot', 'No reason given'];
 const NO_SHOW_REASONS_DASH_TL: Record<string, string> = {
@@ -121,6 +125,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 }) => {
   const { locale } = useLanguage();
   const isTl = locale === 'tl';
+
+  // Apple style for everything inside the staff app (also pop-ups opened in portals); the login screen is not affected
+  useEffect(() => {
+    document.documentElement.classList.add('desk-app');
+    return () => document.documentElement.classList.remove('desk-app');
+  }, []);
 
   // 5-Tier Font Size State
   const [currentTextSize, setCurrentTextSize] = useState<TextSize>(() => getTextSize());
@@ -753,7 +763,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         t.parentName.toLowerCase().includes(q);
       return matchesTab && matchesDone && matchesSearch;
     });
-    return list.sort((a, b) => {
+    const seenKey = new Set<string>();
+    return list.filter((t) => {
+      if (t.resolved) return true;
+      const k = `${t.caseId}|${t.parentPhone.replace(/\D/g, '')}`;
+      if (seenKey.has(k)) return false;
+      seenKey.add(k);
+      return true;
+    }).sort((a, b) => {
       if (taskSort === 'name') return a.studentName.localeCompare(b.studentName);
       if (taskSort === 'attention') return Number(a.resolved) - Number(b.resolved) || b.attemptsCount - a.attemptsCount || timeOf(a.createdAt) - timeOf(b.createdAt);
       const d = timeOf(b.createdAt) - timeOf(a.createdAt);
@@ -1173,7 +1190,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       triggerToast(isTl ? '⚠️ Piliin muna kung ano ang nangyari sa tawag.' : '⚠️ Pick what happened on the call first.');
       return;
     }
-    const isResolved = callOutcome === CALL_WILL_COME;
+    const isResolved = callOutcome === CALL_WILL_COME || callOutcome === CALL_NEW_DATE || callOutcome === CALL_STUDENT;
 
     const nextSummary = `${callOutcome}${callCustomNotes ? ` · ${callCustomNotes}` : ''}`;
     const nextAttempts = callLogTarget.attemptsCount + 1;
@@ -1203,9 +1220,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     });
     if (!ok) return;
 
+    const sameKey = (x: FollowUpTaskItem) => x.id !== callLogTarget.id && !x.resolved && x.caseId === callLogTarget.caseId && x.parentPhone.replace(/\D/g, '') === callLogTarget.parentPhone.replace(/\D/g, '');
+    if (isResolved) followUpTasks.filter(sameKey).forEach((x) => void updateFollowUpTaskInDb(x.id, x.attemptsCount, nextSummary, true));
     setFollowUpTasks((prev) =>
       prev.map((item) =>
-        item.id === callLogTarget.id
+        isResolved && sameKey(item)
+          ? { ...item, lastContactSummaryEn: nextSummary, lastContactSummaryTl: nextSummary, resolved: true }
+          : item.id === callLogTarget.id
           ? {
               ...item,
               attemptsCount: nextAttempts,
@@ -1222,7 +1243,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       appointmentCode: '',
       studentName: callLogTarget.studentName,
       parentName: callLogTarget.parentName,
-      method: 'Call',
+      method: callOutcome === CALL_STUDENT ? 'Student call-out' : 'Call',
       result: CALL_TO_CONTACT_RESULT[callOutcome] ?? callOutcome,
       note: callCustomNotes,
     });
@@ -1244,12 +1265,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     setCallCustomNotes('');
     setCallOutcome('');
     // Say what happened AND the obvious next step (Golden Rule 6)
-    if (callOutcome === 'Reached — asked for a new date') {
-      triggerToast(
-        isTl ? `Naitala ang tawag. Pumili na ng bagong araw para kay ${target.parentName}.` : `Call saved. Now pick a new date for ${target.parentName}.`,
-        undefined,
-        { label: isTl ? 'Pumili ng araw' : 'Pick new date', run: () => openParents('schedule', target.caseId || undefined) }
-      );
+    if (callOutcome === CALL_NEW_DATE) {
+      openParents('schedule', target.caseId || undefined);
+      triggerToast(isTl ? `Naitala ang tawag. Pumili na dito ng bagong araw para kay ${target.parentName}.` : `Call saved. Pick the new date for ${target.parentName} here.`);
+    } else if (callOutcome === CALL_STUDENT) {
+      triggerToast(isTl ? `Naitala. Tapos na ang follow-up para kay ${target.parentName}.` : `Saved. The follow-up for ${target.parentName} is done.`);
     } else if (callOutcome === 'Wrong number') {
       triggerToast(
         isTl ? `Naitala ang tawag. Ayusin ang number ni ${target.parentName} sa kaso.` : `Call saved. Fix ${target.parentName}'s number in the case.`,
@@ -1368,7 +1388,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     (attendanceStats.noShow / Math.max(attendanceStats.total, 1)) * donutCircumference;
 
   return (
-    <div className="h-screen w-full saas-workspace-canvas flex overflow-hidden select-none">
+    <div className="desk-apple h-screen w-full saas-workspace-canvas flex overflow-hidden select-none">
       {/* ====================================================================
           LEFT CALM SaaS SIDEBAR (OPTION 1: 6 MAIN CATEGORIES)
           ==================================================================== */}
@@ -1396,10 +1416,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             Left: Subtle Breadcrumbs + Clean View Title
             Right: Staff User Badge with Initials + Staff Role + Sign out link
             ================================================================== */}
-        <header className="shrink-0 h-16 px-6 lg:px-8 bg-white dark:bg-[#070F1E] border-b border-[#D5E0EE] dark:border-[#1E3250] flex items-center justify-between gap-4 z-30">
+        <header className="shrink-0 h-16 px-6 lg:px-8 bg-white dark:bg-[#1C1C1E] border-b border-[#E5E5EA] dark:border-[#38383A] flex items-center justify-between gap-4 z-30">
           {/* Left Zone: Clean Heading */}
           <div className="flex items-center gap-3 min-w-0">
-            <h1 className="text-lg font-bold tracking-tight text-[#0B192C] dark:text-[#EDF4FC] truncate">
+            <h1 className="text-lg font-bold tracking-tight text-[#1D1D1F] dark:text-[#EDF4FC] truncate">
               {isTl ? activeCategory.labelTl : activeCategory.labelEn}
             </h1>
           </div>
@@ -1410,7 +1430,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             {searchHere && (
               <div className="relative hidden md:block w-64">
                 <svg
-                  className="w-3.5 h-3.5 text-[#52637A] dark:text-[#94A8C4] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                  className="w-3.5 h-3.5 text-[#6E6E73] dark:text-[#A1A1A6] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -1426,13 +1446,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   value={quickSearch}
                   onChange={(e) => setQuickSearch(e.target.value)}
                   placeholder={isTl ? 'Hanapin ang estudyante…' : 'Search student or ID…'}
-                  className="w-full pl-8 pr-7 py-1.5 rounded-[10px] bg-[#F8FAFC] dark:bg-[#0A1526] border border-[#D5E0EE] dark:border-[#1E3250] text-xs font-medium text-[#0B192C] dark:text-[#EDF4FC] placeholder-[#52637A] dark:placeholder-[#94A8C4] focus:outline-none focus:border-[#1E469B] dark:focus:border-[#38BDF8]"
+                  className="w-full pl-8 pr-7 py-1.5 rounded-[10px] bg-[#F5F5F7] dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A] text-xs font-medium text-[#1D1D1F] dark:text-[#EDF4FC] placeholder-[#52637A] dark:placeholder-[#94A8C4] focus:outline-none focus:border-[#007AFF] dark:focus:border-[#38BDF8]"
                 />
                 {quickSearch && (
                   <button
                     type="button"
                     onClick={() => setQuickSearch('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#52637A] hover:text-[#0B192C]"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#6E6E73] hover:text-[#1D1D1F]"
                   >
                     ✕
                   </button>
@@ -1450,7 +1470,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 onLockTerminal();
               }}
               title={isTl ? 'Mag-sign out' : 'Sign out'}
-              className="text-xs font-semibold text-[#64748B] hover:text-rose-600 dark:text-[#94A3B8] dark:hover:text-rose-400 pl-1 transition-colors"
+              className="text-xs font-semibold text-[#6E6E73] hover:text-rose-600 dark:text-[#A1A1A6] dark:hover:text-rose-400 pl-1 transition-colors"
             >
               {isTl ? 'Mag-sign out' : 'Sign out'}
             </button>
@@ -1478,7 +1498,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 exit={{ scale: 0.92, opacity: 0, y: 8 }}
                 transition={{ type: 'spring', stiffness: 360, damping: 24 }}
                 onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-sm rounded-2xl saas-card p-6 text-center shadow-2xl border border-[#DCE5F2] dark:border-[#243B6B] space-y-4"
+                className="w-full max-w-sm rounded-2xl saas-card p-6 text-center shadow-2xl border border-[#E5E5EA] dark:border-[#243B6B] space-y-4"
               >
                 {/* Animated Icon Badge (Red for Failures, Amber for Warnings, Emerald for Success) */}
                 <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
@@ -1549,7 +1569,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
                 {/* Confirmation Heading & Message */}
                 <div className="space-y-1.5">
-                  <h4 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
+                  <h4 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">
                     {(() => {
                       const msg = toastBanner.message.toLowerCase();
                       if (msg.includes('not saved') || msg.includes('hindi na-save') || msg.includes('failed') || msg.includes('error')) {
@@ -1561,7 +1581,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                       return isTl ? 'Matagumpay na Naisagawa!' : 'Action Confirmed!';
                     })()}
                   </h4>
-                  <p className="text-xs sm:text-[13px] font-semibold text-[#4A608A] dark:text-[#94A8D0] leading-relaxed">
+                  <p className="text-xs sm:text-[13px] font-semibold text-[#6E6E73] dark:text-[#A1A1A6] leading-relaxed">
                     {toastBanner.message.replace(/^(?:✓|✨|📥|⚠️|⚠)\s*/u, '')}
                   </p>
                 </div>
@@ -1575,7 +1595,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         toastBanner.undoAction?.();
                         setToastBanner(null);
                       }}
-                      className="btn-press px-4 py-2 rounded-xl saas-card-subtle text-xs font-extrabold text-[#1E469B] dark:text-[#7CB8F7]"
+                      className="btn-press px-4 py-2 rounded-xl saas-card-subtle text-xs font-extrabold text-[#007AFF] dark:text-[#409CFF]"
                     >
                       {isTl ? 'I-undo' : 'Undo'}
                     </button>
@@ -1585,7 +1605,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                       <button
                         type="button"
                         onClick={() => setToastBanner(null)}
-                        className="btn-press px-4 py-2 rounded-xl saas-card-subtle text-xs font-bold text-[#4A608A] dark:text-[#94A8D0]"
+                        className="btn-press px-4 py-2 rounded-xl saas-card-subtle text-xs font-bold text-[#6E6E73] dark:text-[#A1A1A6]"
                       >
                         {isTl ? 'Mamaya na' : 'Later'}
                       </button>
@@ -1596,7 +1616,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                           setToastBanner(null);
                           next?.run();
                         }}
-                        className="btn-press px-5 py-2 rounded-xl bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-extrabold shadow-sm"
+                        className="btn-press px-5 py-2 rounded-xl bg-[#007AFF] hover:bg-[#0062CC] text-white text-xs font-extrabold shadow-sm"
                       >
                         {toastBanner.nextAction.label} →
                       </button>
@@ -1616,7 +1636,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   )}
                 </div>
                 {toastBanner.nextAction?.hint && (
-                  <p className="text-[11px] font-semibold text-[#4A608A] dark:text-[#94A8D0]">
+                  <p className="text-[11px] font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">
                     {toastBanner.nextAction.hint}
                   </p>
                 )}
@@ -1630,7 +1650,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <p className="text-sm font-semibold">
               {isTl ? `Magla-lock ang app sa loob ng ${idleWarnSecs} segundo dahil walang galaw.` : `The app will lock in ${idleWarnSecs} seconds because nothing was done.`}
             </p>
-            <button type="button" onClick={() => setIdleWarnSecs(null)} className="btn-press px-4 py-2 rounded-xl bg-white text-[#0B1F4D] text-xs font-bold whitespace-nowrap">
+            <button type="button" onClick={() => setIdleWarnSecs(null)} className="btn-press px-4 py-2 rounded-xl bg-white text-[#1D1D1F] text-xs font-bold whitespace-nowrap">
               {isTl ? 'Manatiling naka-sign in' : 'Stay signed in'}
             </button>
           </div>
@@ -1801,17 +1821,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         ) : activeCategory.id !== 'dashboard' ? (
           <main className="p-6 lg:p-10 max-w-3xl mx-auto w-full my-auto">
             <div className="p-8 rounded-2xl saas-card space-y-5 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-[#E4ECFC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7] flex items-center justify-center mx-auto">
+              <div className="w-12 h-12 rounded-2xl bg-[#EAF3FF] dark:bg-[#2C2C2E] text-[#007AFF] dark:text-[#409CFF] flex items-center justify-center mx-auto">
                 <DuotoneIcon name={activeCategory.icon} size={24} />
               </div>
               <div className="space-y-1.5">
-                <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-[#E4ECFC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7]">
+                <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-[#EAF3FF] dark:bg-[#2C2C2E] text-[#007AFF] dark:text-[#409CFF]">
                   {isTl ? 'Paparating pa' : 'Coming soon'}
                 </span>
-                <h2 className="text-2xl font-extrabold text-[#0B1F4D] dark:text-white">
+                <h2 className="text-2xl font-extrabold text-[#1D1D1F] dark:text-white">
                   {isTl ? activeCategory.labelTl : activeCategory.labelEn}
                 </h2>
-                <p className="text-sm text-[#4A608A] dark:text-[#94A8D0] max-w-lg mx-auto">
+                <p className="text-sm text-[#6E6E73] dark:text-[#A1A1A6] max-w-lg mx-auto">
                   {isTl
                     ? 'Ginagawa pa ang page na ito. Sa ngayon, magagamit mo ang Dashboard at ang Mga Kaso.'
                     : 'This page is still being built. For now you can use the Dashboard and Cases.'}
@@ -1831,7 +1851,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 <button
                   type="button"
                   onClick={() => openCasesTab('add-report')}
-                  className="btn-press px-5 py-2.5 rounded-xl bg-[#1E469B] text-white text-xs font-bold"
+                  className="btn-press px-5 py-2.5 rounded-xl bg-[#007AFF] text-white text-xs font-bold"
                 >
                   {isTl ? '＋ Bagong Kaso' : '＋ New Case'}
                 </button>
@@ -1854,21 +1874,21 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 <p className="text-xs font-bold text-rose-900 dark:text-rose-200">{isTl ? 'Kailangang aksyunan' : 'Needs attention'}</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {alerts.overdue.length > 0 && (
-                    <button type="button" data-alert="overdue" onClick={() => openCasesTab('case-board', 'overdue')} className="btn-press text-left rounded-lg bg-white dark:bg-[#0F1A30] border border-rose-200 dark:border-rose-900/60 px-3 py-2 hover:border-rose-400">
-                      <span className="block text-sm font-bold text-[#0F172A] dark:text-white">
+                    <button type="button" data-alert="overdue" onClick={() => openCasesTab('case-board', 'overdue')} className="btn-press text-left rounded-lg bg-white dark:bg-[#1C1C1E] border border-rose-200 dark:border-rose-900/60 px-3 py-2 hover:border-rose-400">
+                      <span className="block text-sm font-bold text-[#1D1D1F] dark:text-white">
                         {isTl ? `${alerts.overdue.length} overdue na kaso` : `${alerts.overdue.length} overdue case${alerts.overdue.length === 1 ? '' : 's'}`}
                       </span>
-                      <span className="block text-xs text-[#475569] dark:text-[#94A8D0]">
+                      <span className="block text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                         {isTl ? `Bukas nang higit ${appConfig.caseRules.overdueDays} araw · Tingnan` : `Open more than ${appConfig.caseRules.overdueDays} day${appConfig.caseRules.overdueDays === 1 ? '' : 's'} · Show`}
                       </span>
                     </button>
                   )}
                   {alerts.waiting.length > 0 && (
-                    <button type="button" data-alert="waiting" onClick={() => openCasesTab('case-board', 'waiting')} className="btn-press text-left rounded-lg bg-white dark:bg-[#0F1A30] border border-rose-200 dark:border-rose-900/60 px-3 py-2 hover:border-rose-400">
-                      <span className="block text-sm font-bold text-[#0F172A] dark:text-white">
+                    <button type="button" data-alert="waiting" onClick={() => openCasesTab('case-board', 'waiting')} className="btn-press text-left rounded-lg bg-white dark:bg-[#1C1C1E] border border-rose-200 dark:border-rose-900/60 px-3 py-2 hover:border-rose-400">
+                      <span className="block text-sm font-bold text-[#1D1D1F] dark:text-white">
                         {isTl ? `${alerts.waiting.length} sanction na naghihintay` : `${alerts.waiting.length} sanction${alerts.waiting.length === 1 ? '' : 's'} waiting`}
                       </span>
-                      <span className="block text-xs text-[#475569] dark:text-[#94A8D0]">
+                      <span className="block text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                         {isTl ? `Hindi pa alam ng magulang nang higit ${appConfig.caseRules.pendingSanctionDays} araw · Tingnan` : `Parent not notified for over ${appConfig.caseRules.pendingSanctionDays} day${appConfig.caseRules.pendingSanctionDays === 1 ? '' : 's'} · Show`}
                       </span>
                     </button>
@@ -2027,10 +2047,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                               : isNoShow
                               ? 'border-l-[3px] border-l-rose-500 bg-rose-50/50 dark:bg-rose-950/25 border-rose-200 dark:border-rose-800/70'
                               : apt.severityTone === 'rose'
-                              ? 'border-l-[3px] border-l-rose-500 border-[#CBD5E1] dark:border-[#1E3158] bg-white dark:bg-[#0B1528] hover:border-[#1E469B]'
+                              ? 'border-l-[3px] border-l-rose-500 border-[#D1D1D6] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] hover:border-[#007AFF]'
                               : apt.severityTone === 'amber'
-                              ? 'border-l-[3px] border-l-amber-500 border-[#CBD5E1] dark:border-[#1E3158] bg-white dark:bg-[#0B1528] hover:border-[#1E469B]'
-                              : 'border-l-[3px] border-l-[#1E469B] border-[#CBD5E1] dark:border-[#1E3158] bg-white dark:bg-[#0B1528] hover:border-[#1E469B]'
+                              ? 'border-l-[3px] border-l-amber-500 border-[#D1D1D6] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] hover:border-[#007AFF]'
+                              : 'border-l-[3px] border-l-[#007AFF] border-[#D1D1D6] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] hover:border-[#007AFF]'
                           }`}
                         >
                           <div className="flex items-start gap-3.5 min-w-0">
@@ -2040,7 +2060,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                   ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200'
                                   : isNoShow
                                   ? 'bg-rose-100 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200'
-                                  : 'bg-[#EEF3FC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7]'
+                                  : 'bg-[#EAF3FF] dark:bg-[#2C2C2E] text-[#007AFF] dark:text-[#409CFF]'
                               }`}
                             >
                               {apt.initials}
@@ -2048,10 +2068,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
                             <div className="min-w-0 space-y-1">
                               <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-sm font-bold text-[#0F172A] dark:text-white">
+                                <span className="text-sm font-bold text-[#1D1D1F] dark:text-white">
                                   {apt.studentName}
                                 </span>
-                                <span className="text-xs font-medium text-[#475569] dark:text-[#94A8D0]">
+                                <span className="text-xs font-medium text-[#6E6E73] dark:text-[#A1A1A6]">
                                   · {apt.gradeSection}
                                 </span>
                                 {isAttended && (
@@ -2061,9 +2081,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                 )}
                               </div>
 
-                              <p className="text-xs text-[#475569] dark:text-[#94A8D0]">
+                              <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                                 {apt.parentName} ({apt.relationship}) ·{' '}
-                                <span className="font-semibold text-[#0F172A] dark:text-white">
+                                <span className="font-semibold text-[#1D1D1F] dark:text-white">
                                   {apt.timeSlot}
                                 </span>
                               </p>
@@ -2089,7 +2109,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                     openParents('schedule', apt.caseId || undefined);
                                   }
                                 }}
-                                className="btn-press px-3.5 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap"
+                                className="btn-press px-3.5 py-1.5 rounded-lg bg-[#007AFF] hover:bg-[#0062CC] text-white text-xs font-semibold whitespace-nowrap"
                               >
                                 {isTl ? 'Mag-schedule ulit sa Step 4' : 'Reschedule in Due Process (Step 4)'}
                               </button>
@@ -2107,7 +2127,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                   setAppointments((prev) => prev.map((item) => (item.id === apt.id ? { ...item, status: 'Scheduled', noShowReason: undefined } : item)));
                                   void updateAppointmentStatusInDb(apt.id, 'Scheduled');
                                 }}
-                                className="btn-press px-3 py-1.5 rounded-lg text-xs font-semibold saas-card-subtle text-[#475569] dark:text-[#94A8D0]"
+                                className="btn-press px-3 py-1.5 rounded-lg text-xs font-semibold saas-card-subtle text-[#6E6E73] dark:text-[#A1A1A6]"
                               >
                                 {isTl ? 'I-undo' : 'Undo'}
                               </button>
@@ -2152,7 +2172,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                   );
                                   void updateAppointmentStatusInDb(apt.id, 'Scheduled');
                                 }}
-                                className="btn-press px-3 py-1.5 rounded-lg text-xs font-semibold saas-card-subtle text-[#475569] dark:text-[#94A8D0]"
+                                className="btn-press px-3 py-1.5 rounded-lg text-xs font-semibold saas-card-subtle text-[#6E6E73] dark:text-[#A1A1A6]"
                               >
                                 {isTl ? 'I-undo' : 'Undo'}
                               </button>
@@ -2164,7 +2184,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                 soundFX.playKeyClick(2);
                                 setNoShowTarget(apt);
                               }}
-                              className="btn-press px-3 py-1.5 rounded-lg text-xs font-semibold saas-card-subtle hover:border-rose-500 text-[#475569] dark:text-[#94A8D0] hover:text-rose-600"
+                              className="btn-press px-3 py-1.5 rounded-lg text-xs font-semibold saas-card-subtle hover:border-rose-500 text-[#6E6E73] dark:text-[#A1A1A6] hover:text-rose-600"
                             >
                               {isTl ? 'Hindi dumalo' : 'Did not attend'}
                             </button>
@@ -2184,7 +2204,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                   caseCode: apt.caseId || undefined,
                                 })
                               }
-                              className="btn-press px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap saas-card-subtle hover:border-[#1E469B] text-[#1E469B] dark:text-[#7CB8F7]"
+                              className="btn-press px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap saas-card-subtle hover:border-[#007AFF] text-[#007AFF] dark:text-[#409CFF]"
                             >
                               {isTl ? 'I-text' : 'Text'}
                             </button>
@@ -2207,7 +2227,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                       <button
                         type="button"
                         onClick={() => setShowAttended(false)}
-                        className="w-full py-2 text-center text-xs font-bold text-[#4A608A] dark:text-[#94A8D0] hover:text-[#0B1F4D] dark:hover:text-white"
+                        className="w-full py-2 text-center text-xs font-bold text-[#6E6E73] dark:text-[#A1A1A6] hover:text-[#1D1D1F] dark:hover:text-white"
                       >
                         {isTl ? 'Itago ang mga dumalo na' : 'Hide attended'}
                       </button>
@@ -2230,7 +2250,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                       <div
                         role="tablist"
                         aria-label={isTl ? 'Ipakita ang task' : 'Show tasks'}
-                        className="flex items-center p-0.5 rounded-lg bg-[#EEF3F9] dark:bg-[#0A1526] border border-[#D5E0EE] dark:border-[#1E3250]"
+                        className="flex items-center p-0.5 rounded-lg bg-[#EEF3F9] dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A]"
                       >
                         {[
                           { done: false, label: isTl ? 'Kailangan pa' : 'Pending', n: pendingTaskCount },
@@ -2244,8 +2264,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                             onClick={() => setShowDoneTasks(o.done)}
                             className={`px-2.5 py-1 rounded-md text-xs font-bold whitespace-nowrap transition-colors active:scale-[0.97] ${
                               showDoneTasks === o.done
-                                ? 'bg-white dark:bg-[#1E3250] text-[#0B192C] dark:text-white shadow-sm'
-                                : 'text-[#52637A] dark:text-[#94A8C4] hover:text-[#0B192C] dark:hover:text-white'
+                                ? 'bg-white dark:bg-[#1E3250] text-[#1D1D1F] dark:text-white shadow-sm'
+                                : 'text-[#6E6E73] dark:text-[#A1A1A6] hover:text-[#1D1D1F] dark:hover:text-white'
                             }`}
                           >
                             {o.label} <span className="tabular-nums opacity-70">{o.n}</span>
@@ -2257,7 +2277,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         <summary
                           className={`list-none [&::-webkit-details-marker]:hidden cursor-pointer h-8 px-3 rounded-full inline-flex items-center gap-1.5 text-xs font-medium transition-colors ${
                             taskFilter !== 'ALL'
-                              ? 'bg-[#1E469B]/10 text-[#1E469B] dark:text-[#7CB8F7]'
+                              ? 'bg-[#007AFF]/10 text-[#007AFF] dark:text-[#409CFF]'
                               : 'text-[#6E6E73] dark:text-[#A1A1A6] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
                           }`}
                         >
@@ -2283,7 +2303,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                   className="flex items-center justify-between gap-6 px-2 py-1.5 rounded-lg text-[13px] text-left text-[#1D1D1F] dark:text-[#F5F5F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                                 >
                                   {l}
-                                  {taskFilter === v && <Check className="w-4 h-4 text-[#1E469B] dark:text-[#7CB8F7]" aria-hidden />}
+                                  {taskFilter === v && <Check className="w-4 h-4 text-[#007AFF] dark:text-[#409CFF]" aria-hidden />}
                                 </button>
                               ))}
                             </div>
@@ -2300,12 +2320,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   <div className="divide-y divide-black/[0.06] dark:divide-white/[0.08] flex-1 h-[400px] overflow-y-auto clean-scroll">
                     {filteredFollowUps.length === 0 && (
                       <div className="py-10 px-6 text-center space-y-2">
-                        <p className="text-sm font-bold text-[#0B192C] dark:text-[#EDF4FC]">
+                        <p className="text-sm font-bold text-[#1D1D1F] dark:text-[#EDF4FC]">
                           {showDoneTasks
                             ? isTl ? 'Wala pang tapos na follow-up.' : 'No finished follow-ups yet.'
                             : isTl ? 'Lahat ng follow-up ay tapos na.' : 'All follow-ups are done.'}
                         </p>
-                        <p className="text-xs text-[#52637A] dark:text-[#94A8C4]">
+                        <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                           {isTl
                             ? 'Lalabas dito ang mga magulang na hindi dumalo o kailangang tawagan.'
                             : 'Parents who did not attend or need a call will show up here.'}
@@ -2314,7 +2334,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                           <button
                             type="button"
                             onClick={() => setShowDoneTasks(true)}
-                            className="text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7] hover:underline"
+                            className="text-xs font-bold text-[#007AFF] dark:text-[#409CFF] hover:underline"
                           >
                             {isTl ? `Tingnan ang ${doneTaskCount} na tapos na →` : `See ${doneTaskCount} done →`}
                           </button>
@@ -2346,7 +2366,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         emerald: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200',
                         rose: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200',
                         amber: 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200',
-                        cobalt: 'bg-[#E4ECFC] text-[#1E469B] dark:bg-[#192D58] dark:text-[#AFCBFA]',
+                        cobalt: 'bg-[#EAF3FF] text-[#007AFF] dark:bg-[#2C2C2E] dark:text-[#AFCBFA]',
                       }[tone];
                       return (
                       <div
@@ -2357,10 +2377,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-1.5">
                               <span className={`w-2 h-2 rounded-full ${dotTone}`} />
-                              <span className="text-xs font-black text-[#0B1F4D] dark:text-white truncate">
+                              <span className="text-xs font-black text-[#1D1D1F] dark:text-white truncate">
                                 {task.studentName}
                               </span>
-                              <span className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
+                              <span className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">
                                 ({task.gradeSection})
                               </span>
                               {task.resolved ? (
@@ -2368,14 +2388,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                   {isTl ? 'Tapos na' : 'Done'}
                                 </span>
                               ) : escalate ? (
-                                <span className="px-1.5 py-0.2 rounded bg-rose-600 text-white text-[9.5px] font-bold">
-                                  {isTl ? 'I-escalate' : 'Escalate'}
+                                <span className="px-2 py-0.5 rounded-full bg-[#FF3B30] text-white text-[11px] font-semibold" title={isTl ? 'Hindi sumasagot. Ipatawag ang estudyante at ipasabi sa magulang, tapos piliin ito sa Log call.' : 'No answer many times. Call the student in to tell the parent, then pick that in Log call.'}>
+                                  {isTl ? 'Ipatawag ang estudyante' : 'Call the student in'}
                                 </span>
                               ) : null}
                             </div>
-                            <p className="text-[11.5px] font-bold text-[#1E469B] dark:text-[#7CB8F7] mt-0.5 truncate">
+                            <p className="text-[12.5px] font-semibold text-[#FF3B30] mt-0.5 truncate">
                               {plainAttendanceWords(isTl ? task.reasonTl : task.reasonEn)}
                             </p>
+                            {(() => {
+                              const appt = appointments.find((a) => a.caseId === task.caseId && a.status === 'Scheduled');
+                              return appt ? (
+                                <p className="text-[12.5px] text-[#1D1D1F] dark:text-[#F5F5F7] mt-0.5">
+                                  {isTl ? 'Conference: ' : 'Conference: '}<b className="font-semibold">{new Date(appt.date + 'T00:00').toLocaleDateString(isTl ? 'fil-PH' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' })} · {appt.timeSlot}</b>
+                                </p>
+                              ) : null;
+                            })()}
                           </div>
 
                           <span
@@ -2387,8 +2415,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         </div>
 
                         <div className="flex items-center justify-between pt-0.5 gap-2">
-                          <span className="text-xs font-medium text-[#475569] dark:text-[#94A8D0] truncate">
-                            {task.parentName} · <a href={`tel:${task.parentPhone.replace(/\D/g, '')}`} className="font-mono font-semibold text-[#0F172A] dark:text-white hover:underline">{task.parentPhone}</a>
+                          <span className="text-xs font-medium text-[#6E6E73] dark:text-[#A1A1A6] truncate">
+                            {task.parentName} · <a href={`tel:${task.parentPhone.replace(/\D/g, '')}`} className="font-mono font-semibold text-[#1D1D1F] dark:text-white hover:underline">{task.parentPhone}</a>
                           </span>
 
                           {/* Finished follow-ups are read-only: no Log call / Text that would silently reopen them */}
@@ -2398,17 +2426,28 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                             </span>
                           ) : (
                           <div className="flex items-center gap-1.5 shrink-0">
+                            {task.caseId && (
+                              <button
+                                type="button"
+                                onClick={() => openCasesTab('case-board', null, null, task.caseId)}
+                                title={isTl ? `Buksan ang kaso ${task.caseId}` : `Open case ${task.caseId}`}
+                                className="btn-press px-3 py-1 rounded-full saas-card-subtle text-[13px] font-semibold text-[#007AFF] dark:text-[#409CFF] whitespace-nowrap"
+                              >
+                                {isTl ? 'Buksan ang kaso' : 'Open case'}
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={() => {
                                 soundFX.playKeyClick(1);
                                 setCallLogTarget(task);
                               }}
-                              className="btn-press px-2.5 py-1 rounded-lg saas-card-subtle hover:border-[#1E469B] text-xs font-semibold whitespace-nowrap"
+                              title={isTl ? 'Tawagan ang magulang, tapos itala dito ang nangyari' : 'Call the parent, then save what happened here'}
+                              className="btn-press px-3 py-1 rounded-full bg-[#007AFF] hover:bg-[#0062CC] text-white text-[13px] font-semibold whitespace-nowrap"
                             >
                               {isTl ? 'Itala ang tawag' : 'Log call'}
                             </button>
-                            <button
+                            {smsReady === true && <button
                               type="button"
                               onClick={() =>
                                 openComposerForParent({
@@ -2417,15 +2456,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                   parentName: task.parentName,
                                   parentPhone: task.parentPhone,
                                   parentEmail: task.parentEmail,
-                                  scheduleText: '',
+                                  scheduleText: (() => { const a = appointments.find((x) => x.caseId === task.caseId && x.status === 'Scheduled'); return a ? `${a.date} ${a.timeSlot}` : ''; })(),
                                   caseCode: task.caseId || undefined,
                                 })
                               }
                               title={isTl ? `I-text si ${task.parentName}` : `Text ${task.parentName}`}
-                              className="btn-press px-3 py-1 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap"
+                              className="btn-press px-3 py-1 rounded-full saas-card-subtle text-[13px] font-semibold whitespace-nowrap"
                             >
                               <span>{isTl ? 'I-text' : 'Text'}</span>
-                            </button>
+                            </button>}
                           </div>
                           )}
                         </div>
@@ -2446,10 +2485,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 <div className="lg:col-span-5 p-6 rounded-2xl saas-card flex flex-col justify-between gap-5">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
+                      <h3 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">
                         {isTl ? 'Trend ng Kaso at Naayos' : 'Case Volume & Resolution'}
                       </h3>
-                      <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                      <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                         {isTl ? 'Naitalang kaso vs. naayos' : 'Logged cases vs. resolved cases'}
                       </p>
                     </div>
@@ -2462,8 +2501,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                           onClick={() => setTimeframe(k)}
                           className={`px-2.5 py-1 rounded-md text-xs font-bold ${
                             timeframe === k
-                              ? 'bg-[#1E469B] text-white'
-                              : 'text-[#4A608A] dark:text-[#94A8D0]'
+                              ? 'bg-[#007AFF] text-white'
+                              : 'text-[#6E6E73] dark:text-[#A1A1A6]'
                           }`}
                         >
                           {
@@ -2476,7 +2515,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                     </div>
                   </div>
 
-                  <div className="h-44 pt-4 px-2 flex items-end justify-around gap-3 border-b border-[#DCE5F2] dark:border-[#1E3158]">
+                  <div className="h-44 pt-4 px-2 flex items-end justify-around gap-3 border-b border-[#E5E5EA] dark:border-[#38383A]">
                     {currentAnalytics.points.map((pt, idx) => {
                       const loggedH = pt.logged ? Math.max(8, Math.round((pt.logged / maxTrendValue) * 130)) : 2;
                       const resolvedH = pt.resolved
@@ -2486,12 +2525,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         <div key={idx} className="flex-1 flex flex-col items-center gap-2">
                           <div className="w-full flex items-end justify-center gap-1.5 h-[136px]">
                             <div className="flex flex-col items-center gap-1">
-                              <span className="text-[10px] font-mono font-bold text-[#1E469B] dark:text-[#7CB8F7]">
+                              <span className="text-[10px] font-mono font-bold text-[#007AFF] dark:text-[#409CFF]">
                                 {pt.logged}
                               </span>
                               <div
                                 style={{ height: `${loggedH}px` }}
-                                className="w-5 rounded-t-md bg-[#1E469B]"
+                                className="w-5 rounded-t-md bg-[#007AFF]"
                               />
                             </div>
                             <div className="flex flex-col items-center gap-1">
@@ -2504,7 +2543,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                               />
                             </div>
                           </div>
-                          <span className="text-xs font-bold text-[#4A608A] dark:text-[#94A8D0] pb-1">
+                          <span className="text-xs font-bold text-[#6E6E73] dark:text-[#A1A1A6] pb-1">
                             {isTl ? pt.labelTl : pt.labelEn}
                           </span>
                         </div>
@@ -2512,7 +2551,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                     })}
                   </div>
 
-                  <p className="text-xs font-semibold text-[#4A608A] dark:text-[#94A8D0]">
+                  <p className="text-xs font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">
                     {isTl ? currentAnalytics.takeawayTl : currentAnalytics.takeawayEn}
                   </p>
                 </div>
@@ -2520,10 +2559,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 {/* Donut Breakdown (3 Cols) */}
                 <div className="lg:col-span-3 p-6 rounded-2xl saas-card flex flex-col justify-between gap-4">
                   <div>
-                    <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
+                    <h3 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">
                       {isTl ? 'Breakdown Ngayong Araw' : "Today's Conferences"}
                     </h3>
-                    <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                    <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                       {isTl ? 'Pagdalo ng magulang ngayong araw' : 'Parent attendance today'}
                     </p>
                   </div>
@@ -2544,7 +2583,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                           cy="64"
                           r={donutRadius}
                           fill="transparent"
-                          stroke="#10B981"
+                          stroke="#34C759"
                           strokeWidth="12"
                           strokeDasharray={`${attendedStroke} ${donutCircumference}`}
                           strokeDashoffset={0}
@@ -2554,7 +2593,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                           cy="64"
                           r={donutRadius}
                           fill="transparent"
-                          stroke="#F59E0B"
+                          stroke="#FF9500"
                           strokeWidth="12"
                           strokeDasharray={`${scheduledStroke} ${donutCircumference}`}
                           strokeDashoffset={-attendedStroke}
@@ -2571,10 +2610,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-xl font-mono font-extrabold text-[#0B1F4D] dark:text-white">
+                        <span className="text-xl font-mono font-extrabold text-[#1D1D1F] dark:text-white">
                           {attendanceStats.attended}/{attendanceStats.total}
                         </span>
-                        <span className="text-[10px] font-bold text-[#4A608A] dark:text-[#94A8D0]">
+                        <span className="text-[10px] font-bold text-[#6E6E73] dark:text-[#A1A1A6]">
                           {isTl ? 'DUMALO' : 'ATTENDED'}
                         </span>
                       </div>
@@ -2606,10 +2645,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 {/* Open cases by section (4 Cols) */}
                 <div className="lg:col-span-4 p-6 rounded-2xl saas-card space-y-4">
                   <div>
-                    <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
+                    <h3 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">
                       {isTl ? 'Bukas na kaso bawat section' : 'Open cases by section'}
                     </h3>
-                    <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                    <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                       {isTl
                         ? 'Pinakamaraming bukas na kaso ang nasa itaas'
                         : 'Most open cases first'}
@@ -2618,31 +2657,31 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
                   <div className="space-y-3">
                     {sectionCases.length === 0 && (
-                      <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Wala pang estudyante sa masterlist.' : 'No students in the masterlist yet.'}</p>
+                      <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Wala pang estudyante sa masterlist.' : 'No students in the masterlist yet.'}</p>
                     )}
                     {sectionCases.slice(0, 8).map((st) => (
                       <div key={st.sectionCode} className="space-y-1">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-extrabold text-[#0B1F4D] dark:text-white">
+                          <span className="font-extrabold text-[#1D1D1F] dark:text-white">
                             {st.sectionCode}{' '}
-                            <span className="font-normal text-[#4A608A] dark:text-[#94A8D0]">
+                            <span className="font-normal text-[#6E6E73] dark:text-[#A1A1A6]">
                               · {st.students} {isTl ? 'estudyante' : st.students === 1 ? 'student' : 'students'}
                             </span>
                           </span>
-                          <span className="font-mono font-bold text-[#1E469B] dark:text-[#7CB8F7]">
+                          <span className="font-mono font-bold text-[#007AFF] dark:text-[#409CFF]">
                             {st.openCases} {isTl ? 'kaso' : st.openCases === 1 ? 'case' : 'cases'}
                           </span>
                         </div>
-                        <div className="w-full h-2 rounded-full bg-[#E4ECFC] dark:bg-[#192D58] overflow-hidden">
+                        <div className="w-full h-2 rounded-full bg-[#EAF3FF] dark:bg-[#2C2C2E] overflow-hidden">
                           <div
                             style={{ width: `${st.barPercent}%` }}
-                            className="h-full rounded-full bg-[#1E469B] dark:bg-[#4E92DF]"
+                            className="h-full rounded-full bg-[#007AFF] dark:bg-[#0A84FF]"
                           />
                         </div>
                       </div>
                     ))}
                     {sectionCases.length > 8 && (
-                      <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
+                      <p className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">
                         {isTl ? `+${sectionCases.length - 8} pang section` : `+${sectionCases.length - 8} more section(s)`}
                       </p>
                     )}
@@ -2658,19 +2697,19 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-7 p-6 rounded-2xl saas-card space-y-4">
                   <div>
-                    <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
+                    <h3 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">
                       {isTl ? 'Early Intervention' : 'Early Intervention'}
                     </h3>
-                    <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                    <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                       {isTl
                         ? 'Mga estudyanteng magiging serious ang susunod na minor offense · kausapin sila nang maaga'
                         : 'Students whose next minor offense would be serious · talk with them early'}
                     </p>
                   </div>
 
-                  <div className="divide-y divide-[#E2E9F5] dark:divide-[#1E3158]">
+                  <div className="divide-y divide-[#E5E5EA] dark:divide-[#38383A]">
                     {earlyInterventionList.length === 0 && (
-                      <p className="py-4 text-sm font-medium text-[#475569] dark:text-[#94A8D0]">{isTl ? 'Walang estudyante sa listahan ngayon.' : 'No students on the list right now.'}</p>
+                      <p className="py-4 text-sm font-medium text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Walang estudyante sa listahan ngayon.' : 'No students on the list right now.'}</p>
                     )}
                     {earlyInterventionList.map((item) => (
                       <div
@@ -2680,14 +2719,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-amber-500" />
-                            <span className="text-sm font-bold text-[#0F172A] dark:text-white">
+                            <span className="text-sm font-bold text-[#1D1D1F] dark:text-white">
                               {item.fullName}
                             </span>
-                            <span className="text-xs text-[#475569] dark:text-[#94A8D0]">
+                            <span className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                               · {item.gradeSection}
                             </span>
                           </div>
-                          <p className="text-xs text-[#475569] dark:text-[#94A8D0]">
+                          <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                             {isTl ? item.priorOffensesTl : item.priorOffensesEn}
                           </p>
                         </div>
@@ -2705,7 +2744,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                             })
                           }
                           title={isTl ? 'Hindi isasama ang offense sa mensahe' : 'The message never includes the offense'}
-                          className="btn-press inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#1E469B] text-white text-xs font-semibold shrink-0 whitespace-nowrap"
+                          className="btn-press inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#007AFF] text-white text-xs font-semibold shrink-0 whitespace-nowrap"
                         >
                           {isTl ? 'I-text ang magulang' : 'Text parent'}
                         </button>
@@ -2716,26 +2755,26 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
                 <div className="lg:col-span-5 p-6 rounded-2xl saas-card space-y-4">
                   <div>
-                    <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
+                    <h3 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">
                       {isTl ? 'Kamakailang Aktibidad sa Opisina' : 'Recent Guidance Activity'}
                     </h3>
-                    <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                    <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                       {isTl ? 'Mga huling ginawa ng opisina · nasa Settings ang buong tala' : 'What the office did lately · the full log is in Settings'}
                     </p>
                   </div>
 
-                  <div className="divide-y divide-[#E2E9F5] dark:divide-[#1E3158]">
+                  <div className="divide-y divide-[#E5E5EA] dark:divide-[#38383A]">
                     {activityLogs.map((log) => (
                       <div key={log.id} className="py-3 space-y-0.5">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-[#1E469B] dark:text-[#7CB8F7]">
+                          <span className="font-bold text-[#007AFF] dark:text-[#409CFF]">
                             {log.actor}
                           </span>
-                          <span className="text-[#4A608A] dark:text-[#94A8D0]">
+                          <span className="text-[#6E6E73] dark:text-[#A1A1A6]">
                             {plainTimeAgo(isTl ? log.timeAgoTl : log.timeAgoEn, isTl)}
                           </span>
                         </div>
-                        <p className="text-xs text-[#0B1F4D] dark:text-white">
+                        <p className="text-xs text-[#1D1D1F] dark:text-white">
                           {isTl ? log.actionTl : log.actionEn}
                         </p>
                       </div>
@@ -2749,7 +2788,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         )}
 
         {/* Calm Footer */}
-        <footer className="shrink-0 px-8 py-4 border-t border-[#DCE5F2] dark:border-[#1E3158] text-center text-xs text-[#4A608A] dark:text-[#94A8D0]">
+        <footer className="shrink-0 px-8 py-4 border-t border-[#E5E5EA] dark:border-[#38383A] text-center text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
           Official Guidance System of Asian Institute of Computer Studies · Montalban — Data Privacy
           Act (RA 10173) Compliant
         </footer>
@@ -2775,7 +2814,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               className="w-full max-w-md rounded-2xl saas-card p-6 space-y-4"
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
+                <h3 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">
                   {isTl ? 'Markahan bilang Hindi dumalo' : 'Mark as Did not attend'}
                 </h3>
                 <button
@@ -2783,17 +2822,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   title={isTl ? 'Isara' : 'Close'}
                   type="button"
                   onClick={() => setNoShowTarget(null)}
-                  className="text-sm font-bold text-[#4A608A]"
+                  className="text-sm font-bold text-[#6E6E73]"
                 >
                   ✕
                 </button>
               </div>
 
               <div className="p-3 rounded-xl saas-card-subtle text-xs space-y-1">
-                <p className="font-bold text-[#0B1F4D] dark:text-white">
+                <p className="font-bold text-[#1D1D1F] dark:text-white">
                   {noShowTarget.parentName} ({noShowTarget.studentName})
                 </p>
-                <p className="text-[#4A608A] dark:text-[#94A8D0]">
+                <p className="text-[#6E6E73] dark:text-[#A1A1A6]">
                   {isTl
                     ? 'Awtomatikong idaragdag ito sa Follow-Up Tasks Due.'
                     : 'Automatically queues a follow-up task for rescheduling.'}
@@ -2808,8 +2847,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                     onClick={() => setNoShowReason(reason)}
                     className={`w-full text-left p-3 rounded-xl text-xs font-bold transition-colors ${
                       noShowReason === reason
-                        ? 'bg-[#1E469B] text-white'
-                        : 'saas-card-subtle text-[#0B1F4D] dark:text-white'
+                        ? 'bg-[#007AFF] text-white'
+                        : 'saas-card-subtle text-[#1D1D1F] dark:text-white'
                     }`}
                   >
                     {isTl ? NO_SHOW_REASONS_DASH_TL[reason] : reason}
@@ -2859,11 +2898,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               {/* Modal Header */}
               <div className="flex items-start justify-between pb-3 border-b border-slate-200 dark:border-white/10">
                 <div>
-                  <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white leading-tight">
-                    {isTl ? 'Itala ang Tawag sa Magulang' : 'Log Parent Call Attempt'}
+                  <h3 className="text-base font-extrabold text-[#1D1D1F] dark:text-white leading-tight">
+                    {isTl ? 'Itala ang tawag' : 'Log the call'}
                   </h3>
-                  <p className="text-[11px] font-semibold text-[#4A608A] dark:text-[#94A8D0]">
-                    {isTl ? 'Piliin ang kinalabasan ng pakikipag-ugnayan' : 'Document call outcome for follow-up record'}
+                  <p className="text-[11px] font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">
+                    {isTl ? 'Tawagan muna ang magulang, tapos piliin dito ang nangyari.' : 'Call the parent first, then pick what happened.'}
                   </p>
                 </div>
                 <button
@@ -2871,7 +2910,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   title={isTl ? 'Isara' : 'Close'}
                   type="button"
                   onClick={() => setCallLogTarget(null)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[#4A608A] hover:text-[#0B1F4D] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-[0.97]"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6E6E73] hover:text-[#1D1D1F] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-[0.97]"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -2881,17 +2920,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 space-y-2 text-xs">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="font-bold text-[#0B1F4D] dark:text-white truncate">
+                    <div className="font-bold text-[#1D1D1F] dark:text-white truncate">
                       {callLogTarget.parentName}
                     </div>
-                    <div className="text-[11px] text-[#4A608A] dark:text-slate-400 mt-0.5 truncate">
+                    <div className="text-[11px] text-[#6E6E73] dark:text-slate-400 mt-0.5 truncate">
                       {isTl ? 'Magulang / Guardian ni' : 'Parent / Guardian of'}{' '}
-                      <span className="font-semibold text-[#0B1F4D] dark:text-slate-200">{callLogTarget.studentName}</span>
+                      <span className="font-semibold text-[#1D1D1F] dark:text-slate-200">{callLogTarget.studentName}</span>
                       {callLogTarget.gradeSection ? ` · ${callLogTarget.gradeSection}` : ''}
                     </div>
                   </div>
                   <div className="shrink-0 flex flex-col items-end gap-1">
-                    <span className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-blue-100 dark:bg-blue-950 text-[#1E469B] dark:text-blue-300 border border-blue-200 dark:border-blue-900">
+                    <span className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-blue-100 dark:bg-blue-950 text-[#007AFF] dark:text-blue-300 border border-blue-200 dark:border-blue-900">
                       {callLogTarget.caseId}
                     </span>
                     <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60">
@@ -2902,11 +2941,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
                 {/* Phone & Reason Bar */}
                 <div className="flex items-center justify-between pt-2 border-t border-slate-200/80 dark:border-white/5">
-                  <div className="text-[11px] text-[#4A608A] dark:text-slate-400">
+                  <div className="text-[11px] text-[#6E6E73] dark:text-slate-400">
                     <span>{isTl ? 'Telepono: ' : 'Contact: '}</span>
                     <a
                       href={`tel:${callLogTarget.parentPhone}`}
-                      className="font-mono font-bold text-[#1E469B] dark:text-blue-300 hover:underline"
+                      className="font-mono font-bold text-[#007AFF] dark:text-blue-300 hover:underline"
                       title={isTl ? 'Pindutin para tumawag' : 'Click to call'}
                     >
                       {callLogTarget.parentPhone}
@@ -2921,16 +2960,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
               {/* Call Outcome Options */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#0B1F4D] dark:text-slate-200 block">
+                <label className="text-xs font-bold text-[#1D1D1F] dark:text-slate-200 block">
                   {isTl ? 'Ano ang kinalabasan ng tawag?' : 'What happened on this call?'}
                 </label>
                 <div className="space-y-2">
-                  {CALL_OUTCOMES.map((opt) => {
+                  {CALL_OUTCOMES.filter((opt) => opt !== CALL_STUDENT || callLogTarget.attemptsCount >= 2).map((opt) => {
                     const isSelected = callOutcome === opt;
                     const isCome = opt === CALL_WILL_COME;
-                    const isResched = opt === 'Reached — asked for a new date';
+                    const isResched = opt === CALL_NEW_DATE;
                     const isNoAns = opt === 'No answer';
                     const isWrong = opt === 'Wrong number';
+                    const isStudent = opt === CALL_STUDENT;
 
                     return (
                       <button
@@ -2939,23 +2979,24 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         onClick={() => setCallOutcome(opt)}
                         className={`w-full text-left p-3 rounded-xl text-xs font-semibold transition-all border flex items-center justify-between active:scale-[0.98] ${
                           isSelected
-                            ? 'bg-[#1E469B] text-white border-[#1E469B] shadow-sm'
-                            : 'bg-white dark:bg-slate-800/80 text-[#0B1F4D] dark:text-white border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                            ? 'bg-[#007AFF] text-white border-[#007AFF] shadow-sm'
+                            : 'bg-white dark:bg-slate-800/80 text-[#1D1D1F] dark:text-white border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                         }`}
                       >
                         <div>
                           <span className="font-bold">{isTl ? CALL_OUTCOMES_TL[opt] : opt}</span>
-                          <p className={`text-[10px] mt-0.5 ${isSelected ? 'text-blue-100' : 'text-[#4A608A] dark:text-slate-400'}`}>
+                          <p className={`text-[10px] mt-0.5 ${isSelected ? 'text-blue-100' : 'text-[#6E6E73] dark:text-slate-400'}`}>
                             {isCome && (isTl ? 'Tapos na ang follow-up na ito.' : 'This follow-up is done.')}
-                            {isResched && (isTl ? 'Pagkatapos i-save, pipili ka ng bagong araw.' : 'After saving, you pick the new date.')}
+                            {isResched && (isTl ? 'Pagkatapos i-save, bubukas agad ang pagpili ng bagong araw.' : 'After saving, picking the new date opens right away.')}
+                            {isStudent && (isTl ? 'Hindi sumasagot ang magulang. Tapos na ang follow-up na ito.' : 'The parent never answers. This follow-up is done.')}
                             {isNoAns && (isTl ? 'Mananatili sa listahan para tawagan ulit.' : 'Stays on the list so you can call again.')}
                             {isWrong && (isTl ? 'Pagkatapos i-save, aayusin mo ang number sa kaso.' : 'After saving, you fix the number in the case.')}
                           </p>
                         </div>
                         <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                          isSelected ? 'border-white bg-white text-[#1E469B]' : 'border-slate-300 dark:border-slate-600'
+                          isSelected ? 'border-white bg-white text-[#007AFF]' : 'border-slate-300 dark:border-slate-600'
                         }`}>
-                          {isSelected && <span className="w-2 h-2 rounded-full bg-[#1E469B]" />}
+                          {isSelected && <span className="w-2 h-2 rounded-full bg-[#007AFF]" />}
                         </div>
                       </button>
                     );
@@ -2965,8 +3006,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
               {/* Optional Custom Notes Input */}
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-[#4A608A] dark:text-slate-300 block">
-                  {isTl ? 'Karagdagang Tala (Opsyonal)' : 'Additional Notes (Optional)'}
+                <label className="text-[11px] font-bold text-[#6E6E73] dark:text-slate-300 block">
+                  {isTl ? 'Tala (hindi required)' : 'Note (optional)'}
                 </label>
                 <input
                   type="text"
@@ -2977,7 +3018,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                       ? 'Halimbawa: "Humiling ng alas-2 ng hapon bukas", "Nasa trabaho pa"...'
                       : 'e.g. "Requested 2:00 PM tomorrow", "Mother answered at work"...'
                   }
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-semibold text-[#0B1F4D] dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#1E469B]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-semibold text-[#1D1D1F] dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#007AFF]"
                 />
               </div>
 
@@ -2986,15 +3027,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 <button
                   type="button"
                   onClick={() => setCallLogTarget(null)}
-                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-white/10 text-xs font-bold text-[#0B1F4D] dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-[0.97]"
+                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-white/10 text-xs font-bold text-[#1D1D1F] dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-[0.97]"
                 >
                   {isTl ? 'Kanselahin' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#1E469B] hover:bg-[#163574] text-white text-xs font-bold transition-all shadow-sm active:scale-[0.97]"
+                  className="px-5 py-2 rounded-xl bg-[#007AFF] hover:bg-[#163574] text-white text-xs font-bold transition-all shadow-sm active:scale-[0.97]"
                 >
-                  {isTl ? 'I-save ang Tala' : 'Save Call Log'}
+                  {isTl ? 'I-save' : 'Save'}
                 </button>
               </div>
             </motion.form>
@@ -3025,17 +3066,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <div className="flex items-start justify-between pb-3 border-b border-slate-200 dark:border-white/10">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white leading-tight">
-                      {isTl ? 'Parent SMS & Live Gmail Notice Composer' : 'Parent SMS & Live Gmail Notice Composer'}
+                    <h3 className="text-base font-extrabold text-[#1D1D1F] dark:text-white leading-tight">
+                      {isTl ? 'Magpadala ng mensahe sa magulang' : 'Message the parent'}
                     </h3>
                     {composerCaseCode && (
-                      <span className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-blue-100 dark:bg-blue-950 text-[#1E469B] dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                      <span className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-blue-100 dark:bg-blue-950 text-[#007AFF] dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                         {composerCaseCode}
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] font-semibold text-[#4A608A] dark:text-[#94A8D0]">
-                    {isTl ? 'RA 10173 Data Privacy Guarded · Na-e-edit na Mensahe' : 'RA 10173 Data Privacy Guarded · Editable Official Notice'}
+                  <p className="text-[11px] font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">
+                    {isTl ? 'Pwede mong i-edit bago ipadala. Walang detalye ng offense ang lalabas.' : 'You can edit it before sending. No offense details are ever included.'}
                   </p>
                 </div>
                 <button
@@ -3043,7 +3084,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   title={isTl ? 'Isara' : 'Close'}
                   type="button"
                   onClick={() => setComposerOpen(false)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[#4A608A] hover:text-[#0B1F4D] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-[0.97]"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6E6E73] hover:text-[#1D1D1F] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-[0.97]"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -3053,9 +3094,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <div className="grid grid-cols-3 gap-2 p-1 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/5">
                 {(
                   [
-                    { key: 'both', label: 'SMS + Live Gmail' },
+                    { key: 'both', label: isTl ? 'Text + Email' : 'Text + Email' },
                     { key: 'sms', label: 'SMS Only' },
-                    { key: 'gmail', label: 'Live Gmail Only' },
+                    { key: 'gmail', label: isTl ? 'Email lang' : 'Email only' },
                   ] as const
                 ).map((ch) => {
                   const isSelected = composerChannel === ch.key;
@@ -3066,8 +3107,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                       onClick={() => setComposerChannel(ch.key)}
                       className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all active:scale-[0.98] ${
                         isSelected
-                          ? 'bg-[#1E469B] text-white shadow-sm'
-                          : 'text-[#4A608A] dark:text-slate-400 hover:text-[#0B1F4D] dark:hover:text-white'
+                          ? 'bg-[#007AFF] text-white shadow-sm'
+                          : 'text-[#6E6E73] dark:text-slate-400 hover:text-[#1D1D1F] dark:hover:text-white'
                       }`}
                     >
                       {ch.label}
@@ -3079,31 +3120,31 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               {/* Parent, Student & Contact Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div>
-                  <label className="block font-bold text-[#0B1F4D] dark:text-slate-200 mb-1">
+                  <label className="block font-bold text-[#1D1D1F] dark:text-slate-200 mb-1">
                     {isTl ? 'Pangalan ng Magulang / Guardian' : 'Parent / Guardian Name'}
                   </label>
                   <input
                     type="text"
                     value={composerParentName}
                     onChange={(e) => setComposerParentName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 font-semibold text-[#0B1F4D] dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#1E469B]"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 font-semibold text-[#1D1D1F] dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#007AFF]"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-[#0B1F4D] dark:text-slate-200 mb-1">
+                  <label className="block font-bold text-[#1D1D1F] dark:text-slate-200 mb-1">
                     {isTl ? 'Estudyante at Seksiyon' : 'Student & Section'}
                   </label>
                   <input
                     type="text"
                     value={`${composerStudentName}${composerGradeSection ? ` (${composerGradeSection})` : ''}`}
                     readOnly
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300/80 dark:border-white/5 bg-slate-100 dark:bg-slate-800/60 font-semibold text-[#0B1F4D] dark:text-slate-300 cursor-not-allowed opacity-90"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300/80 dark:border-white/5 bg-slate-100 dark:bg-slate-800/60 font-semibold text-[#1D1D1F] dark:text-slate-300 cursor-not-allowed opacity-90"
                   />
                 </div>
                 <div>
-                  <label htmlFor="composer-phone" className="block font-bold text-[#0B1F4D] dark:text-slate-200 mb-1">
+                  <label htmlFor="composer-phone" className="block font-bold text-[#1D1D1F] dark:text-slate-200 mb-1">
                     {isTl ? 'Mobile Number (SMS)' : 'Mobile Number (SMS)'}
-                    {composerChannel === 'gmail' && <span className="text-[10px] text-slate-400 font-normal ml-1">({isTl ? 'Hindi gagamitin' : 'Bypassed'})</span>}
+                    {composerChannel === 'gmail' && <span className="text-[10px] text-slate-400 font-normal ml-1">({isTl ? 'hindi gagamitin' : 'not used'})</span>}
                   </label>
                   <PhoneInput
                     id="composer-phone"
@@ -3111,15 +3152,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                     onChange={setComposerPhone}
                     isTl={isTl}
                     disabled={composerChannel === 'gmail'}
-                    className={`w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 font-mono font-semibold text-[#0B1F4D] dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#1E469B] ${
+                    className={`w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 font-mono font-semibold text-[#1D1D1F] dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#007AFF] ${
                       composerChannel === 'gmail' ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-[#0B1F4D] dark:text-slate-200 mb-1">
-                    {isTl ? 'Parent Email (Live Gmail SMTP)' : 'Parent Email (Live Gmail SMTP)'}
-                    {composerChannel === 'sms' && <span className="text-[10px] text-slate-400 font-normal ml-1">({isTl ? 'Hindi gagamitin' : 'Bypassed'})</span>}
+                  <label className="block font-bold text-[#1D1D1F] dark:text-slate-200 mb-1">
+                    {isTl ? 'Email ng magulang' : 'Parent email'}
+                    {composerChannel === 'sms' && <span className="text-[10px] text-slate-400 font-normal ml-1">({isTl ? 'hindi gagamitin' : 'not used'})</span>}
                   </label>
                   <input
                     type="email"
@@ -3127,7 +3168,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                     onChange={(e) => setComposerEmail(e.target.value)}
                     disabled={composerChannel === 'sms'}
                     placeholder={composerChannel === 'sms' ? (isTl ? 'Naka-SMS Only' : 'SMS Only mode') : 'parent@example.com'}
-                    className={`w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 font-semibold text-[#0B1F4D] dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#1E469B] ${
+                    className={`w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 font-semibold text-[#1D1D1F] dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#007AFF] ${
                       composerChannel === 'sms' ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                   />
@@ -3137,16 +3178,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               {/* Conference Schedule & Venue Settings */}
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 space-y-2.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-[#0B1F4D] dark:text-white">
-                    {isTl ? 'Iskedyul at Lugar ng Pag-uusap' : 'Conference Schedule & Venue'}
+                  <span className="font-bold text-[#1D1D1F] dark:text-white">
+                    {isTl ? 'Petsa at lugar ng conference' : 'Conference date and place'}
                   </span>
-                  <span className="text-[10px] text-[#4A608A] dark:text-slate-400">
-                    {isTl ? 'Isingit sa mensahe sa isang pindot' : 'Inserted directly into the notice'}
+                  <span className="text-[10px] text-[#6E6E73] dark:text-slate-400">
+                    {isTl ? 'Kasama ito sa mensahe' : 'This goes into the message'}
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   <div>
-                    <label className="text-[10px] font-bold text-[#4A608A] dark:text-slate-400 block mb-0.5">
+                    <label className="text-[10px] font-bold text-[#6E6E73] dark:text-slate-400 block mb-0.5">
                       {isTl ? 'Petsa at Oras (Kailan)' : 'Date & Time (When)'}
                     </label>
                     <input
@@ -3154,11 +3195,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                       value={composerSchedule}
                       onChange={(e) => setComposerSchedule(e.target.value)}
                       placeholder={isTl ? 'Hal. Bukas, 10:15 AM' : 'e.g. Tomorrow, 10:15 AM'}
-                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-semibold text-[#0B1F4D] dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#1E469B]"
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-semibold text-[#1D1D1F] dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#007AFF]"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-[#4A608A] dark:text-slate-400 block mb-0.5">
+                    <label className="text-[10px] font-bold text-[#6E6E73] dark:text-slate-400 block mb-0.5">
                       {isTl ? 'Lugar / Deskripsyon' : 'Venue / Room'}
                     </label>
                     <div className="flex items-center gap-1">
@@ -3176,11 +3217,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               {/* Quick Template Presets */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-[#0B1F4D] dark:text-slate-200">
-                    {isTl ? 'Mabilis na Templates' : 'Standard Templates'}
+                  <span className="font-bold text-[#1D1D1F] dark:text-slate-200">
+                    {isTl ? 'Handang mensahe' : 'Ready messages'}
                   </span>
-                  <span className="text-[10px] text-[#4A608A] dark:text-slate-400">
-                    {isTl ? 'Pindutin para mag-apply ng standard format' : 'Click to apply handbook standard message'}
+                  <span className="text-[10px] text-[#6E6E73] dark:text-slate-400">
+                    {isTl ? 'Pindutin para gamitin' : 'Click one to use it'}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5 text-xs">
@@ -3192,7 +3233,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         `AICS Guidance Office: Magandang araw po. Inaanyayahan po kayo sa Parent Conference para kay ${composerStudentName}${when} sa Guidance Office. Salamat po.`
                       );
                     }}
-                    className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/80 hover:border-[#1E469B] text-[#0B1F4D] dark:text-white text-[11px] font-bold transition-all active:scale-[0.97]"
+                    className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/80 hover:border-[#007AFF] text-[#1D1D1F] dark:text-white text-[11px] font-bold transition-all active:scale-[0.97]"
                   >
                     {isTl ? 'Unang Paanyaya' : 'First Notice'}
                   </button>
@@ -3204,7 +3245,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         `AICS Guidance: Paalala po, may Parent Conference po kayo para kay ${composerStudentName}${when} sa Guidance Room. Mangyaring dumalo po. Salamat po.`
                       );
                     }}
-                    className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/80 hover:border-[#1E469B] text-[#0B1F4D] dark:text-white text-[11px] font-bold transition-all active:scale-[0.97]"
+                    className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/80 hover:border-[#007AFF] text-[#1D1D1F] dark:text-white text-[11px] font-bold transition-all active:scale-[0.97]"
                   >
                     {isTl ? 'Paalala (Reminder)' : 'Reminder'}
                   </button>
@@ -3216,7 +3257,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         `AICS Guidance Office: Inilipat po ang ating pag-uusap para kay ${composerStudentName}${when}. Ipagbigay-alam po kung matatanggap. Salamat po.`
                       );
                     }}
-                    className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/80 hover:border-[#1E469B] text-[#0B1F4D] dark:text-white text-[11px] font-bold transition-all active:scale-[0.97]"
+                    className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/80 hover:border-[#007AFF] text-[#1D1D1F] dark:text-white text-[11px] font-bold transition-all active:scale-[0.97]"
                   >
                     {isTl ? 'Reschedule' : 'Reschedule'}
                   </button>
@@ -3244,7 +3285,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         })
                       )
                     }
-                    className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/40 text-[#4A608A] dark:text-slate-400 text-[11px] font-semibold active:scale-[0.97] ml-auto"
+                    className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/40 text-[#6E6E73] dark:text-slate-400 text-[11px] font-semibold active:scale-[0.97] ml-auto"
                     title={isTl ? 'Ibalik sa orihinal na template' : 'Reset to default template'}
                   >
                     {isTl ? 'I-reset' : 'Reset'}
@@ -3255,10 +3296,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               {/* Message Content & Character Counter */}
               <div className="space-y-1.5">
                 <div className="flex justify-between items-center text-xs font-bold">
-                  <span className="text-[#0B1F4D] dark:text-slate-200">{isTl ? 'Nilalaman ng Mensahe' : 'Message Content'}</span>
+                  <span className="text-[#1D1D1F] dark:text-slate-200">{isTl ? 'Nilalaman ng Mensahe' : 'Message Content'}</span>
                   <div className="flex items-center gap-2">
                     {composerChannel !== 'gmail' && (
-                      <span className="font-mono text-[11px] text-[#1E469B] dark:text-[#7CB8F7]">
+                      <span className="font-mono text-[11px] text-[#007AFF] dark:text-[#409CFF]">
                         {(() => {
                           const i = smsInfo(composerMessage);
                           return isTl ? `${i.length} letra · ${i.parts} SMS` : `${i.length} letters · ${i.parts} SMS`;
@@ -3267,7 +3308,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                     )}
                     {composerChannel === 'gmail' && (
                       <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400">
-                        {isTl ? 'Walang limit sa haba (Live Gmail)' : 'Unlimited characters (Live Gmail)'}
+                        {isTl ? 'Walang limit sa haba (email)' : 'No length limit (email)'}
                       </span>
                     )}
                   </div>
@@ -3277,7 +3318,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   value={composerMessage}
                   onChange={(e) => setComposerMessage(e.target.value)}
                   placeholder={isTl ? 'I-type ang mensahe para sa magulang...' : 'Type official notice message...'}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-medium text-[#0B1F4D] dark:text-white leading-relaxed resize-y min-h-[120px] focus:outline-hidden focus:ring-2 focus:ring-[#1E469B]"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-medium text-[#1D1D1F] dark:text-white leading-relaxed resize-y min-h-[120px] focus:outline-hidden focus:ring-2 focus:ring-[#007AFF]"
                 />
               </div>
 
@@ -3288,8 +3329,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                     <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
                     <span>
                       {isTl
-                        ? `RA 10173 Privacy Alert: May sensitibong salita (${detectedSensitiveTerms.join(', ')}) na ipinagbabawal sa bukas na SMS!`
-                        : `RA 10173 Privacy Alert: Sensitive term (${detectedSensitiveTerms.join(', ')}) detected!`}
+                        ? `Bawal ito sa mensahe sa magulang: ${detectedSensitiveTerms.join(', ')}. Tanggalin ang detalye ng offense.`
+                        : `Not allowed in a parent message: ${detectedSensitiveTerms.join(', ')}. Remove the offense details.`}
                     </span>
                   </div>
                   <button
@@ -3308,13 +3349,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                     className="px-3 py-1 rounded-lg bg-rose-600 text-white font-bold text-xs inline-flex items-center gap-1 active:scale-[0.97]"
                   >
                     <RotateCcw className="w-3 h-3" />
-                    <span>{isTl ? 'Ibalik sa RA 10173 Safe Format' : 'Restore RA 10173 Safe Message'}</span>
+                    <span>{isTl ? 'Ibalik ang ligtas na mensahe' : 'Use the safe message'}</span>
                   </button>
                 </div>
               ) : (
                 <div className="px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-xs font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span>{isTl ? '✓ RA 10173 Data Privacy Check Passed: Walang sensitibong detalye ng offense sa mensahe' : '✓ RA 10173 Data Privacy Check Passed: No offense details exposed in public transit'}</span>
+                  <span>{isTl ? 'Ligtas: walang detalye ng offense sa mensahe (Data Privacy Act).' : 'Safe: no offense details in the message (Data Privacy Act).'}</span>
                 </div>
               )}
 
@@ -3323,7 +3364,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 <button
                   type="button"
                   onClick={() => setComposerOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-white/10 text-xs font-bold text-[#0B1F4D] dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-[0.97]"
+                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-white/10 text-xs font-bold text-[#1D1D1F] dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-[0.97]"
                 >
                   {isTl ? 'Kanselahin' : 'Cancel'}
                 </button>
@@ -3340,9 +3381,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         : 'Fix the mobile number first'
                       : undefined
                   }
-                  className="px-5 py-2 rounded-xl bg-[#1E469B] hover:bg-[#163574] text-white text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm active:scale-[0.97]"
+                  className="px-5 py-2 rounded-xl bg-[#007AFF] hover:bg-[#163574] text-white text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm active:scale-[0.97]"
                 >
-                  <span>{isSendingNotice ? (isTl ? 'Ipinapadala...' : 'Sending...') : (isTl ? 'I-send ang Opisyal na Notice' : 'Send Official Notice')}</span>
+                  <span>{isSendingNotice ? (isTl ? 'Ipinapadala...' : 'Sending...') : (isTl ? 'Ipadala' : 'Send')}</span>
                 </button>
               </div>
             </motion.form>
@@ -3369,7 +3410,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               className="w-full max-w-md rounded-2xl saas-card p-6 space-y-4"
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
+                <h3 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">
                   {isTl ? 'Walk-in na magulang' : 'Walk-in parent'}
                 </h3>
                 <button
@@ -3377,12 +3418,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   title={isTl ? 'Isara' : 'Close'}
                   type="button"
                   onClick={() => setWalkInOpen(false)}
-                  className="text-sm font-bold text-[#4A608A]"
+                  className="text-sm font-bold text-[#6E6E73]"
                 >
                   ✕
                 </button>
               </div>
-              <p className="text-xs text-[#4A608A] dark:text-[#94A8D0] -mt-2">
+              <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6] -mt-2">
                 {isTl ? 'Para sa magulang na dumating nang walang appointment.' : 'For a parent who came without an appointment.'}
               </p>
 
@@ -3414,10 +3455,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 </div>
                 {walkInMatch && (
                   <div className="p-3 rounded-lg saas-card-subtle">
-                    <p className="font-bold text-[#0B1F4D] dark:text-white">
+                    <p className="font-bold text-[#1D1D1F] dark:text-white">
                       {isTl ? 'Magulang' : 'Parent'}: {walkInMatch.parentName}
                     </p>
-                    <p className="text-[#4A608A] dark:text-[#94A8D0]">
+                    <p className="text-[#6E6E73] dark:text-[#A1A1A6]">
                       {walkInMatch.parentPhone || (isTl ? 'walang number' : 'no number')}
                       {walkInMatch.parentEmail ? ` · ${walkInMatch.parentEmail}` : ''}
                     </p>
@@ -3446,7 +3487,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 <button
                   type="submit"
                   disabled={!walkInMatch}
-                  className="px-4 py-2 rounded-lg bg-[#1E469B] text-white text-xs font-bold disabled:bg-[#94A8D0] disabled:cursor-not-allowed"
+                  className="px-4 py-2 rounded-lg bg-[#007AFF] text-white text-xs font-bold disabled:bg-[#94A8D0] disabled:cursor-not-allowed"
                 >
                   {walkInMatch ? (isTl ? '✓ I-log ang walk-in' : '✓ Log walk-in') : isTl ? 'Pumili muna ng estudyante' : 'Pick a student first'}
                 </button>
@@ -3478,15 +3519,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               onClick={(e) => e.stopPropagation()}
               className="w-full max-w-4xl max-h-[calc(100vh-2rem)] overflow-y-auto rounded-2xl saas-card p-6 space-y-4 shadow-2xl" data-quick-guide
             >
-              <div className="flex items-start justify-between gap-4 border-b border-[#DCE5F2] dark:border-[#1E3158] pb-3">
+              <div className="flex items-start justify-between gap-4 border-b border-[#E5E5EA] dark:border-[#38383A] pb-3">
                 <div>
-                  <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#E4ECFC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7] text-[11px] font-extrabold mb-1">
+                  <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#EAF3FF] dark:bg-[#2C2C2E] text-[#007AFF] dark:text-[#409CFF] text-[11px] font-extrabold mb-1">
                     {isTl ? 'PAANO GAMITIN' : 'QUICK GUIDE'}
                   </span>
-                  <h3 className="text-lg font-extrabold text-[#0B1F4D] dark:text-white">
+                  <h3 className="text-lg font-extrabold text-[#1D1D1F] dark:text-white">
                     {isTl ? 'Ang araw-araw na trabaho sa 6 na hakbang' : 'Your daily work in 6 steps'}
                   </h3>
-                  <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                  <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                     {isTl ? 'Pindutin ang isang hakbang para buksan agad ang page na iyon.' : 'Press a step to open that page right away.'}
                   </p>
                 </div>
@@ -3495,7 +3536,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   title={isTl ? 'Isara' : 'Close'}
                   type="button"
                   onClick={() => setShowQuickGuideModal(false)}
-                  className="text-sm font-bold text-[#4A608A] hover:text-[#0B1F4D] dark:hover:text-white"
+                  className="text-sm font-bold text-[#6E6E73] hover:text-[#1D1D1F] dark:hover:text-white"
                 >
                   ✕
                 </button>
@@ -3591,13 +3632,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                             type="button"
                             data-guide-step={st.key}
                             onClick={st.run}
-                            className="btn-press w-full h-full text-left p-3 rounded-xl saas-card-subtle hover:border-[#1E469B] flex gap-3 items-start"
+                            className="btn-press w-full h-full text-left p-3 rounded-xl saas-card-subtle hover:border-[#007AFF] flex gap-3 items-start"
                           >
-                            <span className="shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#1E469B] text-white text-xs font-extrabold">{i + 1}</span>
+                            <span className="shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#007AFF] text-white text-xs font-extrabold">{i + 1}</span>
                             <span className="min-w-0 space-y-0.5">
-                              <span className="block text-sm font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? st.tl : st.en}</span>
-                              <span className="block text-xs text-[#4A608A] dark:text-[#94A8D0] leading-relaxed">{isTl ? st.dTl : st.dEn}</span>
-                              <span className="block text-xs font-extrabold text-[#1E469B] dark:text-[#7CB8F7]">{isTl ? st.aTl : st.aEn} →</span>
+                              <span className="block text-sm font-extrabold text-[#1D1D1F] dark:text-white">{isTl ? st.tl : st.en}</span>
+                              <span className="block text-xs text-[#6E6E73] dark:text-[#A1A1A6] leading-relaxed">{isTl ? st.dTl : st.dEn}</span>
+                              <span className="block text-xs font-extrabold text-[#007AFF] dark:text-[#409CFF]">{isTl ? st.aTl : st.aEn} →</span>
                             </span>
                           </button>
                         </li>
@@ -3605,18 +3646,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                     </ol>
 
                     <div className="space-y-1.5">
-                      <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Iba pang page' : 'Other pages'}</p>
+                      <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Iba pang page' : 'Other pages'}</p>
                       <div className="grid grid-cols-3 gap-2">
                         {others.map((o) => (
-                          <button key={o.key} type="button" data-guide-page={o.key} onClick={o.run} className="btn-press px-3 py-2 rounded-lg saas-card-subtle hover:border-[#1E469B] text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7] text-left whitespace-nowrap">
+                          <button key={o.key} type="button" data-guide-page={o.key} onClick={o.run} className="btn-press px-3 py-2 rounded-lg saas-card-subtle hover:border-[#007AFF] text-xs font-bold text-[#007AFF] dark:text-[#409CFF] text-left whitespace-nowrap">
                             {isTl ? o.tl : o.en} →
                           </button>
                         ))}
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#DCE5F2] dark:border-[#1E3158]">
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#475569] dark:text-[#94A8D0]" data-guide-colors aria-label={isTl ? 'Ibig sabihin ng mga kulay' : 'What the colours mean'}>
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#E5E5EA] dark:border-[#38383A]">
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#6E6E73] dark:text-[#A1A1A6]" data-guide-colors aria-label={isTl ? 'Ibig sabihin ng mga kulay' : 'What the colours mean'}>
                         <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" /> {isTl ? 'Serious o major / naghihintay 7+ araw' : 'Serious or major / waiting 7+ days'}</span>
                         <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" /> {isTl ? 'Ika-2 minor (bantayan) / 3–6 araw' : '2nd minor (watch) / 3–6 days'}</span>
                         <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> {isTl ? 'Tapos na / Dumalo' : 'Done / Attended'}</span>
@@ -3625,7 +3666,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         type="button"
                         data-guide-close
                         onClick={() => setShowQuickGuideModal(false)}
-                        className="btn-press px-5 py-2 rounded-lg bg-[#1E469B] text-white text-xs font-semibold whitespace-nowrap"
+                        className="btn-press px-5 py-2 rounded-lg bg-[#007AFF] text-white text-xs font-semibold whitespace-nowrap"
                       >
                         {isTl ? 'OK, naintindihan ko' : 'Got it'}
                       </button>

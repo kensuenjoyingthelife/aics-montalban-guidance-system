@@ -34,10 +34,10 @@ import { useConfirmChange } from '../components/ui/ConfirmChange';
 import { printIncidentSlip, printMonthlyExecutivePdf, printDepEdCompliancePdf } from '../services/documentPrintEngine';
 import { Download, Printer, FileText, BarChart3, TrendingUp, Calendar, Award, ShieldCheck } from 'lucide-react';
 
-const C_NEW = '#E11D48';
-const C_SOLVED = '#059669';
-const C_ATT = '#2563EB';
-const C_MISS = '#F59E0B';
+const C_NEW = '#FF3B30';
+const C_SOLVED = '#34C759';
+const C_ATT = '#007AFF';
+const C_MISS = '#FF9500';
 
 type Tab = 'overview' | 'stats' | 'repeat' | 'monthly' | 'handover';
 interface Props {
@@ -49,10 +49,10 @@ interface Props {
   onOpenCase?: (caseCode: string) => void;
 }
 
-const btn = 'px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap';
+const btn = 'px-3.5 py-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap';
 const card = 'rounded-2xl saas-card';
-const sub = 'text-xs text-[#4A608A] dark:text-[#94A8D0]';
-const h2 = 'text-base font-extrabold text-[#0B1F4D] dark:text-white';
+const sub = 'text-xs text-[#6E6E73] dark:text-[#A1A1A6]';
+const h2 = 'text-base font-extrabold text-[#1D1D1F] dark:text-white';
 const LEVEL_TL: Record<string, string> = { Minor: 'Minor', 'Less serious': 'Less serious', Serious: 'Serious', Grave: 'Grave' };
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] as string);
 
@@ -64,13 +64,13 @@ const Bars: React.FC<{ rows: CountRow[]; isTl: boolean; empty: string; limit?: n
       {rows.slice(0, limit).map((r) => (
         <div key={r.label} className="space-y-1">
           <div className="flex items-center justify-between gap-3 text-xs">
-            <span className="font-bold text-[#0B1F4D] dark:text-white min-w-0 break-words">{isTl && r.labelTl ? r.labelTl : isTl ? LEVEL_TL[r.label] ?? r.label : r.label}</span>
-            <span className="font-mono font-bold text-[#1E469B] dark:text-[#7CB8F7] whitespace-nowrap">
+            <span className="font-bold text-[#1D1D1F] dark:text-white min-w-0 break-words">{isTl && r.labelTl ? r.labelTl : isTl ? LEVEL_TL[r.label] ?? r.label : r.label}</span>
+            <span className="font-mono font-bold text-[#007AFF] dark:text-[#409CFF] whitespace-nowrap">
               {r.count} · {r.pct}%
             </span>
           </div>
-          <div className="h-2 rounded-full bg-[#E4ECFC] dark:bg-[#192D58] overflow-hidden">
-            <div className="h-full rounded-full bg-[#1E469B] dark:bg-[#4E92DF]" style={{ width: `${(r.count / max) * 100}%` }} />
+          <div className="h-2 rounded-full bg-[#EAF3FF] dark:bg-[#2C2C2E] overflow-hidden">
+            <div className="h-full rounded-full bg-[#007AFF] dark:bg-[#0A84FF]" style={{ width: `${(r.count / max) * 100}%` }} />
           </div>
         </div>
       ))}
@@ -324,8 +324,8 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
             </div>
             <Legend
               items={[
-                { color: '#059669', label: isTl ? '▲▼ berde = gumaganda' : '▲▼ green = getting better', shape: 'dot' },
-                { color: '#E11D48', label: isTl ? '▲▼ pula = lumalala' : '▲▼ red = getting worse', shape: 'dot' },
+                { color: '#34C759', label: isTl ? '▲▼ berde = gumaganda' : '▲▼ green = getting better', shape: 'dot' },
+                { color: '#FF3B30', label: isTl ? '▲▼ pula = lumalala' : '▲▼ red = getting worse', shape: 'dot' },
               ]}
             />
           </div>
@@ -343,8 +343,8 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
               return (
                 <div key={id} className={`${card} p-4`} data-kpi={id}>
                   <p className={sub}>{title}</p>
-                  <p className="text-3xl font-extrabold text-[#0B1F4D] dark:text-white mt-1">{v === null ? '—' : `${v}${suf}`}</p>
-                  <p className={`text-xs font-extrabold mt-1 ${good === null ? 'text-[#4A608A] dark:text-[#94A8D0]' : good ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`} data-change={ch.dir}>
+                  <p className="text-3xl font-extrabold text-[#1D1D1F] dark:text-white mt-1">{v === null ? '—' : `${v}${suf}`}</p>
+                  <p className={`text-xs font-extrabold mt-1 ${good === null ? 'text-[#6E6E73] dark:text-[#A1A1A6]' : good ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`} data-change={ch.dir}>
                     {arrowText(ch.dir, ch.diff, ch.pct, suf, unit, isTl)}
                   </p>
                 </div>
@@ -352,11 +352,11 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
             })}
             <div className={`${card} p-4 col-span-2 xl:col-span-1`} data-kpi="open">
               <p className={sub}>{isTl ? 'Bukas pa ngayon' : 'Still open now'}</p>
-              <p className="text-3xl font-extrabold text-[#0B1F4D] dark:text-white mt-1">{openNow}</p>
+              <p className="text-3xl font-extrabold text-[#1D1D1F] dark:text-white mt-1">{openNow}</p>
               <p className={sub}>{isTl ? 'lahat ng kasong hindi pa tapos' : 'all cases not done yet'}</p>
             </div>
           </div>
-          <p className="text-sm font-bold text-[#0B1F4D] dark:text-white" data-summary>
+          <p className="text-sm font-bold text-[#1D1D1F] dark:text-white" data-summary>
             {trendSentence(cur.newCases, prev?.newCases ?? null, cur.solved, unit, isTl)}
           </p>
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -397,7 +397,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                 max={100}
               />
               {series.every((p) => p.attendanceRate === null) && (
-                <p className="text-xs font-bold text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Wala pang conference sa mga panahong ito.' : 'No conferences in these periods yet.'}</p>
+                <p className="text-xs font-bold text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Wala pang conference sa mga panahong ito.' : 'No conferences in these periods yet.'}</p>
               )}
               <Legend items={[{ color: C_ATT, label: isTl ? '% ng dumalo sa lahat ng conference' : '% attended of all conferences' }]} />
             </section>
@@ -409,15 +409,15 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                 labels={series.map((p) => p.label)}
                 series={[
                   { name: isTl ? 'Araw bago maisara' : 'Days to close', color: C_SOLVED, values: series.map((p) => p.avgDaysToClose) },
-                  { name: isTl ? 'Target' : 'Target', color: '#94A3B8', values: series.map(() => OVERDUE), dashed: true },
+                  { name: isTl ? 'Target' : 'Target', color: '#8E8E93', values: series.map(() => OVERDUE), dashed: true },
                 ]}
               />
               {series.every((p) => p.avgDaysToClose === null) && (
-                <p className="text-xs font-bold text-[#4A608A] dark:text-[#94A8D0]" data-empty-note>
+                <p className="text-xs font-bold text-[#6E6E73] dark:text-[#A1A1A6]" data-empty-note>
                   {isTl ? 'Wala pang naisarang kaso sa mga panahong ito, kaya target lang ang nakikita.' : 'No case was closed in these periods yet, so only the target line shows.'}
                 </p>
               )}
-              <Legend items={[{ color: C_SOLVED, label: isTl ? 'Average na araw' : 'Average days' }, { color: '#94A3B8', label: isTl ? `Target (${OVERDUE} araw)` : `Target (${OVERDUE} days)`, shape: 'dash' }]} />
+              <Legend items={[{ color: C_SOLVED, label: isTl ? 'Average na araw' : 'Average days' }, { color: '#8E8E93', label: isTl ? `Target (${OVERDUE} araw)` : `Target (${OVERDUE} days)`, shape: 'dash' }]} />
             </section>
           </div>
         </>
@@ -447,7 +447,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
               <button type="button" aria-label={isTl ? 'Nakaraan' : 'Previous'} title={isTl ? 'Nakaraan' : 'Previous'} data-period-step="-1" onClick={() => setRef((r) => shiftRef(kind, r, -1))} className={`${btn} saas-card-subtle`}>
                 ←
               </button>
-              <span className="text-sm font-extrabold text-[#0B1F4D] dark:text-white min-w-[150px] text-center" data-period-label>
+              <span className="text-sm font-extrabold text-[#1D1D1F] dark:text-white min-w-[150px] text-center" data-period-label>
                 {periodLabel}
               </span>
               <button type="button" aria-label={isTl ? 'Susunod' : 'Next'} title={isTl ? 'Susunod' : 'Next'} data-period-step="1" disabled={isCurrent} onClick={() => setRef((r) => shiftRef(kind, r, 1))} className={`${btn} saas-card-subtle disabled:opacity-40`}>
@@ -474,22 +474,22 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                 <p className={sub}>{isTl ? 'Bilang at porsyento ng kabuuan · pinakamarami sa itaas' : 'Count and share of the total · most first'}</p>
               </div>
               <Bars rows={stats.rows} isTl={isTl} empty={isTl ? 'Walang naitalang offense sa panahong ito.' : 'No offenses were recorded in this period.'} />
-              <Legend items={[{ color: '#1E469B', label: isTl ? 'Haba ng bar = bilang · % = bahagi ng lahat ng offense' : 'Bar length = count · % = share of all offenses', shape: 'box' }]} />
+              <Legend items={[{ color: '#007AFF', label: isTl ? 'Haba ng bar = bilang · % = bahagi ng lahat ng offense' : 'Bar length = count · % = share of all offenses', shape: 'box' }]} />
             </section>
             <section className={`${card} p-5 lg:col-span-2 space-y-3`}>
               <div>
                 <h2 className={h2}>{isTl ? 'Takbo ng mga kaso' : 'Cases over time'}</h2>
                 <p className={sub}>{kind === 'sy' ? (isTl ? 'Bawat buwan' : 'Per month') : kind === 'month' ? (isTl ? 'Bawat linggo' : 'Per week') : isTl ? 'Bawat araw' : 'Per day'}</p>
-                <Legend items={[{ color: '#1E469B', label: isTl ? 'Bagong kaso (ayon sa petsa ng insidente)' : 'New cases (by incident date)', shape: 'box' }]} />
+                <Legend items={[{ color: '#007AFF', label: isTl ? 'Bagong kaso (ayon sa petsa ng insidente)' : 'New cases (by incident date)', shape: 'box' }]} />
               </div>
               <div className="h-[180px] flex items-end gap-1.5" data-trend>
                 {bars.map((b, i) => {
                   const max = Math.max(1, ...bars.map((x) => x.count));
                   return (
                     <div key={i} className="flex-1 min-w-0 flex flex-col items-center justify-end gap-1 h-full" title={`${b.label}: ${b.count}`}>
-                      <span className="text-[10px] font-mono font-bold text-[#1E469B] dark:text-[#7CB8F7]">{b.count}</span>
-                      <div className="w-full rounded-t-md bg-[#1E469B] dark:bg-[#4E92DF]" style={{ height: `${(b.count / max) * 130}px`, minHeight: b.count ? 4 : 1, opacity: b.count ? 1 : 0.25 }} />
-                      <span className="text-[10px] text-[#4A608A] dark:text-[#94A8D0] truncate w-full text-center">{b.label}</span>
+                      <span className="text-[10px] font-mono font-bold text-[#007AFF] dark:text-[#409CFF]">{b.count}</span>
+                      <div className="w-full rounded-t-md bg-[#007AFF] dark:bg-[#0A84FF]" style={{ height: `${(b.count / max) * 130}px`, minHeight: b.count ? 4 : 1, opacity: b.count ? 1 : 0.25 }} />
+                      <span className="text-[10px] text-[#6E6E73] dark:text-[#A1A1A6] truncate w-full text-center">{b.label}</span>
                     </div>
                   );
                 })}
@@ -502,7 +502,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
       {/* ================= RECIDIVISM ================= */}
       {tab === 'repeat' && (
         <section className={`${card} overflow-hidden`}>
-          <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-end justify-between gap-3">
+          <div className="px-6 py-4 border-b border-[#E5E5EA] dark:border-[#38383A] flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className={h2}>{isTl ? 'Mga umulit ng parehong offense pagkatapos ng sanction' : 'Students who repeated the same offense after a sanction'}</h2>
               <p className={sub}>
@@ -512,7 +512,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
               </p>
             </div>
             <div className="text-right" data-recid-rate>
-              <p className="text-2xl font-extrabold text-[#0B1F4D] dark:text-white">{rec.sanctionedStudents ? `${rec.rate}%` : '—'}</p>
+              <p className="text-2xl font-extrabold text-[#1D1D1F] dark:text-white">{rec.sanctionedStudents ? `${rec.rate}%` : '—'}</p>
               <p className={sub}>
                 {rec.sanctionedStudents
                   ? isTl
@@ -524,16 +524,16 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
               </p>
             </div>
           </div>
-          <div className="p-4 space-y-2 bg-[#F4F7FC] dark:bg-[#0B1527]">
+          <div className="p-4 space-y-2 bg-[#F5F5F7] dark:bg-[#1C1C1E]">
             {rec.rows.length === 0 && (
               <p className="py-8 text-center text-sm font-bold text-emerald-700 dark:text-emerald-400">
                  {isTl ? 'Walang umulit ng parehong offense pagkatapos ng sanction.' : 'No one repeated the same offense after a sanction.'}
               </p>
             )}
             {rec.rows.slice(0, 100).map((r) => (
-              <div key={r.studentNumber + r.offense} data-repeat-row={r.studentNumber} className="rounded-xl bg-white dark:bg-[#0F1A30] border border-[#D3DDEE] dark:border-[#253B66] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+              <div key={r.studentNumber + r.offense} data-repeat-row={r.studentNumber} className="rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                  <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">
                     {r.studentName} <span className={sub}>· {r.gradeSection}</span>
                   </p>
                   <p className={sub}>
@@ -561,14 +561,14 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
         <>
           <div className={`${card} p-4 flex flex-wrap items-center justify-between gap-3`}>
             <label className="flex items-center gap-2">
-              <span className="text-xs font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Buwan' : 'Month'}</span>
+              <span className="text-xs font-extrabold text-[#1D1D1F] dark:text-white">{isTl ? 'Buwan' : 'Month'}</span>
               <input
                 type="month"
                 data-month
                 value={month}
                 max={today.slice(0, 7)}
                 onChange={(e) => e.target.value && setMonth(e.target.value)}
-                className="px-3 py-2 rounded-xl border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-sm text-[#0B1F4D] dark:text-white"
+                className="px-3 py-2 rounded-xl border border-[#E5E5EA] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] text-sm text-[#1D1D1F] dark:text-white"
               />
             </label>
             <div className="flex flex-wrap items-center gap-2">
@@ -605,7 +605,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                     staffName: config.signatories?.guidanceAssociate || 'Maurice Enriquez',
                   });
                 }}
-                className={`${btn} px-4 py-2 bg-[#1E469B] hover:bg-[#16377E] text-white active:scale-[0.97] transition-all inline-flex items-center gap-1.5 shadow-sm`}
+                className={`${btn} px-4 py-2 bg-[#007AFF] hover:bg-[#0062CC] text-white active:scale-[0.97] transition-all inline-flex items-center gap-1.5 shadow-sm`}
               >
                 <Download className="w-3.5 h-3.5" />
                 {isTl ? 'I-download ang PDF (Kasama ang Graphs)' : 'Download PDF (with Graphs)'}
@@ -748,7 +748,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
             ].map(([t, v, s]) => (
               <div key={t} className={`${card} p-5`}>
                 <p className={sub}>{t}</p>
-                <p className="text-3xl font-extrabold text-[#0B1F4D] dark:text-white mt-1">{v}</p>
+                <p className="text-3xl font-extrabold text-[#1D1D1F] dark:text-white mt-1">{v}</p>
                 <p className={sub}>{s}</p>
               </div>
             ))}
@@ -769,8 +769,8 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
               ) : (
                 <div className="space-y-1.5 max-h-[260px] overflow-y-auto">
                   {report.overdue.slice(0, 50).map((c) => (
-                    <button key={c.caseCode} type="button" onClick={() => onOpenCase?.(c.caseCode)} className="w-full text-left rounded-lg px-3 py-2 saas-card-subtle hover:border-[#1E469B]">
-                      <span className="block text-xs font-extrabold text-[#0B1F4D] dark:text-white">
+                    <button key={c.caseCode} type="button" onClick={() => onOpenCase?.(c.caseCode)} className="w-full text-left rounded-lg px-3 py-2 saas-card-subtle hover:border-[#007AFF]">
+                      <span className="block text-xs font-extrabold text-[#1D1D1F] dark:text-white">
                         {c.caseCode} · {c.studentName}
                       </span>
                       <span className={sub}>{isTl ? `${daysOpen(c)} araw nang bukas` : `open ${daysOpen(c)} days`}</span>
@@ -788,16 +788,16 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
       {tab === 'handover' && (
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(300px,380px)_1fr] gap-4 items-start">
           <section className={`${card} overflow-hidden`}>
-            <div className="p-3 border-b border-[#DCE5F2] dark:border-[#1E3158]">
+            <div className="p-3 border-b border-[#E5E5EA] dark:border-[#38383A]">
               <input
                 data-handover-search
                 value={hq}
                 onChange={(e) => setHq(e.target.value.slice(0, 60))}
                 placeholder={isTl ? 'Hanapin ang kaso o estudyante' : 'Find a case or student'}
-                className="w-full px-3 py-2 rounded-xl border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-sm text-[#0B1F4D] dark:text-white"
+                className="w-full px-3 py-2 rounded-xl border border-[#E5E5EA] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] text-sm text-[#1D1D1F] dark:text-white"
               />
             </div>
-            <div className="max-h-[calc(100vh-260px)] min-h-[260px] overflow-y-auto p-2 space-y-1.5 bg-[#F4F7FC] dark:bg-[#0B1527]">
+            <div className="max-h-[calc(100vh-260px)] min-h-[260px] overflow-y-auto p-2 space-y-1.5 bg-[#F5F5F7] dark:bg-[#1C1C1E]">
               {caseList.length === 0 && <p className={`${sub} p-6 text-center`}>{isTl ? 'Walang tugmang kaso.' : 'No matching case.'}</p>}
               {caseList.slice(0, hLimit).map((c) => (
                 <button
@@ -805,10 +805,10 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                   type="button"
                   data-handover-case={c.caseCode}
                   onClick={() => setSelected(c.caseCode)}
-                  className={`w-full text-left rounded-xl px-3 py-2.5 border ${selected === c.caseCode ? 'bg-white dark:bg-[#13203B] border-[#1E469B] dark:border-[#7CB8F7]' : 'bg-white dark:bg-[#0F1A30] border-[#D3DDEE] dark:border-[#253B66]'}`}
+                  className={`w-full text-left rounded-xl px-3 py-2.5 border ${selected === c.caseCode ? 'bg-white dark:bg-[#2C2C2E] border-[#007AFF] dark:border-[#0A84FF]' : 'bg-white dark:bg-[#1C1C1E] border-[#E5E5EA] dark:border-[#38383A]'}`}
                 >
                   <span className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-extrabold text-[#0B1F4D] dark:text-white truncate">{c.studentName}</span>
+                    <span className="text-sm font-extrabold text-[#1D1D1F] dark:text-white truncate">{c.studentName}</span>
                     {(noteCounts.get(c.caseCode) ?? 0) > 0 && (
                       <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200 whitespace-nowrap" title={isTl ? 'Bilang ng handover note' : 'Number of handover notes'}>
                          {noteCounts.get(c.caseCode)}
@@ -830,12 +830,12 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
           <section className={`${card} overflow-hidden`}>
             {!sel ? (
               <div className="p-10 text-center">
-                <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Pumili ng kaso sa kaliwa.' : 'Pick a case on the left.'}</p>
+                <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">{isTl ? 'Pumili ng kaso sa kaliwa.' : 'Pick a case on the left.'}</p>
                 <p className={sub}>{isTl ? 'Makikita rito ang buod at ang mga tala para maituloy ito ng ibang staff.' : 'You will see its summary and notes so another staff member can continue it.'}</p>
               </div>
             ) : (
               <div data-handover-summary={sel.caseCode}>
-                <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-start justify-between gap-3">
+                <div className="px-6 py-4 border-b border-[#E5E5EA] dark:border-[#38383A] flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <h2 className={h2}>
                       {sel.studentName} <span className={sub}>· {sel.gradeSection}</span>
@@ -877,7 +877,7 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                           guidanceStaffName: 'Guidance Staff',
                         });
                       }}
-                      className={`${btn} bg-[#1E469B] hover:bg-[#16377E] text-white active:scale-[0.97] transition-all inline-flex items-center gap-1.5 shadow-sm`}
+                      className={`${btn} bg-[#007AFF] hover:bg-[#0062CC] text-white active:scale-[0.97] transition-all inline-flex items-center gap-1.5 shadow-sm`}
                     >
                       <Printer className="w-3.5 h-3.5" />
                       {isTl ? 'I-print ang Incident Slip (PDF)' : 'Print Incident Slip (PDF)'}
@@ -904,13 +904,13 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                     [isTl ? 'Bukas na follow-up' : 'Open follow-ups', caseTasks.length ? String(caseTasks.length) : isTl ? 'Wala' : 'None'],
                   ].map(([k, v]) => (
                     <div key={k}>
-                      <dt className="text-[11px] font-extrabold uppercase tracking-wide text-[#4A608A] dark:text-[#94A8D0]">{k}</dt>
-                      <dd className="text-[#0B1F4D] dark:text-white break-words">{v}</dd>
+                      <dt className="text-[11px] font-extrabold uppercase tracking-wide text-[#6E6E73] dark:text-[#A1A1A6]">{k}</dt>
+                      <dd className="text-[#1D1D1F] dark:text-white break-words">{v}</dd>
                     </div>
                   ))}
                 </dl>
-                <div className="px-6 py-4 border-t border-[#DCE5F2] dark:border-[#1E3158] space-y-3">
-                  <h3 className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Handover notes' : 'Handover notes'}</h3>
+                <div className="px-6 py-4 border-t border-[#E5E5EA] dark:border-[#38383A] space-y-3">
+                  <h3 className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">{isTl ? 'Handover notes' : 'Handover notes'}</h3>
                   <div className="space-y-2">
                     <textarea
                       data-handover-note
@@ -918,11 +918,11 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                       onChange={(e) => setDraft(e.target.value.slice(0, 1000))}
                       rows={3}
                       placeholder={isTl ? 'hal. Tinawagan ang nanay, babalik siya sa Biyernes. Hintayin ang sagot ng tatay.' : 'e.g. Called the mother, she will come on Friday. The father will reply soon.'}
-                      className="w-full px-3 py-2 rounded-xl border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-sm text-[#0B1F4D] dark:text-white leading-relaxed"
+                      className="w-full px-3 py-2 rounded-xl border border-[#E5E5EA] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] text-sm text-[#1D1D1F] dark:text-white leading-relaxed"
                     />
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className={sub}>{isTl ? 'Para sa susunod na staff · hindi counseling notes · hindi na mae-edit kapag na-save' : 'For the next staff member · not counseling notes · cannot be edited once saved'}</p>
-                      <button type="button" data-action="save-note" disabled={draft.trim().length < 3 || saving} onClick={() => void saveNote()} className={`${btn} px-4 py-2 bg-[#1E469B] text-white disabled:opacity-50`}>
+                      <button type="button" data-action="save-note" disabled={draft.trim().length < 3 || saving} onClick={() => void saveNote()} className={`${btn} px-4 py-2 bg-[#007AFF] text-white disabled:opacity-50`}>
                         {saving ? (isTl ? 'Sine-save…' : 'Saving…') : isTl ? 'I-save ang tala' : 'Save note'}
                       </button>
                     </div>
@@ -932,8 +932,8 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                     {notes?.length === 0 && <p className={sub}>{isTl ? 'Wala pang tala para sa kasong ito.' : 'No notes for this case yet.'}</p>}
                     {notes?.map((n) => (
                       <div key={n.id} className="rounded-xl saas-card-subtle px-3 py-2">
-                        <p className="text-sm text-[#0B1F4D] dark:text-white whitespace-pre-wrap break-words">{n.note}</p>
-                        <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0] mt-1">
+                        <p className="text-sm text-[#1D1D1F] dark:text-white whitespace-pre-wrap break-words">{n.note}</p>
+                        <p className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6] mt-1">
                           {dt(n.at)} · {n.author || 'Guidance Office'}
                         </p>
                       </div>

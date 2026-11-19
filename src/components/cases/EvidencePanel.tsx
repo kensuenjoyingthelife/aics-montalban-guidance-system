@@ -110,7 +110,7 @@ export const EvidencePanel: React.FC<{
   return (
     <div className="space-y-2" data-evidence>
       <div className="flex items-center justify-between gap-2">
-        <p className="font-bold text-[#4A608A] dark:text-[#94A8D0]">
+        <p className="font-bold text-[#6E6E73] dark:text-[#A1A1A6]">
           <Paperclip className="inline w-3.5 h-3.5 -mt-0.5 mr-1" aria-hidden />{shown.length} {isTl ? 'file' : shown.length === 1 ? 'file' : 'files'} · {isTl ? 'pribado, sa office lang' : 'private, office only'}
         </p>
         <button type="button" data-action="attach" onClick={() => input.current?.click()} className="px-3 py-1.5 rounded-lg saas-card-subtle text-xs font-bold whitespace-nowrap">
@@ -120,37 +120,37 @@ export const EvidencePanel: React.FC<{
       </div>
       {err && <p className="text-xs font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1" role="alert"><AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden />{err}</p>}
       {file && (
-        <div className="rounded-xl border border-[#1E469B] bg-[#EEF3FC] dark:bg-[#13203B] p-3 space-y-2" data-evidence-pending>
-          <p className="text-xs font-extrabold text-[#0B1F4D] dark:text-white break-all">
+        <div className="rounded-xl border border-[#007AFF] bg-[#EAF3FF] dark:bg-[#2C2C2E] p-3 space-y-2" data-evidence-pending>
+          <p className="text-xs font-extrabold text-[#1D1D1F] dark:text-white break-all">
             {file.name} · {size(file.size)}
           </p>
-          <input value={note} onChange={(e) => setNote(e.target.value.slice(0, 200))} placeholder={isTl ? 'Maikling paliwanag (opsyonal), hal. "Litrato ng sirang upuan"' : 'Short note (optional), e.g. "Photo of the broken chair"'} className="w-full px-3 py-2 rounded-lg border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs text-[#0B1F4D] dark:text-white" />
+          <input value={note} onChange={(e) => setNote(e.target.value.slice(0, 200))} placeholder={isTl ? 'Maikling paliwanag (opsyonal), hal. "Litrato ng sirang upuan"' : 'Short note (optional), e.g. "Photo of the broken chair"'} className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] text-xs text-[#1D1D1F] dark:text-white" />
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => pick(null)} className="px-3 py-1.5 rounded-lg saas-card-subtle text-xs font-bold">
               {isTl ? 'Kanselahin' : 'Cancel'}
             </button>
-            <button type="button" data-action="upload" disabled={busy} onClick={() => void upload()} className="px-4 py-1.5 rounded-lg bg-[#1E469B] text-white text-xs font-bold disabled:opacity-50">
+            <button type="button" data-action="upload" disabled={busy} onClick={() => void upload()} className="px-4 py-1.5 rounded-lg bg-[#007AFF] text-white text-xs font-bold disabled:opacity-50">
               {busy ? (isTl ? 'Ina-upload…' : 'Uploading…') : isTl ? 'I-upload' : 'Upload'}
             </button>
           </div>
         </div>
       )}
-      {items === null && <p className="text-xs text-[#4A608A]">{isTl ? 'Kinukuha…' : 'Loading…'}</p>}
-      {items !== null && shown.length === 0 && !file && <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Wala pang evidence. Puwedeng mag-attach ng litrato o PDF (hanggang 10 MB).' : 'No evidence yet. You can attach a photo or PDF (up to 10 MB).'}</p>}
+      {items === null && <p className="text-xs text-[#6E6E73]">{isTl ? 'Kinukuha…' : 'Loading…'}</p>}
+      {items !== null && shown.length === 0 && !file && <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Wala pang evidence. Puwedeng mag-attach ng litrato o PDF (hanggang 10 MB).' : 'No evidence yet. You can attach a photo or PDF (up to 10 MB).'}</p>}
       <div className="grid grid-cols-2 gap-2">
         {shown.map((e) => (
           <div key={e.id} data-evidence-item={e.fileName} className="rounded-xl saas-card-subtle p-2 flex gap-2 items-start">
-            <button type="button" onClick={() => void open(e)} title={isTl ? 'Buksan' : 'Open'} className="w-14 h-14 shrink-0 rounded-lg overflow-hidden bg-[#E4ECFC] dark:bg-[#192D58] flex items-center justify-center text-lg">
+            <button type="button" onClick={() => void open(e)} title={isTl ? 'Buksan' : 'Open'} className="w-14 h-14 shrink-0 rounded-lg overflow-hidden bg-[#EAF3FF] dark:bg-[#2C2C2E] flex items-center justify-center text-lg">
               {e.mime.startsWith('image/') && thumbs[e.id] ? <img src={thumbs[e.id]} alt="" className="w-full h-full object-cover" /> : e.mime === 'application/pdf' ? <FileText className="w-5 h-5 text-[#6E6E73]" aria-hidden /> : <ImageIcon className="w-5 h-5 text-[#6E6E73]" aria-hidden />}
             </button>
             <div className="min-w-0 flex-1">
-              <button type="button" onClick={() => void open(e)} className="block text-left text-xs font-extrabold text-[#1E469B] dark:text-[#7CB8F7] underline break-all">
+              <button type="button" onClick={() => void open(e)} className="block text-left text-xs font-extrabold text-[#007AFF] dark:text-[#409CFF] underline break-all">
                 {e.fileName}
               </button>
-              <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
+              <p className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">
                 {size(e.size)} · {when(e.at)}
               </p>
-              {e.note && <p className="text-[11px] text-[#0B1F4D] dark:text-white break-words">{e.note}</p>}
+              {e.note && <p className="text-[11px] text-[#1D1D1F] dark:text-white break-words">{e.note}</p>}
               <button type="button" onClick={() => void hide(e, true)} className="text-[11px] font-bold text-rose-700 dark:text-rose-300">
                 {isTl ? 'Alisin' : 'Remove'}
               </button>
@@ -160,7 +160,7 @@ export const EvidencePanel: React.FC<{
       </div>
       {hidden.length > 0 && (
         <div>
-          <button type="button" onClick={() => setShowHidden((v) => !v)} className="text-[11px] font-bold text-[#4A608A] dark:text-[#94A8D0]">
+          <button type="button" onClick={() => setShowHidden((v) => !v)} className="text-[11px] font-bold text-[#6E6E73] dark:text-[#A1A1A6]">
             {showHidden ? '▾' : '▸'} {isTl ? `Mga inalis (${hidden.length})` : `Removed (${hidden.length})`}
           </button>
           {showHidden &&

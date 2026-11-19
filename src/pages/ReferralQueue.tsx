@@ -32,9 +32,9 @@ const PAGE = 50;
 const WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 const WEEK_TL: Record<string, string> = { Mon: 'Lunes', Tue: 'Martes', Wed: 'Miyerkules', Thu: 'Huwebes', Fri: 'Biyernes' };
 const WEEK_EN: Record<string, string> = { Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday', Thu: 'Thursday', Fri: 'Friday' };
-const btn = 'px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap';
+const btn = 'px-3.5 py-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap';
 const card = 'rounded-2xl saas-card overflow-hidden';
-const sub = 'text-xs text-[#4A608A] dark:text-[#94A8D0]';
+const sub = 'text-xs text-[#6E6E73] dark:text-[#A1A1A6]';
 const NOT_SAVED_EN = ' Not saved. Check the internet, then try again.';
 const NOT_SAVED_TL = ' Hindi na-save. I-check ang internet, tapos subukan ulit.';
 
@@ -221,16 +221,16 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
   // ---------- rows ----------
   const list = tab === 'waiting' ? waiting : tab === 'scheduled' ? scheduled : done;
   const renderRow = (q: QueueItem, rank?: number) => (
-    <div data-referral={q.studentNumber} className="rounded-xl bg-white dark:bg-[#0F1A30] border border-[#D3DDEE] dark:border-[#253B66] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+    <div data-referral={q.studentNumber} className="rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
       <div className="min-w-0 flex gap-3 items-start">
         {rank != null && (
-          <span className="shrink-0 w-8 h-8 rounded-full bg-[#E4ECFC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7] text-xs font-extrabold flex items-center justify-center" title={isTl ? 'Pagkakasunod ayon sa priority' : 'Order by priority'}>
+          <span className="shrink-0 w-8 h-8 rounded-full bg-[#EAF3FF] dark:bg-[#2C2C2E] text-[#007AFF] dark:text-[#409CFF] text-xs font-extrabold flex items-center justify-center" title={isTl ? 'Pagkakasunod ayon sa priority' : 'Order by priority'}>
             #{rank}
           </span>
         )}
         <div className="min-w-0 space-y-1">
-          <p className="text-[15px] font-extrabold text-[#0B1F4D] dark:text-white">
-            {q.studentName} {q.gradeSection && <span className="text-xs font-semibold text-[#4A608A] dark:text-[#94A8D0]">· {q.gradeSection}</span>}
+          <p className="text-[15px] font-extrabold text-[#1D1D1F] dark:text-white">
+            {q.studentName} {q.gradeSection && <span className="text-xs font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">· {q.gradeSection}</span>}
           </p>
           <div className="flex flex-wrap gap-1">
             {q.reasons.map((r) => (
@@ -247,7 +247,7 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
                   <React.Fragment key={c.caseCode}>
                     {i > 0 && ', '}
                     {onOpenCase ? (
-                      <button type="button" onClick={() => onOpenCase(c.caseCode)} className="font-bold text-[#1E469B] dark:text-[#7CB8F7] underline" title={isTl ? c.offenseTitleTl : c.offenseTitleEn}>
+                      <button type="button" onClick={() => onOpenCase(c.caseCode)} className="font-bold text-[#007AFF] dark:text-[#409CFF] underline" title={isTl ? c.offenseTitleTl : c.offenseTitleEn}>
                         {c.caseCode}
                       </button>
                     ) : (
@@ -261,7 +261,7 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
             ) : isTl ? 'Walang bukas na kaso' : 'No open case'}
           </p>
           {q.status === 'Scheduled' && q.row?.scheduledDate && (
-            <p className={`text-xs font-extrabold ${q.row.scheduledDate < today ? 'text-rose-700 dark:text-rose-300' : 'text-[#1E469B] dark:text-[#7CB8F7]'}`}>
+            <p className={`text-xs font-extrabold ${q.row.scheduledDate < today ? 'text-rose-700 dark:text-rose-300' : 'text-[#007AFF] dark:text-[#409CFF]'}`}>
                {dayTitle(q.row.scheduledDate)}
               {q.row.scheduledDate < today && (isTl ? ' — lumipas na, i-mark kung nakausap na o ilipat' : ' — date passed: mark as seen or move it')}
             </p>
@@ -278,10 +278,10 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
       <div className="flex flex-wrap gap-2">
         {q.status === 'Waiting' && (
           <>
-            <button type="button" data-action="schedule" onClick={() => setScheduleFor(q)} className={`${btn} px-4 py-2 bg-[#1E469B] text-white`}>
+            <button type="button" data-action="schedule" onClick={() => setScheduleFor(q)} className={`${btn} px-4 py-2 bg-[#007AFF] text-white`}>
                {isTl ? 'I-schedule sa counselor' : 'Schedule with counselor'}
             </button>
-            <button type="button" data-action="remove" onClick={() => setRemoveFor(q)} className={`${btn} px-3 py-2 saas-card-subtle text-[#4A608A] dark:text-[#94A8D0]`}>
+            <button type="button" data-action="remove" onClick={() => setRemoveFor(q)} className={`${btn} px-3 py-2 saas-card-subtle text-[#6E6E73] dark:text-[#A1A1A6]`}>
               {isTl ? 'Alisin' : 'Remove'}
             </button>
           </>
@@ -307,7 +307,7 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
 
   return (
     <main className="p-5 lg:p-6 max-w-[1440px] w-full mx-auto space-y-4 flex-1">
-      <div className="shrink-0 min-h-[54px] flex flex-wrap items-center justify-between gap-3 border-b border-[#DCE5F2] dark:border-[#1E3158] pb-2">
+      <div className="shrink-0 min-h-[54px] flex flex-wrap items-center justify-between gap-3 border-b border-[#E5E5EA] dark:border-[#38383A] pb-2">
         <div className="inline-flex flex-wrap p-1 rounded-xl saas-card-subtle gap-1" role="tablist">
           {(
             [
@@ -328,7 +328,7 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
                 setTab(id);
               }}
               className={`px-4 py-2 rounded-lg text-xs sm:text-[13px] font-bold whitespace-nowrap transition-colors ${
-                tab === id ? 'bg-[#1E469B] text-white shadow-sm' : 'text-[#4A608A] dark:text-[#94A8D0] hover:text-[#0B1F4D] dark:hover:text-white'
+                tab === id ? 'bg-[#007AFF] text-white shadow-sm' : 'text-[#6E6E73] dark:text-[#A1A1A6] hover:text-[#1D1D1F] dark:hover:text-white'
               }`}
             >
               {label}
@@ -337,7 +337,7 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" data-action="days" onClick={() => setDaysOpen(true)} className={`${btn} px-3 py-2 saas-card-subtle`} title={isTl ? 'Palitan ang araw ng counselor' : 'Change the counselor days'}>
-             {isTl ? 'Araw ng counselor' : 'Counselor days'}: <span className="text-[#1E469B] dark:text-[#7CB8F7]">{daysLoaded ? daysText : '…'}</span>
+             {isTl ? 'Araw ng counselor' : 'Counselor days'}: <span className="text-[#007AFF] dark:text-[#409CFF]">{daysLoaded ? daysText : '…'}</span>
           </button>
           <button type="button" data-action="add" onClick={() => setAddOpen(true)} className={`${btn} px-3 py-2 saas-card-subtle`}>
             + {isTl ? 'Magdagdag ng estudyante' : 'Add a student'}
@@ -364,19 +364,19 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
         </div>
       )}
       {tab !== 'scheduled' && dueNow.length > 0 && (
-        <div className="px-4 py-3 rounded-xl bg-[#EEF3FC] dark:bg-[#13203B] border border-[#C9D7F0] dark:border-[#253B66] text-xs flex flex-wrap items-center justify-between gap-3">
-          <p className="font-bold text-[#0B1F4D] dark:text-white">
+        <div className="px-4 py-3 rounded-xl bg-[#EAF3FF] dark:bg-[#2C2C2E] border border-[#C9D7F0] dark:border-[#38383A] text-xs flex flex-wrap items-center justify-between gap-3">
+          <p className="font-bold text-[#1D1D1F] dark:text-white">
              {isTl ? `${dueNow.length} estudyante ang naka-schedule sa counselor ngayon o lumipas na.` : `${dueNow.length} student(s) are scheduled with the counselor today or the date has passed.`}
           </p>
-          <button type="button" onClick={() => setTab('scheduled')} className={`${btn} bg-[#1E469B] text-white`}>
+          <button type="button" onClick={() => setTab('scheduled')} className={`${btn} bg-[#007AFF] text-white`}>
             {isTl ? 'Tingnan' : 'Show them'}
           </button>
         </div>
       )}
 
       <section className={card}>
-        <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158]">
-          <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
+        <div className="px-6 py-4 border-b border-[#E5E5EA] dark:border-[#38383A]">
+          <h2 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">
             {tab === 'waiting'
               ? isTl ? 'Kailangang makausap ng counselor' : 'Students the counselor should see'
               : tab === 'scheduled'
@@ -395,7 +395,7 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
         </div>
         {tab === 'waiting' && (
           <Legend
-            className="px-6 py-2 border-b border-[#DCE5F2] dark:border-[#1E3158]"
+            className="px-6 py-2 border-b border-[#E5E5EA] dark:border-[#38383A]"
             items={[
               { color: '#E11D48', label: isTl ? 'Grave / Serious' : 'Grave / Serious', shape: 'box' },
               { color: '#F59E0B', label: isTl ? 'Paulit-ulit' : 'Repeated', shape: 'box' },
@@ -404,7 +404,7 @@ const ReferralQueue: React.FC<Props> = ({ students, cases, appointments, onTrigg
             ]}
           />
         )}
-        <div className="p-4 sm:p-5 space-y-2.5 bg-[#F4F7FC] dark:bg-[#0B1527]">
+        <div className="p-4 sm:p-5 space-y-2.5 bg-[#F5F5F7] dark:bg-[#1C1C1E]">
           {rows === null && !loadError && <p className={`${sub} py-8 text-center`}>{isTl ? 'Kinukuha ang listahan…' : 'Loading the list…'}</p>}
           {rows !== null && list.length === 0 && (
             <div className="py-8 text-center space-y-1">
@@ -466,15 +466,15 @@ const Modal: React.FC<{ title: string; onClose: () => void; children: React.Reac
   }, [onClose]);
   return createPortal(
     <div className="fixed inset-0 z-[80] !m-0 bg-black/50 flex items-center justify-center p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div role="dialog" aria-modal="true" aria-label={title} className="w-full max-w-lg max-h-[92vh] flex flex-col rounded-2xl bg-white dark:bg-[#0F1A30] border border-[#D3DDEE] dark:border-[#253B66] shadow-2xl">
-        <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-center justify-between">
-          <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">{title}</h3>
-          <button type="button" onClick={onClose} aria-label="Close" className="w-8 h-8 rounded-lg text-[#4A608A] hover:bg-slate-100 dark:hover:bg-slate-800">
+      <div role="dialog" aria-modal="true" aria-label={title} className="w-full max-w-lg max-h-[92vh] flex flex-col rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A] shadow-2xl">
+        <div className="px-6 py-4 border-b border-[#E5E5EA] dark:border-[#38383A] flex items-center justify-between">
+          <h3 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">{title}</h3>
+          <button type="button" onClick={onClose} aria-label="Close" className="w-8 h-8 rounded-lg text-[#6E6E73] hover:bg-slate-100 dark:hover:bg-slate-800">
             
           </button>
         </div>
         <div className="p-6 space-y-3 overflow-y-auto">{children}</div>
-        <div className="px-6 py-4 border-t border-[#DCE5F2] dark:border-[#1E3158] flex justify-end gap-2">{footer}</div>
+        <div className="px-6 py-4 border-t border-[#E5E5EA] dark:border-[#38383A] flex justify-end gap-2">{footer}</div>
       </div>
     </div>,
     document.body
@@ -502,7 +502,7 @@ const ScheduleWindow: React.FC<{
           <button type="button" onClick={onCancel} className={`${btn} px-4 py-2.5 saas-card-subtle`}>
             {isTl ? 'Kanselahin' : 'Cancel'}
           </button>
-          <button type="button" data-action="schedule-confirm" disabled={!pick || busy || pick === q.row?.scheduledDate} onClick={() => onPick(pick)} className={`${btn} px-5 py-2.5 bg-[#1E469B] text-white disabled:opacity-50`}>
+          <button type="button" data-action="schedule-confirm" disabled={!pick || busy || pick === q.row?.scheduledDate} onClick={() => onPick(pick)} className={`${btn} px-5 py-2.5 bg-[#007AFF] text-white disabled:opacity-50`}>
             {busy ? (isTl ? 'Sine-save…' : 'Saving…') : isTl ? 'I-schedule' : 'Schedule'}
           </button>
         </>
@@ -510,14 +510,14 @@ const ScheduleWindow: React.FC<{
     >
       {options.length === 0 ? (
         <div className="space-y-2">
-          <p className="text-sm font-bold text-[#0B1F4D] dark:text-white">{isTl ? 'Wala pang araw ng counselor.' : 'There are no counselor days yet.'}</p>
+          <p className="text-sm font-bold text-[#1D1D1F] dark:text-white">{isTl ? 'Wala pang araw ng counselor.' : 'There are no counselor days yet.'}</p>
           <button type="button" onClick={onSetDays} className={`${btn} px-4 py-2 bg-amber-600 text-white`}>
             {isTl ? 'I-set ang araw ng counselor' : 'Set the counselor days'}
           </button>
         </div>
       ) : (
         <>
-          <p className="text-xs font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Pumili ng araw ng counselor:' : 'Pick a counselor day:'}</p>
+          <p className="text-xs font-extrabold text-[#1D1D1F] dark:text-white">{isTl ? 'Pumili ng araw ng counselor:' : 'Pick a counselor day:'}</p>
           <div className="grid grid-cols-2 gap-2">
             {options.map((d) => {
               const n = countOn(d);
@@ -529,10 +529,10 @@ const ScheduleWindow: React.FC<{
                   data-day={d}
                   disabled={current}
                   onClick={() => setPick(d)}
-                  className={`text-left rounded-xl border px-3 py-2.5 ${pick === d ? 'border-[#1E469B] bg-[#EEF3FC] dark:bg-[#13203B] ring-1 ring-[#1E469B]/40' : 'border-[#D3DDEE] dark:border-[#253B66]'} disabled:opacity-50`}
+                  className={`text-left rounded-xl border px-3 py-2.5 ${pick === d ? 'border-[#007AFF] bg-[#EAF3FF] dark:bg-[#2C2C2E] ring-1 ring-[#007AFF]/40' : 'border-[#E5E5EA] dark:border-[#38383A]'} disabled:opacity-50`}
                 >
-                  <span className="block text-sm font-extrabold text-[#0B1F4D] dark:text-white">{dayTitle(d)}</span>
-                  <span className="block text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
+                  <span className="block text-sm font-extrabold text-[#1D1D1F] dark:text-white">{dayTitle(d)}</span>
+                  <span className="block text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">
                     {current ? (isTl ? 'Kasalukuyang petsa' : 'Current date') : n === 0 ? (isTl ? 'Wala pang naka-schedule' : 'Nobody scheduled yet') : isTl ? `${n} naka-schedule na` : `${n} already scheduled`}
                   </span>
                 </button>
@@ -569,14 +569,14 @@ const RemoveWindow: React.FC<{ q: QueueItem; isTl: boolean; onCancel: () => void
         </>
       }
     >
-      <p className="text-xs font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Bakit aalisin?' : 'Why remove?'}</p>
+      <p className="text-xs font-extrabold text-[#1D1D1F] dark:text-white">{isTl ? 'Bakit aalisin?' : 'Why remove?'}</p>
       {REMOVE_REASONS.map(([en, tl], i) => (
-        <label key={i} className={`flex gap-2 items-center rounded-xl border px-3 py-2 cursor-pointer text-sm text-[#0B1F4D] dark:text-white ${pick === i ? 'border-[#1E469B] bg-[#EEF3FC] dark:bg-[#13203B]' : 'border-[#D3DDEE] dark:border-[#253B66]'}`}>
+        <label key={i} className={`flex gap-2 items-center rounded-xl border px-3 py-2 cursor-pointer text-sm text-[#1D1D1F] dark:text-white ${pick === i ? 'border-[#007AFF] bg-[#EAF3FF] dark:bg-[#2C2C2E]' : 'border-[#E5E5EA] dark:border-[#38383A]'}`}>
           <input type="radio" name="remove" checked={pick === i} onChange={() => setPick(i)} />
           {isTl ? tl : en}
         </label>
       ))}
-      <label className="block text-sm text-[#0B1F4D] dark:text-white space-y-1">
+      <label className="block text-sm text-[#1D1D1F] dark:text-white space-y-1">
         <span className="flex gap-2 items-center">
           <input type="radio" name="remove" checked={pick === null} onChange={() => setPick(null)} />
           {isTl ? 'Ibang dahilan:' : 'Other reason:'}
@@ -587,7 +587,7 @@ const RemoveWindow: React.FC<{ q: QueueItem; isTl: boolean; onCancel: () => void
             setOwn(e.target.value.slice(0, 200));
             setPick(null);
           }}
-          className="w-full px-3 py-2 rounded-lg border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-sm"
+          className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] text-sm"
         />
       </label>
     </Modal>
@@ -618,19 +618,19 @@ const AddWindow: React.FC<{ students: StudentRecord[]; isTl: boolean; busy: bool
           <button type="button" onClick={onCancel} className={`${btn} px-4 py-2.5 saas-card-subtle`}>
             {isTl ? 'Kanselahin' : 'Cancel'}
           </button>
-          <button type="button" data-action="add-confirm" disabled={!chosen || reason.trim().length < 5 || busy} onClick={() => chosen && onAdd(chosen, reason.trim())} className={`${btn} px-5 py-2.5 bg-[#1E469B] text-white disabled:opacity-50`}>
+          <button type="button" data-action="add-confirm" disabled={!chosen || reason.trim().length < 5 || busy} onClick={() => chosen && onAdd(chosen, reason.trim())} className={`${btn} px-5 py-2.5 bg-[#007AFF] text-white disabled:opacity-50`}>
             {busy ? (isTl ? 'Sine-save…' : 'Saving…') : isTl ? 'Idagdag' : 'Add'}
           </button>
         </>
       }
     >
       <p className={sub}>{isTl ? 'Para sa estudyanteng kailangang makausap ng counselor kahit hindi pa siya kusang lumalabas sa listahan.' : 'For a student the counselor should see even if they are not on the list automatically.'}</p>
-      <label htmlFor="ref-student" className="block text-xs font-extrabold text-[#0B1F4D] dark:text-white">
+      <label htmlFor="ref-student" className="block text-xs font-extrabold text-[#1D1D1F] dark:text-white">
         {isTl ? 'Estudyante' : 'Student'}
       </label>
       {chosen ? (
-        <div className="flex items-center justify-between rounded-xl border border-[#1E469B] bg-[#EEF3FC] dark:bg-[#13203B] px-3 py-2">
-          <span className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+        <div className="flex items-center justify-between rounded-xl border border-[#007AFF] bg-[#EAF3FF] dark:bg-[#2C2C2E] px-3 py-2">
+          <span className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">
             {chosen.fullName} <span className={sub}>· {chosen.studentNumber}</span>
           </span>
           <button type="button" onClick={() => setChosen(null)} className={`${btn} saas-card-subtle`}>
@@ -644,19 +644,19 @@ const AddWindow: React.FC<{ students: StudentRecord[]; isTl: boolean; busy: bool
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={isTl ? 'I-type ang pangalan o student no.' : 'Type a name or student no.'}
-            className="w-full px-3 py-2.5 rounded-xl border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-sm text-[#0B1F4D] dark:text-white"
+            className="w-full px-3 py-2.5 rounded-xl border border-[#E5E5EA] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] text-sm text-[#1D1D1F] dark:text-white"
           />
           <div className="space-y-1">
             {q.trim() && matches.length === 0 && <p className={sub}>{isTl ? 'Walang tugma sa masterlist.' : 'No match in the masterlist.'}</p>}
             {matches.map((s) => (
-              <button key={s.studentNumber} type="button" data-pick={s.studentNumber} onClick={() => setChosen(s)} className="w-full text-left rounded-lg px-3 py-2 hover:bg-[#EEF3FC] dark:hover:bg-[#13203B] text-sm text-[#0B1F4D] dark:text-white">
+              <button key={s.studentNumber} type="button" data-pick={s.studentNumber} onClick={() => setChosen(s)} className="w-full text-left rounded-lg px-3 py-2 hover:bg-[#EAF3FF] dark:hover:bg-[#13203B] text-sm text-[#1D1D1F] dark:text-white">
                 {s.fullName} <span className={sub}>· {s.studentNumber} · {s.gradeSection}</span>
               </button>
             ))}
           </div>
         </>
       )}
-      <label htmlFor="ref-reason" className="block text-xs font-extrabold text-[#0B1F4D] dark:text-white">
+      <label htmlFor="ref-reason" className="block text-xs font-extrabold text-[#1D1D1F] dark:text-white">
         {isTl ? 'Dahilan (para sa office lang)' : 'Reason (office only)'}
       </label>
       <input
@@ -664,7 +664,7 @@ const AddWindow: React.FC<{ students: StudentRecord[]; isTl: boolean; busy: bool
         value={reason}
         onChange={(e) => setReason(e.target.value.slice(0, 200))}
         placeholder={isTl ? 'hal. Hiniling ng adviser' : 'e.g. Requested by the adviser'}
-        className="w-full px-3 py-2.5 rounded-xl border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-sm text-[#0B1F4D] dark:text-white"
+        className="w-full px-3 py-2.5 rounded-xl border border-[#E5E5EA] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] text-sm text-[#1D1D1F] dark:text-white"
       />
     </Modal>
   );
@@ -682,7 +682,7 @@ const DaysWindow: React.FC<{ current: string[]; isTl: boolean; onCancel: () => v
           <button type="button" onClick={onCancel} className={`${btn} px-4 py-2.5 saas-card-subtle`}>
             {isTl ? 'Kanselahin' : 'Cancel'}
           </button>
-          <button type="button" data-action="days-save" disabled={same} onClick={() => onSave(WEEK.filter((d) => sel.includes(d)))} className={`${btn} px-5 py-2.5 bg-[#1E469B] text-white disabled:opacity-50`}>
+          <button type="button" data-action="days-save" disabled={same} onClick={() => onSave(WEEK.filter((d) => sel.includes(d)))} className={`${btn} px-5 py-2.5 bg-[#007AFF] text-white disabled:opacity-50`}>
             {isTl ? 'I-save' : 'Save'}
           </button>
         </>
@@ -691,7 +691,7 @@ const DaysWindow: React.FC<{ current: string[]; isTl: boolean; onCancel: () => v
       <p className={sub}>{isTl ? 'Anong mga araw pumupunta ang counselor sa school?' : 'Which days is the counselor at school?'}</p>
       <div className="grid grid-cols-1 gap-2">
         {WEEK.map((d) => (
-          <label key={d} className={`flex items-center gap-2 rounded-xl border px-3 py-2 cursor-pointer text-sm text-[#0B1F4D] dark:text-white ${sel.includes(d) ? 'border-[#1E469B] bg-[#EEF3FC] dark:bg-[#13203B]' : 'border-[#D3DDEE] dark:border-[#253B66]'}`}>
+          <label key={d} className={`flex items-center gap-2 rounded-xl border px-3 py-2 cursor-pointer text-sm text-[#1D1D1F] dark:text-white ${sel.includes(d) ? 'border-[#007AFF] bg-[#EAF3FF] dark:bg-[#2C2C2E]' : 'border-[#E5E5EA] dark:border-[#38383A]'}`}>
             <input type="checkbox" data-weekday={d} checked={sel.includes(d)} onChange={() => setSel((s) => (s.includes(d) ? s.filter((x) => x !== d) : [...s, d]))} />
             {isTl ? WEEK_TL[d] : WEEK_EN[d]}
           </label>

@@ -289,7 +289,7 @@ export async function loadAppConfig(): Promise<boolean> {
 
 /** Save one settings key (JSON). Updates the screen only when the database said OK. */
 export async function saveConfig(
-  key: 'office_hours' | 'case_rules' | 'security' | 'sms_templates' | 'retention' | 'counselor_days' | 'app_pin' | 'student_fields' | 'signatories' | 'campus',
+  key: 'office_hours' | 'case_rules' | 'security' | 'sms_templates' | 'retention' | 'counselor_days' | 'app_pin' | 'student_fields' | 'signatories' | 'campus' | 'seasonal_theme',
   value: unknown
 ): Promise<boolean> {
   try {
@@ -314,6 +314,7 @@ export async function saveConfig(
     signatories: 'signatories',
     campus: 'campus',
   };
+  if (key === 'seasonal_theme') return true; // not part of AppConfig; seasonalTheme.ts keeps it
   set({ [map[key]]: value } as Partial<AppConfig>);
   return true;
 }

@@ -20,10 +20,10 @@ export interface StudentFormValue {
   extra: Record<string, string>;
 }
 
-const input = 'w-full px-3 py-2 rounded-xl border bg-white dark:bg-[#0B1527] text-sm text-[#0B1F4D] dark:text-white';
-const okBorder = 'border-[#D3DDEE] dark:border-[#253B66]';
+const input = 'w-full px-3 py-2 rounded-xl border bg-white dark:bg-[#1C1C1E] text-sm text-[#1D1D1F] dark:text-white';
+const okBorder = 'border-[#E5E5EA] dark:border-[#38383A]';
 const badBorder = 'border-rose-400 dark:border-rose-600';
-const label = 'block text-[11px] font-extrabold text-[#4A608A] dark:text-[#94A8D0] mb-1';
+const label = 'block text-[11px] font-extrabold text-[#6E6E73] dark:text-[#A1A1A6] mb-1';
 const err = 'mt-1 text-[11px] font-bold text-rose-700 dark:text-rose-300';
 const RELATIONS = ['Mother', 'Father', 'Guardian', 'Grandparent', 'Sibling', 'Other'];
 const RELATIONS_TL: Record<string, string> = { Mother: 'Nanay', Father: 'Tatay', Guardian: 'Guardian', Grandparent: 'Lolo / Lola', Sibling: 'Kapatid', Other: 'Iba pa' };
@@ -116,7 +116,7 @@ export const StudentForm: React.FC<{
         aria-modal="true"
         aria-label={existing ? (isTl ? 'Baguhin ang estudyante' : 'Edit student') : isTl ? 'Magdagdag ng estudyante' : 'Add a student'}
         data-student-form
-        className="w-full max-w-3xl max-h-[92vh] flex flex-col rounded-2xl bg-white dark:bg-[#0B1527] border border-[#CBD5E1] dark:border-[#1E2E4E] shadow-2xl overflow-hidden"
+        className="w-full max-w-3xl max-h-[92vh] flex flex-col rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#D1D1D6] dark:border-[#38383A] shadow-2xl overflow-hidden"
         onSubmit={(e) => {
           e.preventDefault();
           setTouched((t) => ({ ...t, __submit: true }));
@@ -124,16 +124,16 @@ export const StudentForm: React.FC<{
         }}
       >
         {/* Header */}
-        <div className="px-6 py-4 bg-white dark:bg-[#0B1527] border-b border-[#E2E8F0] dark:border-[#1E2E4E] flex items-center justify-between shrink-0">
+        <div className="px-6 py-4 bg-white dark:bg-[#1C1C1E] border-b border-[#E2E8F0] dark:border-[#38383A] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[8px] bg-[#1E469B]/10 dark:bg-[#1E469B]/20 text-[#1E469B] dark:text-[#7CB8F7] flex items-center justify-center font-black text-sm border border-[#1E469B]/20">
+            <div className="w-10 h-10 rounded-[8px] bg-[#007AFF]/10 dark:bg-[#007AFF]/20 text-[#007AFF] dark:text-[#409CFF] flex items-center justify-center font-black text-sm border border-[#007AFF]/20">
               {existing ? 'ED' : '+S'}
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white font-serif tracking-tight">
+              <h3 className="text-base font-extrabold text-[#1D1D1F] dark:text-white font-serif tracking-tight">
                 {existing ? (isTl ? `Baguhin si ${existing.fullName}` : `Edit ${existing.fullName}`) : isTl ? 'Magdagdag ng Estudyante' : 'Add Student Record'}
               </h3>
-              <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
+              <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                 {isTl ? 'Opisyal na talaan sa Senior High School Masterlist' : 'Official record in the Senior High School Masterlist'}
               </p>
             </div>
@@ -143,21 +143,21 @@ export const StudentForm: React.FC<{
             onClick={onCancel} 
             aria-label={isTl ? 'Isara' : 'Close'} 
             title={isTl ? 'Isara' : 'Close'} 
-            className="w-8 h-8 rounded-[6px] text-[#64748B] hover:text-[#0B1F4D] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center text-sm font-bold border border-transparent hover:border-[#CBD5E1]"
+            className="w-8 h-8 rounded-[6px] text-[#6E6E73] hover:text-[#1D1D1F] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center text-sm font-bold border border-transparent hover:border-[#D1D1D6]"
           >
             ✕
           </button>
         </div>
 
         {/* Structured Body (Cards) */}
-        <div className="p-6 overflow-y-auto space-y-5 bg-[#F8FAFC] dark:bg-[#070D18]">
+        <div className="p-6 overflow-y-auto space-y-5 bg-[#F5F5F7] dark:bg-[#000000]">
           {/* Card 1: Student Information */}
-          <div className="rounded-xl bg-white dark:bg-[#0F1A30] border border-[#CBD5E1] dark:border-[#1E2E4E] p-4 space-y-4 shadow-2xs">
-            <div className="flex items-center justify-between border-b border-[#F1F5F9] dark:border-[#1E2E4E] pb-2">
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
+          <div className="rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#D1D1D6] dark:border-[#38383A] p-4 space-y-4 shadow-2xs">
+            <div className="flex items-center justify-between border-b border-[#F1F5F9] dark:border-[#38383A] pb-2">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#007AFF] dark:text-[#409CFF]">
                 1. {isTl ? 'Impormasyon ng Estudyante' : 'Student Basic Information'}
               </span>
-              <span className="px-2 py-0.5 rounded-[6px] text-[10px] font-extrabold bg-[#F1F5F9] dark:bg-[#13203B] text-[#475569] dark:text-[#94A3B8] border border-[#CBD5E1] dark:border-[#334155]">
+              <span className="px-2 py-0.5 rounded-[6px] text-[10px] font-extrabold bg-[#F1F5F9] dark:bg-[#2C2C2E] text-[#6E6E73] dark:text-[#A1A1A6] border border-[#D1D1D6] dark:border-[#334155]">
                 Academic Info
               </span>
             </div>
@@ -174,7 +174,7 @@ export const StudentForm: React.FC<{
                   placeholder="2025-11042" 
                   className={`${box('studentNumber')} disabled:opacity-60 font-mono`} 
                 />
-                {existing && <span className="mt-1 block text-[11px] text-[#64748B] dark:text-[#94A3B8]">{isTl ? 'Naka-lock para hindi mawala ang kaugnay na mga records.' : 'Locked to protect connected case records.'}</span>}
+                {existing && <span className="mt-1 block text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Naka-lock para hindi mawala ang kaugnay na mga records.' : 'Locked to protect connected case records.'}</span>}
                 {show('studentNumber') && <span className={err}>{errors.studentNumber}</span>}
               </label>
 
@@ -226,12 +226,12 @@ export const StudentForm: React.FC<{
           </div>
 
           {/* Card 2: Parent / Guardian Contact Details */}
-          <div className="rounded-xl bg-white dark:bg-[#0F1A30] border border-[#CBD5E1] dark:border-[#1E2E4E] p-4 space-y-4 shadow-2xs">
-            <div className="flex items-center justify-between border-b border-[#F1F5F9] dark:border-[#1E2E4E] pb-2">
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
+          <div className="rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#D1D1D6] dark:border-[#38383A] p-4 space-y-4 shadow-2xs">
+            <div className="flex items-center justify-between border-b border-[#F1F5F9] dark:border-[#38383A] pb-2">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#007AFF] dark:text-[#409CFF]">
                 2. {isTl ? 'Impormasyon ng Magulang / Guardian' : 'Parent / Guardian Contact Details'}
               </span>
-              <span className="px-2 py-0.5 rounded-[6px] text-[10px] font-extrabold bg-[#F1F5F9] dark:bg-[#13203B] text-[#475569] dark:text-[#94A3B8] border border-[#CBD5E1] dark:border-[#334155]">
+              <span className="px-2 py-0.5 rounded-[6px] text-[10px] font-extrabold bg-[#F1F5F9] dark:bg-[#2C2C2E] text-[#6E6E73] dark:text-[#A1A1A6] border border-[#D1D1D6] dark:border-[#334155]">
                 Communication Info
               </span>
             </div>
@@ -292,12 +292,12 @@ export const StudentForm: React.FC<{
 
           {/* Card 3: Additional Office Fields (if any enabled) */}
           {custom.length > 0 && (
-            <div className="rounded-xl bg-white dark:bg-[#0F1A30] border border-[#CBD5E1] dark:border-[#1E2E4E] p-4 space-y-4 shadow-2xs">
-              <div className="flex items-center justify-between border-b border-[#F1F5F9] dark:border-[#1E2E4E] pb-2">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
+            <div className="rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#D1D1D6] dark:border-[#38383A] p-4 space-y-4 shadow-2xs">
+              <div className="flex items-center justify-between border-b border-[#F1F5F9] dark:border-[#38383A] pb-2">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#007AFF] dark:text-[#409CFF]">
                   3. {isTl ? 'Karagdagang Impormasyon ng Opisina' : 'Custom Guidance Office Fields'}
                 </span>
-                <span className="px-2 py-0.5 rounded-[6px] text-[10px] font-extrabold bg-[#F1F5F9] dark:bg-[#13203B] text-[#475569] dark:text-[#94A3B8] border border-[#CBD5E1] dark:border-[#334155]">
+                <span className="px-2 py-0.5 rounded-[6px] text-[10px] font-extrabold bg-[#F1F5F9] dark:bg-[#2C2C2E] text-[#6E6E73] dark:text-[#A1A1A6] border border-[#D1D1D6] dark:border-[#334155]">
                   Settings Custom
                 </span>
               </div>
@@ -319,7 +319,7 @@ export const StudentForm: React.FC<{
         </div>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 bg-white dark:bg-[#0B1527] border-t border-[#E2E8F0] dark:border-[#1E2E4E] flex flex-wrap items-center justify-between gap-3 shrink-0">
+        <div className="px-6 py-4 bg-white dark:bg-[#1C1C1E] border-t border-[#E2E8F0] dark:border-[#38383A] flex flex-wrap items-center justify-between gap-3 shrink-0">
           <p className="text-xs font-bold text-rose-700 dark:text-rose-300" role="alert">
             {touched.__submit && hasErrors ? (isTl ? `May ${Object.keys(errors).length} na kailangang punan o ayusin sa itaas.` : `${Object.keys(errors).length} required field(s) need attention above.`) : ''}
           </p>
@@ -327,7 +327,7 @@ export const StudentForm: React.FC<{
             <button 
               type="button" 
               onClick={onCancel} 
-              className="px-4 py-2 rounded-[6px] border border-[#CBD5E1] dark:border-[#253B66] text-[#475569] dark:text-[#94A3B8] bg-white dark:bg-[#0F1A30] hover:bg-slate-100 text-xs font-bold transition-colors"
+              className="px-4 py-2 rounded-[6px] border border-[#D1D1D6] dark:border-[#38383A] text-[#6E6E73] dark:text-[#A1A1A6] bg-white dark:bg-[#1C1C1E] hover:bg-slate-100 text-xs font-bold transition-colors"
             >
               {isTl ? 'Kanselahin' : 'Cancel'}
             </button>
@@ -335,7 +335,7 @@ export const StudentForm: React.FC<{
               type="submit" 
               data-action="save-student" 
               disabled={busy} 
-              className="px-5 py-2 rounded-[6px] bg-[#1E469B] hover:bg-[#153477] text-white text-xs font-bold shadow-xs disabled:opacity-50 transition-colors"
+              className="px-5 py-2 rounded-[6px] bg-[#007AFF] hover:bg-[#153477] text-white text-xs font-bold shadow-xs disabled:opacity-50 transition-colors"
             >
               {busy ? (isTl ? 'Sine-save…' : 'Saving…') : existing ? (isTl ? 'I-save ang Pagbabago' : 'Save Changes') : isTl ? 'Idagdag ang Estudyante' : 'Save Student Record'}
             </button>

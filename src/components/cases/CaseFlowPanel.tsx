@@ -58,8 +58,8 @@ const NOTICE_HOW: [string, string][] = [
 
 
 const ConfidentialHint: React.FC<{ isTl: boolean }> = ({ isTl }) => (
-  <p className="flex items-start gap-1.5 text-[11px] text-[#64748B] dark:text-[#94A8D0]">
-    <ShieldCheck className="w-3.5 h-3.5 mt-px shrink-0 text-[#1E469B] dark:text-[#7CB8F7]" aria-hidden />
+  <p className="flex items-start gap-1.5 text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">
+    <ShieldCheck className="w-3.5 h-3.5 mt-px shrink-0 text-[#007AFF] dark:text-[#409CFF]" aria-hidden />
     {isTl
       ? 'Huwag banggitin sa estudyante kung sino ang nag-report o naapektuhan.'
       : 'Do not tell the student who reported them or who was affected.'}
@@ -403,14 +403,14 @@ export const CaseFlowPanel: React.FC<{
   };
 
   const btn = 'px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap disabled:opacity-50 transition-all';
-  const primary = `${btn} bg-[#1E469B] text-white hover:bg-[#16377c] active:scale-[0.97]`;
-  const input = 'w-full px-3 py-2 rounded-xl border border-[#CBD5E1] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-sm text-[#0B1F4D] dark:text-white';
+  const primary = `${btn} bg-[#007AFF] text-white hover:bg-[#16377c] active:scale-[0.97]`;
+  const input = 'w-full px-3 py-2 rounded-xl border border-[#D1D1D6] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] text-sm text-[#1D1D1F] dark:text-white';
 
   const stepIndex = next ? activeSteps.indexOf(next) + 1 : activeSteps.length;
   const totalSteps = activeSteps.length;
 
   return (
-    <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] space-y-3" data-case-flow>
+    <div className="px-6 py-4 border-b border-[#E5E5EA] dark:border-[#38383A] space-y-3" data-case-flow>
       {/* before the parent summons: a correct mobile number is required; Gmail is asked once */}
       {next === 'Schedule Conference' && student && onUpdateStudentContact && (
         <ParentContactGate
@@ -426,7 +426,7 @@ export const CaseFlowPanel: React.FC<{
       )}
       {/* Why a 1st minor has no parent steps (no dead ends: say why) */}
       {isMinor && (
-        <p className="text-[11px] text-[#64748B] dark:text-[#94A8D0]">
+        <p className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">
           {isTl ? '1st minor: paalala lang, kaya walang patawag sa magulang.' : '1st minor: a reminder only, so there is no parent summons.'}
         </p>
       )}
@@ -479,7 +479,7 @@ export const CaseFlowPanel: React.FC<{
         <div className="rounded-xl bg-sky-50/70 dark:bg-[#0A162D] border border-sky-200 dark:border-sky-900/50 p-4 space-y-2 shadow-xs transition-all">
           <div className="flex items-center justify-between border-b border-sky-200 dark:border-sky-900/40 pb-2">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-black uppercase tracking-wider text-[#1E469B] dark:text-[#7CB8F7]">
+              <span className="text-xs font-black uppercase tracking-wider text-[#007AFF] dark:text-[#409CFF]">
                 {isTl ? `Sinusuring Nakaraang Hakbang: ${STEP_TL[inspectStep]}` : `Inspecting Step: ${inspectStep}`}
               </span>
               <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
@@ -489,13 +489,13 @@ export const CaseFlowPanel: React.FC<{
             <button
               type="button"
               onClick={() => setInspectStep(null)}
-              className="text-[11px] font-bold text-[#4A608A] hover:text-[#0B1F4D] dark:text-[#94A8D0] dark:hover:text-white"
+              className="text-[11px] font-bold text-[#6E6E73] hover:text-[#1D1D1F] dark:text-[#A1A1A6] dark:hover:text-white"
             >
               ✕ {isTl ? 'Isara' : 'Close review'}
             </button>
           </div>
 
-          <div className="text-xs space-y-2 text-[#0F172A] dark:text-white">
+          <div className="text-xs space-y-2 text-[#1D1D1F] dark:text-white">
             {inspectStep === 'Reported' && (
               <p>
                 <span className="font-bold">{isTl ? 'Petsa ng Ulat:' : 'Reported Date:'}</span> {fmt(dates.Reported, isTl)} · {c.reportedBy}
@@ -509,7 +509,7 @@ export const CaseFlowPanel: React.FC<{
             {inspectStep === 'Explanation' && (
               <div className="space-y-1">
                 <span className="font-bold block">{isTl ? 'Paliwanag / Salaysay ng Estudyante:' : 'Student Official Statement:'}</span>
-                <p className="p-2.5 rounded-lg bg-white dark:bg-[#0B1527] border border-slate-200 dark:border-slate-800 leading-relaxed italic">
+                <p className="p-2.5 rounded-lg bg-white dark:bg-[#1C1C1E] border border-slate-200 dark:border-slate-800 leading-relaxed italic">
                   "{c.explanation || (isTl ? 'Walang nakasulat na paliwanag.' : 'No statement provided.')}"
                 </p>
               </div>
@@ -557,7 +557,7 @@ export const CaseFlowPanel: React.FC<{
                   <span className="font-bold">{isTl ? 'Petsa ng Pagsara:' : 'Closed At:'}</span> {fmt(dates.Closed, isTl)}
                 </p>
                 {c.counselingNotes && (
-                  <p className="p-2.5 rounded-lg bg-white dark:bg-[#0B1527] border border-slate-200 dark:border-slate-800 leading-relaxed italic">
+                  <p className="p-2.5 rounded-lg bg-white dark:bg-[#1C1C1E] border border-slate-200 dark:border-slate-800 leading-relaxed italic">
                     "{c.counselingNotes}"
                   </p>
                 )}
@@ -584,7 +584,7 @@ export const CaseFlowPanel: React.FC<{
               <div className="sticky bottom-0 z-10 -mx-1 glass-bar rounded-2xl px-3 py-3 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-1">
                   {onOpenPrint && (
-                    <button type="button" onClick={() => onOpenPrint('callSlip')} className="h-11 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1.5 active:scale-[0.97] transition-transform duration-150">
+                    <button type="button" onClick={() => onOpenPrint('callSlip')} className="h-11 px-4 rounded-full text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1.5 active:scale-[0.97] transition-transform duration-150">
                       <Printer className="w-4 h-4" aria-hidden />
                       {isTl ? 'I-print ang call slip' : 'Print call slip'}
                     </button>
@@ -601,7 +601,7 @@ export const CaseFlowPanel: React.FC<{
                           )
                         )
                       }
-                      className="h-11 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1.5 active:scale-[0.97] transition-transform duration-150"
+                      className="h-11 px-4 rounded-full text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1.5 active:scale-[0.97] transition-transform duration-150"
                     >
                       <Printer className="w-4 h-4" aria-hidden />
                       {isTl ? `Lahat ng call slip (${groupCases.length + 1})` : `All call slips (${groupCases.length + 1})`}
@@ -669,14 +669,14 @@ export const CaseFlowPanel: React.FC<{
                       type="button"
                       onClick={() => setText((prev) => (prev.startsWith(s) ? prev : s + prev.replace(/^(Inamin ng estudyante ang nangyari\. |Hindi inamin ng estudyante\. Ayon sa kanya: |Bahagyang inamin\. Ayon sa kanya: |The student admitted what happened\. |The student denied it\. In their words: |Partly admitted\. In their words: )/, '')))}
                       className={`h-8 px-3 rounded-full text-[12px] transition-[background-color,transform] duration-150 active:scale-[0.97] ${
-                        text.startsWith(s) ? 'btn-lit font-semibold' : 'bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#1E469B]'
+                        text.startsWith(s) ? 'btn-lit font-semibold' : 'bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#007AFF]'
                       }`}
                     >
                       {s.split('.')[0]}
                     </button>
                   ))}
                   {onOpenPrint && (
-                    <button type="button" onClick={() => onOpenPrint('studentStatement')} title={isTl ? 'Blankong papel para sulat-kamay ng estudyante' : 'Blank sheet for the student to handwrite'} className="h-8 px-3 rounded-full text-[12px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1">
+                    <button type="button" onClick={() => onOpenPrint('studentStatement')} title={isTl ? 'Blankong papel para sulat-kamay ng estudyante' : 'Blank sheet for the student to handwrite'} className="h-8 px-3 rounded-full text-[12px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1">
                       <Printer className="w-3.5 h-3.5" aria-hidden />
                       {isTl ? 'Papel para sulat-kamay' : 'Handwritten form'}
                     </button>
@@ -701,7 +701,7 @@ export const CaseFlowPanel: React.FC<{
                       disabled={busy}
                       onClick={onOpenStation}
                       title={isTl ? 'Bubukas ang naka-lock na screen kung saan ang estudyante mismo ang magta-type.' : 'Opens a locked screen where the student types it.'}
-                      className="h-11 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] active:scale-[0.97] transition-transform duration-150"
+                      className="h-11 px-4 rounded-full text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] active:scale-[0.97] transition-transform duration-150"
                     >
                       {isTl ? 'Ipa-type sa estudyante' : 'Let the student type it'}
                     </button>
@@ -781,13 +781,13 @@ export const CaseFlowPanel: React.FC<{
 
               {/* already scheduled: show it calmly, with "Change" */}
               {liveAppointment && !changeScheduleMode && !isReschedule ? (
-                <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
+                <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
                   <div className="px-4 py-3 flex items-center justify-between gap-3">
                     <span className="flex items-center gap-2 text-[14px] font-medium text-emerald-700 dark:text-emerald-300">
                       <CalendarCheck2 className="w-4 h-4" aria-hidden />
                       {isTl ? 'May schedule na' : 'Conference is set'}
                     </span>
-                    <button type="button" onClick={() => setChangeScheduleMode(true)} className="h-9 px-3 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">
+                    <button type="button" onClick={() => setChangeScheduleMode(true)} className="h-9 px-3 rounded-full text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">
                       {isTl ? 'Palitan' : 'Change'}
                     </button>
                   </div>
@@ -804,7 +804,7 @@ export const CaseFlowPanel: React.FC<{
                 <>
                   {/* parent contact: one calm row, Edit opens the fields */}
                   {student && (
-                    <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10">
+                    <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10">
                       <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-2">
                         <span className="min-w-0 text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7]">
                           {student.parentName || '—'}
@@ -822,7 +822,7 @@ export const CaseFlowPanel: React.FC<{
                             </button>
                           )}
                           {!editingContact && (
-                            <button type="button" onClick={() => setEditingContact(true)} className="h-9 px-3 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">
+                            <button type="button" onClick={() => setEditingContact(true)} className="h-9 px-3 rounded-full text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">
                               {isTl ? 'Baguhin ang contact' : 'Edit contact'}
                             </button>
                           )}
@@ -848,7 +848,7 @@ export const CaseFlowPanel: React.FC<{
                                 setParentEmailInput(student.parentEmail ?? '');
                                 setEditingContact(false);
                               }}
-                              className="h-9 px-4 rounded-full text-[13px] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04]"
+                              className="h-9 px-4 rounded-full text-[13px] text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04]"
                             >
                               {isTl ? 'Huwag na' : 'Cancel'}
                             </button>
@@ -898,7 +898,7 @@ export const CaseFlowPanel: React.FC<{
                             className={`min-w-[64px] h-14 px-3 rounded-2xl flex flex-col items-center justify-center transition-[background-color,box-shadow,transform] duration-150 active:scale-[0.97] disabled:opacity-40 ${
                               on
                                 ? 'btn-lit'
-                                : 'bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#1E469B] dark:hover:border-[#5B8DEF]'
+                                : 'bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#007AFF] dark:hover:border-[#5B8DEF]'
                             }`}
                           >
                             <span className={`text-[11px] ${on ? 'text-white/80' : 'text-[#8E8E93]'}`}>{dayFmtShort.format(dt).split(' ')[0]}</span>
@@ -917,7 +917,7 @@ export const CaseFlowPanel: React.FC<{
                             el.focus();
                           }
                         }}
-                        className={`relative h-14 px-4 rounded-2xl border border-dashed flex items-center gap-2 text-[13px] active:scale-[0.97] transition-transform duration-150 ${!officeDays.includes(schedDate) ? 'border-[#1E469B] text-[#1E469B] dark:text-[#7CB8F7]' : 'border-[#C7C7CC] dark:border-white/20 text-[#6E6E73] dark:text-[#A1A1A6]'}`}
+                        className={`relative h-14 px-4 rounded-2xl border border-dashed flex items-center gap-2 text-[13px] active:scale-[0.97] transition-transform duration-150 ${!officeDays.includes(schedDate) ? 'border-[#007AFF] text-[#007AFF] dark:text-[#409CFF]' : 'border-[#C7C7CC] dark:border-white/20 text-[#6E6E73] dark:text-[#A1A1A6]'}`}
                       >
                         <CalendarDays className="w-4 h-4" aria-hidden />
                         <span className="text-left leading-tight">
@@ -975,7 +975,7 @@ export const CaseFlowPanel: React.FC<{
                               className={`h-11 px-4 rounded-full text-[14px] tabular-nums transition-[background-color,transform] duration-150 active:scale-[0.97] ${
                                 on
                                   ? 'btn-lit font-semibold'
-                                  : 'bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#1E469B] dark:hover:border-[#5B8DEF]'
+                                  : 'bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#007AFF] dark:hover:border-[#5B8DEF]'
                               }`}
                             >
                               {slotLabel(s).split('–')[0].trim().replace(/^0/, '')}
@@ -987,7 +987,7 @@ export const CaseFlowPanel: React.FC<{
                   </div>
 
                   {onScheduleOthers && groupToSchedule.length > 0 && schedStart !== null && (
-                    <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10">
+                    <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10">
                       <label className="px-4 py-3 flex items-start gap-2.5 cursor-pointer select-none">
                         <input type="checkbox" checked={withGroup} onChange={(e) => setWithGroup(e.target.checked)} className="mt-0.5 w-5 h-5 rounded-md accent-[#1E469B]" />
                         <span>
@@ -1007,7 +1007,7 @@ export const CaseFlowPanel: React.FC<{
                               {start === null ? (
                                 <span className="text-[12px] text-rose-700 dark:text-rose-300">{isTl ? 'Wala nang bakanteng oras, i-schedule nang hiwalay' : 'No free time left, schedule separately'}</span>
                               ) : (
-                                <span className="h-7 px-3 rounded-full inline-flex items-center bg-[#1E469B]/10 text-[#1E469B] dark:bg-[#7CB8F7]/15 dark:text-[#7CB8F7] text-[13px] font-semibold tabular-nums">
+                                <span className="h-7 px-3 rounded-full inline-flex items-center bg-[#007AFF]/10 text-[#007AFF] dark:bg-[#0A84FF]/15 dark:text-[#409CFF] text-[13px] font-semibold tabular-nums">
                                   {slotLabel(start).split('–')[0].trim().replace(/^0/, '')}
                                 </span>
                               )}
@@ -1019,7 +1019,7 @@ export const CaseFlowPanel: React.FC<{
                   )}
 
                   {/* notice to the parent: how to send + a suggested message, always visible */}
-                  <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10">
+                  <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10">
                     <label className="px-4 py-3 flex items-center gap-2.5 text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] cursor-pointer select-none border-b border-black/[0.06] dark:border-white/[0.06]">
                       <input type="checkbox" checked={schedSendNow} onChange={(e) => setSchedSendNow(e.target.checked)} className="w-5 h-5 rounded-md accent-[#1E469B]" />
                       <span className="font-medium">{isTl ? 'Ipadala ang patawag sa magulang' : 'Send the summons to the parent'}</span>
@@ -1076,10 +1076,10 @@ export const CaseFlowPanel: React.FC<{
                                   ? 'bg-gradient-to-r from-rose-500/15 to-orange-500/15 text-rose-700 dark:text-rose-300'
                                   : ladderLevel === 'high'
                                   ? 'bg-gradient-to-r from-amber-500/15 to-orange-400/15 text-amber-800 dark:text-amber-300'
-                                  : 'bg-gradient-to-r from-[#1E469B]/10 to-sky-500/10 text-[#1E469B] dark:text-[#7CB8F7]'
+                                  : 'bg-gradient-to-r from-[#007AFF]/10 to-sky-500/10 text-[#007AFF] dark:text-[#409CFF]'
                               }`}
                             >
-                              <span className={`w-1.5 h-1.5 rounded-full ${ladderLevel === 'urgent' ? 'bg-rose-500' : ladderLevel === 'high' ? 'bg-amber-500' : 'bg-[#1E469B] dark:bg-[#7CB8F7]'}`} aria-hidden />
+                              <span className={`w-1.5 h-1.5 rounded-full ${ladderLevel === 'urgent' ? 'bg-rose-500' : ladderLevel === 'high' ? 'bg-amber-500' : 'bg-[#007AFF] dark:bg-[#0A84FF]'}`} aria-hidden />
                               {ladderWhy}
                             </span>
                           </span>
@@ -1103,7 +1103,7 @@ export const CaseFlowPanel: React.FC<{
                                 className={`h-10 px-4 rounded-full text-[13px] transition-[background-color,transform] duration-150 active:scale-[0.97] ${
                                   msgStyle === k && !schedMsgEdited
                                     ? 'btn-lit font-semibold'
-                                    : 'bg-white dark:bg-[#0A1526] border border-[#DDE3EC] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#1E469B]'
+                                    : 'bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#007AFF]'
                                 }`}
                               >
                                 {label}
@@ -1129,8 +1129,8 @@ export const CaseFlowPanel: React.FC<{
                               setSchedMessage(e.target.value);
                               setSchedMsgEdited(true);
                             }}
-                            className={`w-full px-3 py-2.5 rounded-xl border bg-white dark:bg-[#0A1526] text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] leading-relaxed resize-y ${
-                              sensitiveWords.length ? 'border-rose-500 ring-1 ring-rose-500' : 'border-[#DDE3EC] dark:border-white/10'
+                            className={`w-full px-3 py-2.5 rounded-xl border bg-white dark:bg-[#1C1C1E] text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] leading-relaxed resize-y ${
+                              sensitiveWords.length ? 'border-rose-500 ring-1 ring-rose-500' : 'border-[#E5E5EA] dark:border-white/10'
                             }`}
                           />
                         </label>
@@ -1153,12 +1153,12 @@ export const CaseFlowPanel: React.FC<{
               {/* the ONE main action, always visible at the bottom (AGENTS §5 #13 #18 #25) */}
               <div className="sticky bottom-0 z-10 -mx-1 glass-bar rounded-2xl px-3 py-3 flex flex-wrap items-center justify-between gap-2">
                 {onOpenPrint && ladderAt.isLast && ladderAt.n > 1 ? (
-                  <button type="button" onClick={() => onOpenPrint('parentLetter')} title={isTl ? 'Pormal na sulat sa magulang. Ibibigay sa estudyante o adviser. Walang detalye ng offense.' : 'Formal letter to the parent, sent through the student or adviser. No offense details.'} className="h-11 px-4 rounded-full text-[13px] font-semibold text-[#1E469B] dark:text-[#7CB8F7] bg-[#1E469B]/[0.08] dark:bg-white/[0.08] hover:bg-[#1E469B]/[0.14] inline-flex items-center gap-1.5 active:scale-[0.97] transition-transform duration-150">
+                  <button type="button" onClick={() => onOpenPrint('parentLetter')} title={isTl ? 'Pormal na sulat sa magulang. Ibibigay sa estudyante o adviser. Walang detalye ng offense.' : 'Formal letter to the parent, sent through the student or adviser. No offense details.'} className="h-11 px-4 rounded-full text-[13px] font-semibold text-[#007AFF] dark:text-[#409CFF] bg-[#007AFF]/[0.08] dark:bg-white/[0.08] hover:bg-[#007AFF]/[0.14] inline-flex items-center gap-1.5 active:scale-[0.97] transition-transform duration-150">
                     <Printer className="w-4 h-4" aria-hidden />
                     {isTl ? 'I-print ang sulat sa magulang' : 'Print the parent letter'}
                   </button>
                 ) : onOpenPrint ? (
-                  <button type="button" onClick={() => onOpenPrint('conference')} title={isTl ? 'Form para sa conference ng magulang (pipirmahan sa pagdinig)' : 'Form for the parent conference (signed at the meeting)'} className="h-11 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1.5 active:scale-[0.97] transition-transform duration-150">
+                  <button type="button" onClick={() => onOpenPrint('conference')} title={isTl ? 'Form para sa conference ng magulang (pipirmahan sa pagdinig)' : 'Form for the parent conference (signed at the meeting)'} className="h-11 px-4 rounded-full text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1.5 active:scale-[0.97] transition-transform duration-150">
                     <Printer className="w-4 h-4" aria-hidden />
                     {isTl ? 'I-print ang conference form' : 'Print conference form'}
                   </button>
@@ -1251,7 +1251,7 @@ export const CaseFlowPanel: React.FC<{
                           ? tone === 'emerald'
                             ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30'
                             : 'border-amber-500 bg-amber-50 dark:bg-amber-950/30'
-                          : 'border-[#DDE3EC] dark:border-white/10 bg-white dark:bg-[#0F1B2E] hover:border-[#AEB8C8]'
+                          : 'border-[#E5E5EA] dark:border-white/10 bg-white dark:bg-[#1C1C1E] hover:border-[#AEB8C8]'
                       }`}
                     >
                       <span className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${on ? (tone === 'emerald' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white') : 'bg-[#F5F5F7] dark:bg-white/[0.08] text-[#6E6E73] dark:text-[#A1A1A6]'}`}>
@@ -1277,7 +1277,7 @@ export const CaseFlowPanel: React.FC<{
                       aria-pressed={how === en}
                       onClick={() => setHow(en)}
                       className={`h-10 px-4 rounded-full text-[13px] transition-[background-color,transform] duration-150 active:scale-[0.97] ${
-                        how === en ? 'btn-lit font-semibold' : 'bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#1E469B]'
+                        how === en ? 'btn-lit font-semibold' : 'bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#007AFF]'
                       }`}
                     >
                       {isTl ? tl : en}
@@ -1288,7 +1288,7 @@ export const CaseFlowPanel: React.FC<{
 
               {/* conference record: who came + what was agreed (a hearing record, not counseling notes) */}
               {parentStatus === 'Attended' && (
-                <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 p-4 space-y-3">
+                <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 p-4 space-y-3">
                   <div className="space-y-2">
                     <span className="block text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Sino ang dumalo?' : 'Who came?'}</span>
                     <div className="seg-track flex-wrap">
@@ -1314,7 +1314,7 @@ export const CaseFlowPanel: React.FC<{
               )}
 
               {onScheduleOthers && groupAtAttendance.length > 0 && (
-                <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
+                <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
                   <p className="px-4 py-2.5 text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">
                     {isTl ? 'Ibang pamilya sa parehong insidente: itala rin dito (opsyonal)' : 'Other families from the same incident: record them here too (optional)'}
                   </p>
@@ -1425,7 +1425,7 @@ export const CaseFlowPanel: React.FC<{
                         onClick={() => setDecision(v)}
                         aria-pressed={on}
                         className={`h-10 px-4 rounded-full text-[13px] transition-[background-color,transform] duration-150 active:scale-[0.97] ${
-                          on ? 'btn-lit font-semibold' : 'bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#1E469B]'
+                          on ? 'btn-lit font-semibold' : 'bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#007AFF]'
                         }`}
                       >
                         {isTl ? preset.labelTl : preset.labelEn}
@@ -1435,7 +1435,7 @@ export const CaseFlowPanel: React.FC<{
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 p-4 space-y-3">
+              <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 p-4 space-y-3">
                 <label className="block space-y-1">
                   <span className="block text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Desisyon' : 'Decision'}</span>
                   <textarea
@@ -1482,7 +1482,7 @@ export const CaseFlowPanel: React.FC<{
                             else if (typeof k === 'number') setEndDate(sanctionEndFrom(k));
                           }}
                           className={`h-10 px-4 rounded-full text-[13px] transition-[background-color,transform] duration-150 active:scale-[0.97] ${
-                            on ? 'btn-lit font-semibold' : 'bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#1E469B]'
+                            on ? 'btn-lit font-semibold' : 'bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#007AFF]'
                           }`}
                         >
                           {lbl}
@@ -1494,7 +1494,7 @@ export const CaseFlowPanel: React.FC<{
                     )}
                   </div>
                   {endDate && (
-                    <p className="text-[12px] text-[#1E469B] dark:text-[#7CB8F7]">
+                    <p className="text-[12px] text-[#007AFF] dark:text-[#409CFF]">
                       {isTl ? 'Huling araw ng sanction: ' : 'Last day of the sanction: '}
                       <b>{new Intl.DateTimeFormat(isTl ? 'fil-PH' : 'en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(parseISO(endDate))}</b>
                       {typeof endDays === 'number' && <span className="text-[#8E8E93]">{isTl ? ' · bilang lang ang may pasok' : ' · school days only'}</span>}
@@ -1517,7 +1517,7 @@ export const CaseFlowPanel: React.FC<{
 
               {/* Same incident, other students: keep decisions fair */}
               {groupCases.length > 0 && (
-                <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
+                <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
                   <p className="px-4 py-2.5 text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Ibang estudyante sa parehong insidente (para pantay)' : 'Other students in the same incident (to keep it fair)'}</p>
                   {onSetWaitForAll && (
                     <label className="px-4 py-3 flex items-start gap-3 cursor-pointer">
@@ -1563,7 +1563,7 @@ export const CaseFlowPanel: React.FC<{
 
           {next === 'Follow-Up' && (
             <div className="space-y-4">
-              <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
+              <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
                 <div className="px-4 py-3 flex items-center justify-between gap-3">
                   <span className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">Sanction</span>
                   <span className="text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] text-right">{c.sanction || '—'}</span>
@@ -1606,7 +1606,7 @@ export const CaseFlowPanel: React.FC<{
                   </div>
                   <div className="flex flex-wrap items-center justify-end gap-2">
                     {onComposeParent && noticeHow === 'SMS / text' && (
-                      <button type="button" onClick={onComposeParent} className="h-10 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] bg-white dark:bg-white/[0.08] shadow-[0_0_0_0.5px_rgb(15_23_42/0.15)] hover:bg-white/80 active:scale-[0.97] transition-[background-color,transform] duration-150">
+                      <button type="button" onClick={onComposeParent} className="h-10 px-4 rounded-full text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] bg-white dark:bg-white/[0.08] shadow-[0_0_0_0.5px_rgb(15_23_42/0.15)] hover:bg-white/80 active:scale-[0.97] transition-[background-color,transform] duration-150">
                         {isTl ? 'Isulat ang SMS (walang detalye ng offense)' : 'Write the SMS (no offense details)'}
                       </button>
                     )}
@@ -1628,7 +1628,7 @@ export const CaseFlowPanel: React.FC<{
                   data-flow="followup-start"
                   disabled={busy || c.sanctionStatus === 'Pending parent notice'}
                   onClick={() => onAction({ kind: 'followup', sanctionDone: false })}
-                  className="h-11 px-5 rounded-full text-[14px] font-medium text-[#1E469B] dark:text-[#7CB8F7] bg-white/80 dark:bg-white/[0.06] shadow-[0_0_0_0.5px_rgb(15_23_42/0.12)] hover:bg-white dark:hover:bg-white/[0.1] disabled:opacity-50 active:scale-[0.97] transition-[background-color,transform] duration-150"
+                  className="h-11 px-5 rounded-full text-[14px] font-medium text-[#007AFF] dark:text-[#409CFF] bg-white/80 dark:bg-white/[0.06] shadow-[0_0_0_0.5px_rgb(15_23_42/0.12)] hover:bg-white dark:hover:bg-white/[0.1] disabled:opacity-50 active:scale-[0.97] transition-[background-color,transform] duration-150"
                 >
                   {isTl ? 'Ginagawa pa' : 'Still serving'}
                 </button>
@@ -1649,7 +1649,7 @@ export const CaseFlowPanel: React.FC<{
           {next === 'Closed' && (
             <div className="space-y-4">
               {/* summary from the REAL record (no invented text) */}
-              <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
+              <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
                 {[
                   [
                     isTl ? 'Panig ng estudyante' : "Student's side",
@@ -1694,13 +1694,13 @@ export const CaseFlowPanel: React.FC<{
                     if (c.decision) kinds.push('kasunduan');
                     printHtml(buildFolderHtml(kinds, { c, stu: student }, window.location.origin));
                   }}
-                  className="h-11 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1.5 active:scale-[0.97] transition-transform duration-150"
+                  className="h-11 px-4 rounded-full text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1.5 active:scale-[0.97] transition-transform duration-150"
                 >
                   <FolderOpen className="w-4 h-4" aria-hidden />
                   {isTl ? 'I-print ang folder' : 'Print the folder'}
                 </button>
                 {onOpenPrint ? (
-                  <button type="button" onClick={() => onOpenPrint('caseResolutionSummary')} className="h-11 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1.5 active:scale-[0.97] transition-transform duration-150">
+                  <button type="button" onClick={() => onOpenPrint('caseResolutionSummary')} className="h-11 px-4 rounded-full text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1.5 active:scale-[0.97] transition-transform duration-150">
                     <Printer className="w-4 h-4" aria-hidden />
                     {isTl ? 'I-print ang buod' : 'Print summary'}
                   </button>
@@ -1725,7 +1725,7 @@ export const CaseFlowPanel: React.FC<{
 
       {/* appeal / request for reconsideration: after a decision, before the case is closed */}
       {c.decidedAt && c.status !== 'Resolved' && (
-        <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10">
+        <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10">
           {c.appealRequestedAt ? (
             <div className="px-4 py-3 text-[13px] text-[#1D1D1F] dark:text-[#F5F5F7]">
               <b>{isTl ? 'May apela' : 'Appeal recorded'}</b> · {c.appealBy} · {fmt(c.appealRequestedAt, isTl)}
@@ -1734,7 +1734,7 @@ export const CaseFlowPanel: React.FC<{
               </span>
             </div>
           ) : !appealOpen ? (
-            <button type="button" onClick={() => setAppealOpen(true)} className="w-full px-4 py-3 text-left text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.03] dark:hover:bg-white/[0.04] rounded-2xl">
+            <button type="button" onClick={() => setAppealOpen(true)} className="w-full px-4 py-3 text-left text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.03] dark:hover:bg-white/[0.04] rounded-2xl">
               {isTl ? 'Humiling ng muling pagsusuri (apela) ang magulang o estudyante?' : 'Did the parent or student ask for a review (appeal)?'}
             </button>
           ) : (
@@ -1742,18 +1742,18 @@ export const CaseFlowPanel: React.FC<{
               <p className="text-[14px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Itala ang apela' : 'Record the appeal'}</p>
               <div className="flex flex-wrap gap-1.5">
                 {[['Parent / guardian', 'Magulang'], ['Student', 'Estudyante']].map(([en, tl]) => (
-                  <button key={en} type="button" onClick={() => setAppealBy(en)} className={`h-8 px-3 rounded-full text-[12px] ${appealBy === en ? 'btn-lit font-semibold' : 'border border-[#DDE3EC] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7]'}`}>{isTl ? tl : en}</button>
+                  <button key={en} type="button" onClick={() => setAppealBy(en)} className={`h-8 px-3 rounded-full text-[12px] ${appealBy === en ? 'btn-lit font-semibold' : 'border border-[#E5E5EA] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7]'}`}>{isTl ? tl : en}</button>
                 ))}
               </div>
               <textarea value={appealReason} onChange={(e) => setAppealReason(e.target.value.slice(0, 1000))} rows={2} placeholder={isTl ? 'Ano ang dahilan ng apela?' : 'Why are they appealing?'} className={`${input} rounded-xl text-[14px]`} />
               <div className="flex flex-wrap gap-1.5">
                 {[['Kept the decision', 'Pinanatili ang desisyon'], ['Changed the sanction', 'Binago ang parusa'], ['Withdrawn', 'Binawi ang parusa']].map(([en, tl]) => (
-                  <button key={en} type="button" onClick={() => setAppealResult(en)} className={`h-8 px-3 rounded-full text-[12px] ${appealResult === en ? 'btn-lit font-semibold' : 'border border-[#DDE3EC] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7]'}`}>{isTl ? tl : en}</button>
+                  <button key={en} type="button" onClick={() => setAppealResult(en)} className={`h-8 px-3 rounded-full text-[12px] ${appealResult === en ? 'btn-lit font-semibold' : 'border border-[#E5E5EA] dark:border-white/10 text-[#1D1D1F] dark:text-[#F5F5F7]'}`}>{isTl ? tl : en}</button>
                 ))}
               </div>
               <input value={appealNote} onChange={(e) => setAppealNote(e.target.value.slice(0, 300))} placeholder={isTl ? 'Tala (opsyonal), hal. bagong parusa' : 'Note (optional), e.g. the new sanction'} className={`${input} h-10 rounded-xl text-[14px]`} />
               <div className="flex justify-end gap-2">
-                <button type="button" onClick={() => setAppealOpen(false)} className="h-9 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04]">{isTl ? 'Huwag na' : 'Cancel'}</button>
+                <button type="button" onClick={() => setAppealOpen(false)} className="h-9 px-4 rounded-full text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04]">{isTl ? 'Huwag na' : 'Cancel'}</button>
                 <button type="button" disabled={busy || appealReason.trim().length < 5} onClick={() => onAction({ kind: 'appeal', by: appealBy, reason: appealReason.trim(), result: appealResult, note: appealNote.trim() || undefined })} className="btn-lit h-9 px-5 text-[13px] font-semibold disabled:opacity-40">
                   {isTl ? 'I-save ang apela' : 'Save appeal'}
                 </button>

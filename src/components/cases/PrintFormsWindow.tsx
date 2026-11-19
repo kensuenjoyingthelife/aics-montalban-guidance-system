@@ -99,7 +99,7 @@ export const PrintFormsWindow: React.FC<{
       : (kind === 'contract' || kind === 'kasunduan') && !promises.trim()
       ? isTl ? 'Ilagay kahit isang pangako.' : 'Enter at least one promise.'
       : '';
-  const input = 'w-full h-10 px-3 rounded-xl border border-[#DDE3EC] dark:border-white/10 bg-white dark:bg-[#0A1526] text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] focus:outline-none focus:border-[#1E469B]';
+  const input = 'w-full h-10 px-3 rounded-xl border border-[#E5E5EA] dark:border-white/10 bg-white dark:bg-[#1C1C1E] text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] focus:outline-none focus:border-[#007AFF]';
   const label = 'block text-[12px] font-medium text-[#6E6E73] dark:text-[#A1A1A6] mb-1';
   const previewHtml = useMemo(() => {
     return buildFormHtml(
@@ -125,13 +125,13 @@ export const PrintFormsWindow: React.FC<{
 
   return createPortal(
     <div className="fixed inset-0 z-[80] !m-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div role="dialog" aria-modal="true" aria-label={isTl ? 'Mag-print ng form' : 'Print a form'} data-print-forms className="w-full max-w-4xl max-h-[94vh] flex flex-col rounded-[24px] bg-white dark:bg-[#0F1B2E] border border-black/[0.06] dark:border-white/10 shadow-[0_24px_80px_rgb(15_23_42/0.28)] overflow-hidden">
+      <div role="dialog" aria-modal="true" aria-label={isTl ? 'Mag-print ng form' : 'Print a form'} data-print-forms className="w-full max-w-4xl max-h-[94vh] flex flex-col rounded-[24px] bg-white dark:bg-[#1C1C1E] border border-black/[0.06] dark:border-white/10 shadow-[0_24px_80px_rgb(15_23_42/0.28)] overflow-hidden">
         
         {/* Header */}
-        <div className="px-6 py-4 border-b border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between gap-3 bg-white dark:bg-[#0F1B2E]">
+        <div className="px-6 py-4 border-b border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between gap-3 bg-white dark:bg-[#1C1C1E]">
           <div>
             <div className="flex items-center gap-2">
-              <span className="h-6 px-2.5 rounded-full inline-flex items-center text-[11px] font-semibold bg-gradient-to-r from-[#1E469B]/12 to-sky-500/12 text-[#1E469B] dark:text-[#7CB8F7]">
+              <span className="h-6 px-2.5 rounded-full inline-flex items-center text-[11px] font-semibold bg-gradient-to-r from-[#007AFF]/12 to-sky-500/12 text-[#007AFF] dark:text-[#409CFF]">
                 {FORM_TITLES[kind][isTl ? 1 : 0]}
               </span>
               <h3 className="text-[17px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">
@@ -177,9 +177,9 @@ export const PrintFormsWindow: React.FC<{
         </div>
 
         {/* Body Container */}
-        <div className="flex-1 p-4 sm:p-6 overflow-y-auto clean-scroll bg-[#F5F5F7] dark:bg-[#0A1526]">
+        <div className="flex-1 p-4 sm:p-6 overflow-y-auto clean-scroll bg-[#F5F5F7] dark:bg-[#1C1C1E]">
           {activeTab === 'options' ? (
-            <div className="space-y-4 max-w-2xl mx-auto bg-white dark:bg-[#0F1B2E] p-5 rounded-2xl border border-[#DDE3EC] dark:border-white/10">
+            <div className="space-y-4 max-w-2xl mx-auto bg-white dark:bg-[#1C1C1E] p-5 rounded-2xl border border-[#E5E5EA] dark:border-white/10">
               <p className="text-[15px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">
                 {isTl ? 'Anong form ang ipi-print?' : 'Which form do you want to print?'}
               </p>
@@ -197,12 +197,12 @@ export const PrintFormsWindow: React.FC<{
                     }}
                     className={`text-left rounded-2xl border px-3.5 py-3 transition-[border-color,background-color,transform] duration-150 active:scale-[0.98] ${
                       kind === k
-                        ? 'border-[#1E469B] bg-[#1E469B]/[0.06] dark:bg-[#7CB8F7]/10 dark:border-[#7CB8F7]'
-                        : 'border-[#DDE3EC] dark:border-white/10 bg-white dark:bg-[#0F1B2E] hover:border-[#1E469B] hover:bg-[#1E469B]/[0.03]'
+                        ? 'border-[#007AFF] bg-[#007AFF]/[0.06] dark:bg-[#0A84FF]/10 dark:border-[#0A84FF]'
+                        : 'border-[#E5E5EA] dark:border-white/10 bg-white dark:bg-[#1C1C1E] hover:border-[#007AFF] hover:bg-[#007AFF]/[0.03]'
                     }`}
                   >
                     <span className="flex items-center gap-1.5 text-[14px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">
-                      <FileText className="w-4 h-4 text-[#1E469B] dark:text-[#7CB8F7] shrink-0" />
+                      <FileText className="w-4 h-4 text-[#007AFF] dark:text-[#409CFF] shrink-0" />
                       <span>{FORM_TITLES[k][isTl ? 1 : 0]}</span>
                     </span>
                     <span className="block text-[12px] text-[#6E6E73] dark:text-[#A1A1A6] mt-0.5">{DESC[k][isTl ? 1 : 0]}</span>
@@ -246,7 +246,7 @@ export const PrintFormsWindow: React.FC<{
             /* Live 1-Page Paper Sheet Preview */
             <div className="flex flex-col items-center">
               {/* who signs this form: edit here, it updates the preview right away */}
-              <div className="w-full max-w-[760px] mb-3 rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 p-4 space-y-3">
+              <div className="w-full max-w-[760px] mb-3 rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 p-4 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-[14px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Pipirma sa form' : 'Who signs this form'}</span>
                   <span className="text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Pwedeng palitan. Makikita agad sa preview.' : 'You can change it. The preview updates right away.'}</span>
@@ -266,12 +266,12 @@ export const PrintFormsWindow: React.FC<{
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="text-[12px] text-[#6E6E73] dark:text-[#A1A1A6] mr-1">{isTl ? 'Magdagdag:' : 'Add:'}</span>
                     {SUGGEST.map((s) => (
-                      <button key={s.title} type="button" onClick={() => { setRows((x) => [...x, s].slice(0, 6)); setSigMsg(''); }} className="h-8 px-3 rounded-full text-[12px] font-medium text-[#1E469B] dark:text-[#7CB8F7] bg-[#1E469B]/[0.08] dark:bg-white/[0.08] hover:bg-[#1E469B]/[0.14] inline-flex items-center gap-1">
+                      <button key={s.title} type="button" onClick={() => { setRows((x) => [...x, s].slice(0, 6)); setSigMsg(''); }} className="h-8 px-3 rounded-full text-[12px] font-medium text-[#007AFF] dark:text-[#409CFF] bg-[#007AFF]/[0.08] dark:bg-white/[0.08] hover:bg-[#007AFF]/[0.14] inline-flex items-center gap-1">
                         <Plus className="w-3.5 h-3.5" aria-hidden />
                         {s.title}
                       </button>
                     ))}
-                    <button type="button" onClick={() => { setRows((x) => [...x, { name: '', title: '' }].slice(0, 6)); setSigMsg(''); }} className="h-8 px-3 rounded-full text-[12px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1">
+                    <button type="button" onClick={() => { setRows((x) => [...x, { name: '', title: '' }].slice(0, 6)); setSigMsg(''); }} className="h-8 px-3 rounded-full text-[12px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1">
                       <Plus className="w-3.5 h-3.5" aria-hidden />
                       {isTl ? 'Iba pa' : 'Other'}
                     </button>
@@ -285,18 +285,18 @@ export const PrintFormsWindow: React.FC<{
                       {sigMsg || (isTl ? 'Para sa print na ito lang, maliban kung gawing default.' : 'For this print only, unless you make it the default.')}
                     </span>
                     {sigChanged && !sigMsg && (
-                      <button type="button" onClick={() => void saveSigDefault()} className="h-9 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] bg-[#1E469B]/[0.08] dark:bg-white/[0.08] hover:bg-[#1E469B]/[0.14]">
+                      <button type="button" onClick={() => void saveSigDefault()} className="h-9 px-4 rounded-full text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] bg-[#007AFF]/[0.08] dark:bg-white/[0.08] hover:bg-[#007AFF]/[0.14]">
                         {isTl ? 'Gawing default sa lahat ng form' : 'Make this the default for all forms'}
                       </button>
                     )}
                   </div>
                 )}
               </div>
-              <div className="mb-2 text-xs font-semibold text-[#475569] dark:text-[#94A3B8] flex items-center gap-1.5">
+              <div className="mb-2 text-xs font-semibold text-[#6E6E73] dark:text-[#A1A1A6] flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5" aria-hidden />
                 <span>{isTl ? 'Ganito ang lalabas sa A4 na papel' : 'This is how it prints on A4 paper'}</span>
               </div>
-              <div className="w-full max-w-[760px] bg-white rounded-lg shadow-xl border border-slate-300 dark:border-slate-700 overflow-hidden text-[#0F172A] p-2">
+              <div className="w-full max-w-[760px] bg-white rounded-lg shadow-xl border border-slate-300 dark:border-slate-700 overflow-hidden text-[#1D1D1F] p-2">
                 <iframe
                   title="Document 1-Page Preview"
                   srcDoc={previewHtml}
@@ -332,7 +332,7 @@ export const PrintFormsWindow: React.FC<{
                 <button
                   type="button"
                   onClick={() => setShowConfirmPrint(false)}
-                  className="flex-1 h-10 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                  className="flex-1 h-10 rounded-full text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                 >
                   {isTl ? 'Bumalik' : 'Go back'}
                 </button>
@@ -350,12 +350,12 @@ export const PrintFormsWindow: React.FC<{
         )}
 
         {/* Footer Actions */}
-        <div className="px-6 py-3 border-t border-black/[0.06] dark:border-white/[0.08] flex flex-wrap items-center justify-between gap-2 bg-white/90 dark:bg-[#0F1B2E]/90 backdrop-blur">
+        <div className="px-6 py-3 border-t border-black/[0.06] dark:border-white/[0.08] flex flex-wrap items-center justify-between gap-2 bg-white/90 dark:bg-[#1C1C1E]/90 backdrop-blur">
           {/* Direct 1-Page PDF Download */}
           <button
             type="button"
             onClick={downloadDirectFile}
-            className="h-10 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] bg-[#1E469B]/[0.08] dark:bg-white/[0.08] hover:bg-[#1E469B]/[0.14] active:scale-[0.97] transition-[background-color,transform] inline-flex items-center gap-1.5"
+            className="h-10 px-4 rounded-full text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] bg-[#007AFF]/[0.08] dark:bg-white/[0.08] hover:bg-[#007AFF]/[0.14] active:scale-[0.97] transition-[background-color,transform] inline-flex items-center gap-1.5"
             title={isTl ? 'I-save bilang PDF file' : 'Save as a PDF file'}
           >
             <Download className="w-3.5 h-3.5" />
@@ -366,7 +366,7 @@ export const PrintFormsWindow: React.FC<{
             <button
               type="button"
               onClick={onClose}
-              className="h-10 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+              className="h-10 px-4 rounded-full text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
             >
               {isTl ? 'Isara' : 'Close'}
             </button>

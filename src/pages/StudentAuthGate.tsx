@@ -14,15 +14,18 @@ import {
   XCircle,
   CheckCircle2,
 } from 'lucide-react';
-import { CelestialBackground } from '../components/auth/CelestialBackground';
-import { WavyBackground } from '../components/auth/WavyBackground';
 import { useStudentEncouragementWings, StudentPairInteractiveWing } from '../components/auth/StudentEncouragementWing';
-import { SoundTogglePill, soundFX } from '../services/soundEngine';
-import { SkyThemePill } from '../context/ThemeContext';
+import { SoundTogglePill, soundFX, useSound } from '../services/soundEngine';
+import { christmasMusic } from '../services/christmasMusic';
+import { SkyThemePill, useTheme } from '../context/ThemeContext';
 import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
 import { SafezoneMascot } from '../components/auth/SafezoneMascot';
 import { AicyForgotWing } from '../components/auth/AicyForgotWing';
 import { CloudflareTurnstile } from '../components/auth/CloudflareTurnstile';
+import { ChristmasLights, HollySprig } from '../components/student/ChristmasDecor';
+import { christmasOn } from '../config/seasonalTheme';
+import { CelestialBackground } from '../components/auth/CelestialBackground';
+import { WavyBackground } from '../components/auth/WavyBackground';
 import { LiveCameraCaptureModal } from '../components/student/LiveCameraCaptureModal';
 import { compressImageClientSide } from '../services/imageOptimizer';
 import {
@@ -33,6 +36,15 @@ import {
   resetPasswordWithOtp,
 } from '../services/studentAuthService';
 import { studentLoginRateLimiter, studentForgotRateLimiter, studentRegisterRateLimiter } from '../services/rateLimiter';
+
+/** Student ID box: numbers only, max 6, a dash after the first 2 (23-0001); erasing removes the dash too. */
+const maskStudentId = (next: string, prev: string) => {
+  const d = next.replace(/\D/g, '').slice(0, 6);
+  const erasing = next.length < prev.length;
+  return d.length > 2 ? `${d.slice(0, 2)}-${d.slice(2)}` : d.length === 2 && !erasing ? `${d}-` : d;
+};
+/** The masterlist keeps IDs without the dash (230001). */
+const idForDb = (v: string) => (/^\d{2}-\d*$/.test(v.trim()) ? v.trim().replace('-', '') : v.trim());
 
 export type PortalAuthMode = 'login' | 'register' | 'forgot';
 
@@ -108,6 +120,38 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   onLoginSuccess,
 }) => {
   const { locale } = useLanguage();
+  const { theme } = useTheme();
+  const isNight = theme === 'dark';
+  const xmas = christmasOn();
+  // Christmas lights tune on the login only: follows the SFX button at the top (on = plays, off = quiet).
+  // Browsers allow sound only after the first tap/key, so it waits for that.
+  const { soundEnabled } = useSound();
+  useEffect(() => {
+    if (!xmas || !soundEnabled) {
+      christmasMusic.stop();
+      return;
+    }
+    const go = () => christmasMusic.start();
+    const ua = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation;
+    if (ua?.hasBeenActive) go();
+    window.addEventListener('pointerdown', go, { once: true });
+    window.addEventListener('keydown', go, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', go);
+      window.removeEventListener('keydown', go);
+      christmasMusic.stop();
+    };
+  }, [xmas, soundEnabled]);
+  // the light/dark toggle crossfades the whole login screen instead of the circle reveal
+  // website only (1024px and up, not the APK): the phone keeps its own toggle animation
+  useEffect(() => {
+    const root = document.documentElement;
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const sync = () => root.classList.toggle('theme-xfade', xmas && mq.matches && !document.body.classList.contains('capacitor-mobile'));
+    sync();
+    mq.addEventListener('change', sync);
+    return () => { mq.removeEventListener('change', sync); root.classList.remove('theme-xfade'); };
+  }, []);
   const isTl = locale === 'tl';
   const { boyWing, girlWing } = useStudentEncouragementWings();
 
@@ -130,10 +174,14 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   // LOGIN FORM STATE & SECURITY
   // ==========================================
   const [loginStudentNumber, setLoginStudentNumber] = useState('');
+  const [showLoginId, setShowLoginId] = useState(false);
   const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginErrorTitle, setLoginErrorTitle] = useState<string | null>(null);
+  const [loginErrorField, setLoginErrorField] = useState<'id' | 'password' | null>(null);
+  const [loginTriesLeft, setLoginTriesLeft] = useState<number | null>(null);
 
   // Invisible Honeypot Anti-Bot Traps (Real students never see or fill these)
   const [loginHoneypot, setLoginHoneypot] = useState('');
@@ -357,7 +405,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   const studentNumberStatus = useMemo(() => {
     const num = regStudentNumber.trim();
     if (!num) return { type: 'not_input', label: 'Not Input' };
-    if (num.length < 5) return { type: 'wrong', label: 'Invalid ID' };
+    if (num.replace(/\D/g, '').length !== 6) return { type: 'wrong', label: 'Needs 6 digits' };
     return { type: 'correct', label: 'Correct' };
   }, [regStudentNumber]);
 
@@ -534,7 +582,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         middleInitial: regMiddleInitial,
         contactNumber: regContactNumber,
         email: regEmail,
-        studentNumber: regStudentNumber,
+        studentNumber: idForDb(regStudentNumber),
         password: regPassword,
         quickPin: regQuickPin.trim(),
         gradeSection: `Grade ${regGradeLevel} · ${regStrand}`,
@@ -591,20 +639,25 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       const timeStr = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
       setLoginError(
         isTl
-          ? `Masyadong maraming maling pagsubok. Naka-lockout ang pag-login ng ${timeStr}.`
-          : `Too many failed attempts. Login locked out for ${timeStr}.`
+          ? `Masyadong maraming mali. Subukan ulit pagkalipas ng ${timeStr}.`
+          : `Too many wrong tries. Try again in ${timeStr}.`
       );
       return;
     }
 
     if (!loginStudentNumber.trim() || !loginPassword) {
       soundFX.playError();
-      setLoginError(isTl ? 'Ilagay ang iyong Student ID Number at Password.' : 'Please enter your Student ID Number and Password.');
+      setLoginErrorTitle(isTl ? 'Kulang pa' : 'Something is missing');
+      setLoginErrorField(!loginStudentNumber.trim() ? 'id' : 'password');
+      setLoginError(isTl ? 'Ilagay ang Student ID at password mo.' : 'Type your Student ID and password.');
       return;
     }
 
     setLoginLoading(true);
     setLoginError(null);
+    setLoginErrorTitle(null);
+    setLoginErrorField(null);
+    setLoginTriesLeft(null);
 
     const res = await loginStudentPortal(loginStudentNumber, loginPassword);
     setLoginLoading(false);
@@ -615,16 +668,26 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       soundFX.playError();
 
       if (attemptRes.locked) {
+        setLoginErrorTitle(isTl ? 'Sandali lang' : 'Please wait');
         setLoginError(
           isTl
-            ? 'Naabot ang maximum na 5 maling pagsubok! Naka-lockout ang account ng 5 minuto para sa proteksyon.'
-            : 'Maximum 5 failed attempts reached! Account temporarily locked out for 5 minutes for security.'
+            ? '5 beses nang mali. Para sa seguridad, maghintay ng 5 minuto bago sumubok ulit.'
+            : 'Too many wrong tries. For your safety, wait 5 minutes before trying again.'
         );
       } else {
         const remaining = 5 - attemptRes.attempts;
-        setLoginError(
-          `${res.error || 'Invalid Student ID or Password.'} (${remaining} attempt${remaining === 1 ? '' : 's'} remaining)`
-        );
+        const msg: Record<string, [string, string, string, string]> = {
+          no_account: ['Walang account', 'Tingnan ang Student ID mo (pindutin ang mata). Wala pang account? Gumawa sa ibaba.', 'No account exists', 'Check your Student ID (tap the eye). No account yet? Create one below.'],
+          wrong_password: ['Mali ang password', 'Subukan ulit, o pindutin ang "Forgot Password?".', 'Wrong password', 'Try again, or tap "Forgot Password?".'],
+          deactivated: ['Naka-off ang account mo', 'Pumunta sa Guidance Office para mabuksan ulit ito.', 'Your account is turned off', 'Please visit the Guidance Office to turn it back on.'],
+          offline: ['Hindi maka-connect', 'Tingnan ang internet mo, tapos subukan ulit.', 'Could not connect', 'Check your internet, then try again.'],
+        };
+        const key = res.code || 'wrong_password';
+        const m = msg[key];
+        setLoginErrorTitle(isTl ? m[0] : m[2]);
+        setLoginError(isTl ? m[1] : m[3]);
+        setLoginErrorField(res.code === 'no_account' ? 'id' : res.code === 'wrong_password' ? 'password' : null);
+        setLoginTriesLeft(res.code === 'offline' ? null : remaining);
       }
       return;
     }
@@ -665,7 +728,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     setForgotLoading(true);
     setForgotError(null);
 
-    const res = await sendForgotPasswordOtp(forgotIdentifier);
+    const res = await sendForgotPasswordOtp(idForDb(forgotIdentifier));
     setForgotLoading(false);
 
     if (!res.success) {
@@ -697,7 +760,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     setForgotLoading(true);
     setForgotError(null);
 
-    const res = await resetPasswordWithOtp(forgotIdentifier, forgotOtp, forgotNewPassword);
+    const res = await resetPasswordWithOtp(idForDb(forgotIdentifier), forgotOtp, forgotNewPassword);
     setForgotLoading(false);
 
     if (!res.success) {
@@ -719,20 +782,26 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     <div className={`min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none student-portal-canvas bg-[#05112B] text-white ${
       mode === 'login' ? 'lg:h-screen lg:overflow-hidden' : 'overflow-y-auto'
     }`}>
-      {/* Celestial Background: Active on Desktop, hidden/static on mobile */}
-      <div className="hidden lg:block">
-        <CelestialBackground />
+      {/* Campus background: day picture in light mode, night picture in dark mode (crossfade on toggle) */}
+      {xmas ? (
+      <div className={`login-web-only hidden lg:block fixed inset-0 z-0 pointer-events-none ${isNight ? 'bg-[#0B1A3A]' : 'bg-[#7FB6E8]'}`} aria-hidden="true">
+        <img src="/login-day.webp" alt="" decoding="async" {...{ fetchpriority: "high" }} onError={(e) => { e.currentTarget.style.display = 'none'; }} className="login-bg absolute inset-0 w-full h-full object-cover object-[42%_50%]" style={{ opacity: isNight ? 0 : 1 }} />
+        <img src="/login-night.webp" alt="" decoding="async" {...{ fetchpriority: "high" }} onError={(e) => { e.currentTarget.style.display = 'none'; }} className="login-bg absolute inset-0 w-full h-full object-cover object-[42%_50%]" style={{ opacity: isNight ? 1 : 0 }} />
+        <div className={`absolute inset-0 transition-opacity duration-700 ${isNight ? 'bg-gradient-to-b from-black/25 via-black/10 to-black/45' : 'bg-gradient-to-b from-black/10 via-transparent to-black/30'}`} />
       </div>
-      <div className="hidden lg:block">
-        <WavyBackground />
-      </div>
+      ) : (
+        <>
+          <div className="hidden lg:block"><CelestialBackground /></div>
+          <div className="hidden lg:block"><WavyBackground /></div>
+        </>
+      )}
 
       {/* Top Floating Glass Island Navbar */}
       <header className="relative z-30 w-full px-3 sm:px-6 pt-3 sm:pt-4 safe-area-top">
         {/* ====================================================
             DESKTOP NAVBAR: Original Classic Glass Capsule (Hidden on mobile)
             ==================================================== */}
-        <div className="hidden lg:flex max-w-6xl mx-auto rounded-full bg-[#0B1E48]/85 dark:bg-[#07132B]/85 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-2xl shadow-blue-950/40 px-6 py-3 items-center justify-between gap-4 transition-all">
+        <div className="hidden lg:flex max-w-6xl mx-auto rounded-full bg-[#0B1E48]/85 dark:bg-[#07132B]/85 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-2xl shadow-blue-950/40 lg-glass-bar px-6 py-3 items-center justify-between gap-4 transition-all">
           {/* Left: Official Brand Seal & Campus Title */}
           <div className="flex items-center gap-3.5 min-w-0">
             <div className="relative shrink-0">
@@ -790,6 +859,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
             MOBILE APP NAVBAR: Custom Stretched Campus Background & Layout (Visible only on mobile)
             ==================================================== */}
         <div className="lg:hidden relative max-w-6xl mx-auto rounded-3xl overflow-hidden border border-white/25 dark:border-white/15 shadow-2xl shadow-blue-950/50 transition-all">
+          <HollySprig className="absolute z-20 top-1.5 right-2 w-11 h-8" />
           {/* Campus Photo Ambient Layer stretched to fill with blue tint */}
           <div
             className="absolute inset-0 bg-no-repeat pointer-events-none"
@@ -898,13 +968,14 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
             transition={{ duration: 0.35 }}
             className={`w-full ${
               mode === 'register' ? 'max-w-5xl xl:max-w-6xl' : mode === 'forgot' ? 'max-w-[540px]' : 'max-w-[430px]'
-            } cosmic-glass-card p-4 sm:p-7 sm:py-8 space-y-5 sm:space-y-6 relative z-10 order-2 lg:order-none`}
+            } cosmic-glass-card login-glass p-4 sm:p-6 sm:py-6 space-y-4 sm:space-y-5 relative z-10 order-2 lg:order-none`}
           >
+          <ChristmasLights className="lg:hidden absolute z-[2] -top-1 left-5 right-5 h-8 w-[calc(100%-2.5rem)]" />
           {/* ====================================================
               MODE: LOGIN SCREEN
               ==================================================== */}
           {mode === 'login' && (
-            <div className="space-y-4 sm:space-y-6">
+            <div className="space-y-4">
               <div className="text-center space-y-3 pb-2 sm:pb-4 lg:hidden">
                 {/* Mobile App: Friendly Animated Safezone Robot Companion in White-Blue Gradient Card (Visible only on Mobile) */}
                 <div className="block lg:hidden my-2">
@@ -937,26 +1008,31 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 </div>
               </div>
 
-              {loginError && (
-                <div
-                  role="alert"
-                  className="p-3.5 sm:p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/80 border-1.5 border-rose-500/80 dark:border-rose-400 text-rose-950 dark:text-rose-100 text-xs sm:text-sm flex items-start gap-3 shadow-md anim-pop"
-                >
-                  <div className="w-5.5 h-5.5 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                  </div>
+              {(loginError || loginCooldownSeconds > 0) && (
+                <div role="alert" className="login-alert rounded-[22px] p-4 flex items-start gap-3.5 anim-pop">
+                  <span className="w-10 h-10 rounded-full bg-[#FF3B30] text-white flex items-center justify-center shrink-0 shadow-[0_6px_16px_-6px_rgba(255,59,48,0.8)]">
+                    {loginErrorField === 'id' ? <User className="w-5 h-5" /> : loginErrorField === 'password' ? <Lock className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
+                  </span>
                   <div className="min-w-0 flex-1">
-                    <p className="font-extrabold text-rose-700 dark:text-rose-300 uppercase tracking-wider text-[11px]">
-                      {isTl ? 'Paunawa sa Pag-Sign In' : 'Sign In Notice'}
-                    </p>
-                    <p className="mt-1 text-xs font-normal text-rose-900 dark:text-rose-200 leading-relaxed">
-                      {loginError}
-                    </p>
+                    <p className="text-[16px] font-bold leading-snug text-white">{loginErrorTitle || (loginCooldownSeconds > 0 ? (isTl ? 'Sandali lang' : 'Please wait') : isTl ? 'Hindi maka-sign in' : 'Could not sign in')}</p>
+                    <p className="mt-1 text-[14px] leading-relaxed text-white/80">{loginError || (isTl ? '5 beses nang mali. Para sa seguridad, maghintay muna.' : 'Too many wrong tries. For your safety, please wait.')}</p>
+                    {loginCooldownSeconds > 0 && (
+                      <span className="mt-2.5 inline-flex items-center gap-1.5 h-7 px-3 rounded-full bg-white/10 text-[12.5px] font-semibold text-white/90 tabular-nums">
+                        <span className="w-2 h-2 rounded-full bg-[#FF9F0A]" />
+                        {isTl ? 'Subukan ulit sa ' : 'Try again in '}{Math.floor(loginCooldownSeconds / 60)}:{(loginCooldownSeconds % 60).toString().padStart(2, '0')}
+                      </span>
+                    )}
+                    {loginTriesLeft !== null && loginCooldownSeconds === 0 && (
+                      <span className="mt-2.5 inline-flex items-center gap-1.5 h-7 px-3 rounded-full bg-white/10 text-[12.5px] font-semibold text-white/90">
+                        <span className={`w-2 h-2 rounded-full ${loginTriesLeft <= 2 ? 'bg-[#FF453A]' : 'bg-[#FF9F0A]'}`} />
+                        {isTl ? `${loginTriesLeft} subok na lang bago maghintay ng 5 minuto` : `${loginTriesLeft} ${loginTriesLeft === 1 ? 'try' : 'tries'} left before a 5-minute wait`}
+                      </span>
+                    )}
                   </div>
                 </div>
               )}
 
-              <form onSubmit={handleLoginSubmit} className="space-y-6">
+              <form onSubmit={handleLoginSubmit} className="space-y-4">
                 {/* Invisible Honeypot Anti-Bot Field (Hidden from real users via CSS & offscreen) */}
                 <div className="opacity-0 absolute -left-[9999px] -top-[9999px] pointer-events-none select-none h-0 w-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
                   <label htmlFor="student_hp_verify">Leave this field empty</label>
@@ -971,19 +1047,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   />
                 </div>
 
-                {/* Anti-Brute-Force Lockout Warning Countdown */}
-                {loginCooldownSeconds > 0 && (
-                  <div className="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-900 dark:text-amber-200 text-xs font-bold flex items-center justify-between gap-3 animate-pulse">
-                    <div className="flex items-center gap-2">
-                      <Shield className="w-4 h-4 text-amber-500 shrink-0" />
-                      <span>{isTl ? 'Naka-lockout ang login dahil sa sunod-sunod na maling attempts.' : 'Login locked out due to consecutive failed attempts.'}</span>
-                    </div>
-                    <span className="font-mono px-2 py-1 rounded-lg bg-amber-500/20 text-xs">
-                      {Math.floor(loginCooldownSeconds / 60)}:{(loginCooldownSeconds % 60).toString().padStart(2, '0')}
-                    </span>
-                  </div>
-                )}
-
                 <div className="space-y-2">
                   <label className="text-sm font-extrabold register-label flex items-center justify-between">
                     <span>Student ID Number</span>
@@ -993,31 +1056,34 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       <User className="w-5 h-5" />
                     </span>
                     <input
-                      type="text"
+                      type={showLoginId ? 'text' : 'password'}
                       required
+                      inputMode="numeric"
+                      autoComplete="username"
+                      maxLength={7}
                       value={loginStudentNumber}
-                      onChange={(e) => setLoginStudentNumber(e.target.value)}
-                      placeholder="Enter your Student ID Number"
-                      className="w-full pl-12 pr-5 py-4 rounded-2xl cosmic-input text-base font-semibold focus:outline-none transition-all"
+                      onChange={(e) => { setLoginStudentNumber(maskStudentId(e.target.value, loginStudentNumber)); if (loginErrorField === 'id') setLoginErrorField(null); }}
+                      placeholder="e.g. 23-0001"
+                      aria-invalid={loginErrorField === 'id'}
+                      className={`w-full pl-12 pr-12 py-4 rounded-2xl cosmic-input text-base font-semibold focus:outline-none transition-all ${loginErrorField === 'id' ? 'login-field-bad' : ''}`}
                     />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-extrabold register-label">Password</label>
                     <button
                       type="button"
                       onClick={() => {
                         soundFX.playToggleSwitch(true);
-                        setMode('forgot');
-                        setForgotIdentifier(loginStudentNumber);
+                        setShowLoginId((prev) => !prev);
                       }}
-                      className="text-xs text-[#2557BE] dark:text-[#7CB8F7] hover:underline font-extrabold"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-white/60 dark:hover:text-white p-1 transition-colors"
+                      title={showLoginId ? 'Hide Student ID' : 'Show Student ID'}
+                      aria-label={showLoginId ? 'Hide Student ID' : 'Show Student ID'}
                     >
-                      {isTl ? 'Nakalimutan ang Password?' : 'Forgot Password?'}
+                      {showLoginId ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-extrabold register-label block">Password</label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/50 pointer-events-none">
                       <Lock className="w-5 h-5" />
@@ -1026,9 +1092,10 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       type={showLoginPassword ? 'text' : 'password'}
                       required
                       value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
+                      onChange={(e) => { setLoginPassword(e.target.value); if (loginErrorField === 'password') setLoginErrorField(null); }}
                       placeholder="Enter your password"
-                      className="w-full pl-12 pr-12 py-4 rounded-2xl cosmic-input text-base font-semibold focus:outline-none transition-all"
+                      aria-invalid={loginErrorField === 'password'}
+                      className={`w-full pl-12 pr-12 py-4 rounded-2xl cosmic-input text-base font-semibold focus:outline-none transition-all ${loginErrorField === 'password' ? 'login-field-bad' : ''}`}
                     />
                     <button
                       type="button"
@@ -1042,12 +1109,25 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       {showLoginPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundFX.playToggleSwitch(true);
+                        setMode('forgot');
+                        setForgotIdentifier(loginStudentNumber);
+                      }}
+                      className="text-sm text-[#2557BE] dark:text-[#7CB8F7] hover:underline font-extrabold"
+                    >
+                      {isTl ? 'Nakalimutan ang Password?' : 'Forgot Password?'}
+                    </button>
+                  </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={loginLoading || loginCooldownSeconds > 0}
-                  className="btn-press w-full py-4 rounded-2xl bg-gradient-to-r from-[#1E469B] via-[#2557BE] to-[#1E469B] hover:opacity-95 text-white text-base font-extrabold shadow-xl shadow-blue-950/60 border border-white/20 disabled:opacity-50 transition-all flex items-center justify-center gap-2.5"
+                  className="btn-press w-full py-4 rounded-2xl bg-gradient-to-r from-[#1E469B] via-[#2557BE] to-[#1E469B] hover:opacity-95 text-white text-base font-extrabold shadow-xl shadow-blue-950/60 border border-white/20 lg-signin-btn disabled:opacity-50 transition-all flex items-center justify-center gap-2.5"
                 >
                   {loginLoading ? (
                     <div className="flex items-center gap-3">
@@ -1061,7 +1141,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       </span>
                     </div>
                   ) : loginCooldownSeconds > 0 ? (
-                    <span>Locked Out ({loginCooldownSeconds}s)</span>
+                    <span className="tabular-nums">{isTl ? 'Subukan ulit sa ' : 'Try again in '}{Math.floor(loginCooldownSeconds / 60)}:{(loginCooldownSeconds % 60).toString().padStart(2, '0')}</span>
                   ) : (
                     <>
                       <span>{isTl ? 'Pumasok sa Student Portal' : 'Sign In to Student Portal'}</span>
@@ -1071,7 +1151,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 </button>
 
                 {/* Cloudflare Turnstile Human & Bot Shield (Positioned below Sign In button) */}
-                <div className="pt-2 flex justify-center">
+                <div className="flex justify-center">
                   <CloudflareTurnstile
                     siteKey={CLOUDFLARE_SITE_KEY}
                     onVerify={(token) => {
@@ -1084,9 +1164,9 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 </div>
               </form>
 
-              <div className="pt-4 border-t border-white/10 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
+              <div className="pt-3 border-t border-white/10 dark:border-white/10 flex flex-row items-center justify-between gap-3 text-sm">
                 <span className="card-subtitle-text font-semibold">
-                  {isTl ? 'Wala ka pang student account?' : "Don't have a student account?"}
+                  {isTl ? 'Wala pang account?' : 'No account yet?'}
                 </span>
                 <button
                   type="button"
@@ -1098,9 +1178,9 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       setMode('register');
                     }
                   }}
-                  className="btn-press px-6 py-2.5 rounded-xl card-back-button font-extrabold transition-all"
+                  className="btn-press px-5 py-2.5 rounded-xl card-back-button font-extrabold whitespace-nowrap transition-all"
                 >
-                  {isTl ? '+ Mag-Create ng Account' : '+ Create Student Account'}
+                  {isTl ? '+ Gumawa ng account' : '+ Create account'}
                 </button>
               </div>
 
@@ -1332,9 +1412,11 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       <input
                         type="text"
                         required
-                        placeholder="260050"
+                        inputMode="numeric"
+                        maxLength={7}
+                        placeholder="e.g. 23-0001"
                         value={regStudentNumber}
-                        onChange={(e) => setRegStudentNumber(e.target.value.toUpperCase().replace(/[^0-9-]/g, ""))}
+                        onChange={(e) => setRegStudentNumber(maskStudentId(e.target.value, regStudentNumber))}
                         className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-mono font-bold focus:outline-none"
                       />
                     </div>
@@ -1738,8 +1820,11 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       type="text"
                       required
                       value={forgotIdentifier}
-                      onChange={(e) => setForgotIdentifier(e.target.value)}
-                      placeholder="e.g. 2025-11098 or name@gmail.com"
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setForgotIdentifier(/[a-zA-Z@._]/.test(v) ? v : maskStudentId(v, forgotIdentifier));
+                      }}
+                      placeholder="e.g. 23-0001 or name@gmail.com"
                       className="w-full px-4 py-3 sm:py-3.5 rounded-xl cosmic-input text-sm font-semibold focus:outline-none"
                     />
                     <p className="text-[11px] font-medium text-slate-600 dark:text-sky-200/90 leading-tight">
@@ -1750,7 +1835,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   <button
                     type="submit"
                     disabled={forgotLoading}
-                    className="btn-press w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 hover:opacity-95 text-white text-sm font-extrabold shadow-lg shadow-blue-950/20 border border-white/20 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="btn-press w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 hover:opacity-95 text-white text-sm font-extrabold shadow-lg shadow-blue-950/20 border border-white/20 lg-signin-btn disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {forgotLoading ? 'Sending OTP Code...' : 'Send 6-Digit Verification OTP →'}
                   </button>
@@ -1842,7 +1927,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     </main>
 
       {/* Footer (Hidden on mobile or when virtual keyboard opens, keeping the screen Messenger-clean) */}
-      <footer className="relative z-20 py-4 text-center text-xs text-[#9BCBFF]/75 border-t border-white/10 bg-[#0B1E48]/50 student-footer hidden sm:block">
+      <footer className="relative z-20 py-4 text-center text-xs text-[#9BCBFF]/75 border-t border-white/10 bg-[#0B1E48]/50 student-footer lg-glass-footer hidden sm:block">
         Official Student Concern & Peer Referral Portal · Asian Institute of Computer Studies – Montalban (RA 10173 Protected)
       </footer>
 

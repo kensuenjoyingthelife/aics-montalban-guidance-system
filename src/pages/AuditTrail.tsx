@@ -11,9 +11,9 @@ import { printAuditTrailPdf } from '../services/documentPrintEngine';
 import { Printer, Download, Filter, RefreshCw, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 
 const PAGE_SIZE = 50;
-const btn = 'px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap';
-const sub = 'text-xs text-[#4A608A] dark:text-[#94A8D0]';
-const input = 'px-3 py-2 rounded-xl border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-sm text-[#0B1F4D] dark:text-white';
+const btn = 'px-3.5 py-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap';
+const sub = 'text-xs text-[#6E6E73] dark:text-[#A1A1A6]';
+const input = 'px-3 py-2 rounded-xl border border-[#E5E5EA] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] text-sm text-[#1D1D1F] dark:text-white';
 
 const ACTION: Record<string, { en: string; tl: string; cls: string }> = {
   insert: { en: 'Added', tl: 'Idinagdag', cls: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200' },
@@ -135,7 +135,7 @@ const AuditTrail: React.FC = () => {
             type="button"
             disabled={!rows || rows.length === 0}
             onClick={handleDownloadPdf}
-            className={`${btn} bg-[#1E469B] hover:bg-[#16377E] text-white active:scale-[0.97] transition-[transform,background-color] inline-flex items-center gap-1.5 shadow-xs disabled:opacity-50`}
+            className={`${btn} bg-[#007AFF] hover:bg-[#0062CC] text-white active:scale-[0.97] transition-[transform,background-color] inline-flex items-center gap-1.5 shadow-xs disabled:opacity-50`}
           >
             <Download className="w-3.5 h-3.5" />
             {isTl ? 'I-download ang PDF (Audit Log)' : 'Export Audit Trail (PDF)'}
@@ -149,7 +149,7 @@ const AuditTrail: React.FC = () => {
       <div className="cdm-panel p-4 sm:p-5 space-y-3">
         <div className="flex flex-wrap items-end gap-2">
           <label className="space-y-1">
-            <span className="block text-[11px] font-extrabold text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Ano' : 'What'}</span>
+            <span className="block text-[11px] font-extrabold text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Ano' : 'What'}</span>
             <select data-audit-filter="table" value={table} onChange={(e) => setTable(e.target.value)} className={input}>
               <option value="">{isTl ? 'Lahat' : 'Everything'}</option>
               {Object.entries(TABLE_WORDS).map(([k, [en, tl]]) => (
@@ -160,15 +160,15 @@ const AuditTrail: React.FC = () => {
             </select>
           </label>
           <label className="space-y-1">
-            <span className="block text-[11px] font-extrabold text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Mula' : 'From'}</span>
+            <span className="block text-[11px] font-extrabold text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Mula' : 'From'}</span>
             <DateField compact value={from} max={to || undefined} onChange={setFrom} isTl={isTl} placeholder={isTl ? 'Mula' : 'From'} ariaLabel={isTl ? 'Mula' : 'From'} />
           </label>
           <label className="space-y-1">
-            <span className="block text-[11px] font-extrabold text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Hanggang' : 'To'}</span>
+            <span className="block text-[11px] font-extrabold text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Hanggang' : 'To'}</span>
             <DateField compact value={to} min={from || undefined} onChange={setTo} isTl={isTl} placeholder={isTl ? 'Hanggang' : 'To'} ariaLabel={isTl ? 'Hanggang' : 'To'} />
           </label>
           <label className="space-y-1 flex-1 min-w-[220px]">
-            <span className="block text-[11px] font-extrabold text-[#4A608A] dark:text-[#94A8D0]">{isTl ? 'Hanapin' : 'Search'}</span>
+            <span className="block text-[11px] font-extrabold text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Hanapin' : 'Search'}</span>
             <input
               data-audit-filter="search"
               value={search}
@@ -210,8 +210,8 @@ const AuditTrail: React.FC = () => {
       )}
 
       <section className="rounded-2xl saas-card overflow-hidden">
-        <div className="px-5 py-3 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs font-bold text-[#0B1F4D] dark:text-white" data-audit-count>
+        <div className="px-5 py-3 border-b border-[#E5E5EA] dark:border-[#38383A] flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-bold text-[#1D1D1F] dark:text-white" data-audit-count>
             {rows === null
               ? isTl ? 'Kinukuha…' : 'Loading…'
               : total === 0
@@ -226,12 +226,12 @@ const AuditTrail: React.FC = () => {
             ]}
           />
           <div className="flex items-center gap-2">
-            <label className="flex items-center gap-1.5 text-xs font-semibold text-[#4A608A] dark:text-[#94A8D0]">
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">
               <span>{isTl ? 'Bawat pahina:' : 'Rows:'}</span>
               <select
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
-                className="px-2 py-1 rounded-lg border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-bold"
+                className="px-2 py-1 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] text-xs font-bold"
               >
                 {[15, 25, 50, 100].map((sz) => (
                   <option key={sz} value={sz}>{sz}</option>
@@ -265,10 +265,10 @@ const AuditTrail: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="p-3 sm:p-4 space-y-2 bg-[#F4F7FC] dark:bg-[#0B1527] min-h-[240px]">
+        <div className="p-3 sm:p-4 space-y-2 bg-[#F5F5F7] dark:bg-[#1C1C1E] min-h-[240px]">
           {rows !== null && rows.length === 0 && !error && (
             <div className="py-10 text-center space-y-1">
-              <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Walang nakitang pagbabago.' : 'No changes found.'}</p>
+              <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">{isTl ? 'Walang nakitang pagbabago.' : 'No changes found.'}</p>
               <p className={sub}>{isTl ? 'Subukang palawakin ang petsa o i-reset ang filter.' : 'Try a wider date range or reset the filters.'}</p>
             </div>
           )}
@@ -278,10 +278,10 @@ const AuditTrail: React.FC = () => {
             const who = whoOf(e);
             const [en, tl] = TABLE_WORDS[e.table] ?? [e.table, e.table];
             return (
-              <article key={e.id} data-audit-row={e.id} className="rounded-xl bg-white dark:bg-[#0F1A30] border border-[#D3DDEE] dark:border-[#253B66] px-4 py-3">
+              <article key={e.id} data-audit-row={e.id} className="rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A] px-4 py-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className={`px-2 py-0.5 rounded-[6px] text-[11px] font-extrabold ${a.cls}`}>{isTl ? a.tl : a.en}</span>
-                  <span className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                  <span className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">
                     {isTl ? tl : en}
                     {who ? ` · ${who}` : ''}
                   </span>
@@ -294,16 +294,16 @@ const AuditTrail: React.FC = () => {
                   <table className="mt-2 w-full text-xs">
                     <tbody>
                       {fields.map((f) => (
-                        <tr key={f.key} className="border-t border-[#EEF2F9] dark:border-[#1E3158]">
-                          <td className="py-1 pr-3 align-top font-bold text-[#4A608A] dark:text-[#94A8D0] w-44">{fieldWord(f.key, isTl)}</td>
+                        <tr key={f.key} className="border-t border-[#EEF2F9] dark:border-[#38383A]">
+                          <td className="py-1 pr-3 align-top font-bold text-[#6E6E73] dark:text-[#A1A1A6] w-44">{fieldWord(f.key, isTl)}</td>
                           {e.action === 'update' ? (
-                            <td className="py-1 align-top text-[#0B1F4D] dark:text-white break-words">
+                            <td className="py-1 align-top text-[#1D1D1F] dark:text-white break-words">
                               <span className="text-rose-700 dark:text-rose-300 line-through decoration-rose-300/70">{showValue(f.before, isTl)}</span>
-                              <span className="mx-1.5 text-[#4A608A]">→</span>
+                              <span className="mx-1.5 text-[#6E6E73]">→</span>
                               <span className="text-emerald-700 dark:text-emerald-300 font-bold">{showValue(f.after, isTl)}</span>
                             </td>
                           ) : (
-                            <td className="py-1 align-top text-[#0B1F4D] dark:text-white break-words">{showValue(e.action === 'insert' ? f.after : f.before, isTl)}</td>
+                            <td className="py-1 align-top text-[#1D1D1F] dark:text-white break-words">{showValue(e.action === 'insert' ? f.after : f.before, isTl)}</td>
                           )}
                         </tr>
                       ))}

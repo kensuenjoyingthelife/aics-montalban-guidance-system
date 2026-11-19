@@ -376,10 +376,10 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
       : a.status === 'Did Not Attend'
       ? pill(isTl ? 'Hindi dumalo' : 'Did not attend', 'bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300')
       : a.status === 'Rescheduled'
-      ? pill(isTl ? 'Nailipat' : 'Rescheduled', 'saas-card-subtle text-[#4A608A]')
-      : pill(isTl ? 'Naka-schedule' : 'Scheduled', 'bg-[#E4ECFC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7]');
-  const btn = 'px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap';
-  const subtleBtn = `${btn} saas-card-subtle hover:border-[#1E469B] text-[#0B1F4D] dark:text-white`;
+      ? pill(isTl ? 'Nailipat' : 'Rescheduled', 'saas-card-subtle text-[#6E6E73]')
+      : pill(isTl ? 'Naka-schedule' : 'Scheduled', 'bg-[#EAF3FF] dark:bg-[#2C2C2E] text-[#007AFF] dark:text-[#409CFF]');
+  const btn = 'px-3.5 py-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap';
+  const subtleBtn = `${btn} saas-card-subtle hover:border-[#007AFF] text-[#1D1D1F] dark:text-white`;
 
   const confRow = (a: ParentAppointmentItem, showActions = true) => {
     const isPastDay = a.date < today;
@@ -388,17 +388,17 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
       <div
         key={a.id}
         data-apt={a.id}
-        className="rounded-xl bg-white dark:bg-[#0F1A30] border border-[#D3DDEE] dark:border-[#253B66] px-4 py-3 flex flex-wrap items-center justify-between gap-3"
+        className="rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A] px-4 py-3 flex flex-wrap items-center justify-between gap-3"
       >
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-[92px] shrink-0">
-            <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white font-mono">{a.timeSlot.split('–')[0].trim()}</p>
-            <p className="text-[10.5px] text-[#687FA8] dark:text-[#89A7DF]">{isTl ? '45 minuto' : '45 min'}</p>
+            <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white font-mono">{a.timeSlot.split('–')[0].trim()}</p>
+            <p className="text-[10.5px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? '45 minuto' : '45 min'}</p>
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+            <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">
               {a.parentName}{' '}
-              <span className="text-xs font-semibold text-[#4A608A] dark:text-[#94A8D0]">
+              <span className="text-xs font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">
                 · {isTl ? 'magulang ni' : 'parent of'} {a.studentName} ({a.gradeSection})
               </span>
             </p>
@@ -409,10 +409,10 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                   ? pill(isTl ? ' Alam na ng magulang' : ' Parent knows', 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300')
                   : pill(isTl ? 'Hindi pa sigurado kung alam na' : 'Not confirmed yet', 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300'))}
               {a.status === 'Scheduled' && a.date >= tomorrow && a.reminderSentAt &&
-                pill(isTl ? 'May reminder na' : 'Reminder sent', 'saas-card-subtle text-[#4A608A]')}
+                pill(isTl ? 'May reminder na' : 'Reminder sent', 'saas-card-subtle text-[#6E6E73]')}
               {noShows >= 2 && pill(isTl ? ` ${noShows}x hindi dumalo` : ` ${noShows} missed`, 'bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300')}
               {a.noShowReason && a.status === 'Did Not Attend' && (
-                <span className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">{a.noShowReason}</span>
+                <span className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">{a.noShowReason}</span>
               )}
             </div>
           </div>
@@ -433,7 +433,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
             )}
             {!a.noticeReceived && (
               <button type="button" onClick={() => setContactFor({ caseCode: a.caseId, apt: a })} className={`${subtleBtn} active:scale-[0.97] transition-transform inline-flex items-center gap-1.5`}>
-                <PhoneCall className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
+                <PhoneCall className="w-3.5 h-3.5 text-[#007AFF] dark:text-[#409CFF]" />
                 {isTl ? 'Tawagan' : 'Call parent'}
               </button>
             )}
@@ -448,7 +448,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
               }}
               className={`${subtleBtn} active:scale-[0.97] transition-transform inline-flex items-center gap-1.5`}
             >
-              <RefreshCw className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
+              <RefreshCw className="w-3.5 h-3.5 text-[#007AFF] dark:text-[#409CFF]" />
               {isTl ? 'Ilipat' : 'Reschedule'}
             </button>
           </div>
@@ -468,7 +468,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                   setSchedule({ mode: 'reschedule', caseCode: a.caseId, from: a });
                 }
               }}
-              className={`${btn} bg-[#1E469B] hover:bg-[#16377E] text-white active:scale-[0.97] transition-transform inline-flex items-center gap-1.5 shadow-sm`}
+              className={`${btn} bg-[#007AFF] hover:bg-[#0062CC] text-white active:scale-[0.97] transition-transform inline-flex items-center gap-1.5 shadow-sm`}
             >
               <RefreshCw className="w-3.5 h-3.5" />
               {isTl ? 'Ilipat ang Petsa (Reschedule sa Step 4)' : 'Reschedule in Due Process (Step 4)'}
@@ -478,7 +478,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
               onClick={() => setContactFor({ caseCode: a.caseId, apt: a })}
               className={`${subtleBtn} active:scale-[0.97] transition-transform inline-flex items-center gap-1.5`}
             >
-              <Phone className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
+              <Phone className="w-3.5 h-3.5 text-[#007AFF] dark:text-[#409CFF]" />
               {isTl ? 'Tawagan ang Magulang' : 'Call Parent'}
             </button>
           </div>
@@ -584,14 +584,14 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
         </div>
       )}
       {remindersDue.length > 0 && smsReady === false && (
-        <div className="px-4 py-3 rounded-xl bg-[#EEF3FC] dark:bg-[#13203B] border border-[#C9D7F0] dark:border-[#253B66] text-xs flex flex-wrap items-center justify-between gap-3">
-          <p className="font-bold text-[#0B1F4D] dark:text-white">
+        <div className="px-4 py-3 rounded-xl bg-[#EAF3FF] dark:bg-[#2C2C2E] border border-[#C9D7F0] dark:border-[#38383A] text-xs flex flex-wrap items-center justify-between gap-3">
+          <p className="font-bold text-[#1D1D1F] dark:text-white">
             {' '}
             {isTl
               ? `${remindersDue.length} magulang ang may conference bukas pero hindi pa napapaalalahanan. Tawagan sila ngayon.`
               : `${remindersDue.length} parent(s) have a conference tomorrow and no reminder yet. Call them today.`}
           </p>
-          <button type="button" onClick={() => setTab('conferences')} className={`${btn} bg-[#1E469B] text-white`}>
+          <button type="button" onClick={() => setTab('conferences')} className={`${btn} bg-[#007AFF] text-white`}>
             {isTl ? 'Tingnan' : 'Show them'}
           </button>
         </div>
@@ -600,15 +600,15 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
       {/* ================= TAB: TO SCHEDULE ================= */}
       {tab === 'schedule' && (
         <section className="rounded-2xl saas-card overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158]">
-            <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
+          <div className="px-6 py-4 border-b border-[#E5E5EA] dark:border-[#38383A]">
+            <h2 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">
               {isTl ? 'Mga kasong kailangan ng conference' : 'Cases that need a parent conference'}
             </h2>
-            <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+            <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
               {isTl ? 'Pinakamatagal nang naghihintay ang nasa itaas. Pindutin ang "Mag-schedule".' : 'The longest waiting are on top. Press "Schedule".'}
             </p>
           </div>
-          <div className="p-4 sm:p-5 space-y-2.5 bg-[#F4F7FC] dark:bg-[#0B1527]">
+          <div className="p-4 sm:p-5 space-y-2.5 bg-[#F5F5F7] dark:bg-[#1C1C1E]">
             {toSchedule.length === 0 && (
               <p className="py-8 text-center text-sm font-bold text-emerald-700 dark:text-emerald-400">
                  {isTl ? 'Lahat ng kaso ay may schedule na. Ayos!' : 'Every case already has a conference date. All set!'}
@@ -618,26 +618,26 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
               const stu = studentByNo.get(c.studentNumber);
               const missed = noShowsByCase.get(c.caseCode) ?? 0;
               return (
-                <div key={c.caseCode} data-to-schedule={c.caseCode} className="rounded-xl bg-white dark:bg-[#0F1A30] border border-[#D3DDEE] dark:border-[#253B66] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                <div key={c.caseCode} data-to-schedule={c.caseCode} className="rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-[15px] font-extrabold text-[#0B1F4D] dark:text-white">
+                    <p className="text-[15px] font-extrabold text-[#1D1D1F] dark:text-white">
                       {c.studentName}{' '}
-                      <span className="text-xs font-semibold text-[#4A608A] dark:text-[#94A8D0]">· {c.gradeSection}</span>
+                      <span className="text-xs font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">· {c.gradeSection}</span>
                     </p>
-                    <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
-                      {isTl ? 'Magulang' : 'Parent'}: <span className="font-bold text-[#0B1F4D] dark:text-white">{stu?.parentName ?? '—'}</span>{' '}
+                    <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
+                      {isTl ? 'Magulang' : 'Parent'}: <span className="font-bold text-[#1D1D1F] dark:text-white">{stu?.parentName ?? '—'}</span>{' '}
                       · {stu?.parentPhone || (isTl ? 'walang number' : 'no number')}
                       {stu?.parentPrefDays ? ` · ${isTl ? 'pwede' : 'can come'}: ${stu.parentPrefDays}${stu.parentPrefTime ? ' ' + stu.parentPrefTime : ''}` : ''}
                     </p>
                     <div className="mt-1 flex flex-wrap gap-1.5">
-                      {pill(isTl ? `Naitala: ${dateFmt.format(parseISO(c.incidentDate))}` : `Logged: ${dateFmt.format(parseISO(c.incidentDate))}`, 'saas-card-subtle text-[#4A608A]')}
+                      {pill(isTl ? `Naitala: ${dateFmt.format(parseISO(c.incidentDate))}` : `Logged: ${dateFmt.format(parseISO(c.incidentDate))}`, 'saas-card-subtle text-[#6E6E73]')}
                       {missed > 0 && pill(isTl ? `${missed}x hindi dumalo` : `${missed} missed before`, 'bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300')}
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => setSchedule({ mode: 'new', caseCode: c.caseCode })}
-                    className="px-4 py-2 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-extrabold whitespace-nowrap"
+                    className="px-4 py-2 rounded-lg bg-[#007AFF] hover:bg-[#0062CC] text-white text-xs font-extrabold whitespace-nowrap"
                   >
                      {isTl ? 'Mag-schedule' : 'Schedule'}
                   </button>
@@ -645,7 +645,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
               );
             })}
             {listLen > listLimit && (
-              <button type="button" onClick={() => setListLimit((n) => n + 50)} className="w-full py-2.5 rounded-xl border border-dashed border-[#B9C8E4] dark:border-[#2E4778] text-xs font-extrabold text-[#1E469B] dark:text-[#7CB8F7]">
+              <button type="button" onClick={() => setListLimit((n) => n + 50)} className="w-full py-2.5 rounded-xl border border-dashed border-[#B9C8E4] dark:border-[#38383A] text-xs font-extrabold text-[#007AFF] dark:text-[#409CFF]">
                 {isTl ? `Ipakita pa (${listLen - listLimit} pa)` : `Show more (${listLen - listLimit} left)`}
               </button>
             )}
@@ -656,10 +656,10 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
       {/* ================= TAB: CONFERENCES ================= */}
       {tab === 'conferences' && (
         <section className="rounded-2xl saas-card overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-3">
+          <div className="px-6 py-4 border-b border-[#E5E5EA] dark:border-[#38383A] flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Mga conference' : 'Conferences'}</h2>
-              <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+              <h2 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">{isTl ? 'Mga conference' : 'Conferences'}</h2>
+              <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                 {isTl
                   ? `Bukas ang opisina: ${officeSummary.fullTl}. Nasa itaas ang mga kailangang i-schedule ulit.`
                   : `Office open: ${officeSummary.fullEn}. Missed ones that need a new date are on top.`}
@@ -679,7 +679,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
             </div>
           </div>
 
-          <div className="p-4 sm:p-5 space-y-4 bg-[#F4F7FC] dark:bg-[#0B1527]">
+          <div className="p-4 sm:p-5 space-y-4 bg-[#F5F5F7] dark:bg-[#1C1C1E]">
             {calView === 'list' && (
               <>
                 {unresolvedNoShows.length > 0 && (
@@ -703,9 +703,9 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
 
                 {upcoming.filter((a) => a.status === 'Scheduled').length === 0 && unresolvedNoShows.length === 0 && (
                   <div className="py-8 text-center space-y-3">
-                    <p className="text-sm font-bold text-[#0B1F4D] dark:text-white">{isTl ? 'Walang darating na conference.' : 'No upcoming conferences.'}</p>
+                    <p className="text-sm font-bold text-[#1D1D1F] dark:text-white">{isTl ? 'Walang darating na conference.' : 'No upcoming conferences.'}</p>
                     {toSchedule.length > 0 && (
-                      <button type="button" onClick={() => setTab('schedule')} className={`${btn} bg-[#1E469B] text-white active:scale-[0.97]`}>
+                      <button type="button" onClick={() => setTab('schedule')} className={`${btn} bg-[#007AFF] text-white active:scale-[0.97]`}>
                         {isTl ? `${toSchedule.length} kaso ang kailangang i-schedule →` : `${toSchedule.length} case(s) need a date →`}
                       </button>
                     )}
@@ -713,7 +713,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                 )}
                 {[...new Set(upcoming.filter((a) => a.status === 'Scheduled').map((a) => a.date))].map((d) => (
                   <div key={d} className="space-y-2">
-                    <p className="text-[11px] font-extrabold tracking-[0.08em] uppercase text-[#4A608A] dark:text-[#94A8D0]">
+                    <p className="text-[11px] font-extrabold tracking-[0.08em] uppercase text-[#6E6E73] dark:text-[#A1A1A6]">
                       {dayTitle(d)} · {upcoming.filter((a) => a.status === 'Scheduled' && a.date === d).length}
                     </p>
                     {upcoming.filter((a) => a.status === 'Scheduled' && a.date === d).map((a) => confRow(a))}
@@ -725,14 +725,14 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                       type="button"
                       aria-expanded={showPast}
                       onClick={() => setShowPast((v) => !v)}
-                      className="text-[11px] font-extrabold tracking-[0.08em] uppercase text-[#4A608A] dark:text-[#94A8D0] hover:text-[#0B1F4D] dark:hover:text-white"
+                      className="text-[11px] font-extrabold tracking-[0.08em] uppercase text-[#6E6E73] dark:text-[#A1A1A6] hover:text-[#1D1D1F] dark:hover:text-white"
                     >
                       {showPast ? '▾' : '▸'} {isTl ? 'Mga nakaraan' : 'Earlier'} · {pastConfs.length}{' '}
                       <span className="normal-case tracking-normal font-semibold">— {showPast ? (isTl ? 'itago' : 'hide') : isTl ? 'ipakita' : 'show'}</span>
                     </button>
                     {showPast && pastConfs.slice(0, 40).map((a) => (
                       <div key={a.id} className="space-y-1">
-                        <p className="text-[10.5px] font-bold text-[#687FA8] dark:text-[#89A7DF]">{dayTitle(a.date)}</p>
+                        <p className="text-[10.5px] font-bold text-[#6E6E73] dark:text-[#A1A1A6]">{dayTitle(a.date)}</p>
                         {confRow(a)}
                       </div>
                     ))}
@@ -746,7 +746,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                 <button type="button" onClick={() => setCalAnchor(calView === 'week' ? addDays(calAnchor, -7) : localISODate(new Date(parseISO(monthStart).getFullYear(), parseISO(monthStart).getMonth() - 1, 1)))} className={subtleBtn} aria-label={isTl ? 'Nakaraan' : 'Previous'}>
                   ← {isTl ? 'Nakaraan' : 'Previous'}
                 </button>
-                <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">
                   {calView === 'week'
                     ? `${dateFmt.format(parseISO(weekDays[0]))} – ${dateFmt.format(parseISO(weekDays[4]))}`
                     : new Intl.DateTimeFormat(isTl ? 'fil-PH' : 'en-US', { month: 'long', year: 'numeric' }).format(parseISO(monthStart))}
@@ -773,8 +773,8 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
             {calView === 'week' && (
               <div className="grid grid-cols-5 gap-2" data-week>
                 {weekDays.map((d) => (
-                  <div key={d} className={`rounded-xl border p-2 min-h-[220px] ${d === today ? 'border-[#1E469B] bg-white dark:bg-[#0F1A30]' : 'border-[#D3DDEE] dark:border-[#253B66] bg-white/70 dark:bg-[#0F1A30]/70'}`}>
-                    <p className={`text-xs font-extrabold mb-2 ${d === today ? 'text-[#1E469B] dark:text-[#7CB8F7]' : 'text-[#0B1F4D] dark:text-white'}`}>
+                  <div key={d} className={`rounded-xl border p-2 min-h-[220px] ${d === today ? 'border-[#007AFF] bg-white dark:bg-[#1C1C1E]' : 'border-[#E5E5EA] dark:border-[#38383A] bg-white/70 dark:bg-[#1C1C1E]/70'}`}>
+                    <p className={`text-xs font-extrabold mb-2 ${d === today ? 'text-[#007AFF] dark:text-[#409CFF]' : 'text-[#1D1D1F] dark:text-white'}`}>
                       {dateFmt.format(parseISO(d))}
                     </p>
                     <div className="space-y-1.5">
@@ -792,7 +792,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                               ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800'
                               : a.status === 'Did Not Attend'
                               ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800'
-                              : 'bg-[#EEF3FC] dark:bg-[#192D58] border-[#C9D7F0] dark:border-[#2E4778]'
+                              : 'bg-[#EAF3FF] dark:bg-[#2C2C2E] border-[#C9D7F0] dark:border-[#38383A]'
                           }`}
                         >
                           <span className="font-extrabold font-mono block">{a.timeSlot.split('–')[0].trim()}</span>
@@ -800,7 +800,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                         </button>
                       ))}
                       {confsOn(d).length === 0 && (
-                        <p className="text-[11px] text-[#687FA8] dark:text-[#89A7DF]">{isTl ? 'Walang conference' : 'No conferences'}</p>
+                        <p className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Walang conference' : 'No conferences'}</p>
                       )}
                     </div>
                   </div>
@@ -812,7 +812,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
               <div data-month>
                 <div className="grid grid-cols-7 gap-1 mb-1">
                   {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((k, i) => (
-                    <p key={k} className="text-[10.5px] font-extrabold text-center text-[#4A608A] dark:text-[#94A8D0]">
+                    <p key={k} className="text-[10.5px] font-extrabold text-center text-[#6E6E73] dark:text-[#A1A1A6]">
                       {isTl ? ['Lun', 'Mar', 'Miy', 'Huw', 'Biy', 'Sab', 'Lin'][i] : k}
                     </p>
                   ))}
@@ -833,12 +833,12 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                         title={`${dateFmt.format(parseISO(d))} · ${n ? (isTl ? `${n} conference` : `${n} conference(s)`) : isTl ? 'walang conference' : 'no conferences'}`}
                         aria-label={`${dateFmt.format(parseISO(d))} · ${n ? (isTl ? `${n} conference` : `${n} conference(s)`) : isTl ? 'walang conference' : 'no conferences'}`}
                         className={`h-14 rounded-lg border text-left px-1.5 py-1 ${inMonth ? '' : 'opacity-40'} ${
-                          d === today ? 'border-[#1E469B]' : 'border-[#D3DDEE] dark:border-[#253B66]'
-                        } ${isOfficeDay(d) ? 'bg-white dark:bg-[#0F1A30] hover:border-[#1E469B]' : 'bg-transparent cursor-default'}`}
+                          d === today ? 'border-[#007AFF]' : 'border-[#E5E5EA] dark:border-[#38383A]'
+                        } ${isOfficeDay(d) ? 'bg-white dark:bg-[#1C1C1E] hover:border-[#007AFF]' : 'bg-transparent cursor-default'}`}
                       >
-                        <span className="text-[11px] font-bold text-[#0B1F4D] dark:text-white">{parseISO(d).getDate()}</span>
+                        <span className="text-[11px] font-bold text-[#1D1D1F] dark:text-white">{parseISO(d).getDate()}</span>
                         {n > 0 && (
-                          <span className="block mt-0.5 text-[10px] font-extrabold text-[#1E469B] dark:text-[#7CB8F7]">
+                          <span className="block mt-0.5 text-[10px] font-extrabold text-[#007AFF] dark:text-[#409CFF]">
                             {n} {isTl ? 'conf' : 'conf'}
                           </span>
                         )}
@@ -846,7 +846,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                     );
                   })}
                 </div>
-                <p className="mt-2 text-[11px] text-[#687FA8] dark:text-[#89A7DF]">
+                <p className="mt-2 text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">
                   {isTl ? 'Pindutin ang araw para makita ang linggo nito.' : 'Click a day to see its week.'}
                 </p>
               </div>
@@ -858,10 +858,10 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
       {/* ================= TAB: FOLLOW-UPS ================= */}
       {tab === 'followups' && (
         <section className="rounded-2xl saas-card overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-start justify-between gap-3">
+          <div className="px-6 py-4 border-b border-[#E5E5EA] dark:border-[#38383A] flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Mga magulang na kailangang tawagan' : 'Parents to call or text'}</h2>
-              <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+              <h2 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">{isTl ? 'Mga magulang na kailangang tawagan' : 'Parents to call or text'}</h2>
+              <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                 {isTl
                   ? 'Kusang nagagawa kapag hindi dumalo ang magulang o hindi naipadala ang SMS.'
                   : 'Added automatically when a parent misses a conference or an SMS does not go out.'}
@@ -869,7 +869,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
             </div>
             <SortControl id="parents-tasks" value={taskSort} onChange={setTaskSort} isTl={isTl} />
           </div>
-          <div className="p-4 sm:p-5 space-y-2.5 bg-[#F4F7FC] dark:bg-[#0B1527]">
+          <div className="p-4 sm:p-5 space-y-2.5 bg-[#F5F5F7] dark:bg-[#1C1C1E]">
             {openTasks.length === 0 && (
               <p className="py-8 text-center text-sm font-bold text-emerald-700 dark:text-emerald-400">
                  {isTl ? 'Walang kailangang tawagan. Ayos!' : 'Nobody to call right now. All caught up!'}
@@ -882,14 +882,14 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
               const stu = c ? studentByNo.get(c.studentNumber) : undefined;
               const next = nextAptByCase.get(t.caseId);
               return (
-                <div key={t.id} data-task={t.id} className={`rounded-xl bg-white dark:bg-[#0F1A30] border px-4 py-3 space-y-2 ${missed >= 2 ? 'border-rose-300 dark:border-rose-800' : 'border-[#D3DDEE] dark:border-[#253B66]'}`}>
+                <div key={t.id} data-task={t.id} className={`rounded-xl bg-white dark:bg-[#1C1C1E] border px-4 py-3 space-y-2 ${missed >= 2 ? 'border-rose-300 dark:border-rose-800' : 'border-[#E5E5EA] dark:border-[#38383A]'}`}>
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-[15px] font-extrabold text-[#0B1F4D] dark:text-white">
+                      <p className="text-[15px] font-extrabold text-[#1D1D1F] dark:text-white">
                         {t.parentName}{' '}
-                        <span className="text-xs font-semibold text-[#4A608A] dark:text-[#94A8D0]">· {t.parentPhone || (isTl ? 'walang number' : 'no number')}</span>
+                        <span className="text-xs font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">· {t.parentPhone || (isTl ? 'walang number' : 'no number')}</span>
                       </p>
-                      <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                      <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                         {isTl ? 'Magulang ni' : 'Parent of'} {t.studentName} ({t.gradeSection}) · {isTl ? t.reasonTl : t.reasonEn}
                         {t.createdAt ? <span data-added> · {addedLabel(t.createdAt, isTl)}</span> : null}
                       </p>
@@ -898,13 +898,13 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                           t.category === 'Failed SMS' ? (isTl ? 'Hindi naipadala ang SMS' : 'SMS not sent') : t.category === 'Missed Conferences' ? (isTl ? 'Hindi dumalo' : 'Missed conference') : isTl ? 'Unahin' : 'Priority',
                           'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300'
                         )}
-                        {pill(isTl ? `${t.attemptsCount}x natawagan` : `${t.attemptsCount} attempt(s)`, 'saas-card-subtle text-[#4A608A]')}
+                        {pill(isTl ? `${t.attemptsCount}x natawagan` : `${t.attemptsCount} attempt(s)`, 'saas-card-subtle text-[#6E6E73]')}
                         {missed >= 2 && pill(isTl ? ` ${missed}x hindi dumalo – para sa counselor` : ` ${missed} missed – flag for counselor`, 'bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300')}
-                        {next && pill(`${isTl ? 'Bagong schedule' : 'New date'}: ${dayTitle(next.date)} ${next.timeSlot.split('–')[0].trim()}`, 'bg-[#E4ECFC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7]')}
+                        {next && pill(`${isTl ? 'Bagong schedule' : 'New date'}: ${dayTitle(next.date)} ${next.timeSlot.split('–')[0].trim()}`, 'bg-[#EAF3FF] dark:bg-[#2C2C2E] text-[#007AFF] dark:text-[#409CFF]')}
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      <button type="button" onClick={() => setContactFor({ caseCode: t.caseId, task: t, apt: next })} className={`${btn} bg-[#1E469B] text-white`}>
+                      <button type="button" onClick={() => setContactFor({ caseCode: t.caseId, task: t, apt: next })} className={`${btn} bg-[#007AFF] text-white`}>
                          {isTl ? 'Itala ang tawag' : 'Log a call'}
                       </button>
                       {!next && (
@@ -920,10 +920,10 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                     </div>
                   </div>
                   {logs.length > 0 && (
-                    <ul className="border-l-2 border-[#DCE5F2] dark:border-[#1E3158] pl-3 space-y-0.5">
+                    <ul className="border-l-2 border-[#E5E5EA] dark:border-[#38383A] pl-3 space-y-0.5">
                       {logs.map((l) => (
-                        <li key={l.id} className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
-                          <span className="font-bold text-[#0B1F4D] dark:text-white">{l.method}</span> · {isTl ? CONTACT_RESULTS_TL[l.result] ?? l.result : l.result}
+                        <li key={l.id} className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">
+                          <span className="font-bold text-[#1D1D1F] dark:text-white">{l.method}</span> · {isTl ? CONTACT_RESULTS_TL[l.result] ?? l.result : l.result}
                           {l.note ? ` · ${l.note}` : ''} · {prettyWhen(l.when)}
                         </li>
                       ))}
@@ -933,7 +933,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
               );
             })}
             {listLen > listLimit && (
-              <button type="button" onClick={() => setListLimit((n) => n + 50)} className="w-full py-2.5 rounded-xl border border-dashed border-[#B9C8E4] dark:border-[#2E4778] text-xs font-extrabold text-[#1E469B] dark:text-[#7CB8F7]">
+              <button type="button" onClick={() => setListLimit((n) => n + 50)} className="w-full py-2.5 rounded-xl border border-dashed border-[#B9C8E4] dark:border-[#38383A] text-xs font-extrabold text-[#007AFF] dark:text-[#409CFF]">
                 {isTl ? `Ipakita pa (${listLen - listLimit} pa)` : `Show more (${listLen - listLimit} left)`}
               </button>
             )}
@@ -944,10 +944,10 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
       {/* ================= TAB: MESSAGES (SMS LOG) ================= */}
       {tab === 'messages' && (
         <section className="rounded-2xl saas-card overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-3">
+          <div className="px-6 py-4 border-b border-[#E5E5EA] dark:border-[#38383A] flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Mga mensahe sa magulang' : 'Messages to parents'}</h2>
-              <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+              <h2 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">{isTl ? 'Mga mensahe sa magulang' : 'Messages to parents'}</h2>
+              <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                 {isTl ? 'Lahat ng SMS at email. Hindi ito mae-edit.' : 'Every SMS and email. This list cannot be edited.'}
               </p>
             </div>
@@ -959,26 +959,26 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
               ))}
             </div>
           </div>
-          <div className="p-4 sm:p-5 space-y-2 bg-[#F4F7FC] dark:bg-[#0B1527]">
+          <div className="p-4 sm:p-5 space-y-2 bg-[#F5F5F7] dark:bg-[#1C1C1E]">
             {smsLogs === null && (
               <p className="py-6 text-center text-sm font-semibold text-rose-600 dark:text-rose-400">
                  {isTl ? 'Hindi makuha ang mga mensahe. I-check ang internet, tapos buksan ulit ang tab na ito.' : "Couldn't load the messages. Check the internet, then open this tab again."}
               </p>
             )}
             {smsLogs !== null && (msgFilter === 'all' ? smsLogs : problemMsgs).length === 0 && (
-              <p className="py-6 text-center text-sm font-bold text-[#4A608A] dark:text-[#94A8D0]">
+              <p className="py-6 text-center text-sm font-bold text-[#6E6E73] dark:text-[#A1A1A6]">
                 {msgFilter === 'problems' ? (isTl ? ' Walang problema sa mga mensahe.' : ' No message problems.') : isTl ? 'Wala pang naipadalang mensahe.' : 'No messages sent yet.'}
               </p>
             )}
             {(msgFilter === 'all' ? smsLogs ?? [] : problemMsgs).slice(0, 100).map((m) => {
               const okSent = m.status === 'Sent' || m.status === 'Delivered' || m.status === 'Email Sent';
               return (
-                <div key={m.id} data-msg={m.id} className="rounded-xl bg-white dark:bg-[#0F1A30] border border-[#D3DDEE] dark:border-[#253B66] px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+                <div key={m.id} data-msg={m.id} className="rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A] px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-xs font-extrabold text-[#0B1F4D] dark:text-white">
-                      {m.parentName} <span className="font-semibold text-[#4A608A] dark:text-[#94A8D0]">· {m.studentName}</span>
+                    <p className="text-xs font-extrabold text-[#1D1D1F] dark:text-white">
+                      {m.parentName} <span className="font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">· {m.studentName}</span>
                     </p>
-                    <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
+                    <p className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">
                       {m.channel === 'gmail' ? ` Email · ${m.email}` : m.channel === 'sms' ? ` SMS · ${m.phone}` : `${m.channel} · ${m.phone} ${m.email}`}
                       {m.kind ? ` · ${m.kind === 'reminder' ? (isTl ? 'paalala' : 'reminder') : m.kind === 'reschedule' ? (isTl ? 'paglipat' : 'reschedule') : isTl ? 'abiso' : 'notice'}` : ''} · {prettyWhen(m.when)}
                     </p>
@@ -1032,15 +1032,15 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
       {noShowFor &&
         createPortal(
           <Overlay onClose={() => setNoShowFor(null)} label={isTl ? 'Hindi dumalo' : 'Did not attend'}>
-            <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
+            <h3 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">
               {isTl ? 'Bakit hindi dumalo?' : 'Why did the parent not attend?'}
             </h3>
-            <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+            <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
               {noShowFor.parentName} · {noShowFor.studentName}
             </p>
             <div className="grid grid-cols-1 gap-1.5">
               {NO_SHOW_REASONS.map((r) => (
-                <label key={r} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-bold cursor-pointer ${noShowReason === r ? 'border-[#1E469B] bg-[#EEF3FC] dark:bg-[#192D58]' : 'border-[#D3DDEE] dark:border-[#253B66]'}`}>
+                <label key={r} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-bold cursor-pointer ${noShowReason === r ? 'border-[#007AFF] bg-[#EAF3FF] dark:bg-[#2C2C2E]' : 'border-[#E5E5EA] dark:border-[#38383A]'}`}>
                   <input type="radio" name="noshow" checked={noShowReason === r} onChange={() => setNoShowReason(r)} className="accent-[#1E469B]" />
                   {isTl ? NO_SHOW_TL[r] : r}
                 </label>
@@ -1134,7 +1134,7 @@ const Overlay: React.FC<{ onClose: () => void; label: string; wide?: boolean; ch
         onClick={onClose}
         aria-label="Close"
         title="Close"
-        className="float-right w-8 h-8 rounded-lg saas-card-subtle flex items-center justify-center text-sm font-bold text-[#4A608A] hover:text-[#0B1F4D] dark:hover:text-white transition-colors"
+        className="float-right w-8 h-8 rounded-lg saas-card-subtle flex items-center justify-center text-sm font-bold text-[#6E6E73] hover:text-[#1D1D1F] dark:hover:text-white transition-colors"
       >
         <X className="w-4 h-4" />
       </button>
@@ -1272,7 +1272,7 @@ const ScheduleWindow: React.FC<{
   if (!c || !stu) {
     return (
       <Overlay onClose={onClose} label="Schedule">
-        <p className="text-sm font-bold text-[#0B1F4D] dark:text-white">
+        <p className="text-sm font-bold text-[#1D1D1F] dark:text-white">
           {isTl ? 'Hindi makita ang kaso o ang estudyante. Isara ito at subukan ulit mula sa listahan.' : "Can't find this case or student. Close this and try again from the list."}
         </p>
       </Overlay>
@@ -1405,32 +1405,32 @@ const ScheduleWindow: React.FC<{
     <Overlay onClose={onClose} label={isTl ? 'Mag-schedule' : 'Schedule'} wide>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
+          <h3 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">
             {reschedule ? (isTl ? 'Ilipat ang conference' : 'Move the conference') : isTl ? 'Mag-schedule ng conference' : 'Schedule a conference'}
           </h3>
-          <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+          <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
             {isTl ? 'I-verify ang student at magulang bago magpadala ng summons o abiso' : 'Verify student & parent information before sending summons or notice'}
           </p>
         </div>
       </div>
 
       {/* Prominent Student & Parent Information Card (With Quick-Edit Capability) */}
-      <div className="rounded-xl border border-[#CBD5E1] dark:border-[#223555] bg-[#F8FAFC] dark:bg-[#0B1528] p-3.5 space-y-2.5">
+      <div className="rounded-xl border border-[#D1D1D6] dark:border-[#223555] bg-[#F5F5F7] dark:bg-[#1C1C1E] p-3.5 space-y-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2E8F0] dark:border-[#1E293B] pb-2">
           <div className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-lg bg-[#1E469B]/10 dark:bg-[#7CB8F7]/20 flex items-center justify-center text-[#1E469B] dark:text-[#7CB8F7]">
+            <span className="w-8 h-8 rounded-lg bg-[#007AFF]/10 dark:bg-[#0A84FF]/20 flex items-center justify-center text-[#007AFF] dark:text-[#409CFF]">
               <User className="w-4 h-4" />
             </span>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                <span className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">
                   {c.studentName}
                 </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#E2E8F0] dark:bg-[#1E293B] text-[#334155] dark:text-[#94A3B8]">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#E2E8F0] dark:bg-[#1E293B] text-[#334155] dark:text-[#A1A1A6]">
                   {c.gradeSection}
                 </span>
               </div>
-              <p className="text-[11px] font-mono text-[#64748B] dark:text-[#94A8D0]">
+              <p className="text-[11px] font-mono text-[#6E6E73] dark:text-[#A1A1A6]">
                 LRN / No: <span className="font-semibold">{c.studentNumber}</span> · Case: <span className="font-semibold">{c.caseCode}</span>
               </p>
             </div>
@@ -1439,7 +1439,7 @@ const ScheduleWindow: React.FC<{
           <button
             type="button"
             onClick={() => setIsEditingParent((v) => !v)}
-            className="px-2.5 py-1 rounded-lg border border-[#CBD5E1] dark:border-[#2A3F6D] bg-white dark:bg-[#0F1E38] text-[11px] font-bold text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#EEF4FF] dark:hover:bg-[#1A2F55] active:scale-[0.97] transition-all flex items-center gap-1.5 shadow-xs"
+            className="px-2.5 py-1 rounded-lg border border-[#D1D1D6] dark:border-[#38383A] bg-white dark:bg-[#0F1E38] text-[11px] font-bold text-[#007AFF] dark:text-[#409CFF] hover:bg-[#EEF4FF] dark:hover:bg-[#1A2F55] active:scale-[0.97] transition-all flex items-center gap-1.5 shadow-xs"
           >
             <Edit2 className="w-3 h-3" />
             {isEditingParent ? (isTl ? 'Kanselahin' : 'Cancel Edit') : (isTl ? 'Palitan / I-update' : 'Edit Parent Info')}
@@ -1450,22 +1450,22 @@ const ScheduleWindow: React.FC<{
         {!isEditingParent ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5 text-xs">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-[#64748B] dark:text-[#94A3B8]">
+              <span className="font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">
                 {isTl ? 'Magulang / Guardian:' : 'Parent / Guardian:'}
               </span>
-              <span className="font-bold text-[#0F172A] dark:text-white">
+              <span className="font-bold text-[#1D1D1F] dark:text-white">
                 {stu.parentName || (isTl ? 'Walang Pangalan' : 'No Name Set')}
               </span>
               {stu.parentRelationship && (
-                <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">
+                <span className="text-[10px] text-[#6E6E73] dark:text-[#A1A1A6]">
                   ({stu.parentRelationship})
                 </span>
               )}
             </div>
 
             <div className="flex items-center gap-2">
-              <Phone className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7] shrink-0" />
-              <span className="font-mono font-bold text-[#0F172A] dark:text-white">
+              <Phone className="w-3.5 h-3.5 text-[#007AFF] dark:text-[#409CFF] shrink-0" />
+              <span className="font-mono font-bold text-[#1D1D1F] dark:text-white">
                 {stu.parentPhone || (
                   <span className="text-rose-500 font-sans italic">{isTl ? 'Walang number (kailangan)' : 'No phone number'}</span>
                 )}
@@ -1473,8 +1473,8 @@ const ScheduleWindow: React.FC<{
             </div>
 
             <div className="flex items-center gap-2 sm:col-span-2">
-              <Mail className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7] shrink-0" />
-              <span className="font-medium text-[#0F172A] dark:text-[#E2E8F0] break-all">
+              <Mail className="w-3.5 h-3.5 text-[#007AFF] dark:text-[#409CFF] shrink-0" />
+              <span className="font-medium text-[#1D1D1F] dark:text-[#E2E8F0] break-all">
                 {stu.parentEmail || (
                   <span className="text-[#94A3B8] italic">{isTl ? 'Walang Gmail / email address' : 'No email address registered'}</span>
                 )}
@@ -1485,7 +1485,7 @@ const ScheduleWindow: React.FC<{
           <div className="space-y-2 pt-1">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] mb-1">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#6E6E73] dark:text-[#A1A1A6] mb-1">
                   {isTl ? 'Pangalan ng Magulang' : 'Parent / Guardian Name'}
                 </label>
                 <input
@@ -1493,12 +1493,12 @@ const ScheduleWindow: React.FC<{
                   value={parentNameInput}
                   onChange={(e) => setParentNameInput(e.target.value)}
                   placeholder="e.g. Mrs. Maria Santos"
-                  className="w-full px-2.5 py-1.5 rounded-lg border border-[#CBD5E1] dark:border-[#2A3F6D] bg-white dark:bg-[#070D18] text-xs font-semibold text-[#0F172A] dark:text-white focus:outline-none focus:ring-1 focus:ring-[#1E469B]"
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-[#D1D1D6] dark:border-[#38383A] bg-white dark:bg-[#000000] text-xs font-semibold text-[#1D1D1F] dark:text-white focus:outline-none focus:ring-1 focus:ring-[#007AFF]"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] mb-1">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#6E6E73] dark:text-[#A1A1A6] mb-1">
                   {isTl ? 'Phone / Mobile No.' : 'Parent Mobile Number'}
                 </label>
                 <input
@@ -1506,12 +1506,12 @@ const ScheduleWindow: React.FC<{
                   value={parentPhoneInput}
                   onChange={(e) => setParentPhoneInput(e.target.value)}
                   placeholder="0917-000-0000"
-                  className="w-full px-2.5 py-1.5 rounded-lg border border-[#CBD5E1] dark:border-[#2A3F6D] bg-white dark:bg-[#070D18] text-xs font-mono font-semibold text-[#0F172A] dark:text-white focus:outline-none focus:ring-1 focus:ring-[#1E469B]"
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-[#D1D1D6] dark:border-[#38383A] bg-white dark:bg-[#000000] text-xs font-mono font-semibold text-[#1D1D1F] dark:text-white focus:outline-none focus:ring-1 focus:ring-[#007AFF]"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] mb-1">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#6E6E73] dark:text-[#A1A1A6] mb-1">
                   {isTl ? 'Gmail / Email Address' : 'Parent Gmail / Email'}
                 </label>
                 <input
@@ -1519,7 +1519,7 @@ const ScheduleWindow: React.FC<{
                   value={parentEmailInput}
                   onChange={(e) => setParentEmailInput(e.target.value)}
                   placeholder="parent@gmail.com"
-                  className="w-full px-2.5 py-1.5 rounded-lg border border-[#CBD5E1] dark:border-[#2A3F6D] bg-white dark:bg-[#070D18] text-xs font-semibold text-[#0F172A] dark:text-white focus:outline-none focus:ring-1 focus:ring-[#1E469B]"
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-[#D1D1D6] dark:border-[#38383A] bg-white dark:bg-[#000000] text-xs font-semibold text-[#1D1D1F] dark:text-white focus:outline-none focus:ring-1 focus:ring-[#007AFF]"
                 />
               </div>
             </div>
@@ -1528,7 +1528,7 @@ const ScheduleWindow: React.FC<{
               <button
                 type="button"
                 onClick={() => setIsEditingParent(false)}
-                className="px-3 py-1 rounded-lg text-xs font-bold text-[#64748B] hover:text-[#0F172A] dark:hover:text-white transition-colors"
+                className="px-3 py-1 rounded-lg text-xs font-bold text-[#6E6E73] hover:text-[#1D1D1F] dark:hover:text-white transition-colors"
               >
                 {isTl ? 'Kanselahin' : 'Cancel'}
               </button>
@@ -1559,10 +1559,10 @@ const ScheduleWindow: React.FC<{
 
       {/* Smart suggestions */}
       <div>
-        <p className="text-xs font-extrabold text-[#0B1F4D] dark:text-white mb-1.5">
+        <p className="text-xs font-extrabold text-[#1D1D1F] dark:text-white mb-1.5">
            {isTl ? 'Mungkahing oras (bakante)' : 'Suggested free times'}
           {stu.parentPrefDays ? (
-            <span className="font-semibold text-[#4A608A] dark:text-[#94A8D0]">
+            <span className="font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">
               {' '}· {isTl ? 'pwede ang magulang' : 'parent can come'}: {stu.parentPrefDays}
               {stu.parentPrefTime ? ` ${stu.parentPrefTime}` : ''}
             </span>
@@ -1570,7 +1570,7 @@ const ScheduleWindow: React.FC<{
         </p>
         <div className="flex flex-wrap gap-1.5" data-suggestions>
           {suggestions.length === 0 && (
-            <p className="text-xs text-[#4A608A]">{isTl ? 'Walang bakante sa susunod na 2 linggo. Pumili ng ibang araw sa ibaba.' : 'No free time in the next 2 weeks. Pick another day below.'}</p>
+            <p className="text-xs text-[#6E6E73]">{isTl ? 'Walang bakante sa susunod na 2 linggo. Pumili ng ibang araw sa ibaba.' : 'No free time in the next 2 weeks. Pick another day below.'}</p>
           )}
           {suggestions.map((s) => {
             const on = s.date === date && s.start === start;
@@ -1582,7 +1582,7 @@ const ScheduleWindow: React.FC<{
                   setDate(s.date);
                   setStart(s.start);
                 }}
-                className={`px-3 py-1.5 rounded-lg border text-xs font-bold ${on ? 'bg-[#1E469B] border-[#1E469B] text-white' : 'border-[#D3DDEE] dark:border-[#253B66] text-[#0B1F4D] dark:text-white hover:border-[#1E469B]'}`}
+                className={`px-3 py-1.5 rounded-lg border text-xs font-bold ${on ? 'bg-[#007AFF] border-[#007AFF] text-white' : 'border-[#E5E5EA] dark:border-[#38383A] text-[#1D1D1F] dark:text-white hover:border-[#007AFF]'}`}
               >
                 {s.preferred ? ' ' : ''}
                 {dayTitle(s.date)} · {s.label.split('–')[0].trim()}
@@ -1597,7 +1597,7 @@ const ScheduleWindow: React.FC<{
         <div>
           <div className="flex items-center justify-between mb-1">
             <label className="block text-xs font-bold" htmlFor="conf-date">{isTl ? 'O pumili ng araw' : 'Or pick a day'}</label>
-            <span className="text-[10.5px] font-extrabold text-[#1E469B] dark:text-[#7CB8F7]">
+            <span className="text-[10.5px] font-extrabold text-[#007AFF] dark:text-[#409CFF]">
               {isTl ? officeSummary.fullTl : officeSummary.fullEn}
             </span>
           </div>
@@ -1654,7 +1654,7 @@ const ScheduleWindow: React.FC<{
                     disabled={ch !== 'sms' && !stu.parentEmail}
                     title={ch !== 'sms' && !stu.parentEmail ? (isTl ? 'Walang email ang magulang' : 'The parent has no email') : undefined}
                     onClick={() => setChannel(ch)}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold border disabled:opacity-40 ${channel === ch ? 'bg-[#1E469B] border-[#1E469B] text-white' : 'border-[#D3DDEE] dark:border-[#253B66]'}`}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold border disabled:opacity-40 ${channel === ch ? 'bg-[#007AFF] border-[#007AFF] text-white' : 'border-[#E5E5EA] dark:border-[#38383A]'}`}
                   >
                     {ch === 'sms' ? 'SMS' : ch === 'gmail' ? 'Email' : 'SMS + Email'}
                   </button>
@@ -1663,10 +1663,10 @@ const ScheduleWindow: React.FC<{
 
               {/* Taglish / English Quick Template Selectors */}
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold text-[#4A608A] dark:text-[#94A8D0]">
+                <span className="text-[11px] font-bold text-[#6E6E73] dark:text-[#A1A1A6]">
                   {isTl ? 'Template ng Mensahe:' : 'Message Template:'}
                 </span>
-                <div className="inline-flex rounded-lg border border-[#D3DDEE] dark:border-[#253B66] p-0.5 bg-white dark:bg-[#0B1527]">
+                <div className="inline-flex rounded-lg border border-[#E5E5EA] dark:border-[#38383A] p-0.5 bg-white dark:bg-[#1C1C1E]">
                   <button
                     type="button"
                     onClick={() => {
@@ -1714,7 +1714,7 @@ const ScheduleWindow: React.FC<{
                 </button>
               </p>
             ) : (
-              <p className="text-[11px] text-[#687FA8] dark:text-[#89A7DF]">
+              <p className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">
                 {(() => {
                   const i = smsInfo(message);
                   const base = isTl ? `Filipino · ${i.length} letra · ${i.parts} SMS · walang detalye ng offense` : `Filipino · ${i.length} letters · ${i.parts} SMS · no offense details`;
@@ -1737,7 +1737,7 @@ const ScheduleWindow: React.FC<{
           disabled={!canSave}
           onClick={save}
           title={start === null ? (isTl ? 'Pumili muna ng oras' : 'Pick a time first') : undefined}
-          className="px-5 py-2 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-extrabold disabled:bg-[#94A8D0] disabled:cursor-not-allowed"
+          className="px-5 py-2 rounded-lg bg-[#007AFF] hover:bg-[#0062CC] text-white text-xs font-extrabold disabled:bg-[#94A8D0] disabled:cursor-not-allowed"
         >
           {saving
             ? isTl ? 'Sine-save…' : 'Saving…'
@@ -1807,16 +1807,16 @@ const ContactWindow: React.FC<{
     <Overlay onClose={onClose} label={isTl ? 'Itala ang pakikipag-ugnayan' : 'Log parent contact'}>
       <div className="space-y-4">
         {/* Header with clear student/parent details */}
-        <div className="border-b border-[#DCE5F2] dark:border-[#1E3158] pb-3">
+        <div className="border-b border-[#E5E5EA] dark:border-[#38383A] pb-3">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-[#E4ECFC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7]">
+            <span className="p-1.5 rounded-lg bg-[#EAF3FF] dark:bg-[#2C2C2E] text-[#007AFF] dark:text-[#409CFF]">
               <PhoneCall className="w-4 h-4" />
             </span>
             <div>
-              <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white leading-tight">
+              <h3 className="text-base font-extrabold text-[#1D1D1F] dark:text-white leading-tight">
                 {isTl ? 'Tawagan o I-text ang Magulang' : 'Call or Text Parent'}
               </h3>
-              <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+              <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                 {parentName} · <span className="font-semibold">{c?.studentName ?? target.task?.studentName}</span>
               </p>
             </div>
@@ -1824,16 +1824,16 @@ const ContactWindow: React.FC<{
         </div>
 
         {/* Big One-Tap Phone Number Dial Box */}
-        <div className="rounded-xl border-2 border-[#1E469B]/30 bg-[#EEF3FC]/50 dark:bg-[#13203B]/60 p-3.5 flex items-center justify-between gap-3">
+        <div className="rounded-xl border-2 border-[#007AFF]/30 bg-[#EAF3FF]/50 dark:bg-[#2C2C2E]/60 p-3.5 flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#4A608A] dark:text-[#94A8D0]">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[#6E6E73] dark:text-[#A1A1A6]">
               {isTl ? 'Numero ng Telepono' : 'Parent Phone Number'}
             </p>
-            <p className="text-lg font-mono font-black text-[#0B1F4D] dark:text-white tracking-wide">
+            <p className="text-lg font-mono font-black text-[#1D1D1F] dark:text-white tracking-wide">
               {phone || (isTl ? 'Walang nakatalang numero' : 'No recorded phone number')}
             </p>
             {target.apt && (
-              <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0] mt-0.5">
+              <p className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6] mt-0.5">
                 Conference: <span className="font-semibold">{target.apt.date} · {target.apt.timeSlot.split('–')[0].trim()}</span>
               </p>
             )}
@@ -1851,7 +1851,7 @@ const ContactWindow: React.FC<{
 
         {/* Method selection */}
         <div>
-          <label className="block text-xs font-bold text-[#0B1F4D] dark:text-white mb-1.5">
+          <label className="block text-xs font-bold text-[#1D1D1F] dark:text-white mb-1.5">
             {isTl ? 'Paraan ng Pakikipag-ugnayan' : 'Contact Method'}
           </label>
           <div className="grid grid-cols-3 gap-2">
@@ -1862,8 +1862,8 @@ const ContactWindow: React.FC<{
                 onClick={() => setMethod(m)}
                 className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all text-center ${
                   method === m
-                    ? 'bg-[#1E469B] border-[#1E469B] text-white shadow-xs'
-                    : 'border-[#D3DDEE] dark:border-[#253B66] text-[#0B1F4D] dark:text-white hover:border-[#1E469B]'
+                    ? 'bg-[#007AFF] border-[#007AFF] text-white shadow-xs'
+                    : 'border-[#E5E5EA] dark:border-[#38383A] text-[#1D1D1F] dark:text-white hover:border-[#007AFF]'
                 }`}
               >
                 {m === 'Call'
@@ -1878,7 +1878,7 @@ const ContactWindow: React.FC<{
 
         {/* Outcome quick choices */}
         <div>
-          <label className="block text-xs font-bold text-[#0B1F4D] dark:text-white mb-1.5">
+          <label className="block text-xs font-bold text-[#1D1D1F] dark:text-white mb-1.5">
             {isTl ? 'Ano ang naging resulta ng pakikipag-usap?' : 'What was the result?'}
           </label>
           <div className="grid grid-cols-1 gap-1.5">
@@ -1891,12 +1891,12 @@ const ContactWindow: React.FC<{
                   onClick={() => setResult(r)}
                   className={`w-full text-left px-3.5 py-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-between ${
                     isSelected
-                      ? 'border-[#1E469B] bg-[#EEF3FC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7]'
-                      : 'border-[#D3DDEE] dark:border-[#253B66] text-[#0B1F4D] dark:text-white hover:border-[#94A8D0]'
+                      ? 'border-[#007AFF] bg-[#EAF3FF] dark:bg-[#2C2C2E] text-[#007AFF] dark:text-[#409CFF]'
+                      : 'border-[#E5E5EA] dark:border-[#38383A] text-[#1D1D1F] dark:text-white hover:border-[#94A8D0]'
                   }`}
                 >
                   <span>{isTl ? CONTACT_RESULTS_TL[r] : r}</span>
-                  {isSelected && <span className="w-2 h-2 rounded-full bg-[#1E469B] dark:bg-[#7CB8F7]" />}
+                  {isSelected && <span className="w-2 h-2 rounded-full bg-[#007AFF] dark:bg-[#0A84FF]" />}
                 </button>
               );
             })}
@@ -1914,11 +1914,11 @@ const ContactWindow: React.FC<{
         </div>
 
         {/* Action buttons */}
-        <div className="flex justify-end gap-2 pt-2 border-t border-[#DCE5F2] dark:border-[#1E3158]">
+        <div className="flex justify-end gap-2 pt-2 border-t border-[#E5E5EA] dark:border-[#38383A]">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl saas-card-subtle text-xs font-bold hover:border-[#1E469B]"
+            className="px-4 py-2 rounded-xl saas-card-subtle text-xs font-bold hover:border-[#007AFF]"
           >
             {isTl ? 'Kanselahin' : 'Cancel'}
           </button>
@@ -1926,7 +1926,7 @@ const ContactWindow: React.FC<{
             type="button"
             disabled={busy}
             onClick={save}
-            className="px-5 py-2 rounded-xl bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-black active:scale-[0.97] transition-transform disabled:opacity-50 inline-flex items-center gap-1.5 shadow-sm"
+            className="px-5 py-2 rounded-xl bg-[#007AFF] hover:bg-[#0062CC] text-white text-xs font-black active:scale-[0.97] transition-transform disabled:opacity-50 inline-flex items-center gap-1.5 shadow-sm"
           >
             <CheckCircle className="w-3.5 h-3.5" />
             {busy ? (isTl ? 'Sine-save…' : 'Saving…') : isTl ? 'I-save ang Resulta' : 'Save Contact Log'}
@@ -1951,27 +1951,27 @@ const PrefsWindow: React.FC<{
   const tl: Record<string, string> = { Mon: 'Lunes', Tue: 'Martes', Wed: 'Miyerkules', Thu: 'Huwebes', Fri: 'Biyernes' };
   return (
     <Overlay onClose={onClose} label={isTl ? 'Pwedeng araw' : 'Best days'}>
-      <h3 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? 'Kailan pwede ang magulang?' : 'When can the parent come?'}</h3>
-      <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+      <h3 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">{isTl ? 'Kailan pwede ang magulang?' : 'When can the parent come?'}</h3>
+      <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
         {student.parentName} · {isTl ? 'Gagamitin ito ng Smart Scheduling sa susunod.' : 'Smart Scheduling will use this next time.'}
       </p>
       <div className="flex flex-wrap gap-1.5">
         {OFFICE_DAYS.map((d) => (
-          <button key={d} type="button" onClick={() => setDays((v) => (v.includes(d) ? v.filter((x) => x !== d) : [...v, d]))} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${days.includes(d) ? 'bg-[#1E469B] border-[#1E469B] text-white' : 'border-[#D3DDEE] dark:border-[#253B66]'}`}>
+          <button key={d} type="button" onClick={() => setDays((v) => (v.includes(d) ? v.filter((x) => x !== d) : [...v, d]))} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${days.includes(d) ? 'bg-[#007AFF] border-[#007AFF] text-white' : 'border-[#E5E5EA] dark:border-[#38383A]'}`}>
             {isTl ? tl[d] : d}
           </button>
         ))}
       </div>
       <div className="flex flex-wrap gap-1.5">
         {[['', isTl ? 'Kahit anong oras' : 'Any time'], ['AM', isTl ? 'Umaga' : 'Morning'], ['PM', isTl ? 'Hapon' : 'Afternoon']].map(([v, l]) => (
-          <button key={v} type="button" onClick={() => setTime(v)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${time === v ? 'bg-[#1E469B] border-[#1E469B] text-white' : 'border-[#D3DDEE] dark:border-[#253B66]'}`}>
+          <button key={v} type="button" onClick={() => setTime(v)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${time === v ? 'bg-[#007AFF] border-[#007AFF] text-white' : 'border-[#E5E5EA] dark:border-[#38383A]'}`}>
             {l}
           </button>
         ))}
       </div>
       <div className="flex justify-end gap-2 pt-1">
         <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg saas-card-subtle text-xs font-bold">{isTl ? 'Kanselahin' : 'Cancel'}</button>
-        <button type="button" onClick={() => onSave(DAY_KEYS.filter((k) => days.includes(k)).join(','), time)} className="px-5 py-2 rounded-lg bg-[#1E469B] text-white text-xs font-extrabold">
+        <button type="button" onClick={() => onSave(DAY_KEYS.filter((k) => days.includes(k)).join(','), time)} className="px-5 py-2 rounded-lg bg-[#007AFF] text-white text-xs font-extrabold">
           {isTl ? ' I-save' : ' Save'}
         </button>
       </div>

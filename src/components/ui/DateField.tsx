@@ -35,11 +35,11 @@ export const DateField: React.FC<{
         type="button"
         onClick={open}
         aria-label={ariaLabel}
-        className={`w-full ${compact ? 'h-9 px-2.5 text-[12px]' : 'h-11 px-3.5 text-[14px]'} rounded-xl border border-[#DDE3EC] dark:border-white/10 bg-white dark:bg-[#0A1526] hover:border-[#1E469B] text-left inline-flex items-center gap-2 transition-colors ${
+        className={`w-full ${compact ? 'h-9 px-2.5 text-[12px]' : 'h-11 px-3.5 text-[14px]'} rounded-xl border border-[#E5E5EA] dark:border-white/10 bg-white dark:bg-[#1C1C1E] hover:border-[#007AFF] text-left inline-flex items-center gap-2 transition-colors ${
           value ? 'text-[#1D1D1F] dark:text-[#F5F5F7]' : 'text-[#8E8E93]'
         }`}
       >
-        <Calendar className="w-4 h-4 shrink-0 text-[#1E469B] dark:text-[#7CB8F7]" aria-hidden />
+        <Calendar className="w-4 h-4 shrink-0 text-[#007AFF] dark:text-[#409CFF]" aria-hidden />
         <span className="truncate">{text}</span>
       </button>
       <input

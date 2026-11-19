@@ -68,7 +68,7 @@ export const SortControl: React.FC<{
     role="radiogroup"
     data-sort={id}
     aria-label={isTl ? 'Ayusin ang listahan' : 'Sort the list'}
-    className="inline-flex items-center p-0.5 rounded-lg bg-[#EEF3F9] dark:bg-[#0E1D34] border border-[#D5E0EE] dark:border-white/10 shrink-0"
+    className="inline-flex items-center p-0.5 rounded-lg bg-[#EEF3F9] dark:bg-[#0E1D34] border border-[#E5E5EA] dark:border-white/10 shrink-0"
   >
     {options.map((k) => {
       const on = value === k;
@@ -82,8 +82,8 @@ export const SortControl: React.FC<{
           onClick={() => onChange(k)}
           className={`px-2 py-1 rounded-md text-[11px] font-bold whitespace-nowrap transition-[background-color,color,transform] duration-150 active:scale-[0.97] ${
             on
-              ? 'bg-white dark:bg-[#1E3250] text-[#0B1F4D] dark:text-white shadow-sm'
-              : 'text-[#52637A] dark:text-[#94A8C4] hover:text-[#0B1F4D] dark:hover:text-white'
+              ? 'bg-white dark:bg-[#1E3250] text-[#1D1D1F] dark:text-white shadow-sm'
+              : 'text-[#6E6E73] dark:text-[#A1A1A6] hover:text-[#1D1D1F] dark:hover:text-white'
           }`}
         >
           {WORDS[k][isTl ? 3 : 2]}

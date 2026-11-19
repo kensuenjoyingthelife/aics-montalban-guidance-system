@@ -148,25 +148,25 @@ export const StatementStation: React.FC<{
     } else setPinErr(t('Wrong PIN. Only the Guidance staff can unlock this screen.', 'Mali ang PIN. Ang Guidance staff lang ang makakapag-unlock nito.'));
   };
 
-  const label = 'block text-sm font-extrabold text-[#0B1F4D] dark:text-white mb-1';
-  const hint = 'text-xs text-[#4A608A] dark:text-[#94A8D0]';
-  const field = 'w-full px-3 py-2.5 rounded-xl border border-[#C9D6EC] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-[15px] text-[#0B1F4D] dark:text-white focus:outline-none focus:ring-4 focus:ring-[#1E469B]/25';
+  const label = 'block text-sm font-extrabold text-[#1D1D1F] dark:text-white mb-1';
+  const hint = 'text-xs text-[#6E6E73] dark:text-[#A1A1A6]';
+  const field = 'w-full px-3 py-2.5 rounded-xl border border-[#E5E5EA] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] text-[15px] text-[#1D1D1F] dark:text-white focus:outline-none focus:ring-4 focus:ring-[#007AFF]/25';
 
   return createPortal(
-    <div role="dialog" aria-modal="true" aria-label={t('Student Statement Station', 'Student Statement Station')} data-statement-station className="fixed inset-0 z-[10000] bg-[#EEF3FC] dark:bg-[#070F1F] overflow-y-auto">
+    <div role="dialog" aria-modal="true" aria-label={t('Student Statement Station', 'Student Statement Station')} data-statement-station className="fixed inset-0 z-[10000] bg-[#EAF3FF] dark:bg-[#070F1F] overflow-y-auto">
       <div className="min-h-full flex flex-col items-center justify-center px-4 py-3">
-        <div className="w-full max-w-[760px] rounded-3xl bg-white dark:bg-[#0F1D38] border border-[#D3DDEE] dark:border-[#1E3158] shadow-2xl">
-          <header className="px-7 pt-5 pb-3 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-center gap-3">
+        <div className="w-full max-w-[760px] rounded-3xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A] shadow-2xl">
+          <header className="px-7 pt-5 pb-3 border-b border-[#E5E5EA] dark:border-[#38383A] flex items-center gap-3">
             <img src="/aics-logo.jpg" alt="" className="w-11 h-11 rounded-full object-cover" onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')} />
             <div className="min-w-0">
-              <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#4A608A] dark:text-[#94A8D0]">AICS Montalban · Guidance Office</p>
-              <h1 className="text-xl font-extrabold text-[#0B1F4D] dark:text-white">{t('My Written Statement', 'Ang Aking Salaysay')}</h1>
+              <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#6E6E73] dark:text-[#A1A1A6]">AICS Montalban · Guidance Office</p>
+              <h1 className="text-xl font-extrabold text-[#1D1D1F] dark:text-white">{t('My Written Statement', 'Ang Aking Salaysay')}</h1>
             </div>
           </header>
 
           {phase !== 'done' ? (
             <div className="px-7 py-4 space-y-3">
-              <p className="text-sm text-[#0B1F4D] dark:text-white">
+              <p className="text-sm text-[#1D1D1F] dark:text-white">
                 <b>{studentName}</b> · {gradeSection}
                 <br />
                 <span className={hint}>{t('Write in your own words, in English or Filipino. Take your time. Only the Guidance Office will read this.', 'Isulat sa sarili mong salita, sa Ingles o Filipino. Huwag magmadali. Ang Guidance Office lang ang makakabasa nito.')}</span>
@@ -190,9 +190,9 @@ export const StatementStation: React.FC<{
                 <span className={label}>4. {t('Who was involved or saw it?', 'Sino ang kasama o nakakita?')}</span>
                 <input data-station-who value={who} onChange={(e) => setWho(e.target.value.slice(0, 300))} className={field} placeholder={t('Names, if you know them (optional)', 'Mga pangalan, kung alam mo (hindi required)')} />
               </label>
-              <label className="flex items-start gap-3 p-3 rounded-xl bg-[#F4F7FC] dark:bg-[#0B1527] border border-[#D3DDEE] dark:border-[#253B66] cursor-pointer">
+              <label className="flex items-start gap-3 p-3 rounded-xl bg-[#F5F5F7] dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A] cursor-pointer">
                 <input type="checkbox" data-station-true checked={truthful} onChange={(e) => setTruthful(e.target.checked)} className="mt-0.5 w-5 h-5 accent-[#1E469B]" />
-                <span className="text-sm text-[#0B1F4D] dark:text-white">{t('I declare that everything I wrote is true, to the best of my knowledge.', 'Pinapatunayan ko na totoo ang lahat ng isinulat ko, sa abot ng aking kaalaman.')}</span>
+                <span className="text-sm text-[#1D1D1F] dark:text-white">{t('I declare that everything I wrote is true, to the best of my knowledge.', 'Pinapatunayan ko na totoo ang lahat ng isinulat ko, sa abot ng aking kaalaman.')}</span>
               </label>
               {error && (
                 <p role="alert" className="text-sm font-bold text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40 px-3 py-2 rounded-xl">
@@ -200,10 +200,10 @@ export const StatementStation: React.FC<{
                 </p>
               )}
               <div className="flex items-center justify-between gap-3 pt-1">
-                <button type="button" data-station-staff onClick={() => setUnlockOpen(true)} className="text-xs font-bold text-[#4A608A] dark:text-[#94A8D0] underline underline-offset-2">
+                <button type="button" data-station-staff onClick={() => setUnlockOpen(true)} className="text-xs font-bold text-[#6E6E73] dark:text-[#A1A1A6] underline underline-offset-2">
                   {t('Staff: stop without saving', 'Staff: ihinto nang hindi sine-save')}
                 </button>
-                <button type="button" data-station-submit disabled={!canSend} onClick={() => void submit()} className="px-6 py-3 rounded-xl bg-[#1E469B] text-white text-sm font-extrabold whitespace-nowrap disabled:opacity-50">
+                <button type="button" data-station-submit disabled={!canSend} onClick={() => void submit()} className="px-6 py-3 rounded-xl bg-[#007AFF] text-white text-sm font-extrabold whitespace-nowrap disabled:opacity-50">
                   {phase === 'saving' ? t('Saving…', 'Sine-save…') : t('Submit my statement', 'Ipasa ang aking salaysay')}
                 </button>
               </div>
@@ -216,22 +216,22 @@ export const StatementStation: React.FC<{
           ) : (
             <div className="px-7 py-10 text-center space-y-3" data-station-done>
               <p className="text-5xl" aria-hidden>✅</p>
-              <h2 className="text-xl font-extrabold text-[#0B1F4D] dark:text-white">{t('Thank you. Your statement was sent to the Guidance Office.', 'Salamat. Naipadala na ang salaysay mo sa Guidance Office.')}</h2>
-              <p className="text-sm text-[#4A608A] dark:text-[#94A8D0]">{t('Please give the computer back to the Guidance staff.', 'Pakibalik ang computer sa Guidance staff.')}</p>
-              <button type="button" data-station-staff onClick={() => setUnlockOpen(true)} className="mt-2 px-5 py-2.5 rounded-xl border border-[#C9D6EC] dark:border-[#253B66] text-sm font-bold text-[#1E469B] dark:text-[#7CB8F7]">
+              <h2 className="text-xl font-extrabold text-[#1D1D1F] dark:text-white">{t('Thank you. Your statement was sent to the Guidance Office.', 'Salamat. Naipadala na ang salaysay mo sa Guidance Office.')}</h2>
+              <p className="text-sm text-[#6E6E73] dark:text-[#A1A1A6]">{t('Please give the computer back to the Guidance staff.', 'Pakibalik ang computer sa Guidance staff.')}</p>
+              <button type="button" data-station-staff onClick={() => setUnlockOpen(true)} className="mt-2 px-5 py-2.5 rounded-xl border border-[#E5E5EA] dark:border-[#38383A] text-sm font-bold text-[#007AFF] dark:text-[#409CFF]">
                 🔒 {t('Staff: unlock', 'Staff: i-unlock')}
               </button>
             </div>
           )}
         </div>
-        <p className="mt-3 text-[11px] text-[#4A608A] dark:text-[#94A8D0]">🔒 {t('This screen is locked. Only the Guidance staff can close it.', 'Naka-lock ang screen na ito. Ang Guidance staff lang ang makakapagsara nito.')}</p>
+        <p className="mt-3 text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">🔒 {t('This screen is locked. Only the Guidance staff can close it.', 'Naka-lock ang screen na ito. Ang Guidance staff lang ang makakapagsara nito.')}</p>
       </div>
 
       {unlockOpen && (
         <div className="fixed inset-0 z-[10001] bg-black/50 flex items-center justify-center px-4" data-station-unlock>
-          <div className="w-full max-w-[360px] rounded-2xl bg-white dark:bg-[#0F1D38] p-6 space-y-3 shadow-2xl">
-            <h2 className="text-lg font-extrabold text-[#0B1F4D] dark:text-white">{t('Staff PIN', 'PIN ng staff')}</h2>
-            <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+          <div className="w-full max-w-[360px] rounded-2xl bg-white dark:bg-[#1C1C1E] p-6 space-y-3 shadow-2xl">
+            <h2 className="text-lg font-extrabold text-[#1D1D1F] dark:text-white">{t('Staff PIN', 'PIN ng staff')}</h2>
+            <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
               {phase === 'done'
                 ? t('Enter the 6-digit app PIN to go back to the case.', 'Ilagay ang 6-digit na PIN ng app para bumalik sa kaso.')
                 : t('Enter the 6-digit app PIN to stop. What the student wrote will not be saved.', 'Ilagay ang 6-digit na PIN ng app para ihinto. Hindi mase-save ang isinulat ng estudyante.')}
@@ -253,10 +253,10 @@ export const StatementStation: React.FC<{
             />
             {pinErr && <p role="alert" className="text-xs font-bold text-red-700 dark:text-red-300">{pinErr}</p>}
             <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => { setUnlockOpen(false); setPin(''); setPinErr(''); }} className="px-4 py-2 rounded-lg text-xs font-bold border border-[#C9D6EC] dark:border-[#253B66] text-[#4A608A] dark:text-[#94A8D0]">
+              <button type="button" onClick={() => { setUnlockOpen(false); setPin(''); setPinErr(''); }} className="px-4 py-2 rounded-lg text-xs font-bold border border-[#E5E5EA] dark:border-[#38383A] text-[#6E6E73] dark:text-[#A1A1A6]">
                 {t('Back', 'Bumalik')}
               </button>
-              <button type="button" data-station-unlock-go onClick={() => void tryUnlock()} className="px-4 py-2 rounded-lg text-xs font-bold bg-[#1E469B] text-white">
+              <button type="button" data-station-unlock-go onClick={() => void tryUnlock()} className="px-4 py-2 rounded-lg text-xs font-bold bg-[#007AFF] text-white">
                 {t('Unlock', 'I-unlock')}
               </button>
             </div>

@@ -28,6 +28,26 @@ import {
   FileText,
   Download,
   CheckCheck,
+  Home as HomeIcon,
+  Plus,
+  UserCircle2,
+  Sparkles,
+  UserCheck,
+  UserX,
+  Hand,
+  Smartphone,
+  Wind,
+  Coins,
+  Scissors,
+  Hammer,
+  DoorOpen,
+  PenLine,
+  AlarmClock,
+  Shirt,
+  BadgeCheck,
+  Volume2,
+  PhoneOff,
+  MoreHorizontal,
 } from 'lucide-react';
 import { WavyBackground } from '../components/auth/WavyBackground';
 import { SoundTogglePill, soundFX } from '../services/soundEngine';
@@ -37,16 +57,23 @@ import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
 import { StudentPortalUser } from '../services/studentAuthService';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../services/supabaseClient';
 import { loadAppConfig, useAppConfig } from '../services/appConfig';
-import { officeHoursText } from '../services/scheduling';
+import { officeHoursText, isOfficeDay, todayISO, SLOT_STARTS, SLOT_MINUTES } from '../services/scheduling';
+import { SafezoneMascot } from '../components/auth/SafezoneMascot';
 import { Clock as ClockIcon, Check as CheckIcon, ShieldCheck as ShieldIcon } from 'lucide-react';
 import { QuickExitButton } from '../components/security/QuickExitButton';
 import { MobileAppTourModal } from '../components/student/MobileAppTourModal';
+import { ChristmasLights, Parol, PaskoGreeting, PaskoChip, HollySprig } from '../components/student/ChristmasDecor';
+import { christmasOn, insideDecorWanted, setInsideDecorWanted, DECOR_EVENT } from '../config/seasonalTheme';
 import { moderateReportContent, recordSecurityAudit } from '../services/securityEngine';
 import {
   ConcernMessage,
   fetchMessages,
   fetchMessagesAfter,
   sendMessage,
+  ChatState,
+  fetchChatState,
+  markChatSeen,
+  setChatTyping,
 } from '../services/concernsDb';
 
 interface StudentDashboardProps {
@@ -66,13 +93,144 @@ interface StudentConcernHistory {
   createdAt: string;
 }
 
+/** Report categories (values stay the same as before; only the look changed). */
+const CONCERN_GROUPS = [
+  { en: 'Serious', tl: 'Mabigat', tone: 'bg-[#FF3B30]/[0.12] text-[#FF3B30]', items: [
+    { v: 'Physical Bullying & Fighting', en: 'Bullying or fighting', tl: 'Bullying o away', icon: Hand },
+    { v: 'Cyberbullying & Online Harassment', en: 'Cyberbullying', tl: 'Cyberbullying', icon: Smartphone },
+    { v: 'Vaping / Smoking Infraction', en: 'Vaping or smoking', tl: 'Vape o sigarilyo', icon: Wind },
+    { v: 'Extortion & Coercion', en: 'Asking for money or threats', tl: 'Panghihingi ng pera o pananakot', icon: Coins },
+    { v: 'Weapons & Dangerous Contraband', en: 'Weapons or dangerous items', tl: 'Matalim o delikadong gamit', icon: Scissors },
+    { v: 'Vandalism & Campus Property Damage', en: 'Damage to school property', tl: 'Pagsira ng gamit ng school', icon: Hammer },
+    { v: 'Cutting Classes & Truancy', en: 'Cutting classes', tl: 'Pag-cutting', icon: DoorOpen },
+    { v: 'Forgery & Tampering of Records', en: 'Fake signature or records', tl: 'Pekeng pirma o records', icon: PenLine },
+  ] },
+  { en: 'Minor', tl: 'Magaan', tone: 'bg-[#FF9F0A]/[0.16] text-[#E08600]', items: [
+    { v: 'Habitual Tardiness', en: 'Always late', tl: 'Laging late', icon: AlarmClock },
+    { v: 'Improper Uniform & Dress Code', en: 'Uniform or dress code', tl: 'Uniporme o gupit', icon: Shirt },
+    { v: 'Improper Use of School ID', en: 'School ID', tl: 'School ID', icon: BadgeCheck },
+    { v: 'Classroom Disruption', en: 'Noise in class', tl: 'Ingay sa klase', icon: Volume2 },
+    { v: 'Littering on Campus', en: 'Littering', tl: 'Pagkakalat', icon: Trash2 },
+    { v: 'Unauthorized Device Use', en: 'Phone use in class', tl: 'Cellphone sa klase', icon: PhoneOff },
+    { v: 'Other Disciplinary Infraction', en: 'Something else', tl: 'Iba pa', icon: MoreHorizontal },
+  ] },
+] as const;
+const fieldCls = 'w-full h-14 px-4 rounded-2xl cosmic-input text-[16px] font-medium focus:outline-none';
+const primaryBtn = 'btn-press h-14 px-7 rounded-full sd-primary text-white text-[16px] font-semibold inline-flex items-center justify-center gap-2 shadow-lg shadow-blue-900/25';
+const backBtn = 'btn-press h-14 px-6 rounded-full lg-chip lg-ink text-[16px] font-semibold inline-flex items-center gap-1.5';
+
+/** Split the stored narrative into readable parts (the form saves labelled [TAGS]). */
+const readNarrative = (raw: string) => {
+  const s = String(raw || '');
+  // photos are saved as "[EVIDENCE_PHOTO_n]: data:image/..." — pull them out so they never show as text
+  const photos = [...s.matchAll(/\[EVIDENCE_PHOTO_\d+\]:\s*(\S+)/g)].map((m) => m[1]).filter((p) => /^(data:image\/|https?:)/.test(p));
+  const body = s.replace(/\[EVIDENCE_PHOTO_\d+\]:\s*\S+/g, ' ');
+  let forFriend = '';
+  let about = '';
+  for (const m of body.matchAll(/\[([^\]:]+):\s*([^\]]*)\]/g)) {
+    const k = m[1].toUpperCase();
+    if (k.includes('FRIEND')) forFriend = m[2].trim().replace(/\s*\(N\/A\)$/, '');
+    else if (k.includes('RESPONDENT') || k.includes('INIREREKLAMO')) about = m[2].trim();
+  }
+  const [namePart, looksPart = ''] = about.split(/\s*-\s*Palatandaan:\s*/);
+  const unknown = /hindi (kilala|tiyak)/i.test(namePart);
+  const aboutName = unknown ? '' : namePart.trim();
+  const aboutLooks = looksPart && looksPart !== 'N/A' ? looksPart.trim() : '';
+  const story = body.replace(/\[[^\]]*\]:?/g, ' ').replace(/\s+/g, ' ').trim();
+  return { forFriend, about, aboutName, aboutLooks, story, photos };
+};
+
+/** Philippine time now (Asia/Manila), ticking every second. Only the clock re-renders. */
+const usePhNow = () => {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  return now;
+};
+const phParts = (d: Date) => {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false }).formatToParts(d).map((x) => [x.type, x.value]));
+  return { h: Number(p.hour) % 24, m: Number(p.minute), s: Number(p.second) };
+};
+
+/** Real analog clock face (Apple Clock widget style). */
+const AnalogClock: React.FC<{ now: Date }> = ({ now }) => {
+  const { h, m, s } = phParts(now);
+  const sec = s * 6;
+  const min = m * 6 + s * 0.1;
+  const hr = (h % 12) * 30 + m * 0.5;
+  return (
+    <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-[0_10px_24px_rgba(8,20,60,0.35)]" role="img" aria-label="Analog clock">
+      <defs>
+        <radialGradient id="aicsFace" cx="50%" cy="38%" r="70%">
+          <stop offset="0%" stopColor="#FFFFFF" />
+          <stop offset="100%" stopColor="#EEF3FF" />
+        </radialGradient>
+      </defs>
+      <circle cx="100" cy="100" r="96" fill="url(#aicsFace)" stroke="rgba(255,255,255,0.9)" strokeWidth="3" />
+      {Array.from({ length: 60 }, (_, i) => {
+        const big = i % 5 === 0;
+        const a = (i * 6 * Math.PI) / 180;
+        const r1 = big ? 78 : 84;
+        return <line key={i} x1={100 + r1 * Math.sin(a)} y1={100 - r1 * Math.cos(a)} x2={100 + 90 * Math.sin(a)} y2={100 - 90 * Math.cos(a)} stroke={big ? '#1D1D1F' : '#A1A1AA'} strokeWidth={big ? 3 : 1.2} strokeLinecap="round" />;
+      })}
+      {[12, 3, 6, 9].map((n) => {
+        const a = ((n % 12) * 30 * Math.PI) / 180;
+        return <text key={n} x={100 + 62 * Math.sin(a)} y={100 - 62 * Math.cos(a) + 6} textAnchor="middle" fontSize="17" fontWeight="600" fill="#1D1D1F">{n}</text>;
+      })}
+      <line x1="100" y1="100" x2="100" y2="54" stroke="#1D1D1F" strokeWidth="6" strokeLinecap="round" transform={`rotate(${hr} 100 100)`} />
+      <line x1="100" y1="100" x2="100" y2="30" stroke="#1D1D1F" strokeWidth="4" strokeLinecap="round" transform={`rotate(${min} 100 100)`} />
+      <g transform={`rotate(${sec} 100 100)`}>
+        <line x1="100" y1="118" x2="100" y2="22" stroke="#FF3B30" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="100" cy="100" r="5" fill="#FF3B30" />
+      </g>
+      <circle cx="100" cy="100" r="2" fill="#FFFFFF" />
+    </svg>
+  );
+};
+
+/** Hero widget: analog clock + big date + digital PH time. */
+const HeroClock: React.FC<{ isTl: boolean }> = ({ isTl }) => {
+  const now = usePhNow();
+  const loc = isTl ? 'fil-PH' : 'en-US';
+  const tz = 'Asia/Manila';
+  const month = new Intl.DateTimeFormat(loc, { timeZone: tz, month: 'long' }).format(now).toUpperCase();
+  const weekday = new Intl.DateTimeFormat(loc, { timeZone: tz, weekday: 'long' }).format(now).toUpperCase();
+  const day = new Intl.DateTimeFormat('en-US', { timeZone: tz, day: 'numeric' }).format(now);
+  const [hms, ampm] = new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true }).format(now).split(' ');
+  const wd = new Intl.DateTimeFormat(loc, { timeZone: tz, weekday: 'short' }).format(now);
+  const mon = month.charAt(0) + month.slice(1).toLowerCase();
+  return (
+    <div className="flex-1 min-h-0 grid grid-cols-2 grid-rows-[minmax(0,1fr)_auto] gap-3">
+      {/* clock tile */}
+      <div className="rounded-[30px] bg-white/95 shadow-[0_12px_30px_-14px_rgba(8,20,60,0.6)] flex items-center justify-center p-3 min-h-[150px]">
+        <div className="w-full max-w-[260px] aspect-square"><AnalogClock now={now} /></div>
+      </div>
+      {/* date tile */}
+      <div className="rounded-[30px] wg-glass p-4 sm:p-5 xl:p-6 flex flex-col justify-between min-h-[150px] text-white">
+        <p className="text-[34px] sm:text-[44px] xl:text-[64px] leading-none font-bold tracking-tight">{wd}</p>
+        <p className="text-[72px] sm:text-[96px] xl:text-[140px] leading-[0.85] font-bold tracking-tight tabular-nums">{day}</p>
+        <p className="text-[24px] sm:text-[30px] xl:text-[40px] leading-none font-semibold text-white/90">{mon}</p>
+      </div>
+      {/* digital time tile */}
+      <div className="col-span-2 rounded-[30px] wg-glass px-5 sm:px-7 py-4 flex items-end justify-between gap-3">
+        <p className="text-[46px] sm:text-[64px] xl:text-[88px] leading-none font-semibold tracking-tight text-white tabular-nums">
+          {hms}<span className="ml-2 text-[18px] xl:text-[26px] font-semibold">{ampm}</span>
+        </p>
+        <p className="pb-1 text-[12px] xl:text-[14px] font-semibold text-white/80 text-right leading-tight">{isTl ? 'Oras sa' : 'Philippine'}<br />{isTl ? 'Pilipinas' : 'time'}</p>
+      </div>
+    </div>
+  );
+};
+
 export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSignOut }) => {
   const { locale, setLocale } = useLanguage();
   const { theme, toggleThemeWithAura } = useTheme();
   const [soundOn, setSoundOn] = useState<boolean>(() => soundFX.isEnabled());
   const isTl = locale === 'tl';
 
-  const [activeTab, setActiveTab] = useState<'submit' | 'history' | 'chat'>('submit');
+  const [activeTab, setActiveTab] = useState<'home' | 'submit' | 'history' | 'chat' | 'me'>('home');
 
   // Multi-step Google Form-style pagination for report submission (1 -> 2 -> 3)
   const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
@@ -89,6 +247,22 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
     void loadAppConfig();
   }, []);
   const hoursText = officeHoursText(isTl);
+  // the app zooms the page (Font Size setting); measure the real screen height in CSS pixels so the
+  // home cards end exactly where the right rail ends
+  useEffect(() => {
+    const set = () => {
+      const z = parseFloat(getComputedStyle(document.documentElement).zoom || "1") || 1;
+      document.documentElement.style.setProperty("--sd-vh", window.innerHeight / z + "px");
+    };
+    set();
+    window.addEventListener("resize", set);
+    const mo = new MutationObserver(set);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["style", "class"] });
+    return () => {
+      window.removeEventListener("resize", set);
+      mo.disconnect();
+    };
+  }, []);
 
   // Submit Concern Form State
   const [reportType, setReportType] = useState<string>('Vaping / Smoking Infraction');
@@ -104,7 +278,6 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   const [happenedWhere, setHappenedWhere] = useState<string>('');
   const [witnesses, setWitnesses] = useState<string>('');
   const [isUrgent, setIsUrgent] = useState<boolean>(false);
-  const [isAnonymousWhistleblower, setIsAnonymousWhistleblower] = useState<boolean>(false);
   const [truthfulAck, setTruthfulAck] = useState<boolean>(false);
   const [evidencePhotos, setEvidencePhotos] = useState<string[]>([]);
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -122,6 +295,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   const [chatMessages, setChatMessages] = useState<ConcernMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState<boolean>(false);
   const [chatInputText, setChatInputText] = useState<string>('');
+  const [chatState, setChatState] = useState<ChatState | null>(null);
+  const lastTypingPing = useRef(0);
   const [sendingMsg, setSendingMsg] = useState<boolean>(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
@@ -240,9 +415,17 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   }, [showIdleWarning, onSignOut]);
 
   // Auto-scroll to bottom of chat
+  // scroll only the message list (never the whole page), like Instagram: newest message at the bottom
   const scrollToBottom = () => {
-    chatScrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const list = chatScrollRef.current?.parentElement;
+    if (list) list.scrollTop = list.scrollHeight;
   };
+  useEffect(() => {
+    if (activeTab !== 'chat') return;
+    const id = requestAnimationFrame(scrollToBottom);
+    return () => cancelAnimationFrame(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, chatMessages.length]);
 
   // Track previous statuses to trigger native phone notifications on change
   const prevStatusesRef = useRef<Record<number, string>>({});
@@ -362,23 +545,15 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
     void loadInitialMessages();
 
-    // Check for new office responses every 3.5 seconds
+    // every 2 s: new messages, "typing...", and what Guidance has seen
     const interval = setInterval(async () => {
       if (document.visibilityState !== 'visible' || !isMounted) return;
-      if (lastMsgId > 0) {
+      void fetchChatState(selectedChatConcern.id).then((st) => { if (isMounted) setChatState(st); });
+      {
         const newer = await fetchMessagesAfter(selectedChatConcern.id, lastMsgId);
         if (isMounted && newer && newer.length > 0) {
           lastMsgId = newer[newer.length - 1].id;
-          soundFX.playStepUnlock();
-          
-          // Send discreet native mobile / browser push notification
-          const officeMsgs = newer.filter((m) => m.sender !== 'student');
-          if (officeMsgs.length > 0) {
-            void notificationService.sendDiscreetNotification(
-              'AICS',
-              'Message you: The Guidance Office sent a response to your concern.'
-            );
-          }
+          if (newer.some((m) => m.sender !== 'student')) soundFX.playStepUnlock();
 
           setChatMessages((prev) => {
             const existingIds = new Set(prev.map((m) => m.id));
@@ -388,13 +563,73 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
           setTimeout(scrollToBottom, 100);
         }
       }
-    }, 3500);
+    }, 2000);
 
     return () => {
+      setChatState(null);
       isMounted = false;
       clearInterval(interval);
     };
   }, [selectedChatConcern?.id]);
+
+  // last Guidance message the student has actually looked at, per report (kept on this device)
+  const [readUpTo, setReadUpTo] = useState<Record<string, number>>(() => {
+    try { return JSON.parse(localStorage.getItem('aics_student_chat_read_v1') || '{}'); } catch { return {}; }
+  });
+  const [unreadChats, setUnreadChats] = useState<Record<string, number>>({});
+  const [chatPopup, setChatPopup] = useState<{ concern: StudentConcernHistory; body: string } | null>(null);
+  const activeTabRef = useRef(activeTab);
+  activeTabRef.current = activeTab;
+  const selectedIdRef = useRef<number | null>(null);
+  selectedIdRef.current = selectedChatConcern?.id ?? null;
+  const markChatRead = (id: number, msgId: number) => {
+    setReadUpTo((r) => {
+      if ((r[String(id)] ?? 0) >= msgId) return r;
+      const next = { ...r, [String(id)]: msgId };
+      try { localStorage.setItem('aics_student_chat_read_v1', JSON.stringify(next)); } catch { /* private mode */ }
+      return next;
+    });
+    setUnreadChats((u) => { if (!u[String(id)]) return u; const n = { ...u }; delete n[String(id)]; return n; });
+  };
+  // the chat on screen counts as read
+  useEffect(() => {
+    if (activeTab !== 'chat' || !selectedChatConcern) return;
+    const lastOffice = [...chatMessages].reverse().find((m) => m.sender !== 'student');
+    if (lastOffice) {
+      markChatRead(selectedChatConcern.id, lastOffice.id);
+      if (document.visibilityState === 'visible') void markChatSeen(selectedChatConcern.id, 'student');
+    }
+    setChatPopup((p) => (p && p.concern.id === selectedChatConcern.id ? null : p));
+  }, [activeTab, selectedChatConcern?.id, chatMessages]);
+  // every 6 s: any new Guidance message in any open chat?
+  const openChatKey = history.filter((h) => h.chatStatus === 'Open').map((h) => h.id).join(',');
+  useEffect(() => {
+    const open = history.filter((h) => h.chatStatus === 'Open');
+    if (!open.length) return;
+    let alive = true;
+    const check = async () => {
+      if (document.visibilityState !== 'visible') return;
+      for (const c of open) {
+        const msgs = await fetchMessagesAfter(c.id, readUpTo[String(c.id)] ?? 0);
+        if (!alive || !msgs) continue;
+        const office = msgs.filter((m) => m.sender !== 'student');
+        if (!office.length) continue;
+        if (activeTabRef.current === 'chat' && selectedIdRef.current === c.id) continue;
+        const last = office[office.length - 1];
+        setUnreadChats((u) => {
+          if ((u[String(c.id)] ?? 0) >= last.id) return u;
+          soundFX.playStepUnlock();
+          setChatPopup({ concern: c, body: last.body });
+          void notificationService.sendDiscreetNotification('AICS', 'You have a new message from the Guidance Office.');
+          return { ...u, [String(c.id)]: last.id };
+        });
+      }
+    };
+    void check();
+    const iv = window.setInterval(() => void check(), 6000);
+    return () => { alive = false; window.clearInterval(iv); };
+  }, [openChatKey, readUpTo]);
+  const unreadCount = Object.keys(unreadChats).length;
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -543,24 +778,18 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
         },
         body: JSON.stringify({
           referral_code: refCode,
-          student_name: isAnonymousWhistleblower
-            ? (isTl ? 'Protektadong Whistleblower (DepEd DO 40)' : 'Protected Whistleblower (DepEd DO 40)')
-            : (isPeer && friendName.trim() ? friendName.trim() : user.fullName),
-          grade_section: isAnonymousWhistleblower
-            ? 'Confidential'
-            : (isPeer && friendGradeSection.trim() ? friendGradeSection.trim() : user.gradeSection || 'SHS Student'),
-          student_number: isAnonymousWhistleblower ? 'ANON-DO40' : user.studentNumber,
+          student_name: isPeer && friendName.trim() ? friendName.trim() : user.fullName,
+          grade_section: isPeer && friendGradeSection.trim() ? friendGradeSection.trim() : user.gradeSection || 'SHS Student',
+          student_number: user.studentNumber,
           account_id: user.id,
-          submitted_by: isAnonymousWhistleblower
-            ? 'Anonymous Whistleblower (DepEd Child Protection Policy DO 40, s. 2012)'
-            : (isPeer ? `Report for Friend by ${user.fullName} (${user.studentNumber})` : `Self-Report: ${user.fullName}`),
+          submitted_by: isPeer ? `Report for Friend by ${user.fullName} (${user.studentNumber})` : `Self-Report: ${user.fullName}`,
           category: reportType,
           concern_type: reportType,
           urgency: isUrgent ? 'Urgent' : 'Normal',
           who_involved: knowsSuspect === 'yes' ? `${suspectName}${suspectDetails ? ` (${suspectDetails})` : ''}` : (knowsSuspect === 'unsure' ? `Hindi tiyak${suspectDetails ? ` (${suspectDetails})` : ''}` : `Hindi kilala${suspectDetails ? ` (${suspectDetails})` : ''}`),
-          summary_en: (isAnonymousWhistleblower ? '[ANONYMOUS WHISTLEBLOWER - DEPED DO 40] ' : '') + whatHappened.slice(0, 160),
-          summary_tl: (isAnonymousWhistleblower ? '[ANONYMOUS WHISTLEBLOWER - DEPED DO 40] ' : '') + whatHappened.slice(0, 160),
-          what_happened: (isAnonymousWhistleblower ? `[DEPED DO 40, S. 2012 ANONYMOUS WHISTLEBLOWER SUBMISSION]\n[REPORTER IDENTITY SHIELDED FOR CHILD PROTECTION]\n\n` : '') + finalNarrative,
+          summary_en: whatHappened.slice(0, 160),
+          summary_tl: whatHappened.slice(0, 160),
+          what_happened: finalNarrative,
           happened_when: happenedWhen || 'Not specified',
           happened_where: happenedWhere || 'AICS Campus / Online',
           witnesses: witnesses || 'None',
@@ -598,7 +827,6 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       setHappenedWhere('');
       setWitnesses('');
       setEvidencePhotos([]);
-      setIsAnonymousWhistleblower(false);
       setTruthfulAck(false);
       setReportingRole('self');
       setFriendName('');
@@ -613,56 +841,85 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
     }
   };
 
-  return (
-    <div className="min-h-[100dvh] w-full relative flex flex-col justify-start overflow-x-clip font-sans select-none student-portal-canvas sd-canvas bg-[#F5F5F7] dark:bg-[#0B1220] text-slate-900 dark:text-white transition-colors duration-150">
-      {/* Top Navigation Bar - Clean, Organized & Non-Congested Header */}
-      <header className="sticky top-0 z-30 w-full sd-header safe-area-top">
-        <div className="max-w-3xl mx-auto h-14 px-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <img src="/aics-logo.jpg" alt="AICS" className="w-8 h-8 rounded-full object-cover bg-white shrink-0" />
-            <div className="min-w-0 leading-tight">
-              <p className="text-[15px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7] truncate">AICS Kalang Ba</p>
-              <p className="text-[12px] text-[#6E6E73] dark:text-[#A1A1A6] truncate">{user.fullName}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="hidden md:block">
-              <QuickExitButton onTrigger={onSignOut} />
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                soundFX.playToggleSwitch(true);
-                setIsMenuOpen(true);
-              }}
-              aria-label={isTl ? 'Buksan ang menu' : 'Open menu'}
-              title={isTl ? 'Menu' : 'Menu'}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-[#1D1D1F] dark:text-[#F5F5F7] bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] active:scale-[0.97] transition-[transform,background-color] duration-150"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Right Drawer Navigation (Native CSS for 100% reliable clicks on mobile) */}
-      {/* Menu: iOS Settings-style sheet (follows light/dark). The 3 sections already live in the tabs. */}
-      {isMenuOpen && (
-        <div className="fixed inset-0 z-[99990] flex justify-end" role="dialog" aria-modal="true" aria-label={isTl ? 'Menu' : 'Menu'}>
-          <div onClick={() => setIsMenuOpen(false)} className="fixed inset-0 bg-black/30 backdrop-blur-[2px]" />
-          <motion.div
-            initial={{ x: 24, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
-            className="relative h-full w-[min(360px,92vw)] sd-sheet z-[99995] flex flex-col overflow-y-auto"
-          >
-            <div className="flex items-center justify-between px-5 pt-5 pb-2">
-              <p className="text-[22px] font-bold tracking-tight text-[#1D1D1F] dark:text-white">{isTl ? 'Menu' : 'Menu'}</p>
-              <button type="button" onClick={() => setIsMenuOpen(false)} aria-label={isTl ? 'Isara' : 'Close'} className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.06] dark:bg-white/[0.12] text-[#6E6E73] dark:text-[#A1A1A6] active:scale-[0.97] transition-transform duration-150">
-                <X className="w-4 h-4" />
+  // office open right now? (office days + hours from Settings)
+  const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
+  const openNow = isOfficeDay(todayISO()) && nowMin >= (SLOT_STARTS[0] ?? 480) && nowMin < (SLOT_STARTS[SLOT_STARTS.length - 1] ?? 900) + SLOT_MINUTES;
+  const latest = history[0];
+  const [repFilter, setRepFilter] = useState<'all' | 'amber' | 'green' | 'rose'>('all');
+  const repTone = (st: string): 'green' | 'rose' | 'amber' => (/approv|resolv/i.test(st) ? 'green' : /reject|block|declin/i.test(st) ? 'rose' : 'amber');
+  const stepNames = [
+    [isTl ? 'Uri ng concern' : 'Kind of concern', isTl ? 'Ano ang nangyari' : 'Pick one'],
+    [isTl ? 'Sino' : 'Who it is about', isTl ? 'Kahit walang pangalan' : 'Name not required'],
+    [isTl ? 'Kuwento' : 'Your story', isTl ? 'Kailan, saan, litrato' : 'When, where, photos'],
+  ] as const;
+  const dayStart = SLOT_STARTS[0] ?? 480;
+  const dayEnd = (SLOT_STARTS[SLOT_STARTS.length - 1] ?? 900) + SLOT_MINUTES;
+  const dayPct = Math.min(100, Math.max(0, ((nowMin - dayStart) / (dayEnd - dayStart)) * 100));
+  const fmtMin = (m: number) => { const h = Math.floor(m / 60); const mm = m % 60; return `${((h + 11) % 12) + 1}:${String(mm).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; };
+  const isoOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const week = (() => {
+    const base = new Date(); base.setDate(base.getDate() - ((base.getDay() + 6) % 7));
+    return Array.from({ length: 5 }, (_, i) => { const d = new Date(base); d.setDate(base.getDate() + i); const iso = isoOf(d); return { iso, num: d.getDate(), today: iso === isoOf(new Date()), open: isOfficeDay(iso), label: d.toLocaleDateString(isTl ? 'fil-PH' : 'en-US', { weekday: 'short' }).slice(0, 3) }; });
+  })();
+  const officeNote = (() => {
+    if (openNow) { const left = dayEnd - nowMin; return isTl ? `Sasara ng ${fmtMin(dayEnd)} (${Math.floor(left / 60)}h ${left % 60}m pa)` : `Closes at ${fmtMin(dayEnd)} (${Math.floor(left / 60)}h ${left % 60}m left)`; }
+    for (let i = 0; i < 8; i++) { const d = new Date(); d.setDate(d.getDate() + i); if (i === 0 && nowMin >= dayStart) continue; if (isOfficeDay(isoOf(d))) { const w = i === 0 ? (isTl ? 'ngayon' : 'today') : i === 1 ? (isTl ? 'bukas' : 'tomorrow') : d.toLocaleDateString(isTl ? 'fil-PH' : 'en-US', { weekday: 'long' }); return isTl ? `Bubukas ${w}, ${fmtMin(dayStart)}` : `Opens ${w} at ${fmtMin(dayStart)}`; } }
+    return hoursText;
+  })();
+  const openChats = history.filter((c) => c.chatStatus === 'Open').length;
+  const firstName = (() => {
+    const raw = (user.fullName || '').trim();
+    const given = raw.includes(',') ? raw.split(',')[1].trim() : raw;
+    const w = given.split(/\s+/)[0] || raw;
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  })();
+  const hour = new Date().getHours();
+  const greet = isTl ? (hour < 12 ? 'Magandang umaga' : hour < 18 ? 'Magandang hapon' : 'Magandang gabi') : hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const statusTone = (st: string) => (/approv/i.test(st) ? 'green' : /reject|block/i.test(st) ? 'rose' : 'amber');
+  const statusWord = (st: string) => (/approv/i.test(st) ? (isTl ? 'Tinanggap' : 'Accepted') : /reject|block/i.test(st) ? (isTl ? 'Hindi tinanggap' : 'Not accepted') : isTl ? 'Sinusuri ng Guidance' : 'Being reviewed');
+  const goTab = (k: 'home' | 'submit' | 'history' | 'chat' | 'me') => {
+    soundFX.playToggleSwitch(true);
+    setActiveTab(k);
+    if (k === 'history') void fetchMyHistory();
+  };
+  const navBar = (
+    <>
+        <div className="lg-capsule pointer-events-auto flex items-center p-1.5 gap-0.5 overflow-visible">
+          {([
+            ['home', HomeIcon, 'Home'],
+            ['history', FolderArchive, isTl ? 'Mga Report' : 'Reports'],
+            ['chat', MessageSquare, 'Chat'],
+            ['me', UserCircle2, isTl ? 'Ako' : 'Me'],
+          ] as const).map(([k, Icon, label]) => {
+            const on = activeTab === k;
+            return (
+              <button key={k} type="button" onClick={() => goTab(k)} aria-current={on ? 'page' : undefined} className="relative w-[68px] sm:w-[84px] lg:w-[66px] xl:w-[78px] h-[54px] flex flex-col items-center justify-center gap-0.5 rounded-full active:scale-[0.96] transition-transform duration-150">
+                <span className={`relative w-11 h-11 rounded-full flex items-center justify-center nav-float ${on ? 'nav-on nav-c-' + k + ' -translate-y-[18px]' : ''}`}>
+                  <Icon className={`w-[22px] h-[22px] ${on ? 'text-white' : 'lg-ink-soft'}`} strokeWidth={on ? 2.3 : 1.8} />
+                </span>
+                <span className={`relative -mt-1 text-[11px] ${on ? 'font-bold nav-t-' + k : 'font-medium lg-ink-soft'}`}>{label}</span>
+                {k === 'chat' && (unreadCount > 0 ? <span title={isTl ? 'May bagong mensahe' : 'New message'} className="absolute top-1 right-[16px] sm:right-[22px] min-w-[18px] h-[18px] px-1 rounded-full bg-[#FF3B30] text-white text-[11px] font-bold leading-[18px] text-center ring-2 ring-white/70">{unreadCount}</span> : openChats > 0 && <span className="absolute top-2 right-[22px] sm:right-[28px] w-2 h-2 rounded-full bg-[#30D158] ring-2 ring-white/60" />)}
               </button>
-            </div>
+            );
+          })}
+        </div>
+        <button type="button" onClick={() => goTab('submit')} aria-label={isTl ? 'Mag-report' : 'Report a concern'} title={isTl ? 'Mag-report' : 'Report a concern'} className={`lg-capsule pointer-events-auto w-[67px] h-[67px] rounded-full flex items-center justify-center active:scale-[0.95] transition-transform duration-150 ${activeTab === 'submit' ? 'ring-2 ring-[#0A84FF]/60' : ''}`}>
+          <span className="w-[48px] h-[48px] rounded-full lg-plus flex items-center justify-center"><Plus className="w-6 h-6 text-white" strokeWidth={2.4} /></span>
+        </button>
+    </>
+  );
 
+  // Christmas decorations inside the portal: season switch + the student's own choice in Settings
+  const [decorWanted, setDecorWanted] = useState(insideDecorWanted);
+  useEffect(() => {
+    const on = (e: Event) => setDecorWanted(Boolean((e as CustomEvent<boolean>).detail));
+    window.addEventListener(DECOR_EVENT, on);
+    return () => window.removeEventListener(DECOR_EVENT, on);
+  }, []);
+  const decor = christmasOn() && decorWanted;
+
+  const settingsBody = (
+    <>
             {/* who is signed in */}
             <div className="mx-4 mt-2 sd-list p-4 flex items-center gap-3">
               <div className="w-12 h-12 rounded-full sd-hero text-white flex items-center justify-center text-[16px] font-semibold shrink-0">
@@ -693,6 +950,12 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   ))}
                 </div>
               </div>
+              {christmasOn() && (
+                <label className="sd-row cursor-pointer">
+                  <span className="sd-row-label">{isTl ? 'Pamaskong dekorasyon' : 'Christmas decorations'}</span>
+                  <input type="checkbox" className="sd-switch" checked={decorWanted} onChange={(e) => { setInsideDecorWanted(e.target.checked); setDecorWanted(e.target.checked); }} aria-label={isTl ? 'Pamaskong dekorasyon' : 'Christmas decorations'} />
+                </label>
+              )}
               <label className="sd-row cursor-pointer">
                 <span className="sd-row-label">{isTl ? 'Mga tunog' : 'Sounds'}</span>
                 <input type="checkbox" className="sd-switch" checked={soundOn} onChange={(e) => { soundFX.setEnabled(e.target.checked); setSoundOn(e.target.checked); }} />
@@ -748,6 +1011,56 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 {isTl ? 'Mag-sign out' : 'Sign out'}
               </button>
             </div>
+    </>
+  );
+
+  return (
+    <div className="min-h-[100dvh] w-full relative flex flex-col justify-start overflow-x-clip font-sans select-none student-portal-canvas sd-canvas bg-[#F5F5F7] dark:bg-[#0B1220] text-slate-900 dark:text-white transition-colors duration-150">
+      {/* Top Navigation Bar - Clean, Organized & Non-Congested Header */}
+      <header className="sticky top-0 z-30 w-full sd-header safe-area-top lg:!pt-0">
+        {decor && <ChristmasLights className="absolute left-0 right-0 -bottom-[13px] h-[18px] w-full z-[1]" />}
+        <div className="relative w-full px-4 sm:px-6 lg:px-8 py-3 lg:py-0 lg:h-[92px] flex items-center gap-3 sm:gap-4">
+          <img src="/aics-logo.jpg" alt="AICS" className="w-12 h-12 sm:w-14 sm:h-14 lg:w-[60px] lg:h-[60px] rounded-full object-cover bg-white shrink-0 ring-1 ring-black/5 shadow-sm" />
+          <div className="min-w-0 flex-1 leading-tight">
+            <p className="text-[14px] sm:text-[18px] lg:text-[17px] xl:text-[22px] font-bold tracking-tight text-[#0F2557] dark:text-white uppercase lg:whitespace-nowrap">Asian Institute of Computer Studies</p>
+            <p className="text-[12px] sm:text-[14px] text-[#1E469B] dark:text-[#9CC3FF] truncate">
+              <span className="font-semibold uppercase">Montalban Branch</span>
+              <span className="text-[#6E6E73] dark:text-[#A1A1A6]"> · {user.fullName}</span>
+            </p>
+          </div>
+          {decor && (
+            <div className="absolute right-2 top-0 lg:static lg:shrink-0 lg:self-start flex items-start gap-1.5 lg:gap-3 pointer-events-none" aria-hidden="true">
+              <PaskoGreeting isTl={isTl} className="hidden lg:inline-flex mt-8 mr-1" />
+              <Parol color="red" className="w-6 h-[40px] lg:w-9 lg:h-[60px] text-[#8E8E93]" />
+              <Parol color="gold" delay={0.8} className="w-5 h-[33px] lg:w-8 lg:h-[52px] text-[#8E8E93]" />
+              <Parol color="blue" delay={1.6} className="hidden lg:block w-7 h-[46px] lg:w-9 lg:h-[60px] text-[#8E8E93]" />
+            </div>
+          )}
+          <div className="hidden lg:flex items-center gap-3 shrink-0">
+            <QuickExitButton onTrigger={onSignOut} />
+          </div>
+        </div>
+      </header>
+
+      {/* Right Drawer Navigation (Native CSS for 100% reliable clicks on mobile) */}
+      {/* Menu: iOS Settings-style sheet (follows light/dark). The 3 sections already live in the tabs. */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-[99990] flex justify-end" role="dialog" aria-modal="true" aria-label={isTl ? 'Menu' : 'Menu'}>
+          <div onClick={() => setIsMenuOpen(false)} className="fixed inset-0 bg-black/30 backdrop-blur-[2px]" />
+          <motion.div
+            initial={{ x: 24, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+            className="relative h-full w-[min(360px,92vw)] sd-sheet z-[99995] flex flex-col overflow-y-auto"
+          >
+            <div className="flex items-center justify-between px-5 pt-5 pb-2">
+              <p className="text-[22px] font-bold tracking-tight text-[#1D1D1F] dark:text-white">{isTl ? 'Menu' : 'Menu'}</p>
+              <button type="button" onClick={() => setIsMenuOpen(false)} aria-label={isTl ? 'Isara' : 'Close'} className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.06] dark:bg-white/[0.12] text-[#6E6E73] dark:text-[#A1A1A6] active:scale-[0.97] transition-transform duration-150">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {settingsBody}
             <p className="mt-auto px-6 py-5 text-[12px] text-center text-[#8E8E93]">{isTl ? 'Pribado at protektado (RA 10173)' : 'Private and protected (RA 10173)'}</p>
           </motion.div>
         </div>
@@ -762,1044 +1075,768 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       <AnimatePresence>
         {showIdleWarning && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="relative z-30 w-full bg-amber-500/20 border-b border-amber-400/40 px-4 py-2 text-center text-xs text-amber-200 font-semibold flex items-center justify-center gap-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-black/45 backdrop-blur-sm flex items-center justify-center p-6"
+            role="alertdialog"
+            aria-modal="true"
           >
-            <span>
-              <LockIcon className="w-3.5 h-3.5 text-amber-300 inline shrink-0 mr-1.5" />
-              {isTl
-                ? `Para sa iyong kaligtasan, magla-logout ang portal sa loob ng ${secondsRemaining}s dahil walang galaw. Pindutin ang kahit saan upang manatiling naka-login.`
-                : `For your safety and privacy, you will be logged out in ${secondsRemaining}s due to inactivity. Click anywhere to stay signed in.`}
-            </span>
+            <motion.div initial={{ scale: 1.08, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 420, damping: 32 }} className="w-full max-w-[320px] rounded-[26px] bg-white/95 dark:bg-[#2C2C2E]/95 backdrop-blur-xl text-center overflow-hidden shadow-2xl">
+              <div className="px-6 pt-6 pb-5">
+                <span className="mx-auto w-12 h-12 rounded-full bg-[#FF9F0A] text-white flex items-center justify-center"><LockIcon className="w-6 h-6" /></span>
+                <p className="mt-3 text-[18px] font-bold text-[#1D1D1F] dark:text-white">{isTl ? 'Nandiyan ka pa ba?' : 'Are you still there?'}</p>
+                <p className="mt-1 text-[14px] leading-snug text-[#3A3A3C] dark:text-[#D1D1D6]">
+                  {isTl ? 'Para sa kaligtasan mo, masa-sign out ka sa loob ng ' : 'For your safety, you will be signed out in '}
+                  <b className="tabular-nums">{secondsRemaining}s</b>.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 border-t border-black/10 dark:border-white/10">
+                <button type="button" onClick={onSignOut} className="h-12 text-[16px] text-[#FF3B30] border-r border-black/10 dark:border-white/10">{isTl ? 'Mag-sign out' : 'Sign out'}</button>
+                <button type="button" onClick={resetInactivityTimer} className="h-12 text-[16px] font-semibold text-[#0A84FF]">{isTl ? 'Manatili' : 'Stay signed in'}</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {chatPopup && (
+          <motion.div
+            initial={{ opacity: 0, y: -24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -24 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+            role="status"
+            aria-live="polite"
+            className="fixed top-3 inset-x-0 mx-auto z-[55] w-[min(440px,calc(100vw-24px))] rounded-[22px] bg-white/95 dark:bg-[#2C2C2E]/95 backdrop-blur-xl shadow-2xl p-3 flex items-center gap-3"
+          >
+            <span className="w-11 h-11 rounded-full nav-c-chat text-white flex items-center justify-center text-[14px] font-bold shrink-0">GO</span>
+            <button type="button" onClick={() => { openConcernChat(chatPopup.concern); setChatPopup(null); }} className="min-w-0 flex-1 text-left">
+              <span className="block text-[15px] font-semibold text-[#1D1D1F] dark:text-white">{isTl ? 'Bagong mensahe · Guidance' : 'New message · Guidance'}</span>
+              <span className="block text-[14px] text-[#3A3A3C] dark:text-[#D1D1D6] truncate">{chatPopup.body}</span>
+            </button>
+            <button type="button" onClick={() => { openConcernChat(chatPopup.concern); setChatPopup(null); }} className="h-9 px-4 rounded-full bg-[#0A84FF] text-white text-[14px] font-semibold shrink-0">{isTl ? 'Buksan' : 'Open'}</button>
+            <button type="button" onClick={() => setChatPopup(null)} aria-label={isTl ? 'Isara' : 'Close'} title={isTl ? 'Isara' : 'Close'} className="w-9 h-9 rounded-full lg-chip lg-ink-soft flex items-center justify-center shrink-0"><X className="w-4 h-4" /></button>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Main Workspace Area (Clean Responsive Vertical Flow: Compact Spacing on Mobile) */}
-      <main className={`relative z-20 flex-1 w-full mx-auto px-4 pt-4 sm:px-6 space-y-5 pb-28 md:pb-10 ${activeTab === 'submit' ? 'max-w-6xl' : 'max-w-3xl'}`}>
+      <main className={`relative z-20 flex-1 w-full mx-auto px-4 pt-4 sm:px-6 space-y-5 pb-32 lg:pr-[148px] ${activeTab === 'home' ? 'lg:max-w-none lg:px-8 lg:pt-5 lg:pb-6' : activeTab === 'me' ? 'max-w-3xl lg:pb-10' : 'lg:max-w-none lg:px-8 lg:pt-5 lg:pb-10'}`}>
         {/* Navigation Tabs (Hidden on Mobile < 768px because everything is neatly in the Right Menu Drawer) */}
-        <div className="hidden md:flex justify-center pt-2">
-          <div className="seg-track p-1" role="tablist">
-            {([
-              ['submit', FileEdit, isTl ? 'Mag-report' : 'Report'],
-              ['history', FolderArchive, isTl ? 'Aking mga Report' : 'My Reports'],
-              ['chat', MessageSquare, isTl ? 'Chat' : 'Chat'],
-            ] as const).map(([k, Icon, label]) => (
-              <button
-                key={k}
-                type="button"
-                role="tab"
-                aria-selected={activeTab === k}
-                onClick={() => {
-                  soundFX.playToggleSwitch(true);
-                  setActiveTab(k);
-                  if (k === 'history') void fetchMyHistory();
-                }}
-                className={`h-9 px-5 text-[14px] inline-flex items-center gap-2 ${activeTab === k ? 'seg-on' : 'seg-off'}`}
-              >
-                <Icon className="w-4 h-4" />
-                {label}
-                {k === 'chat' && history.some((c) => c.chatStatus === 'Open') && <span className="w-1.5 h-1.5 rounded-full bg-[#30D158]" />}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* TAB 1: SUBMIT REPORT (Compact, Responsive Padding) */}
-        {activeTab === 'submit' && (
-          <div className="lg:grid lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-6 lg:items-start">
-          {/* LEFT (website): who is reporting, the 3 steps, office hours — the form gets the full right side */}
-          <aside className="hidden lg:flex flex-col gap-4 sticky top-20">
-            <div className="sd-hero p-5 text-white">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-[17px] font-semibold">
-                  {user.fullName.split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join('')}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[16px] font-semibold truncate">{user.fullName}</p>
-                  <p className="text-[12px] text-white/75 truncate">{user.gradeSection || user.studentNumber}</p>
-                </div>
-              </div>
-              <p className="mt-4 text-[13px] leading-snug text-white/85 flex items-start gap-2">
-                <ShieldIcon className="w-4 h-4 mt-0.5 shrink-0" />
-                {isTl ? 'Pribado ito. Ang Guidance Office lang ang makakabasa.' : 'This is private. Only the Guidance Office can read it.'}
-              </p>
+        {activeTab === 'home' && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 lg:grid-rows-[1fr_1fr_auto] gap-4 pt-2 lg:pt-0 lg:h-[calc(var(--sd-vh,100dvh)-138px)]">
+            {decor && <div className="col-span-2 lg:hidden flex justify-center pt-2"><PaskoChip isTl={isTl} /></div>}
+            {/* hero: clock widget + the one main action */}
+            <div className={`lg-card lg-widget relative overflow-hidden col-span-2 lg:row-span-2 p-3 sm:p-3.5 ${decor ? 'pt-7 sm:pt-7' : ''} flex flex-col gap-3 min-h-[420px] lg:min-h-0`}>
+              <span aria-hidden className="wg-blob wg-b1" /><span aria-hidden className="wg-blob wg-b2" /><span aria-hidden className="wg-blob wg-b3" />
+              {decor && <ChristmasLights className="absolute z-[2] top-0 left-4 right-4 h-6 w-[calc(100%-2rem)]" />}
+              <div className="relative flex-1 min-h-0 flex flex-col"><HeroClock isTl={isTl} /></div>
+              <button type="button" onClick={() => goTab('submit')} className="relative wg-glass flex items-center gap-3 px-5 h-14 w-full rounded-[22px] text-left active:scale-[0.99] transition-transform duration-150">
+                <span className="flex-1 text-[15px] text-white/85">{isTl ? 'May gusto ka bang i-report?' : 'Something to report? Start here'}</span>
+                <span className="w-9 h-9 rounded-full bg-white text-[#2563EB] flex items-center justify-center"><Plus className="w-5 h-5" strokeWidth={2.4} /></span>
+              </button>
             </div>
-            <ol className="sd-card p-3">
-              {[
-                isTl ? 'Uri ng concern' : 'What kind of concern',
-                isTl ? 'Sino ang inirereklamo' : 'Who it is about',
-                isTl ? 'Ano ang nangyari' : 'What happened',
-              ].map((s, i) => {
+
+            {/* latest report */}
+            <div className={`lg-card col-span-2 p-5 xl:p-7 flex flex-col gap-4 ${latest ? 'lg-tone-' + statusTone(latest.status) : ''}`}>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[15px] xl:text-[17px] font-semibold lg-ink-soft inline-flex items-center gap-2">{isTl ? 'Huling report' : 'Latest report'}{decor && <Parol color="green" className="w-4 h-[26px] -mb-2 text-[#8E8E93]" />}</p>
+                <button type="button" onClick={() => goTab('history')} className="text-[14px] xl:text-[15px] font-semibold text-[#0A84FF] hover:underline">{isTl ? 'Tingnan lahat' : 'See all'} ({history.length})</button>
+              </div>
+              {latest ? (
+                <button type="button" onClick={() => goTab('history')} className="flex-1 min-h-0 text-left flex flex-col justify-between gap-3">
+                  <span className="block">
+                    <span className="block text-[24px] xl:text-[34px] leading-tight font-bold tracking-tight lg-ink truncate">{latest.category}</span>
+                    <span className="block mt-1 text-[14px] xl:text-[15px] lg-ink-soft">{new Date(latest.createdAt).toLocaleDateString(isTl ? 'fil-PH' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' })} · {latest.referralCode}</span>
+                    {readNarrative(latest.whatHappened).story && <span className="block mt-2 text-[15px] xl:text-[16px] lg-ink line-clamp-2">{readNarrative(latest.whatHappened).story}</span>}
+                  </span>
+                  <span className="flex items-center gap-2 text-[14px] xl:text-[15px] font-semibold lg-ink">
+                    <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="w-5 h-5 text-[#30D158]" />{isTl ? 'Naipadala' : 'Sent'}</span>
+                    <span className="flex-1 h-[2px] rounded-full lg-line" />
+                    <span className="inline-flex items-center gap-1.5">{statusTone(latest.status) === 'amber' ? <Clock className="w-5 h-5 text-[#FF9F0A]" /> : <CheckCircle2 className="w-5 h-5 text-[#30D158]" />}{isTl ? 'Sinusuri' : 'Reviewed'}</span>
+                    <span className="flex-1 h-[2px] rounded-full lg-line" />
+                    <span className={`h-8 px-3.5 rounded-full inline-flex items-center text-[13px] text-white lg-status-${statusTone(latest.status)}`}>{statusWord(latest.status)}</span>
+                  </span>
+                </button>
+              ) : (
+                <button type="button" onClick={() => goTab('submit')} className="flex-1 text-left">
+                  <span className="block text-[24px] xl:text-[30px] font-bold lg-ink">{isTl ? 'Wala ka pang report' : 'No reports yet'}</span>
+                  <span className="block text-[15px] lg-ink-soft">{isTl ? 'Pindutin ang + para magsimula. Confidential ito.' : 'Tap + to start one. It stays confidential.'}</span>
+                </button>
+              )}
+            </div>
+
+            {/* office now (Control Center tile) */}
+            <div className="lg-card relative p-5 xl:p-7 flex flex-col justify-between gap-3">
+              {decor && <HollySprig className="absolute top-3 right-3 w-10 h-7" />}
+              <div className="flex items-center gap-3">
+                <span className={`w-11 h-11 xl:w-12 xl:h-12 rounded-full flex items-center justify-center shrink-0 text-white ${openNow ? 'bg-[#30D158]' : 'bg-[#FF9F0A]'}`}><ClockIcon className="w-6 h-6" /></span>
+                <p className="text-[14px] xl:text-[15px] font-semibold lg-ink-soft leading-tight">Guidance Office</p>
+              </div>
+              <div>
+                <p className="text-[24px] xl:text-[32px] leading-tight font-bold tracking-tight lg-ink">{openNow ? (isTl ? 'Bukas ngayon' : 'Open now') : isTl ? 'Sarado ngayon' : 'Closed now'}</p>
+                <p className="text-[14px] xl:text-[16px] lg-ink-soft">{officeNote}</p>
+                {openNow && <div className="mt-3 h-2 rounded-full lg-line overflow-hidden"><div className="h-full rounded-full bg-[#30D158]" style={{ width: `${dayPct}%` }} /></div>}
+              </div>
+              <div className="flex justify-between gap-1">
+                {week.map((d) => (
+                  <span key={d.iso} title={d.open ? (isTl ? 'Bukas' : 'Open') : isTl ? 'Sarado' : 'Closed'} className={`flex-1 h-12 xl:h-14 rounded-2xl flex flex-col items-center justify-center text-[11px] xl:text-[12px] font-semibold ${d.today ? 'bg-[#0A84FF] text-white' : d.open ? 'lg-chip lg-ink' : 'lg-ink-soft opacity-50'}`}>
+                    {d.label}<span className="text-[15px] xl:text-[17px] font-bold">{d.num}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* chat: open chats you can tap */}
+            <div className="lg-card relative p-5 xl:p-7 flex flex-col gap-3 min-h-0">
+              {decor && <HollySprig className="absolute top-3 right-3 w-10 h-7" />}
+              <button type="button" onClick={() => goTab('chat')} className="flex items-center gap-3 text-left">
+                <span className={`w-11 h-11 xl:w-12 xl:h-12 rounded-full flex items-center justify-center shrink-0 ${openChats ? 'bg-[#0A84FF] text-white' : 'lg-chip'}`}><MessageSquare className="w-6 h-6" /></span>
+                <span className="text-[14px] xl:text-[15px] font-semibold lg-ink-soft">Chat</span>
+              </button>
+              <p className="text-[24px] xl:text-[32px] leading-tight font-bold tracking-tight lg-ink">{openChats ? (isTl ? `${openChats} bukas na chat` : `${openChats} open chat${openChats > 1 ? 's' : ''}`) : isTl ? 'Walang chat' : 'No chat yet'}</p>
+              {openChats ? (
+                <div className="flex-1 min-h-0 flex flex-col gap-2 overflow-hidden">
+                  {history.filter((c) => c.chatStatus === 'Open').slice(0, 3).map((c) => (
+                    <button key={c.id} type="button" onClick={() => openConcernChat(c)} className="w-full rounded-2xl lg-chip px-3.5 py-2.5 text-left flex items-center gap-2 active:scale-[0.98] transition-transform duration-150">
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[14px] xl:text-[15px] font-semibold lg-ink truncate">{c.category}</span>
+                        <span className="block text-[12px] lg-ink-soft">{isTl ? 'Pindutin para buksan' : 'Tap to open'} · {c.referralCode}</span>
+                      </span>
+                      <ChevronRight className="w-4 h-4 lg-ink-soft shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[14px] xl:text-[15px] lg-ink-soft">{isTl ? 'Bubuksan ng Guidance kapag tinanggap ang report mo.' : 'Guidance opens a chat when they accept your report.'}</p>
+              )}
+            </div>
+
+            {/* safety note */}
+            <div className="lg-card relative col-span-2 lg:col-span-4 p-5 flex items-center gap-4">
+              {decor && (
+                <div className="hidden lg:flex absolute right-6 top-0 items-start gap-4" aria-hidden="true">
+                  <Parol color="gold" className="w-7 h-[46px] text-[#8E8E93]" />
+                  <Parol color="red" delay={0.7} className="w-8 h-[54px] text-[#8E8E93]" />
+                  <Parol color="green" delay={1.4} className="w-7 h-[46px] text-[#8E8E93]" />
+                  <Parol color="blue" delay={2.1} className="w-8 h-[54px] text-[#8E8E93]" />
+                </div>
+              )}
+              <span className="w-11 h-11 rounded-2xl tile-grad tile-violet text-white flex items-center justify-center shrink-0"><ShieldIcon className="w-5 h-5" /></span>
+              <div className="min-w-0">
+                <p className="text-[15px] font-semibold lg-ink">{isTl ? 'Confidential ang report mo' : 'Your report is confidential'}</p>
+                <p className="text-[13px] lg-ink-soft">{isTl ? 'Ang Guidance Office lang ang makakabasa. Hindi sasabihin sa inireklamo kung sino ka. Pindutin ang Quick Exit kung kailangan.' : 'Only the Guidance Office can read it. The reported student is never told who you are. Use Quick Exit anytime.'}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'me' && (
+          <div className="max-w-2xl mx-auto pt-2 lg-me">
+            <p className="px-1 text-[30px] sm:text-[34px] font-bold tracking-tight lg-ink flex items-center gap-2">{isTl ? 'Ako' : 'Me'}{decor && <Parol color="blue" className="w-6 h-[38px] -mb-3 text-[#8E8E93]" />}</p>
+            <p className="px-1 pb-2 text-[15px] lg-ink-soft">{isTl ? 'Ang account mo at mga setting.' : 'Your account and settings.'}</p>
+            {settingsBody}
+            <p className="pt-6 text-[12px] text-center lg-ink-soft">{isTl ? 'Pribado at protektado (RA 10173)' : 'Private and protected (RA 10173)'}</p>
+          </div>
+        )}
+
+        {activeTab === 'submit' && (
+          <div className="lg:grid lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)] lg:gap-5 lg:items-start pt-2 lg:pt-0">
+          {/* LEFT (website): who is reporting, the steps, office now */}
+          <aside className="hidden lg:flex flex-col gap-5 sticky top-[112px]">
+            <div className="lg-card lg-widget relative overflow-hidden p-6 text-white">
+              <span aria-hidden className="wg-blob wg-b1" /><span aria-hidden className="wg-blob wg-b2" /><span aria-hidden className="wg-blob wg-b3" />
+              <div className="relative">
+                <div className="flex items-center gap-4">
+                  <span className="w-16 h-16 rounded-[22px] wg-glass flex items-center justify-center text-[22px] font-bold shrink-0">
+                    {user.fullName.split(/[\s,]+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join('')}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[22px] leading-tight font-bold tracking-tight">{firstName}</p>
+                    <p className="text-[15px] text-white/80 truncate">{user.gradeSection || user.studentNumber}</p>
+                  </div>
+                </div>
+                <p className="mt-5 rounded-2xl wg-glass px-4 py-3 text-[15px] leading-snug flex items-start gap-2.5">
+                  <ShieldIcon className="w-5 h-5 mt-0.5 shrink-0" />
+                  {isTl ? 'Pribado ito. Ang Guidance Office lang ang makakabasa.' : 'This is private. Only the Guidance Office can read it.'}
+                </p>
+              </div>
+            </div>
+
+            <ol className="lg-card p-3">
+              {stepNames.map((s, i) => {
                 const n = i + 1;
                 const done = formStep > n;
                 const on = formStep === n;
                 return (
-                  <li key={n} className={`flex items-center gap-3 px-3 py-3 rounded-xl ${on ? 'bg-[#0A84FF]/[0.08]' : ''}`}>
-                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[13px] font-semibold shrink-0 ${done ? 'bg-[#30D158] text-white' : on ? 'bg-[#0A84FF] text-white' : 'bg-black/[0.06] dark:bg-white/[0.1] text-[#6E6E73]'}`}>
-                      {done ? <CheckIcon className="w-4 h-4" /> : n}
+                  <li key={n} className={`flex items-center gap-4 px-3 py-3.5 rounded-2xl ${on ? 'lg-chip' : ''}`}>
+                    <span className={`w-10 h-10 rounded-full flex items-center justify-center text-[16px] font-bold shrink-0 ${done ? 'bg-[#30D158] text-white' : on ? 'nav-c-home text-white' : 'lg-chip lg-ink-soft'}`}>
+                      {done ? <CheckIcon className="w-5 h-5" /> : n}
                     </span>
-                    <span className={`text-[14px] ${on ? 'font-semibold text-[#1D1D1F] dark:text-white' : 'text-[#6E6E73] dark:text-[#A1A1A6]'}`}>{s}</span>
+                    <span className="min-w-0">
+                      <span className={`block text-[17px] ${on ? 'font-bold lg-ink' : 'font-semibold lg-ink-soft'}`}>{s[0]}</span>
+                      <span className="block text-[13px] lg-ink-soft">{done ? (isTl ? 'Tapos na' : 'Done') : s[1]}</span>
+                    </span>
                   </li>
                 );
               })}
             </ol>
-            <div className="sd-card p-4 flex items-start gap-3">
-              <span className="w-9 h-9 rounded-xl tile-grad tile-teal text-white flex items-center justify-center shrink-0"><ClockIcon className="w-4 h-4" /></span>
-              <div className="min-w-0">
-                <p className="text-[14px] font-semibold text-[#1D1D1F] dark:text-white">{isTl ? 'Oras ng Guidance Office' : 'Guidance Office hours'}</p>
-                <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">{hoursText}</p>
-                <p className="mt-1 text-[12px] text-[#8E8E93]">{isTl ? 'Ang report sa labas ng oras ay babasahin sa susunod na pasok.' : 'Reports sent after hours are read on the next office day.'}</p>
+
+            <div className="lg-card p-5 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <span className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 text-white ${openNow ? 'bg-[#30D158]' : 'bg-[#FF9F0A]'}`}><ClockIcon className="w-6 h-6" /></span>
+                <div className="min-w-0">
+                  <p className="text-[20px] leading-tight font-bold lg-ink">{openNow ? (isTl ? 'Bukas ngayon' : 'Open now') : isTl ? 'Sarado ngayon' : 'Closed now'}</p>
+                  <p className="text-[14px] lg-ink-soft">{officeNote}</p>
+                </div>
               </div>
+              {openNow && <div className="h-2 rounded-full lg-line overflow-hidden"><div className="h-full rounded-full bg-[#30D158]" style={{ width: `${dayPct}%` }} /></div>}
+              <div className="flex justify-between gap-1">
+                {week.map((d) => (
+                  <span key={d.iso} className={`flex-1 h-12 rounded-2xl flex flex-col items-center justify-center text-[11px] font-semibold ${d.today ? 'bg-[#0A84FF] text-white' : d.open ? 'lg-chip lg-ink' : 'lg-ink-soft opacity-50'}`}>
+                    {d.label}<span className="text-[15px] font-bold">{d.num}</span>
+                  </span>
+                ))}
+              </div>
+              {!openNow && <p className="text-[13px] lg-ink-soft">{isTl ? 'Pwede ka pa ring mag-report. Babasahin ito sa susunod na pasok.' : 'You can still send it. Guidance reads it on the next office day.'}</p>}
             </div>
           </aside>
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="sd-card p-5 sm:p-7 space-y-5"
-          >
-            {/* Form Header & Progress Tracker */}
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/30 text-[10px] font-semibold">
-                      Page {formStep} of 3
-                    </span>
-                    <span className="text-[11px] text-emerald-400 font-bold flex items-center gap-1">
-                      <Shield className="w-3.5 h-3.5" /> RA 10173 Protected
-                    </span>
-                  </div>
-                  <h2 className="text-base sm:text-xl font-semibold card-title-text mt-1">
-                    {formStep === 1 && (isTl ? '1. Category ng Insidente & Para Kanino' : '1. Incident Category & Scope')}
-                    {formStep === 2 && (isTl ? '2. Inirereklamong Estudyante (Respondent) & Detalye' : '2. Reported Student (Respondent) & Incident Details')}
-                    {formStep === 3 && (isTl ? '3. Salaysay, Konteksto & Pagsumite' : '3. Narrative Context & Submission')}
-                  </h2>
-                  <p className="text-xs card-subtitle-text mt-0.5">
-                    {isTl
-                      ? 'Tanging ang AICS Guidance Associate lamang ang makakabasa nito. Ligtas ka rito.'
-                      : 'Direct, private channel to the AICS Montalban Guidance Office.'}
-                  </p>
-                </div>
 
-                {/* Visual Step Bar (phones) */}
-                <div className="flex lg:hidden items-center gap-2 self-start sm:self-auto">
-                  {[1, 2, 3].map((step) => (
-                    <div
-                      key={step}
-                      className={`h-2 rounded-full transition-all ${
-                        formStep === step
-                          ? 'w-8 bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.7)]'
-                          : formStep > step
-                          ? 'w-4 bg-emerald-400'
-                          : 'w-4 bg-white/20'
-                      }`}
-                    />
-                  ))}
-                </div>
+          <div className="lg-card p-5 sm:p-8 space-y-6">
+            {/* header */}
+            <div>
+              <div className="flex items-center gap-3">
+                <span className="h-8 px-3.5 rounded-full lg-chip inline-flex items-center text-[13px] font-bold lg-ink">{isTl ? `Hakbang ${formStep} sa 3` : `Step ${formStep} of 3`}</span>
+                <span className="text-[13px] font-semibold text-[#30A14E] inline-flex items-center gap-1.5"><Shield className="w-4 h-4" />{isTl ? 'Confidential' : 'Confidential'}</span>
+              </div>
+              <h2 className="mt-3 text-[28px] sm:text-[36px] leading-tight font-bold tracking-tight lg-ink">
+                {formStep === 1 ? (isTl ? 'Anong klaseng concern?' : 'What kind of concern?') : formStep === 2 ? (isTl ? 'Sino ang inirereklamo?' : 'Who is it about?') : isTl ? 'Ano ang nangyari?' : 'What happened?'}
+              </h2>
+              <p className="mt-1 text-[16px] lg-ink-soft">
+                {formStep === 1 ? (isTl ? 'Piliin ang pinakamalapit. Okay lang kung hindi sigurado, piliin ang "Iba pa".' : 'Pick the closest one. Not sure? Choose "Something else".') : formStep === 2 ? (isTl ? 'Kahit hindi mo alam ang pangalan, pwede pa rin.' : 'It is okay if you do not know their name.') : isTl ? 'Ikuwento nang tapat. Ang Guidance lang ang makakabasa.' : 'Tell it honestly. Only Guidance will read it.'}
+              </p>
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                {[1, 2, 3].map((s) => <span key={s} className={`h-1.5 rounded-full ${formStep >= s ? 'nav-c-home' : 'lg-line'}`} />)}
               </div>
             </div>
 
-            {/* office hours (phones; the website shows it on the left) */}
-            <div className="lg:hidden p-3.5 rounded-2xl sd-note flex items-center gap-3">
-              <span className="w-8 h-8 rounded-xl tile-grad tile-teal text-white flex items-center justify-center shrink-0"><ClockIcon className="w-4 h-4" /></span>
-              <p className="text-[13px] text-[#1D1D1F] dark:text-white">
-                <b className="font-semibold">{isTl ? 'Oras ng opisina' : 'Office hours'}:</b> {hoursText}
-              </p>
+            {/* office (phones; the website shows it on the left) */}
+            <div className="lg:hidden rounded-2xl lg-chip px-4 py-3 flex items-center gap-3">
+              <span className={`w-3 h-3 rounded-full shrink-0 ${openNow ? 'bg-[#30D158]' : 'bg-[#FF9F0A]'}`} />
+              <p className="text-[14px] lg-ink"><b className="font-semibold">{openNow ? (isTl ? 'Bukas ngayon' : 'Open now') : isTl ? 'Sarado ngayon' : 'Closed now'}</b> · {officeNote}</p>
             </div>
 
-{submitError && (
-              <div className="p-3.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-600 dark:text-rose-200 text-xs font-semibold flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+            {submitError && (
+              <div className="p-4 rounded-2xl bg-[#FF3B30]/10 border border-[#FF3B30]/30 text-[15px] font-semibold text-[#D70015] dark:text-[#FF6961] flex items-center gap-3">
+                <AlertTriangle className="w-5 h-5 shrink-0" />
                 <span>{submitError}</span>
               </div>
             )}
 
             <form onSubmit={handleSubmitConcern} className="space-y-6">
-              {/* ========================================================= */}
-              {/* STEP 1: CATEGORY & SINO ANG MAGREREPORT                   */}
-              {/* ========================================================= */}
               {formStep === 1 && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="space-y-5"
-                >
-                  {/* Category Selector */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold register-section-title block">
-                      {isTl ? 'A. Piliin ang Uri ng Concern' : 'A. Select Incident / Concern Category'} *
-                    </label>
-                    <select
-                      value={reportType}
-                      onChange={(e) => setReportType(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl cosmic-input text-xs sm:text-sm font-semibold focus:outline-none"
-                    >
-                      <optgroup label={isTl ? '── MAJOR / SERIOUS OFFENSES (Mabibigat na Paglabag) ──' : '── MAJOR & SERIOUS OFFENSES ──'}>
-                        <option value="Physical Bullying & Fighting">
-                          {isTl ? 'Physical Bullying, Away, o Pananakit (RA 10627)' : 'Physical Bullying, Assault, or Fighting'}
-                        </option>
-                        <option value="Cyberbullying & Online Harassment">
-                          {isTl ? 'Cyberbullying o Paninirang-Puri sa Social Media' : 'Cyberbullying & Online Harassment'}
-                        </option>
-                        <option value="Vaping / Smoking Infraction">
-                          {isTl ? 'Vaping o Paninigarilyo sa Loob ng Campus' : 'Vaping / Smoking on Campus'}
-                        </option>
-                        <option value="Extortion & Coercion">
-                          {isTl ? 'Panghihingi ng Pera (Extortion) o Pananakot' : 'Extortion, Blackmail, or Threat'}
-                        </option>
-                        <option value="Weapons & Dangerous Contraband">
-                          {isTl ? 'Matatalim na Bagay o Delikadong Gamit' : 'Weapons & Dangerous Contraband'}
-                        </option>
-                        <option value="Vandalism & Campus Property Damage">
-                          {isTl ? 'Pagsira sa Gamit ng Paaralan (Vandalism)' : 'Vandalism & Campus Property Damage'}
-                        </option>
-                        <option value="Cutting Classes & Truancy">
-                          {isTl ? 'Pagtakas sa Gate o Pag-cutting Classes' : 'Cutting Classes & Gate Truancy'}
-                        </option>
-                        <option value="Forgery & Tampering of Records">
-                          {isTl ? 'Pamemeke ng Pirma ng Magulang o Records' : 'Forgery of Parent Signature or Records'}
-                        </option>
-                      </optgroup>
+                <div className="space-y-6">
+                  {CONCERN_GROUPS.map((g) => (
+                    <div key={g.en}>
+                      <p className="mb-3 text-[15px] font-bold lg-ink-soft">{isTl ? g.tl : g.en}</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {g.items.map((c) => {
+                          const on = reportType === c.v;
+                          const Ic = c.icon;
+                          return (
+                            <button key={c.v} type="button" onClick={() => setReportType(c.v)} aria-pressed={on} className={`min-h-[96px] p-4 rounded-[22px] text-left flex flex-col justify-between gap-2 border-2 transition-colors duration-150 active:scale-[0.98] ${on ? 'border-[#0A84FF] bg-[#0A84FF]/[0.08] dark:bg-[#0A84FF]/20' : 'border-transparent lg-chip hover:border-[#0A84FF]/30'}`}>
+                              <span className={`w-10 h-10 rounded-full flex items-center justify-center ${on ? 'nav-c-home text-white' : g.tone}`}><Ic className="w-5 h-5" /></span>
+                              <span className="text-[15px] leading-snug font-semibold lg-ink">{isTl ? c.tl : c.en}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
 
-                      <optgroup label={isTl ? '── MINOR OFFENSES (Magaan na Paglabag) ──' : '── MINOR OFFENSES ──'}>
-                        <option value="Habitual Tardiness">
-                          {isTl ? 'Madalas na Pagkahuli sa Klase / Gate (Tardiness)' : 'Habitual Tardiness & Late Arrival'}
-                        </option>
-                        <option value="Improper Uniform & Dress Code">
-                          {isTl ? 'Paglabag sa Tamang Uniporme o Gupit (Dress Code)' : 'Improper Uniform & Dress Code Violation'}
-                        </option>
-                        <option value="Improper Use of School ID">
-                          {isTl ? 'Hindi Pagsusuot o Maling Paggamit ng School ID' : 'Non-Wearing or Improper Use of School ID'}
-                        </option>
-                        <option value="Classroom Disruption">
-                          {isTl ? 'Kakulitan o Kaingayan sa Klase (Disruption)' : 'Classroom Disruption & Noise'}
-                        </option>
-                        <option value="Littering on Campus">
-                          {isTl ? 'Pagtatapon ng Kalat sa Campus (Littering)' : 'Campus Littering Infraction'}
-                        </option>
-                        <option value="Unauthorized Device Use">
-                          {isTl ? 'Paggamit ng Cellphone Habang Nagkaklase' : 'Unauthorized Mobile Phone Use in Class'}
-                        </option>
-                        <option value="Other Disciplinary Infraction">
-                          {isTl ? 'Iba Pang Paglabag sa Student Handbook' : 'Other Disciplinary Handbook Infraction'}
-                        </option>
-                      </optgroup>
-                    </select>
-                  </div>
-
-                  {/* SINO ANG MAGREREPORT: SARILI O PARA SA KAIBIGAN */}
-                  <div className="p-4 sm:p-5 rounded-2xl sd-group space-y-4">
-                    <label className="text-xs font-semibold register-section-title block">
-                      {isTl ? 'B. Para kanino ang report na ito?' : 'B. Who is this report for?'} *
-                    </label>
-
+                  <div>
+                    <p className="mb-3 text-[15px] font-bold lg-ink-soft">{isTl ? 'Para kanino ang report?' : 'Who is this report for?'}</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          soundFX.playToggleSwitch(true);
-                          setReportingRole('self');
-                        }}
-                        className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 cursor-pointer ${
-                          reportingRole === 'self'
-                            ? 'bg-[#0A84FF]/[0.07] dark:bg-[#0A84FF]/20 border-[#0A84FF] ring-1 ring-[#0A84FF]'
-                            : 'bg-white dark:bg-white/5 border-slate-300 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'
-                        }`}
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-600 dark:text-sky-300 flex items-center justify-center shrink-0"><User className="w-4 h-4" /></div>
-                        <div>
-                          <p className="text-xs font-semibold text-[#1D1D1F] dark:text-white">
-                            {isTl ? 'Para sa Sarili Ko' : 'For Myself (Self-Report)'}
-                          </p>
-                          <p className="text-[11px] text-[#6E6E73] dark:text-sky-200/80 mt-0.5">
-                            {isTl ? 'Ako mismo ang nakaranas o may concern' : 'I personally experienced or have this concern'}
-                          </p>
-                        </div>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          soundFX.playToggleSwitch(true);
-                          setReportingRole('peer');
-                        }}
-                        className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 cursor-pointer ${
-                          reportingRole === 'peer'
-                            ? 'bg-[#0A84FF]/[0.07] dark:bg-[#0A84FF]/20 border-[#0A84FF] ring-1 ring-[#0A84FF]'
-                            : 'bg-white dark:bg-white/5 border-slate-300 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'
-                        }`}
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 flex items-center justify-center shrink-0"><Users className="w-4 h-4" /></div>
-                        <div>
-                          <p className="text-xs font-semibold text-[#1D1D1F] dark:text-white">
-                            {isTl ? 'Para sa Aking Kaibigan / Kaklase' : 'For a Friend / Classmate'}
-                          </p>
-                          <p className="text-[11px] text-[#6E6E73] dark:text-sky-200/80 mt-0.5">
-                            {isTl ? 'Irereport ko ang nangyari sa aking kaibigan' : 'Reporting an incident that happened to my friend'}
-                          </p>
-                        </div>
-                      </button>
+                      {([
+                        ['self', User, isTl ? 'Para sa sarili ko' : 'For myself', isTl ? 'Ako mismo ang nakaranas nito' : 'It happened to me'],
+                        ['peer', Users, isTl ? 'Para sa kaibigan o kaklase' : 'For a friend or classmate', isTl ? 'Nangyari ito sa kaibigan ko' : 'It happened to someone I know'],
+                      ] as const).map(([v, Ic, t1, t2]) => {
+                        const on = reportingRole === v;
+                        return (
+                          <button key={v} type="button" onClick={() => { soundFX.playToggleSwitch(true); setReportingRole(v); }} aria-pressed={on} className={`p-4 rounded-[22px] text-left flex items-center gap-4 border-2 transition-colors duration-150 ${on ? 'border-[#0A84FF] bg-[#0A84FF]/[0.08] dark:bg-[#0A84FF]/20' : 'border-transparent lg-chip'}`}>
+                            <span className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${on ? 'nav-c-home text-white' : 'nav-c-me text-white'}`}><Ic className="w-6 h-6" /></span>
+                            <span><span className="block text-[17px] font-bold lg-ink">{t1}</span><span className="block text-[14px] lg-ink-soft">{t2}</span></span>
+                          </button>
+                        );
+                      })}
                     </div>
-
-                    {/* Details if Reporting for a Friend */}
                     {reportingRole === 'peer' && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-200 dark:border-white/10">
-                        <div className="space-y-1">
-                          <label className="text-xs font-bold register-label">
-                            {isTl ? 'Pangalan ng Kaibigan / Biktima' : 'Friend / Affected Student Name'} *
-                          </label>
-                          <input
-                            type="text"
-                            required={reportingRole === 'peer'}
-                            placeholder={isTl ? 'Buong pangalan ng kaibigan' : 'Full name of your friend'}
-                            value={friendName}
-                            onChange={(e) => setFriendName(e.target.value)}
-                            className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-xs font-bold register-label">Grade & Section</label>
-                          <input
-                            type="text"
-                            placeholder="e.g. Grade 11 · STEM-1"
-                            value={friendGradeSection}
-                            onChange={(e) => setFriendGradeSection(e.target.value)}
-                            className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
-                          />
-                        </div>
+                      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <label className="block">
+                          <span className="block mb-1.5 text-[15px] font-semibold lg-ink">{isTl ? 'Pangalan ng kaibigan' : "Friend's name"} *</span>
+                          <input type="text" required placeholder={isTl ? 'Buong pangalan' : 'Full name'} value={friendName} onChange={(e) => setFriendName(e.target.value)} className={fieldCls} />
+                        </label>
+                        <label className="block">
+                          <span className="block mb-1.5 text-[15px] font-semibold lg-ink">{isTl ? 'Grade at section' : 'Grade and section'}</span>
+                          <input type="text" placeholder={isTl ? 'hal. Grade 11 · STEM-1' : 'e.g. Grade 11 · STEM-1'} value={friendGradeSection} onChange={(e) => setFriendGradeSection(e.target.value)} className={fieldCls} />
+                        </label>
                       </div>
                     )}
                   </div>
 
-                  {/* Step 1 Next Button */}
                   <div className="sd-actionbar flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (reportingRole === 'peer' && !friendName.trim()) {
-                          soundFX.playError();
-                          setSubmitError(isTl ? 'Pakilagay ang pangalan ng kaibigan.' : 'Please enter your friend\'s name.');
-                          return;
-                        }
-                        setSubmitError(null);
-                        soundFX.playToggleSwitch(true);
-                        setFormStep(2);
-                      }}
-                      className="btn-press px-6 py-3 rounded-xl sd-primary text-white text-xs sm:text-sm font-semibold shadow-lg shadow-blue-950/40 flex items-center gap-2"
-                    >
-                      <span>{isTl ? 'Pumunta sa Hakbang 2' : 'Next: Bully & Suspect Info'}</span>
-                      <ChevronRight className="w-4 h-4" />
+                    <button type="button" onClick={() => {
+                      if (reportingRole === 'peer' && !friendName.trim()) { soundFX.playError(); setSubmitError(isTl ? 'Ilagay ang pangalan ng kaibigan mo para makapagpatuloy.' : "Type your friend's name to continue."); return; }
+                      setSubmitError(null); soundFX.playToggleSwitch(true); setFormStep(2);
+                    }} className={primaryBtn}>
+                      {isTl ? 'Susunod' : 'Next'}<ChevronRight className="w-5 h-5" />
                     </button>
                   </div>
-                </motion.div>
+                </div>
               )}
 
-              {/* ========================================================= */}
-              {/* STEP 2: KILALA BA ANG NAMBULLY O SUSPECT?                 */}
-              {/* ========================================================= */}
               {formStep === 2 && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="space-y-5"
-                >
-                  <div className="p-4 sm:p-5 rounded-2xl sd-group space-y-4">
-                    <label className="text-xs font-semibold register-section-title block">
-                      {isTl ? 'Kilala mo ba ang Inirereklamong Estudyante (Respondent)?' : 'Do you know the Reported Student (Respondent)?'} *
-                    </label>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                      {[
-                        { id: 'yes', labelTl: 'Oo, Kilala ko ang Inirereklamo', labelEn: 'Yes, I know the student' },
-                        { id: 'no', labelTl: 'Hindi ko kilala (Unknown)', labelEn: 'I do not know (Unknown)' },
-                        { id: 'unsure', labelTl: 'May kutob / Hindi sigurado sa pangalan', labelEn: 'Unsure of full name / Suspected' },
-                      ].map((opt) => (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          onClick={() => {
-                            soundFX.playToggleSwitch(true);
-                            setKnowsSuspect(opt.id as any);
-                          }}
-                          className={`px-3 py-3 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer ${
-                            knowsSuspect === opt.id
-                              ? 'bg-[#0A84FF]/[0.07] dark:bg-[#0A84FF]/20 border-[#0A84FF] text-[#1D1D1F] dark:text-white ring-1 ring-[#0A84FF] dark:ring-blue-400'
-                              : 'bg-white dark:bg-white/5 border-slate-300 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10'
-                          }`}
-                        >
-                          {isTl ? opt.labelTl : opt.labelEn}
-                        </button>
-                      ))}
+                <div className="space-y-6">
+                  <div>
+                    <p className="mb-3 text-[15px] font-bold lg-ink-soft">{isTl ? 'Kilala mo ba siya?' : 'Do you know who it is?'}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {([
+                        ['yes', UserCheck, isTl ? 'Oo, kilala ko' : 'Yes, I know them', isTl ? 'Alam ko ang pangalan' : 'I know their name'],
+                        ['unsure', HelpCircle, isTl ? 'Hindi sigurado' : 'Not sure', isTl ? 'May hula ako sa pangalan' : 'I think I know who'],
+                        ['no', UserX, isTl ? 'Hindi ko kilala' : 'I do not know', isTl ? 'Ilalarawan ko na lang' : 'I will describe them'],
+                      ] as const).map(([v, Ic, t1, t2]) => {
+                        const on = knowsSuspect === v;
+                        return (
+                          <button key={v} type="button" onClick={() => { soundFX.playToggleSwitch(true); setKnowsSuspect(v as any); }} aria-pressed={on} className={`p-4 rounded-[22px] text-left flex flex-col gap-3 border-2 transition-colors duration-150 ${on ? 'border-[#0A84FF] bg-[#0A84FF]/[0.08] dark:bg-[#0A84FF]/20' : 'border-transparent lg-chip'}`}>
+                            <span className={`w-12 h-12 rounded-full flex items-center justify-center ${on ? 'nav-c-home text-white' : 'nav-c-history text-white'}`}><Ic className="w-6 h-6" /></span>
+                            <span><span className="block text-[17px] font-bold lg-ink">{t1}</span><span className="block text-[14px] lg-ink-soft">{t2}</span></span>
+                          </button>
+                        );
+                      })}
                     </div>
-
-                                        {knowsSuspect !== 'yes' && (
-                      <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-400/30 space-y-2">
-                        <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-bold text-xs">
-                          <HelpCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                          <span>{isTl ? 'Mga Palatandaan (Physical Identifiers / Hangout Spot)' : 'Physical Identifiers & Description'}</span>
-                        </div>
-                        <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
-                          {isTl
-                            ? 'Kahit hindi mo alam ang pangalan, ilagay ang anumang palatandaan (suot, kulay ng bag, estimated grade, o kung saan karaniwang tumatambay) upang matulungan ang Guidance.'
-                            : 'Even without a name, describe their appearance, uniform, estimated grade/strand, or hangout area to aid Guidance.'}
-                        </p>
-                        <input
-                          type="text"
-                          placeholder={isTl ? 'hal. Matangkad, laging nasa 3rd floor hallway tuwing break, naka-black bag' : 'e.g. Tall, hangs out at 3rd floor hallway during recess, black backpack'}
-                          value={suspectDetails}
-                          onChange={(e) => setSuspectDetails(e.target.value)}
-                          className="w-full px-3.5 py-2 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
-                        />
-                      </div>
-                    )}
-
-                    {knowsSuspect === 'yes' && (
-                      <div className="space-y-3 pt-3 border-t border-slate-200 dark:border-white/10">
-                        <div className="space-y-1">
-                          <label className="text-xs font-bold register-label">
-                            {isTl ? 'Pangalan ng Inirereklamo (Respondent)' : 'Name of Reported Student (Respondent)'} *
-                          </label>
-                          <input
-                            type="text"
-                            required={knowsSuspect === 'yes'}
-                            placeholder={isTl ? 'hal. Juan Dela Cruz (o alyas / palayaw)' : 'e.g. Juan Dela Cruz (or nickname / alias)'}
-                            value={suspectName}
-                            onChange={(e) => setSuspectName(e.target.value)}
-                            className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-xs font-bold register-label">
-                            {isTl ? 'Baitang, Strand, o Palatandaan (Optional)' : 'Grade, Strand, or Physical Identifiers (Optional)'}
-                          </label>
-                          <input
-                            type="text"
-                            placeholder={isTl ? 'hal. Grade 11 ICT-2, matangkad, laging nakasuot ng jacket na itim' : 'e.g. Grade 11 ICT-2, tall, wears black hoodie'}
-                            value={suspectDetails}
-                            onChange={(e) => setSuspectDetails(e.target.value)}
-                            className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
-                          />
-                        </div>
-                      </div>
-                    )}
                   </div>
-
-                  {/* Step 2 Back & Next Buttons */}
+                  {knowsSuspect === 'yes' && (
+                    <label className="block">
+                      <span className="block mb-1.5 text-[15px] font-semibold lg-ink">{isTl ? 'Pangalan niya' : 'Their name'} *</span>
+                      <input type="text" required placeholder={isTl ? 'hal. Juan Dela Cruz, o palayaw' : 'e.g. Juan Dela Cruz, or a nickname'} value={suspectName} onChange={(e) => setSuspectName(e.target.value)} className={fieldCls} />
+                    </label>
+                  )}
+                  <label className="block">
+                    <span className="block mb-1.5 text-[15px] font-semibold lg-ink">{knowsSuspect === 'yes' ? (isTl ? 'Grade, section o itsura (hindi kailangan)' : 'Grade, section or looks (optional)') : isTl ? 'Ilarawan siya' : 'Describe them'}</span>
+                    <span className="block mb-2 text-[14px] lg-ink-soft">{isTl ? 'Suot, kulay ng bag, tantyang grade, o saan siya madalas tumambay.' : 'Clothes, bag, guessed grade, or where they usually hang out.'}</span>
+                    <input type="text" placeholder={isTl ? 'hal. Matangkad, laging nasa 3rd floor tuwing break, itim na bag' : 'e.g. Tall, at the 3rd floor during break, black bag'} value={suspectDetails} onChange={(e) => setSuspectDetails(e.target.value)} className={fieldCls} />
+                  </label>
                   <div className="sd-actionbar flex items-center justify-between gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        soundFX.playBackspace();
-                        setFormStep(1);
-                      }}
-                      className="btn-press px-4 py-2.5 rounded-xl bg-slate-200/70 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-800 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                      <span>{isTl ? 'Bumalik sa Hakbang 1' : 'Back to Step 1'}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (knowsSuspect === 'yes' && !suspectName.trim()) {
-                          soundFX.playError();
-                          setSubmitError(isTl ? 'Pakilagay ang pangalan ng inirereklamong estudyante.' : 'Please enter the name of the reported student.');
-                          return;
-                        }
-                        setSubmitError(null);
-                        soundFX.playToggleSwitch(true);
-                        setFormStep(3);
-                      }}
-                      className="btn-press px-6 py-3 rounded-xl sd-primary text-white text-xs sm:text-sm font-semibold shadow-lg shadow-blue-950/40 flex items-center gap-2"
-                    >
-                      <span>{isTl ? 'Pumunta sa Hakbang 3' : 'Next: Salaysay & Review'}</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
+                    <button type="button" onClick={() => { soundFX.playBackspace(); setFormStep(1); }} className={backBtn}><ChevronLeft className="w-5 h-5" />{isTl ? 'Bumalik' : 'Back'}</button>
+                    <button type="button" onClick={() => {
+                      if (knowsSuspect === 'yes' && !suspectName.trim()) { soundFX.playError(); setSubmitError(isTl ? 'Ilagay ang pangalan niya, o piliin ang "Hindi sigurado".' : 'Type their name, or choose "Not sure".'); return; }
+                      setSubmitError(null); soundFX.playToggleSwitch(true); setFormStep(3);
+                    }} className={primaryBtn}>{isTl ? 'Susunod' : 'Next'}<ChevronRight className="w-5 h-5" /></button>
                   </div>
-                </motion.div>
+                </div>
               )}
 
-              {/* ========================================================= */}
-              {/* STEP 3: SALAYSAY, KONTEKSTO & TERMS & CONDITION          */}
-              {/* ========================================================= */}
               {formStep === 3 && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="space-y-5"
-                >
-                  {/* Narrative of what happened */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold register-section-title block">
-                      {isTl ? 'Salaysay ng Pangyayari (What Happened)' : 'Incident Narrative (What Happened)'} *
-                    </label>
-                    <textarea
-                      rows={4}
-                      required
-                      placeholder={
-                        isTl
-                          ? 'Ikuwento nang tapat ang buong pangyayari. Ano ang ginawa o sinabi? Sino-sino ang kasama?'
-                          : 'Provide an honest description of the incident. What happened? Who was involved?'
-                      }
-                      value={whatHappened}
-                      onChange={(e) => setWhatHappened(e.target.value)}
-                      className="w-full p-4 rounded-xl cosmic-input text-xs sm:text-sm font-semibold focus:outline-none leading-relaxed"
-                    />
-                  </div>
-
-                  {/* Incident Context Details (When & Where) */}
+                <div className="space-y-6">
+                  <label className="block">
+                    <span className="block mb-1.5 text-[15px] font-semibold lg-ink">{isTl ? 'Ikuwento ang nangyari' : 'Tell us what happened'} *</span>
+                    <textarea rows={6} required placeholder={isTl ? 'Ano ang ginawa o sinabi? Sino-sino ang kasama?' : 'What was done or said? Who was there?'} value={whatHappened} onChange={(e) => setWhatHappened(e.target.value)} className={`${fieldCls} h-auto py-4 leading-relaxed`} />
+                  </label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold register-label">
-                        {isTl ? 'Kailan Nangyari (When)' : 'When It Happened'}
+                    {([
+                      [isTl ? 'Kailan' : 'When', isTl ? 'hal. Kanina, 10:15 AM recess' : 'e.g. Today, 10:15 AM recess', happenedWhen, setHappenedWhen],
+                      [isTl ? 'Saan' : 'Where', isTl ? 'hal. CR sa 3rd floor' : 'e.g. 3rd floor CR', happenedWhere, setHappenedWhere],
+                      [isTl ? 'May nakakita ba?' : 'Who saw it?', isTl ? 'hal. 2 kaklase, guard' : 'e.g. 2 classmates, the guard', witnesses, setWitnesses],
+                    ] as const).map(([l, p, v, set]) => (
+                      <label key={l} className="block">
+                        <span className="block mb-1.5 text-[15px] font-semibold lg-ink">{l}</span>
+                        <input type="text" placeholder={p} value={v} onChange={(e) => set(e.target.value)} className={fieldCls} />
                       </label>
-                      <input
-                        type="text"
-                        placeholder={isTl ? 'hal. Kaninang 10:15 AM recess (o ilagay N/A kung di matandaan)' : 'e.g. Today at 10:15 AM recess (or N/A)'}
-                        value={happenedWhen}
-                        onChange={(e) => setHappenedWhen(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold register-label">
-                        {isTl ? 'Saan Nangyari (Where)' : 'Where It Happened'}
-                      </label>
-                      <input
-                        type="text"
-                        placeholder={isTl ? 'hal. CR ng 3rd floor malapit sa Lab 2 (o ilagay N/A)' : 'e.g. 3rd floor CR near Lab 2 (or N/A)'}
-                        value={happenedWhere}
-                        onChange={(e) => setHappenedWhere(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold register-label">
-                        {isTl ? 'Mga Saksi (Witnesses)' : 'Witnesses Present'}
-                      </label>
-                      <input
-                        type="text"
-                        placeholder={isTl ? 'hal. 2 kaklase sa ICT-1 / Guwardya (o ilagay N/A kung walang saksi)' : 'e.g. 2 ICT-1 classmates / Security guard (or N/A)'}
-                        value={witnesses}
-                        onChange={(e) => setWitnesses(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl cosmic-input text-xs font-semibold focus:outline-none"
-                      />
-                    </div>
+                    ))}
                   </div>
 
-                  {/* PHOTO & PHYSICAL EVIDENCE ATTACHMENT CARD */}
-                  <div className="p-4 rounded-2xl sd-group space-y-3 border border-sky-300/40 dark:border-sky-800/40 bg-sky-50/40 dark:bg-[#0B1527]/60">
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-[#1E469B] text-white flex items-center justify-center shrink-0 shadow-xs">
-                          <Camera className="w-3.5 h-3.5" />
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold text-[#1D1D1F] dark:text-white block">
-                            {isTl ? 'Mag-attach ng Litrato o Ebidensya (Opsyonal)' : 'Attach Photo Evidence (Optional)'}
-                          </label>
-                          <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
-                            {isTl
-                              ? 'Pasa, pananakit, sira o bandalismong gamit, vape/kontrabando, o screenshot ng cyberbullying.'
-                              : 'Photos of injuries/bruises, damaged property, contraband/vape, or cyberbullying screenshots.'}
-                          </p>
-                        </div>
-                      </div>
-                      <span className="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-400/20">
-                        {evidencePhotos.length} {isTl ? 'Litrato na-attach' : 'Photos attached'}
-                      </span>
+                  <div>
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <p className="text-[15px] font-bold lg-ink-soft">{isTl ? 'Litrato (hindi kailangan)' : 'Photos (optional)'}</p>
+                      <span className="text-[14px] lg-ink-soft">{evidencePhotos.length}/10</span>
                     </div>
-
-                    {photoError && (
-                      <p className="text-[11px] font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1">
-                        <AlertTriangle className="w-3.5 h-3.5" />
-                        <span>{photoError}</span>
-                      </p>
-                    )}
-
-                    {/* Upload Triggers (Always visible if under 10 photos) */}
+                    {photoError && <p className="mb-2 text-[14px] font-semibold text-[#D70015] dark:text-[#FF6961] flex items-center gap-2"><AlertTriangle className="w-4 h-4" />{photoError}</p>}
                     {evidencePhotos.length < 10 && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                        {/* Option 1: Direct Camera Shutter */}
-                        <label className="rounded-xl border-2 border-dashed border-sky-400/80 dark:border-sky-700 hover:border-[#1E469B] bg-white/80 dark:bg-white/5 hover:bg-sky-50/90 p-3.5 flex items-center gap-3 cursor-pointer transition-all shadow-xs">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            capture="environment"
-                            onChange={handleEvidenceUpload}
-                            className="hidden"
-                          />
-                          <div className="w-9 h-9 rounded-xl bg-sky-500/20 text-sky-600 dark:text-sky-300 flex items-center justify-center shrink-0">
-                            <Camera className="w-5 h-5" />
-                          </div>
-                          <div className="min-w-0 text-left">
-                            <p className="text-xs font-semibold text-[#1D1D1F] dark:text-white leading-tight">
-                              {evidencePhotos.length === 0
-                                ? (isTl ? 'Picturan Agad (Camera)' : 'Take Photo (Camera)')
-                                : (isTl ? 'Kumuha Pa ng Litrato (Camera)' : 'Take Another Photo (Camera)')}
-                            </p>
-                            <p className="text-[10px] text-[#4A608A] dark:text-[#94A8D0]">
-                              {isTl ? 'Live camera capture' : 'Live camera snapshot'}
-                            </p>
-                          </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <label className="p-4 rounded-[22px] lg-chip flex items-center gap-3 cursor-pointer border-2 border-transparent hover:border-[#0A84FF]/30">
+                          <input type="file" accept="image/*" capture="environment" onChange={handleEvidenceUpload} className="hidden" />
+                          <span className="w-12 h-12 rounded-full nav-c-home text-white flex items-center justify-center shrink-0"><Camera className="w-6 h-6" /></span>
+                          <span className="text-[16px] font-semibold lg-ink">{isTl ? 'Kumuha ng litrato' : 'Take a photo'}</span>
                         </label>
-
-                        {/* Option 2: Upload Multiple from Gallery / Files */}
-                        <label className="rounded-xl border-2 border-dashed border-blue-400/80 dark:border-blue-700 hover:border-[#1E469B] bg-white/80 dark:bg-white/5 hover:bg-blue-50/90 p-3.5 flex items-center gap-3 cursor-pointer transition-all shadow-xs">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            onChange={handleEvidenceUpload}
-                            className="hidden"
-                          />
-                          <div className="w-9 h-9 rounded-xl bg-blue-500/20 text-[#6E6E73] dark:text-sky-300 flex items-center justify-center shrink-0">
-                            <ImageIcon className="w-5 h-5" />
-                          </div>
-                          <div className="min-w-0 text-left">
-                            <p className="text-xs font-semibold text-[#1D1D1F] dark:text-white leading-tight">
-                              {evidencePhotos.length === 0
-                                ? (isTl ? 'Pumili sa Gallery / Files' : 'Select Photos / Gallery')
-                                : (isTl ? 'Magdagdag Pa mula Gallery' : 'Add More from Gallery')}
-                            </p>
-                            <p className="text-[10px] text-[#4A608A] dark:text-[#94A8D0]">
-                              {isTl ? 'Kahit ilan (hanggang 10)' : 'Upload more photos (up to 10)'}
-                            </p>
-                          </div>
+                        <label className="p-4 rounded-[22px] lg-chip flex items-center gap-3 cursor-pointer border-2 border-transparent hover:border-[#0A84FF]/30">
+                          <input type="file" accept="image/*" multiple onChange={handleEvidenceUpload} className="hidden" />
+                          <span className="w-12 h-12 rounded-full nav-c-me text-white flex items-center justify-center shrink-0"><ImageIcon className="w-6 h-6" /></span>
+                          <span className="text-[16px] font-semibold lg-ink">{isTl ? 'Pumili sa gallery' : 'Choose from gallery'}</span>
                         </label>
                       </div>
                     )}
-
-                    {/* Previews Grid if photos are uploaded */}
                     {evidencePhotos.length > 0 && (
-                      <div className="pt-2">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[11px] font-semibold text-[#1D1D1F] dark:text-white">
-                            {isTl ? 'Mga Na-attach na Litrato' : 'Attached Photos'} ({evidencePhotos.length}/10)
-                          </span>
-                          <span className="text-[10px] text-[#4A608A] dark:text-[#94A8D0]">
-                            {isTl ? 'I-click ang basurahan para alisin' : 'Click trash icon to remove'}
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
-                          {evidencePhotos.map((photoUrl, idx) => (
-                            <div key={idx} className="relative group rounded-xl overflow-hidden border-2 border-sky-400/50 dark:border-sky-700 aspect-video bg-black/5 flex items-center justify-center shadow-xs">
-                              <img src={photoUrl} alt={`Evidence ${idx + 1}`} className="w-full h-full object-cover" />
-                              <button
-                                type="button"
-                                onClick={() => removeEvidencePhoto(idx)}
-                                className="absolute top-1 right-1 w-6 h-6 rounded-full bg-rose-600/90 text-white flex items-center justify-center shadow-md hover:bg-rose-700 transition-all cursor-pointer"
-                                title={isTl ? 'Alisin ang litrato' : 'Remove photo'}
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                              <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-black/60 text-white">
-                                #{idx + 1}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
+                      <div className="mt-3 grid grid-cols-3 sm:grid-cols-5 gap-3">
+                        {evidencePhotos.map((photoUrl, idx) => (
+                          <div key={idx} className="relative rounded-2xl overflow-hidden aspect-square bg-black/5">
+                            <img src={photoUrl} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                            <button type="button" onClick={() => removeEvidencePhoto(idx)} title={isTl ? 'Alisin' : 'Remove'} aria-label={isTl ? 'Alisin' : 'Remove'} className="absolute top-1.5 right-1.5 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center"><Trash2 className="w-4 h-4" /></button>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
 
-                  {/* Urgency & Truthfulness Checkboxes */}
-                  <div className="space-y-3 pt-2">
-                    {/* DepEd DO 40 Anonymous Whistleblower Protection */}
-                    <label className="flex items-start gap-2.5 cursor-pointer text-xs p-2.5 rounded-xl border border-sky-300 dark:border-sky-800 bg-sky-50/50 dark:bg-sky-950/20">
-                      <input
-                        type="checkbox"
-                        checked={isAnonymousWhistleblower}
-                        onChange={(e) => setIsAnonymousWhistleblower(e.target.checked)}
-                        className="w-4 h-4 rounded accent-[#1E469B] mt-0.5"
-                      />
-                      <div>
-                        <span className="font-semibold text-[#6E6E73] dark:text-[#7CB8F7] block">
-                          {isTl
-                            ? 'Isumite bilang Anonymous Whistleblower (DepEd DO 40, s. 2012)'
-                            : 'Submit as Anonymous Whistleblower (DepEd DO 40, s. 2012)'}
-                        </span>
-                        <span className="text-[11px] card-subtitle-text block mt-0.5">
-                          {isTl
-                            ? 'Itatago ang iyong pangalan sa case board. Direktang ipapasa sa Guidance Office alinsunod sa DepEd Child Protection Policy.'
-                            : 'Shields your identity on case records. Filed directly to Guidance under DepEd Child Protection Policy.'}
-                        </span>
-                      </div>
+                  <div className="rounded-[22px] lg-chip divide-y divide-black/5 dark:divide-white/10">
+                    <label className="flex items-center gap-4 p-4 cursor-pointer">
+                      <span className="w-10 h-10 rounded-full bg-[#FF3B30] text-white flex items-center justify-center shrink-0"><AlertTriangle className="w-5 h-5" /></span>
+                      <span className="flex-1"><span className="block text-[16px] font-semibold lg-ink">{isTl ? 'Urgent ito' : 'This is urgent'}</span><span className="block text-[14px] lg-ink-soft">{isTl ? 'May banta sa kaligtasan o kailangan agad ng tulong' : 'Someone is in danger or needs help right away'}</span></span>
+                      <input type="checkbox" checked={isUrgent} onChange={(e) => setIsUrgent(e.target.checked)} className="w-6 h-6 accent-[#FF3B30]" />
                     </label>
-
-                    <label className="flex items-center gap-2.5 cursor-pointer text-xs">
-                      <input
-                        type="checkbox"
-                        checked={isUrgent}
-                        onChange={(e) => setIsUrgent(e.target.checked)}
-                        className="w-4 h-4 rounded accent-rose-500"
-                      />
-                      <span className="font-bold text-rose-500 dark:text-rose-300">
-                        {isTl
-                          ? 'Mark as URGENT (Kailangan ng mabilisang aksyon o may banta sa kaligtasan)'
-                          : 'Mark as URGENT (Immediate intervention needed / Safety threat)'}
-                      </span>
-                    </label>
-
-                    <label className="flex items-start gap-2.5 cursor-pointer text-xs register-label opacity-90 leading-snug">
-                      <input
-                        type="checkbox"
-                        checked={truthfulAck}
-                        onChange={(e) => setTruthfulAck(e.target.checked)}
-                        className="w-4 h-4 rounded accent-emerald-500 mt-0.5"
-                      />
-                      <span>
-                        {isTl ? (
-                          <>
-                            Pinatutunayan ko na totoo ang aking isinusumite at nauunawaan ko na protektado ng{' '}
-                            <strong>Data Privacy Act (RA 10173)</strong> ang aking pagkakakilanlan.
-                          </>
-                        ) : (
-                          <>
-                            I certify that this report is truthful and understand that my identity is protected under the{' '}
-                            <strong>Data Privacy Act (RA 10173)</strong>.
-                          </>
-                        )}
-                      </span>
+                    <label className="flex items-center gap-4 p-4 cursor-pointer">
+                      <span className="w-10 h-10 rounded-full bg-[#30D158] text-white flex items-center justify-center shrink-0"><ShieldIcon className="w-5 h-5" /></span>
+                      <span className="flex-1"><span className="block text-[16px] font-semibold lg-ink">{isTl ? 'Totoo ang sinabi ko' : 'What I wrote is true'} *</span><span className="block text-[14px] lg-ink-soft">{isTl ? 'Protektado ang pangalan mo ng Data Privacy Act (RA 10173).' : 'Your name is protected by the Data Privacy Act (RA 10173).'}</span></span>
+                      <input type="checkbox" checked={truthfulAck} onChange={(e) => setTruthfulAck(e.target.checked)} className="w-6 h-6 accent-[#30D158]" />
                     </label>
                   </div>
 
-                  {/* Step 3 Action Buttons */}
-                  <div className="sd-actionbar flex flex-row items-center justify-between gap-2 sm:gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        soundFX.playBackspace();
-                        setFormStep(2);
-                      }}
-                      className="btn-press w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-200/70 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-800 dark:text-slate-300 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                      <span>{isTl ? 'Bumalik sa Hakbang 2' : 'Back to Step 2'}</span>
-                    </button>
-
-                    <button
-                      type="submit"
-                      disabled={submitting || !truthfulAck || !whatHappened.trim()}
-                      className="btn-press w-full sm:w-auto px-8 py-3.5 rounded-xl sd-primary text-white text-xs sm:text-sm font-semibold shadow-lg shadow-emerald-950/40 border border-emerald-400/40 disabled:opacity-45 transition-all flex items-center justify-center gap-2"
-                    >
-                      {submitting ? (
-                        <span>{isTl ? 'Isinusumite ang Report...' : 'Submitting Report...'}</span>
-                      ) : (
-                        <>
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span>{isTl ? 'Isumite Na sa Guidance Office' : 'Submit Confidential Report Now'}</span>
-                        </>
-                      )}
+                  <div className="sd-actionbar flex items-center justify-between gap-3">
+                    <button type="button" onClick={() => { soundFX.playBackspace(); setFormStep(2); }} className={backBtn}><ChevronLeft className="w-5 h-5" />{isTl ? 'Bumalik' : 'Back'}</button>
+                    <button type="submit" disabled={submitting || !truthfulAck || !whatHappened.trim()} className={`${primaryBtn} disabled:opacity-45`}>
+                      {submitting ? (isTl ? 'Ipinapadala...' : 'Sending...') : <><Send className="w-5 h-5" />{isTl ? 'Ipadala sa Guidance' : 'Send to Guidance'}</>}
                     </button>
                   </div>
-                </motion.div>
+                  {(!truthfulAck || !whatHappened.trim()) && <p className="text-right text-[14px] lg-ink-soft">{isTl ? 'Isulat ang nangyari at i-check ang "Totoo ang sinabi ko" para maipadala.' : 'Write what happened and tick "What I wrote is true" to send.'}</p>}
+                </div>
               )}
             </form>
-          </motion.div>
+          </div>
           </div>
         )}
 
         {/* TAB 2: MY SUBMITTED REPORTS HISTORY */}
         {activeTab === 'history' && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-3xl sd-card p-6 sm:p-8 space-y-4 shadow-2xl"
-          >
-            <div className="flex items-center justify-between">
+          <div className="pt-2 space-y-5">
+            {/* title */}
+            <div className="flex items-end justify-between gap-3 px-1">
               <div>
-                <h2 className="text-lg sm:text-xl font-semibold card-title-text">
-                  {isTl ? 'Aking mga Naipasa na Concern Reports' : 'My Submitted Concern Reports'}
-                </h2>
-                <p className="text-xs card-subtitle-text">
-                  {isTl
-                    ? 'Subaybayan ang aksyon ng Guidance Associate sa iyong mga isinumite.'
-                    : 'Track the status and actions taken by the Guidance Associate.'}
-                </p>
+                <p className="text-[30px] sm:text-[34px] font-bold tracking-tight lg-ink flex items-center gap-2">{isTl ? 'Mga Report Ko' : 'My Reports'}{decor && <Parol color="gold" className="w-6 h-[38px] -mb-3 text-[#8E8E93]" />}</p>
+                <p className="text-[15px] lg-ink-soft">{isTl ? 'Ang lagay ng bawat report mo.' : 'Where each of your reports stands.'}</p>
               </div>
-              <button
-                type="button"
-                onClick={() => void fetchMyHistory()}
-                className="btn-press px-3 py-1.5 rounded-lg card-back-button text-xs font-bold"
-              >
-                <span className="flex items-center gap-1.5"><RefreshCw className="w-3.5 h-3.5" /><span>{isTl ? 'I-refresh' : 'Refresh'}</span></span>
+              <button type="button" onClick={() => void fetchMyHistory()} title={isTl ? 'I-refresh' : 'Refresh'} aria-label={isTl ? 'I-refresh' : 'Refresh'} className="lg-capsule h-11 px-4 rounded-full flex items-center gap-2 lg-ink text-[14px] font-semibold active:scale-[0.97] transition-transform duration-150">
+                <RefreshCw className={`w-[18px] h-[18px] ${loadingHistory ? 'animate-spin' : ''}`} />{isTl ? 'I-refresh' : 'Refresh'}
               </button>
             </div>
 
-            {loadingHistory ? (
-              <div className="p-8 text-center text-xs card-subtitle-text">
-                {isTl ? 'Kinukuha ang iyong mga reports...' : 'Loading your reports...'}
-              </div>
-            ) : history.length === 0 ? (
-              <div className="p-10 rounded-2xl sd-group text-center space-y-2">
-                <div className="w-12 h-12 mx-auto rounded-2xl bg-sky-500/10 text-sky-500 flex items-center justify-center"><FileText className="w-6 h-6" /></div>
-                <p className="text-sm font-semibold register-label">
-                  {isTl ? 'Wala ka pang naisusumiteng concern report.' : 'You have not submitted any concern reports yet.'}
-                </p>
-                <p className="text-xs card-subtitle-text max-w-sm mx-auto">
-                  {isTl
-                    ? 'Kung ikaw o ang iyong kaklase ay nakararanas ng bullying, harassment, o matinding stress, huwag mag-atubiling mag-submit.'
-                    : 'If you or a classmate are experiencing bullying, harassment, or distress, feel safe to file a report.'}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {history.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-4 rounded-2xl register-inner-card flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-semibold text-[#6E6E73] dark:text-[#7CB8F7]">
-                          {item.referralCode}
-                        </span>
-                        <span className="text-xs font-semibold register-label">
-                          · {item.category}
-                        </span>
-                        {item.urgency === 'Urgent' && (
-                          <span className="px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-600 dark:text-rose-300 text-[10px] font-semibold border border-rose-500/40">
-                            URGENT
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs register-label opacity-90 line-clamp-2">{item.whatHappened}</p>
-                      <p className="text-[10px] card-subtitle-text">
-                        {isTl ? 'Petsa' : 'Date'}: {new Date(item.createdAt).toLocaleDateString(isTl ? 'fil-PH' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                      </p>
-                    </div>
-
-                    <div className="shrink-0 flex items-center gap-2">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold border ${
-                          item.status === 'Resolved' || item.status === 'Approved'
-                            ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border-emerald-400/40'
-                            : item.status === 'In Counseling'
-                            ? 'bg-blue-500/20 text-blue-600 dark:text-blue-300 border-blue-400/40'
-                            : 'bg-amber-500/20 text-amber-600 dark:text-amber-300 border-amber-400/40'
-                        }`}
-                      >
-                        {item.status}
+            {/* counts = filters */}
+            {history.length > 0 && (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {([
+                  ['all', isTl ? 'Lahat' : 'All reports', history.length, 'nav-c-home', FileText],
+                  ['amber', isTl ? 'Sinusuri' : 'Being reviewed', history.filter((h) => repTone(h.status) === 'amber').length, 'nav-c-history', Clock],
+                  ['green', isTl ? 'Tinanggap' : 'Accepted', history.filter((h) => repTone(h.status) === 'green').length, 'nav-c-chat', CheckCircle2],
+                  ['rose', isTl ? 'Hindi tinanggap' : 'Not accepted', history.filter((h) => repTone(h.status) === 'rose').length, 'lg-status-rose', AlertTriangle],
+                ] as const).map(([k, label, n, tone, Ic]) => {
+                  const on = repFilter === k;
+                  return (
+                    <button key={k} type="button" onClick={() => setRepFilter(k)} aria-pressed={on} className={`lg-card p-4 flex items-center gap-3 text-left border-2 transition-colors duration-150 ${on ? '!border-[#0A84FF]' : 'border-transparent'}`}>
+                      <span className={`w-11 h-11 rounded-2xl ${tone} text-white flex items-center justify-center shrink-0`}><Ic className="w-5 h-5" /></span>
+                      <span className="min-w-0">
+                        <span className="block text-[26px] leading-none font-bold lg-ink tabular-nums">{n}</span>
+                        <span className="block mt-1 text-[13px] font-semibold lg-ink-soft truncate">{label}</span>
                       </span>
-                      {item.chatStatus === 'Open' && (
-                        <button
-                          type="button"
-                          onClick={() => openConcernChat(item)}
-                          className="btn-press px-3 py-1 rounded-full bg-[#1E469B] hover:bg-[#2557BE] text-white text-xs font-bold shadow flex items-center gap-1"
-                        >
-                          <span className="flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5" /><span>Chat</span></span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             )}
-          </motion.div>
+
+            {loadingHistory && history.length === 0 ? (
+              <div className="grid gap-4">
+                {[0, 1].map((i) => <div key={i} className="lg-card h-[180px] animate-pulse" />)}
+              </div>
+            ) : history.length === 0 ? (
+              <div className="lg-card p-10 text-center">
+                <span className="mx-auto w-14 h-14 rounded-2xl nav-c-home text-white flex items-center justify-center"><FileText className="w-7 h-7" /></span>
+                <p className="mt-4 text-[20px] font-semibold lg-ink">{isTl ? 'Wala ka pang report' : 'No reports yet'}</p>
+                <p className="mt-1 text-[15px] lg-ink-soft max-w-md mx-auto">{isTl ? 'Kapag may gusto kang sabihin, pindutin ang + para mag-report. Confidential ito.' : 'When something happens, tap + to report it. It stays confidential.'}</p>
+                <button type="button" onClick={() => goTab('submit')} className="mt-5 h-11 px-6 rounded-full sd-primary text-white text-[15px] font-semibold inline-flex items-center gap-2"><Plus className="w-5 h-5" />{isTl ? 'Mag-report' : 'Report a concern'}</button>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {history.filter((h) => repFilter === 'all' || repTone(h.status) === repFilter).length === 0 && (
+                  <div className="lg-card p-8 text-center text-[15px] lg-ink-soft">
+                    {isTl ? 'Walang report dito.' : 'No reports here.'}{' '}
+                    <button type="button" onClick={() => setRepFilter('all')} className="font-semibold text-[#0A84FF]">{isTl ? 'Ipakita lahat' : 'Show all'}</button>
+                  </div>
+                )}
+                {history.filter((h) => repFilter === 'all' || repTone(h.status) === repFilter).map((item) => {
+                  const tone = repTone(item.status);
+                  const word = tone === 'green' ? (isTl ? 'Tinanggap' : 'Accepted') : tone === 'rose' ? (isTl ? 'Hindi tinanggap' : 'Not accepted') : isTl ? 'Sinusuri ng Guidance' : 'Being reviewed';
+                  const n = readNarrative(item.whatHappened);
+                  const date = new Date(item.createdAt).toLocaleDateString(isTl ? 'fil-PH' : 'en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
+                  const steps = [
+                    { label: isTl ? 'Naipadala' : 'Sent', state: 'done' },
+                    { label: isTl ? 'Sinusuri' : 'Being reviewed', state: tone === 'amber' ? 'now' : 'done' },
+                    { label: tone === 'rose' ? (isTl ? 'Hindi tinanggap' : 'Not accepted') : isTl ? 'Tinanggap' : 'Accepted', state: tone === 'amber' ? 'todo' : tone === 'rose' ? 'bad' : 'done' },
+                  ];
+                  return (
+                    <div key={item.id} className="lg-card p-5 sm:p-6">
+                      {/* header */}
+                      <div className="flex flex-wrap items-start gap-4">
+                        <span className={`w-12 h-12 rounded-2xl text-white flex items-center justify-center shrink-0 lg-status-${tone}`}>
+                          {tone === 'green' ? <CheckCircle2 className="w-6 h-6" /> : tone === 'rose' ? <AlertTriangle className="w-6 h-6" /> : <Clock className="w-6 h-6" />}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[20px] sm:text-[24px] leading-tight font-bold tracking-tight lg-ink">{item.category}</p>
+                          <p className="mt-1 text-[14px] lg-ink-soft">{date}</p>
+                        </div>
+                        <span className={`h-9 px-4 rounded-full inline-flex items-center gap-1.5 text-[14px] font-semibold text-white lg-status-${tone}`}>{word}</span>
+                      </div>
+
+                      {/* progress */}
+                      <div className="mt-5 grid grid-cols-3 gap-2">
+                        {steps.map((s, i) => (
+                          <div key={i}>
+                            <div className={`h-1.5 rounded-full ${s.state === 'done' ? 'bg-[#30D158]' : s.state === 'now' ? 'bg-[#FF9F0A]' : s.state === 'bad' ? 'bg-[#FF453A]' : 'lg-line'}`} />
+                            <p className={`mt-2 text-[13px] ${s.state === 'todo' ? 'lg-ink-soft' : 'font-semibold lg-ink'}`}>{s.label}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* details */}
+                      <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="rounded-2xl lg-chip p-4">
+                          <p className="text-[12px] font-semibold uppercase tracking-wide lg-ink-soft">{isTl ? 'Report code' : 'Report code'}</p>
+                          <p className="mt-1 text-[16px] font-semibold lg-ink tabular-nums">{item.referralCode}</p>
+                        </div>
+                        <div className="rounded-2xl lg-chip p-4">
+                          <p className="text-[12px] font-semibold uppercase tracking-wide lg-ink-soft">{isTl ? 'Para kay' : 'Reported for'}</p>
+                          <p className="mt-1 text-[16px] font-semibold lg-ink">{n.forFriend || (isTl ? 'Sarili ko' : 'Myself')}</p>
+                        </div>
+                        <div className="rounded-2xl lg-chip p-4">
+                          <p className="text-[12px] font-semibold uppercase tracking-wide lg-ink-soft">{isTl ? 'Tungkol kay' : 'About'}</p>
+                          <p className="mt-1 text-[16px] font-semibold lg-ink">{n.aboutName || (isTl ? 'Hindi kilala' : 'Name not known')}</p>
+                          {n.aboutLooks && <p className="text-[13px] lg-ink-soft">{n.aboutLooks}</p>}
+                        </div>
+                      </div>
+
+                      {/* what they wrote + photos */}
+                      {(n.story || n.photos.length > 0) && (
+                        <div className="mt-3 rounded-2xl lg-chip p-4">
+                          <p className="text-[12px] font-semibold uppercase tracking-wide lg-ink-soft">{isTl ? 'Ang isinulat mo' : 'What you wrote'}</p>
+                          {n.story && <p className="mt-1 text-[15px] leading-relaxed lg-ink line-clamp-3">{n.story}</p>}
+                          {n.photos.length > 0 && (
+                            <div className="mt-3 flex items-center gap-2">
+                              {n.photos.slice(0, 4).map((src, i) => <img key={i} src={src} alt={`${isTl ? 'Litrato' : 'Photo'} ${i + 1}`} className="w-14 h-14 rounded-xl object-cover" />)}
+                              <span className="text-[13px] lg-ink-soft">{n.photos.length} {isTl ? 'litrato' : n.photos.length === 1 ? 'photo' : 'photos'}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* next step */}
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-[14px] lg-ink-soft">
+                          {item.chatStatus === 'Open'
+                            ? isTl ? 'Bukas na ang chat. Pwede mo nang kausapin ang Guidance.' : 'The chat is open. You can talk to Guidance now.'
+                            : tone === 'amber'
+                            ? isTl ? 'Babasahin ito ng Guidance. Bubuksan nila ang chat kapag tinanggap.' : 'Guidance will read it and open a chat when they accept it.'
+                            : tone === 'rose'
+                            ? isTl ? 'Pwede kang pumunta sa Guidance Office kung may tanong ka.' : 'You can visit the Guidance Office if you have questions.'
+                            : isTl ? 'Hintayin ang Guidance na buksan ang chat.' : 'Wait for Guidance to open the chat.'}
+                        </p>
+                        {item.chatStatus === 'Open' && (
+                          <button type="button" onClick={() => openConcernChat(item)} className="h-11 px-5 rounded-full sd-primary text-white text-[15px] font-semibold inline-flex items-center gap-2 active:scale-[0.97] transition-transform duration-150">
+                            <MessageSquare className="w-5 h-5" />{isTl ? 'Buksan ang chat' : 'Open chat'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         )}
 
         {/* TAB 3: CONFIDENTIAL GUIDANCE CHAT */}
         {activeTab === 'chat' && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-3xl sd-card p-4 sm:p-6 space-y-4 shadow-2xl"
-          >
-            {/* Chat Header & Selector */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-white/10 dark:border-white/10 gap-3">
-              <div>
-                <h2 className="text-lg sm:text-xl font-semibold card-title-text flex items-center gap-2">
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span>{isTl ? 'Kumpidensyal na Chat sa Guidance Office' : 'Confidential Guidance Office Chat'}</span>
-                </h2>
-                <p className="text-xs card-subtitle-text">
-                  {isTl
-                    ? 'Direktang mensahe sa AICS Guidance Associate. Ligtas at protektado ng Data Privacy.'
-                    : 'Direct, private conversation with the Guidance Associate. Protected by RA 10173.'}
-                </p>
-              </div>
-
-              {/* Selector for multi-concern students */}
-              {history.length > 1 && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs card-subtitle-text font-bold">Topic:</span>
-                  <select
-                    value={selectedChatConcern?.id || ''}
-                    onChange={(e) => {
-                      const found = history.find((h) => h.id === Number(e.target.value));
-                      if (found) setSelectedChatConcern(found);
-                    }}
-                    className="px-3 py-1.5 rounded-xl cosmic-input text-xs font-bold"
-                  >
-                    {history.map((h) => (
-                      <option key={h.id} value={h.id}>
-                        {h.referralCode} — {h.category.slice(0, 24)} ({h.chatStatus})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+          <div className="pt-2 space-y-4">
+            <div className="px-1">
+              <p className="text-[30px] sm:text-[34px] font-bold tracking-tight lg-ink flex items-center gap-2">Chat{decor && <Parol color="red" className="w-6 h-[38px] -mb-3 text-[#8E8E93]" />}</p>
+              <p className="text-[15px] lg-ink-soft">{isTl ? 'Pribadong usapan ninyo ng Guidance Office.' : 'Your private conversation with the Guidance Office.'}</p>
             </div>
 
-            {/* Chat Body */}
-            {!selectedChatConcern ? (
-              <div className="p-10 rounded-2xl sd-group text-center space-y-2">
-                <div className="w-12 h-12 mx-auto rounded-2xl bg-sky-500/10 text-sky-500 flex items-center justify-center"><MessageSquare className="w-6 h-6" /></div>
-                <p className="text-sm font-semibold register-label">
-                  {isTl ? 'Walang aktibong chat session.' : 'No active chat session.'}
-                </p>
-                <p className="text-xs card-subtitle-text max-w-sm mx-auto">
-                  {isTl
-                    ? 'Magsumite muna ng report sa "Mag-report ng Concern". Kapag binuksan ng Guidance Office ang chat, maaari ka nang makipag-usap dito.'
-                    : 'Submit a concern report first. Once the Guidance Office opens the channel, you can communicate directly here.'}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {/* Chat Topic Banner */}
-                <div className="p-3 rounded-2xl register-inner-card flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-semibold text-[#6E6E73] dark:text-[#7CB8F7]">
-                      {selectedChatConcern.referralCode}
-                    </span>
-                    <span className="font-bold register-label truncate max-w-[220px] sm:max-w-md">
-                      · {selectedChatConcern.category}
-                    </span>
-                  </div>
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full font-semibold text-[11px] ${
-                      selectedChatConcern.chatStatus === 'Open'
-                        ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-400/30'
-                        : 'bg-slate-500/20 text-slate-600 dark:text-slate-300 border border-slate-400/30'
-                    }`}
-                  >
-                    {selectedChatConcern.chatStatus === 'Open'
-                      ? isTl ? 'Bukas ang Chat' : 'Chat Open'
-                      : isTl ? 'Sarado ang Chat' : 'Chat Closed'}
-                  </span>
-                </div>
-
-                {/* Message Stream */}
-                <div className="h-[380px] sm:h-[440px] overflow-y-auto p-4 rounded-2xl sd-group space-y-3">
-                  {loadingMessages ? (
-                    <div className="h-full flex items-center justify-center text-xs card-subtitle-text">
-                      Loading messages...
-                    </div>
-                  ) : chatMessages.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-2">
-                      <div className="w-12 h-12 mx-auto rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center"><Users className="w-6 h-6" /></div>
-                      <p className="text-sm font-bold register-label">
-                        {isTl ? 'Magsimula ng pag-uusap sa Guidance Office' : 'Start the conversation with Guidance'}
-                      </p>
-                      <p className="text-xs card-subtitle-text max-w-sm">
-                        {isTl
-                          ? 'Maaari kang mag-iwan ng karagdagang impormasyon o magtanong. Sasagutin ito ng Guidance Associate sa oras ng opisina.'
-                          : 'Leave any additional details or questions. The Guidance Associate will respond during office hours.'}
-                      </p>
-                    </div>
-                  ) : (
-                    chatMessages.map((msg) => {
-                      const isStudent = msg.sender === 'student';
-                      return (
-                        <div
-                          key={msg.id}
-                          className={`flex ${isStudent ? 'justify-end' : 'justify-start'}`}
-                        >
-                          <div
-                            className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed shadow-sm ${
-                              isStudent
-                                ? 'sd-bubble-me rounded-br-md'
-                                : 'sd-bubble-office rounded-bl-md'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between gap-3 text-[10px] font-semibold pb-1 opacity-80 border-b border-white/10 dark:border-white/10 mb-1">
-                              <span>{isStudent ? 'Ikaw (Student)' : 'AICS Guidance Office'}</span>
-                              <div className="flex items-center gap-1.5 font-mono">
-                                <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                {isStudent && (
-                                  <span className="inline-flex items-center gap-0.5 text-sky-200" title={isTl ? 'Binasa ng Guidance Office' : 'Seen by Guidance Office'}>
-                                    <CheckCheck className="w-3 h-3 text-sky-300" />
-                                    <span className="text-[9px] font-sans font-semibold">{isTl ? 'Seen' : 'Seen'}</span>
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <p className="whitespace-pre-wrap">{msg.body}</p>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                  <div ref={chatScrollRef} />
-                </div>
-
-                {/* Chat Input Field */}
-                {selectedChatConcern.chatStatus === 'Closed' ? (
-                  <div className="p-3.5 rounded-xl bg-slate-500/10 border border-slate-500/20 text-center text-xs font-semibold card-subtitle-text">
-                    {isTl ? 'Isinara na ng Guidance Office ang chat session na ito. Nananatiling nakatago ang mga mensahe.' : 'This chat session has been closed by the Guidance Office. Messages are securely archived.'}
-                  </div>
+            <div className="lg:grid lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)] lg:gap-5 space-y-4 lg:space-y-0">
+              {/* conversations (one per report) */}
+              <div className="lg-card p-3 lg:h-[calc(var(--sd-vh,100dvh)-252px)] lg:overflow-y-auto">
+                <p className="px-2 pt-1 pb-2 text-[13px] font-semibold uppercase tracking-wide lg-ink-soft">{isTl ? 'Mga usapan' : 'Conversations'}</p>
+                {history.length === 0 ? (
+                  <p className="px-2 pb-2 text-[14px] lg-ink-soft">{isTl ? 'Wala pa. Magsisimula ito kapag tinanggap ang report mo.' : 'None yet. A chat starts when your report is accepted.'}</p>
                 ) : (
-                  <form onSubmit={handleSendMessage} className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder={isTl ? 'Isulat ang iyong mensahe sa Guidance Office...' : 'Type your message to the Guidance Office...'}
-                      value={chatInputText}
-                      onChange={(e) => setChatInputText(e.target.value)}
-                      disabled={sendingMsg}
-                      className="flex-1 px-4 py-3 rounded-2xl cosmic-input text-xs sm:text-sm font-semibold focus:outline-none"
-                    />
-                    <button
-                      type="submit"
-                      disabled={!chatInputText.trim() || sendingMsg}
-                      className="btn-press px-5 sm:px-6 py-3 rounded-2xl sd-primary text-white font-semibold text-xs sm:text-sm shadow-lg disabled:opacity-40 transition-all flex items-center gap-1.5"
-                    >
-                      {sendingMsg ? (
-                        <span>...</span>
-                      ) : (
-                        <>
-                          <span>Send</span>
-                          <span>↗</span>
-                        </>
-                      )}
-                    </button>
-                  </form>
+                  <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-1">
+                    {[...history].sort((a, b) => Number(b.chatStatus === 'Open') - Number(a.chatStatus === 'Open')).map((h) => {
+                      const on = selectedChatConcern?.id === h.id;
+                      const open = h.chatStatus === 'Open';
+                      return (
+                        <button key={h.id} type="button" onClick={() => setSelectedChatConcern(h)} aria-pressed={on} className={`shrink-0 w-[240px] lg:w-full rounded-2xl p-3 text-left flex items-center gap-3 transition-colors duration-150 ${on ? 'bg-[#0A84FF] text-white' : 'hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'}`}>
+                          <span className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${on ? 'bg-white/20' : open ? 'nav-c-chat text-white' : 'lg-chip lg-ink-soft'}`}><MessageSquare className="w-5 h-5" /></span>
+                          <span className="min-w-0 flex-1">
+                            <span className={`block text-[15px] font-semibold truncate ${on ? 'text-white' : 'lg-ink'}`}>{h.category}</span>
+                            <span className={`block text-[13px] truncate ${on ? 'text-white/80' : 'lg-ink-soft'}`}>
+                              {open ? (isTl ? 'Bukas ang chat' : 'Chat open') : h.chatStatus === 'Closed' ? (isTl ? 'Sarado na' : 'Closed') : isTl ? 'Hindi pa bukas' : 'Not open yet'} · {h.referralCode}
+                            </span>
+                          </span>
+                          {!on && unreadChats[String(h.id)] ? <span className="h-6 px-2 rounded-full bg-[#FF3B30] text-white text-[12px] font-bold inline-flex items-center shrink-0">{isTl ? 'Bago' : 'New'}</span> : open && !on && <span className="w-2.5 h-2.5 rounded-full bg-[#30D158] shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
-            )}
-          </motion.div>
+
+              {/* the conversation */}
+              <div className="lg-card overflow-hidden flex flex-col lg:h-[calc(var(--sd-vh,100dvh)-252px)]">
+                {!selectedChatConcern ? (
+                  <div className="flex-1 min-h-[320px] flex flex-col items-center justify-center text-center p-8">
+                    <span className="w-16 h-16 rounded-[22px] nav-c-chat text-white flex items-center justify-center"><MessageSquare className="w-8 h-8" /></span>
+                    <p className="mt-4 text-[20px] font-bold lg-ink">{isTl ? 'Pumili ng usapan' : 'Pick a conversation'}</p>
+                    <p className="mt-1 text-[15px] lg-ink-soft max-w-sm">{history.length ? (isTl ? 'Pindutin ang isang report sa listahan para makita ang chat.' : 'Tap a report in the list to see its chat.') : isTl ? 'Mag-report muna. Bubuksan ng Guidance ang chat kapag tinanggap nila ito.' : 'Send a report first. Guidance opens a chat when they accept it.'}</p>
+                    {!history.length && <button type="button" onClick={() => goTab('submit')} className="mt-5 h-11 px-6 rounded-full sd-primary text-white text-[15px] font-semibold inline-flex items-center gap-2"><Plus className="w-5 h-5" />{isTl ? 'Mag-report' : 'Report a concern'}</button>}
+                  </div>
+                ) : (
+                  <>
+                    {/* header */}
+                    <div className="px-5 py-4 flex items-center gap-3 border-b border-black/[0.06] dark:border-white/[0.08]">
+                      <span className="w-12 h-12 rounded-full nav-c-chat text-white flex items-center justify-center text-[16px] font-bold shrink-0">GO</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[17px] font-bold lg-ink truncate">Guidance Office</p>
+                        <p className="text-[13px] lg-ink-soft truncate">
+                          <span className={`inline-block w-2 h-2 rounded-full mr-1.5 align-middle ${selectedChatConcern.chatStatus === 'Open' ? 'bg-[#30D158]' : 'bg-[#8E8E93]'}`} />
+                          {selectedChatConcern.chatStatus === 'Open' ? (isTl ? `Sumasagot sa oras ng opisina · ${hoursText}` : `Replies during office hours · ${hoursText}`) : isTl ? 'Sarado ang chat' : 'Chat closed'}
+                        </p>
+                      </div>
+                      <span className="hidden sm:inline-flex h-8 px-3 rounded-full lg-chip text-[13px] font-semibold lg-ink tabular-nums">{selectedChatConcern.referralCode}</span>
+                    </div>
+
+                    {/* messages */}
+                    <div className="lg:flex-1 min-h-0 h-[max(220px,calc(100dvh-575px))] lg:h-auto sd-chat-scroll overflow-y-auto overscroll-contain px-4 sm:px-6 py-5 space-y-1.5">
+                      <p className="mx-auto mb-3 max-w-md text-center text-[12.5px] lg-ink-soft flex items-center justify-center gap-1.5"><ShieldIcon className="w-3.5 h-3.5" />{isTl ? 'Confidential ito. Kayo lang ng Guidance Office ang makakabasa.' : 'This is confidential. Only you and the Guidance Office can read it.'}</p>
+                      {loadingMessages ? (
+                        <p className="py-10 text-center text-[14px] lg-ink-soft">{isTl ? 'Kinukuha ang mga mensahe...' : 'Loading messages...'}</p>
+                      ) : chatMessages.length === 0 ? (
+                        <div className="py-10 text-center">
+                          <p className="text-[17px] font-semibold lg-ink">{isTl ? 'Wala pang mensahe' : 'No messages yet'}</p>
+                          <p className="mt-1 text-[14px] lg-ink-soft">{isTl ? 'Pwede kang magtanong o magdagdag ng detalye.' : 'You can ask a question or add more details.'}</p>
+                        </div>
+                      ) : (
+                        chatMessages.map((msg, i) => {
+                          const me = msg.sender === 'student';
+                          const d = new Date(msg.createdAt);
+                          const prev = chatMessages[i - 1];
+                          const newDay = !prev || new Date(prev.createdAt).toDateString() !== d.toDateString();
+                          const nextSame = chatMessages[i + 1]?.sender === msg.sender;
+                          return (
+                            <React.Fragment key={msg.id}>
+                              {newDay && <p className="pt-3 pb-2 text-center text-[12.5px] font-semibold lg-ink-soft">{d.toLocaleDateString(isTl ? 'fil-PH' : 'en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>}
+                              <div className={`flex flex-col ${me ? 'items-end' : 'items-start'}`}>
+                                <div className={`max-w-[80%] sm:max-w-[65%] px-4 py-2.5 text-[15px] leading-snug whitespace-pre-wrap break-words ${me ? 'bg-[#0A84FF] text-white rounded-[20px] rounded-br-md' : 'lg-chip lg-ink rounded-[20px] rounded-bl-md'}`}>{msg.body}</div>
+                                {!nextSame && (
+                                  <p className="mt-1 mb-2 px-1 text-[12px] lg-ink-soft">
+                                    {me ? (isTl ? 'Ikaw' : 'You') : 'Guidance Office'} · {d.toLocaleTimeString(isTl ? 'fil-PH' : 'en-US', { hour: 'numeric', minute: '2-digit' })}
+                                    {me && ((chatState?.studentSeenUpTo ?? 0) >= msg.id
+                                      ? <> · <span className="font-semibold text-[#0A84FF]">{isTl ? 'Nakita na' : 'Seen'}</span></>
+                                      : <> · {isTl ? 'Naipadala' : 'Sent'}</>)}
+                                  </p>
+                                )}
+                              </div>
+                            </React.Fragment>
+                          );
+                        })
+                      )}
+                      {chatState?.officeTyping && selectedChatConcern.chatStatus === 'Open' && (
+                        <div className="flex items-center gap-2" aria-live="polite">
+                          <span className="lg-chip rounded-[20px] rounded-bl-md px-4 py-3 inline-flex gap-1" aria-hidden="true">
+                            {[0, 1, 2].map((k) => <span key={k} className="w-2 h-2 rounded-full bg-current lg-ink-soft animate-bounce" style={{ animationDelay: `${k * 150}ms` }} />)}
+                          </span>
+                          <span className="text-[12px] lg-ink-soft">{isTl ? 'Nagta-type ang Guidance...' : 'Guidance is typing...'}</span>
+                        </div>
+                      )}
+                      <div ref={chatScrollRef} />
+                    </div>
+
+                    {/* input */}
+                    {selectedChatConcern.chatStatus === 'Open' ? (
+                      <form onSubmit={handleSendMessage} className="p-3 sm:p-4 flex items-center gap-2 border-t border-black/[0.06] dark:border-white/[0.08]">
+                        <input
+                          type="text"
+                          placeholder={isTl ? 'Mensahe sa Guidance Office' : 'Message the Guidance Office'}
+                          value={chatInputText}
+                          onChange={(e) => {
+                            setChatInputText(e.target.value);
+                            const now = Date.now();
+                            if (e.target.value.trim() && now - lastTypingPing.current > 2500) {
+                              lastTypingPing.current = now;
+                              void setChatTyping(selectedChatConcern.id, 'student');
+                            }
+                          }}
+                          disabled={sendingMsg}
+                          aria-label={isTl ? 'Mensahe' : 'Message'}
+                          className="flex-1 h-12 px-5 rounded-full cosmic-input text-[15px] focus:outline-none"
+                        />
+                        <button type="submit" disabled={!chatInputText.trim() || sendingMsg} title={isTl ? 'Ipadala' : 'Send'} aria-label={isTl ? 'Ipadala' : 'Send'} className="w-12 h-12 rounded-full bg-[#0A84FF] text-white flex items-center justify-center shrink-0 disabled:opacity-35 active:scale-[0.94] transition-transform duration-150">
+                          {sendingMsg ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                        </button>
+                      </form>
+                    ) : (
+                      <p className="p-4 text-center text-[14px] lg-ink-soft border-t border-black/[0.06] dark:border-white/[0.08]">
+                        {selectedChatConcern.chatStatus === 'Closed'
+                          ? isTl ? 'Isinara na ng Guidance Office ang chat na ito. Mababasa mo pa rin ang mga mensahe.' : 'The Guidance Office closed this chat. You can still read the messages.'
+                          : isTl ? 'Bubuksan ng Guidance ang chat kapag tinanggap nila ang report mo.' : 'Guidance will open this chat when they accept your report.'}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         )}
       </main>
 
       {/* Footer (Messenger-Style Clean: hidden on mobile phones so keyboard never pushes or squishes it) */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 sd-tabbar" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} aria-label={isTl ? 'Mga seksyon' : 'Sections'}>
-        <div className="grid grid-cols-3 h-16">
+      {/* website: standing rail on the right edge, tabs spread from top to bottom (uses the free side space) */}
+      <nav className="hidden lg:flex fixed right-8 top-[112px] bottom-6 z-40 w-[92px] flex-col items-center gap-4" aria-label={isTl ? 'Mga seksyon' : 'Sections'}>
+        <div className="lg-capsule flex-1 w-full flex flex-col items-center justify-evenly py-3 rounded-[46px]">
           {([
-            ['submit', FileEdit, isTl ? 'Mag-report' : 'Report'],
-            ['history', FolderArchive, isTl ? 'Mga Report' : 'My Reports'],
+            ['home', HomeIcon, 'Home'],
+            ['history', FolderArchive, isTl ? 'Mga Report' : 'Reports'],
             ['chat', MessageSquare, 'Chat'],
-          ] as const).map(([k, Icon, label]) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => {
-                soundFX.playToggleSwitch(true);
-                setActiveTab(k);
-                if (k === 'history') void fetchMyHistory();
-              }}
-              className={`relative flex flex-col items-center justify-center gap-1 text-[11px] font-medium active:scale-[0.97] transition-transform duration-150 ${activeTab === k ? 'text-[#0A84FF]' : 'text-[#8E8E93]'}`}
-            >
-              <Icon className="w-6 h-6" strokeWidth={activeTab === k ? 2.2 : 1.75} />
-              {label}
-              {k === 'chat' && history.some((c) => c.chatStatus === 'Open') && <span className="absolute top-2.5 right-[calc(50%-18px)] w-2 h-2 rounded-full bg-[#30D158]" />}
-            </button>
-          ))}
+            ['me', UserCircle2, isTl ? 'Ako' : 'Me'],
+          ] as const).map(([k, Icon, label]) => {
+            const on = activeTab === k;
+            return (
+              <button key={k} type="button" onClick={() => goTab(k)} aria-current={on ? 'page' : undefined} className="relative w-[76px] h-[76px] flex flex-col items-center justify-center gap-1 rounded-[26px] active:scale-[0.96] transition-transform duration-150">
+                <span className={`relative w-[52px] h-[52px] rounded-full flex items-center justify-center nav-float ${on ? 'nav-on nav-c-' + k + ' -translate-x-[26px]' : ''}`}>
+                  <Icon className={`w-[26px] h-[26px] ${on ? 'text-white' : 'lg-ink-soft'}`} strokeWidth={on ? 2.3 : 1.8} />
+                </span>
+                <span className={`relative text-[12px] ${on ? 'font-bold nav-t-' + k : 'font-medium lg-ink-soft'}`}>{label}</span>
+                {k === 'chat' && (unreadCount > 0 ? <span title={isTl ? 'May bagong mensahe' : 'New message'} className="absolute top-2 right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FF3B30] text-white text-[11px] font-bold leading-[18px] text-center ring-2 ring-white/70">{unreadCount}</span> : openChats > 0 && <span className="absolute top-3 right-4 w-2.5 h-2.5 rounded-full bg-[#30D158] ring-2 ring-white/60" />)}
+              </button>
+            );
+          })}
         </div>
+        <button type="button" onClick={() => goTab('submit')} aria-label={isTl ? 'Mag-report' : 'Report a concern'} title={isTl ? 'Mag-report' : 'Report a concern'} className={`lg-capsule shrink-0 w-[84px] h-[84px] rounded-full flex items-center justify-center active:scale-[0.95] transition-transform duration-150 ${activeTab === 'submit' ? 'ring-2 ring-[#0A84FF]/60' : ''}`}>
+          <span className="w-[60px] h-[60px] rounded-full lg-plus flex items-center justify-center"><Plus className="w-7 h-7 text-white" strokeWidth={2.4} /></span>
+        </button>
+      </nav>
+
+      {/* phones + tablets: the same nav as a floating bar at the bottom */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 flex justify-center gap-3 px-3 pointer-events-none" style={{ paddingBottom: 'calc(14px + env(safe-area-inset-bottom))' }} aria-label={isTl ? 'Mga seksyon' : 'Sections'}>
+        {navBar}
       </nav>
 
       <footer className="relative z-20 py-3 text-center text-xs card-subtitle-text mt-auto student-footer hidden md:block">
@@ -1813,51 +1850,39 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-[#06122B]/75 backdrop-blur-md flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm flex items-center justify-center p-4"
           >
             <motion.div
-              initial={{ scale: 0.88, opacity: 0, y: 16 }}
+              initial={{ scale: 0.94, opacity: 0, y: 12 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-md rounded-3xl bg-[#0B1E48] border border-emerald-400/50 p-6 sm:p-7 text-center shadow-2xl space-y-4"
+              exit={{ scale: 0.96, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              role="dialog"
+              aria-modal="true"
+              className="w-full max-w-[440px] rounded-[32px] bg-white dark:bg-[#1C1C1E] text-[#1D1D1F] dark:text-white p-7 text-center shadow-2xl"
             >
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 mx-auto flex items-center justify-center shadow-lg shadow-emerald-500/40">
-                <svg
-                  className="w-9 h-9 text-white"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
-
-              <h3 className="text-xl font-semibold text-white">Report Submitted Successfully!</h3>
-              <p className="text-xs text-[#9BCBFF]/80">
-                Natanggap na ng AICS Guidance Office ang iyong confidential concern report.
+              <span className="mx-auto w-20 h-20 rounded-full bg-[#30D158] text-white flex items-center justify-center shadow-[0_14px_30px_-12px_rgba(48,209,88,0.8)]">
+                <CheckCircle2 className="w-11 h-11" strokeWidth={2.2} />
+              </span>
+              <h3 className="mt-5 text-[26px] leading-tight font-bold tracking-tight">{isTl ? 'Naipadala na!' : 'Report sent'}</h3>
+              <p className="mt-2 text-[16px] leading-relaxed text-[#6E6E73] dark:text-[#A1A1A6]">
+                {isTl ? 'Natanggap na ng Guidance Office ang report mo. Confidential ito.' : 'The Guidance Office has your report. It stays confidential.'}
               </p>
-
-              <div className="p-3.5 rounded-xl bg-black/40 border border-white/15 text-center">
-                <span className="text-[11px] text-white/60 block">Reference Tracking Code:</span>
-                <span className="font-mono text-base font-semibold text-emerald-300">
-                  {submittedConcernCode}
-                </span>
+              <div className="mt-5 rounded-[22px] bg-black/[0.04] dark:bg-white/[0.06] p-4">
+                <p className="text-[13px] font-semibold uppercase tracking-wide text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Report code mo' : 'Your report code'}</p>
+                <p className="mt-1 text-[24px] font-bold tracking-tight tabular-nums">{submittedConcernCode}</p>
               </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  soundFX.playToggleSwitch(true);
-                  setSubmittedConcernCode(null);
-                  setActiveTab('history');
-                }}
-                className="btn-press w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold text-xs shadow-lg"
-              >
-                Tingnan sa Aking Reports List →
-              </button>
+              <p className="mt-4 text-[14px] text-[#6E6E73] dark:text-[#A1A1A6]">
+                {isTl ? 'Susunod: susuriin ito ng Guidance. Bubuksan nila ang chat kapag tinanggap.' : 'Next: Guidance reviews it and opens a chat when they accept it.'}
+              </p>
+              <div className="mt-6 flex flex-col gap-2.5">
+                <button type="button" onClick={() => { soundFX.playToggleSwitch(true); setSubmittedConcernCode(null); setActiveTab('history'); }} className="h-14 rounded-full sd-primary text-white text-[16px] font-semibold">
+                  {isTl ? 'Tingnan ang report ko' : 'See my report'}
+                </button>
+                <button type="button" onClick={() => { setSubmittedConcernCode(null); setActiveTab('home'); }} className="h-12 rounded-full text-[16px] font-semibold text-[#0A84FF]">
+                  {isTl ? 'Bumalik sa Home' : 'Back to Home'}
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -1866,6 +1891,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       {/* Guideline / Onboarding Tour Modal */}
       <MobileAppTourModal
         isOpen={showMobileTour}
+        defaultLanguage={isTl ? 'tl' : 'en'}
         onComplete={() => {
           localStorage.setItem('aics_mobile_tour_completed', 'true');
           setShowMobileTour(false);

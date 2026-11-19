@@ -1215,7 +1215,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       };
     return {
       word: isTl ? 'Unang minor' : '1st minor',
-      cls: 'bg-[#E4ECFC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7]',
+      cls: 'bg-[#EAF3FF] dark:bg-[#2C2C2E] text-[#007AFF] dark:text-[#409CFF]',
     };
   };
   /** "today", "yesterday", "5 days ago" — how long a case has been waiting */
@@ -2156,7 +2156,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       {/* ====================================================================
           DIRECT, CLEAN SUB-TAB BAR WITH PROMINENT ACTION BUTTONS
           ==================================================================== */}
-      <div className="shrink-0 py-2 sm:h-[58px] flex flex-wrap items-center justify-between gap-3 border-b border-[#DCE5F2] dark:border-[#1E3158]">
+      <div className="shrink-0 py-2 sm:h-[58px] flex flex-wrap items-center justify-between gap-3 border-b border-[#E5E5EA] dark:border-[#38383A]">
         <div className="seg-track overflow-x-auto">
           {(
             [
@@ -2210,7 +2210,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               soundFX.playStepUnlock();
               setStudentFormFor('new');
             }}
-            className="h-10 px-4 rounded-full bg-white dark:bg-white/[0.06] shadow-[0_0_0_0.5px_rgb(15_23_42/0.1)] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#EEF3F9] dark:hover:bg-[#0E1D34] active:scale-[0.97] text-xs sm:text-[13px] font-bold flex items-center gap-1.5 transition-[background-color,transform] duration-150 whitespace-nowrap"
+            className="h-10 px-4 rounded-full bg-white dark:bg-white/[0.06] shadow-[0_0_0_0.5px_rgb(15_23_42/0.1)] text-[#007AFF] dark:text-[#409CFF] hover:bg-[#EEF3F9] dark:hover:bg-[#0E1D34] active:scale-[0.97] text-xs sm:text-[13px] font-bold flex items-center gap-1.5 transition-[background-color,transform] duration-150 whitespace-nowrap"
             title={isTl ? 'Magdagdag ng isang estudyante sa records' : 'Add one student to the records'}
           >
             <UserPlus className="w-4 h-4" aria-hidden />
@@ -2224,8 +2224,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
             }}
             className={`h-10 px-4 rounded-full text-xs sm:text-[13px] font-bold flex items-center gap-1.5 transition-[background-color,transform] duration-150 active:scale-[0.97] whitespace-nowrap ${
               subTab === 'masterlist'
-                ? 'bg-[#1E469B]/10 text-[#1E469B] dark:text-[#7CB8F7]'
-                : 'bg-white dark:bg-white/[0.06] shadow-[0_0_0_0.5px_rgb(15_23_42/0.1)] text-[#1E469B] dark:text-[#7CB8F7] hover:bg-[#F5F5F7] dark:hover:bg-white/[0.1]'
+                ? 'bg-[#007AFF]/10 text-[#007AFF] dark:text-[#409CFF]'
+                : 'bg-white dark:bg-white/[0.06] shadow-[0_0_0_0.5px_rgb(15_23_42/0.1)] text-[#007AFF] dark:text-[#409CFF] hover:bg-[#F5F5F7] dark:hover:bg-white/[0.1]'
             }`}
             title={isTl ? 'Mag-upload ng Excel ng mga estudyante' : 'Upload the student masterlist (Excel)'}
           >
@@ -2239,7 +2239,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               setSubTab('add-report');
             }}
             className={`h-10 px-5 rounded-full text-white text-xs sm:text-[13px] font-semibold flex items-center gap-1.5 transition-[background-color,transform] duration-150 active:scale-[0.97] whitespace-nowrap ${
-              subTab === 'add-report' ? 'bg-[#16377E] ring-2 ring-[#1E469B]/30' : 'bg-[#1E469B] hover:bg-[#16377E]'
+              subTab === 'add-report' ? 'bg-[#0062CC] ring-2 ring-[#007AFF]/30' : 'bg-[#007AFF] hover:bg-[#0062CC]'
             }`}
             title={isTl ? 'Magtala ng bagong kaso' : 'File a new discipline case'}
           >
@@ -2298,7 +2298,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   <button
                     type="button"
                     onClick={resumeDraft}
-                    className="px-3 py-1.5 rounded-lg bg-[#1E469B] text-white text-xs font-extrabold"
+                    className="px-3 py-1.5 rounded-lg bg-[#007AFF] text-white text-xs font-extrabold"
                   >
                     {isTl ? 'Ituloy ang draft' : 'Continue draft'}
                   </button>
@@ -2309,24 +2309,24 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
             <div className="xl:col-span-5 ring-card p-6 flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
+                  <h2 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">
                     {isTl
                       ? 'Step 1: Sino ang estudyante?'
                       : 'Step 1: Who is involved?'}
                   </h2>
-                  <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                  <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                     {isTl
                       ? 'Pwedeng isa o higit pa. Kusang kukunin ang section at magulang.'
                       : 'Pick one or more. Section and parent are filled in for you.'}
                   </p>
                 </div>
-                <span className="px-2.5 py-1 rounded-full bg-[#E4ECFC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7] text-xs font-extrabold whitespace-nowrap shrink-0">
+                <span className="px-2.5 py-1 rounded-full bg-[#EAF3FF] dark:bg-[#2C2C2E] text-[#007AFF] dark:text-[#409CFF] text-xs font-extrabold whitespace-nowrap shrink-0">
                   {selectedStudentNumbers.length} {isTl ? 'napili' : 'selected'}
                 </span>
               </div>
 
               <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#4A608A] dark:text-[#94A8D0] pointer-events-none" aria-hidden />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#6E6E73] dark:text-[#A1A1A6] pointer-events-none" aria-hidden />
               <input
                 type="text"
                 autoFocus
@@ -2347,7 +2347,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     ? 'Hanapin: pangalan, student no., o section'
                     : 'Search name, student no., or section'
                 }
-                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl saas-card-subtle text-sm font-semibold text-[#0B1F4D] dark:text-white focus:outline-none focus:border-[#1E469B]"
+                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl saas-card-subtle text-sm font-semibold text-[#1D1D1F] dark:text-white focus:outline-none focus:border-[#007AFF]"
               />
               </div>
               <div className="-mt-2 flex items-center justify-between gap-3">
@@ -2357,14 +2357,14 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   data-action="picker-add-student"
                   onClick={() => setStudentFormFor('new')}
                   title={isTl ? 'Magdagdag ng isang estudyante (o mag-import ng masterlist sa "I-import ang masterlist")' : 'Add one student (or import the masterlist under "Import masterlist")'}
-                  className="shrink-0 whitespace-nowrap px-2.5 py-1 rounded-lg saas-card-subtle hover:border-[#1E469B] text-[11px] font-bold text-[#1E469B] dark:text-[#7CB8F7]"
+                  className="shrink-0 whitespace-nowrap px-2.5 py-1 rounded-lg saas-card-subtle hover:border-[#007AFF] text-[11px] font-bold text-[#007AFF] dark:text-[#409CFF]"
                 >
                   {isTl ? 'Wala sa listahan? + Idagdag' : 'Not in the list? + Add student'}
                 </button>
               </div>
 
               {/* Fills the card down to the same height as Step 2 (no empty gap) */}
-              <div className="max-h-[290px] xl:max-h-none xl:flex-1 xl:h-0 xl:min-h-[240px] overflow-y-auto clean-scroll divide-y divide-[#E2E9F5] dark:divide-[#1E3158] rounded-xl border border-[#DCE5F2] dark:border-[#1E3158]">
+              <div className="max-h-[290px] xl:max-h-none xl:flex-1 xl:h-0 xl:min-h-[240px] overflow-y-auto clean-scroll divide-y divide-[#E5E5EA] dark:divide-[#38383A] rounded-xl border border-[#E5E5EA] dark:border-[#38383A]">
                 {visiblePicker.map((stu) => {
                   const isChecked = selectedStudentNumbers.includes(stu.studentNumber);
                   return (
@@ -2381,7 +2381,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       }}
                       className={`w-full px-4 py-3 flex items-center justify-between gap-3 text-left transition-colors ${
                         isChecked
-                          ? 'bg-[#E4ECFC]/75 dark:bg-[#192D58]/80'
+                          ? 'bg-[#EAF3FF]/75 dark:bg-[#2C2C2E]/80'
                           : 'hover:bg-[#F8FAFE] dark:hover:bg-[#13203B]'
                       }`}
                     >
@@ -2389,17 +2389,17 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                         <div
                           className={`w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold border ${
                             isChecked
-                              ? 'bg-[#1E469B] border-[#1E469B] text-white'
+                              ? 'bg-[#007AFF] border-[#007AFF] text-white'
                               : 'border-[#94A8D0] text-transparent'
                           }`}
                         >
                           {isChecked && <Check className="w-3.5 h-3.5" strokeWidth={3} aria-hidden />}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs sm:text-sm font-extrabold text-[#0B1F4D] dark:text-white leading-snug">
+                          <p className="text-xs sm:text-sm font-extrabold text-[#1D1D1F] dark:text-white leading-snug">
                             {stu.fullName}
                           </p>
-                          <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
+                          <p className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">
                             #{stu.studentNumber} · {stu.gradeSection}
                           </p>
                         </div>
@@ -2413,7 +2413,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                             ? 'bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300'
                             : stu.minorOffenseCount >= 2
                             ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300'
-                            : 'saas-card-subtle text-[#4A608A] dark:text-[#94A8D0]'
+                            : 'saas-card-subtle text-[#6E6E73] dark:text-[#A1A1A6]'
                         }`}
                       >
                         {stu.majorOffenseCount > 0
@@ -2425,14 +2425,14 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   );
                 })}
                 {filteredStudentPicker.length === 0 && (
-                  <p className="px-4 py-6 text-center text-xs font-semibold text-[#4A608A] dark:text-[#94A8D0]">
+                  <p className="px-4 py-6 text-center text-xs font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">
                     {isTl
                       ? `Walang tugma sa "${studentPickerQuery}". Subukan ang ibang spelling o student no.`
                       : `No student matches "${studentPickerQuery}". Try another spelling or the student no.`}
                   </p>
                 )}
                 {filteredStudentPicker.length > visiblePicker.length && (
-                  <p className="px-4 py-3 text-center text-[11px] font-semibold text-[#687FA8] dark:text-[#89A7DF] bg-[#F8FAFE] dark:bg-[#13203B]">
+                  <p className="px-4 py-3 text-center text-[11px] font-semibold text-[#6E6E73] dark:text-[#A1A1A6] bg-[#F8FAFE] dark:bg-[#2C2C2E]">
                     {isTl
                       ? `Ipinapakita ang ${visiblePicker.length} sa ${filteredStudentPicker.length}. Mag-type ng pangalan para mahanap ang iba.`
                       : `Showing ${visiblePicker.length} of ${filteredStudentPicker.length}. Type a name to find the others.`}
@@ -2445,12 +2445,12 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
             <div className="xl:col-span-7 ring-card p-6 space-y-5 flex flex-col">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">
+                  <h2 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">
                     {isTl
                       ? 'Step 2: Ano ang nangyari?'
                       : 'Step 2: What happened?'}
                   </h2>
-                  <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                  <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                     {isTl
                       ? 'Bibilangin ng system kung pang-ilang offense na ito at ipapakita ang sanction.'
                       : 'The system counts past offenses and shows the Handbook sanction.'}
@@ -2462,11 +2462,11 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               <div className="relative flex-1">
               {noStudentYet && (
                 <div className="absolute inset-0 z-10 flex items-start justify-center pt-24">
-                  <div className="px-4 py-3 rounded-xl bg-white dark:bg-[#0F1A30] border border-[#1E469B]/40 shadow-lg text-center max-w-xs">
-                    <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                  <div className="px-4 py-3 rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#007AFF]/40 shadow-lg text-center max-w-xs">
+                    <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">
                        {isTl ? 'Pumili muna ng estudyante sa Step 1' : 'Pick a student in Step 1 first'}
                     </p>
-                    <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0] mt-0.5">
+                    <p className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6] mt-0.5">
                       {isTl ? 'Bubukas ang Step 2 kapag may napili na.' : 'Step 2 opens once a student is picked.'}
                     </p>
                   </div>
@@ -2498,7 +2498,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       return (
                         <p
                           key={stu.studentNumber}
-                          className="text-xs font-semibold text-[#0B1F4D] dark:text-white"
+                          className="text-xs font-semibold text-[#1D1D1F] dark:text-white"
                         >
                           • <strong>{stu.fullName}</strong> ({stu.gradeSection}):{' '}
                           {out.consecutive ? (
@@ -2530,7 +2530,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               {/* Offense Policy Selector */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-bold text-[#0B1F4D] dark:text-white mb-1.5">
+                  <label className="block text-xs font-bold text-[#1D1D1F] dark:text-white mb-1.5">
                     {isTl
                       ? isGroup
                         ? 'Offense (para sa lahat — puwedeng palitan sa bawat isa sa ibaba)'
@@ -2543,7 +2543,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     ref={offenseSelectRef}
                     value={selectedPolicyCode}
                     onChange={(e) => setSelectedPolicyCode(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl saas-card-subtle text-xs sm:text-sm font-bold text-[#0B1F4D] dark:text-white focus:outline-none focus:border-[#1E469B]"
+                    className="w-full px-3.5 py-2.5 rounded-xl saas-card-subtle text-xs sm:text-sm font-bold text-[#1D1D1F] dark:text-white focus:outline-none focus:border-[#007AFF]"
                   >
                     {offenseGroups.map((g) => (
                       <optgroup key={g.cls} label={g.label}>
@@ -2558,9 +2558,9 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 </div>
 
                 {isGroup && (
-                  <div className="md:col-span-2 rounded-xl border border-[#DCE5F2] dark:border-[#1E3158] overflow-hidden">
-                    <div className="px-3.5 py-2.5 bg-[#F4F7FC] dark:bg-[#13203B] space-y-1">
-                      <p className="text-xs font-extrabold text-[#0B1F4D] dark:text-white">
+                  <div className="md:col-span-2 rounded-xl border border-[#E5E5EA] dark:border-[#38383A] overflow-hidden">
+                    <div className="px-3.5 py-2.5 bg-[#F5F5F7] dark:bg-[#2C2C2E] space-y-1">
+                      <p className="text-xs font-extrabold text-[#1D1D1F] dark:text-white">
                         {isTl
                           ? `Isang insidente · ${selectedStudentsList.length} hiwalay na case ang gagawin`
                           : `One incident · ${selectedStudentsList.length} separate cases will be made`}
@@ -2571,14 +2571,14 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                           : ' Only include students who did something wrong. Put a victim or witness in "Witness or proof", not here.'}
                       </p>
                     </div>
-                    <div className="divide-y divide-[#E2E9F5] dark:divide-[#1E3158]">
+                    <div className="divide-y divide-[#E5E5EA] dark:divide-[#38383A]">
                       {selectedStudentsList.map((stu) => {
                         const pol = policyFor(stu);
                         const out = outcomeFor(stu, pol);
                         return (
                           <div key={stu.studentNumber} className="px-3.5 py-2 grid grid-cols-[190px_minmax(0,1fr)_24px] items-center gap-2">
                             <div className="min-w-0 space-y-0.5">
-                              <span className="text-xs font-bold text-[#0B1F4D] dark:text-white block truncate" title={stu.fullName}>
+                              <span className="text-xs font-bold text-[#1D1D1F] dark:text-white block truncate" title={stu.fullName}>
                               {stu.fullName}
                             </span>
                               <span
@@ -2587,7 +2587,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                                   ? 'bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300'
                                   : stu.minorOffenseCount >= 1
                                   ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300'
-                                  : 'bg-[#E4ECFC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7]'
+                                  : 'bg-[#EAF3FF] dark:bg-[#2C2C2E] text-[#007AFF] dark:text-[#409CFF]'
                               }`}
                             >
                               {out.word}
@@ -2600,7 +2600,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               onChange={(e) =>
                                 setPolicyOverride((prev) => ({ ...prev, [stu.studentNumber]: e.target.value }))
                               }
-                              className="w-full px-2 py-1.5 rounded-lg saas-card-subtle text-[11px] font-bold text-[#0B1F4D] dark:text-white"
+                              className="w-full px-2 py-1.5 rounded-lg saas-card-subtle text-[11px] font-bold text-[#1D1D1F] dark:text-white"
                             >
                               <option value="">{isTl ? 'Pareho sa itaas' : 'Same as above'}</option>
                               {offenseGroups.map((g) => (
@@ -2620,7 +2620,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               onClick={() =>
                                 setSelectedStudentNumbers((prev) => prev.filter((id) => id !== stu.studentNumber))
                               }
-                              className="w-6 h-6 rounded-md text-xs font-bold text-[#4A608A] hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-950/60"
+                              className="w-6 h-6 rounded-md text-xs font-bold text-[#6E6E73] hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-950/60"
                             >
                               
                             </button>
@@ -2632,14 +2632,14 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 )}
 
                 <div>
-                  <label className="block text-xs font-bold text-[#0B1F4D] dark:text-white mb-1">
+                  <label className="block text-xs font-bold text-[#1D1D1F] dark:text-white mb-1">
                     {isTl ? 'Petsa' : 'Date'}
                   </label>
                   <DateField value={incidentDate} onChange={setIncidentDate} isTl={isTl} max={todayISO()} ariaLabel={isTl ? 'Petsa ng insidente' : 'Incident date'} />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#0B1F4D] dark:text-white mb-1">
+                  <label className="block text-xs font-bold text-[#1D1D1F] dark:text-white mb-1">
                     {isTl ? 'Sino ang nag-report' : 'Reported by'}
                   </label>
                   <input
@@ -2652,7 +2652,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                         ? 'hal. Prof. R. Macapagal (Class Adviser)'
                         : 'e.g. Prof. R. Macapagal (Class Adviser)'
                     }
-                    className="w-full px-3.5 py-2 rounded-xl saas-card-subtle text-xs font-bold text-[#0B1F4D] dark:text-white"
+                    className="w-full px-3.5 py-2 rounded-xl saas-card-subtle text-xs font-bold text-[#1D1D1F] dark:text-white"
                   />
                   <datalist id="aics-reporters">
                     {reporterSuggestions.map((n) => (
@@ -2662,19 +2662,19 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#0B1F4D] dark:text-white mb-1">
+                  <label className="block text-xs font-bold text-[#1D1D1F] dark:text-white mb-1">
                     {isTl ? 'Oras (optional)' : 'Time (optional)'}
                   </label>
                   <input
                     type="time"
                     value={incidentTime}
                     onChange={(e) => setIncidentTime(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl saas-card-subtle text-xs font-bold text-[#0B1F4D] dark:text-white"
+                    className="w-full px-3.5 py-2 rounded-xl saas-card-subtle text-xs font-bold text-[#1D1D1F] dark:text-white"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#0B1F4D] dark:text-white mb-1">
+                  <label className="block text-xs font-bold text-[#1D1D1F] dark:text-white mb-1">
                     {isTl ? 'Saan nangyari (optional)' : 'Place (optional)'}
                   </label>
                   <input
@@ -2682,13 +2682,13 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     value={incidentPlace}
                     onChange={(e) => setIncidentPlace(e.target.value)}
                     placeholder={isTl ? 'hal. Gate, Room 204, Canteen' : 'e.g. Gate, Room 204, Canteen'}
-                    className="w-full px-3.5 py-2 rounded-xl saas-card-subtle text-xs font-bold text-[#0B1F4D] dark:text-white"
+                    className="w-full px-3.5 py-2 rounded-xl saas-card-subtle text-xs font-bold text-[#1D1D1F] dark:text-white"
                   />
                 </div>
 
                 {/* Affected student (complainant): staff-only, never in SMS or the parent's copy */}
                 <div className="md:col-span-2 space-y-1.5">
-                  <label htmlFor="affected-student" className="block text-xs font-bold text-[#0B1F4D] dark:text-white">
+                  <label htmlFor="affected-student" className="block text-xs font-bold text-[#1D1D1F] dark:text-white">
                     {isTl ? 'May naapektuhang estudyante? (opsyonal)' : 'Was a student affected? (optional)'}
                   </label>
                   <input
@@ -2697,7 +2697,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     value={affectedQuery}
                     onChange={(e) => setAffectedQuery(e.target.value)}
                     placeholder={isTl ? 'I-type ang pangalan o student no.' : 'Type a name or student no.'}
-                    className="w-full px-3.5 py-2 rounded-xl saas-card-subtle text-xs font-bold text-[#0B1F4D] dark:text-white"
+                    className="w-full px-3.5 py-2 rounded-xl saas-card-subtle text-xs font-bold text-[#1D1D1F] dark:text-white"
                   />
                   <datalist id="affected-student-list">
                     {affectedQuery.trim().length >= 2 &&
@@ -2706,7 +2706,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                         .slice(0, 8)
                         .map((s) => <option key={s.studentNumber} value={`${s.fullName} · #${s.studentNumber}`} />)}
                   </datalist>
-                  <p className="text-[11px] text-[#64748B] dark:text-[#94A8D0]">
+                  <p className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">
                     {affectedStudent
                       ? isTl ? `Naitala: ${affectedStudent.fullName}. Staff lang ang makakakita.` : `Linked: ${affectedStudent.fullName}. Only staff can see this.`
                       : isTl ? 'Staff lang ang makakakita. Hindi ito lalabas sa SMS o sa kopya ng magulang.' : 'Only staff can see this. It never appears in SMS or the parent copy.'}
@@ -2714,7 +2714,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 </div>
 
                 <div className="md:col-span-2 space-y-2">
-                  <label className="block text-xs font-bold text-[#0B1F4D] dark:text-white">
+                  <label className="block text-xs font-bold text-[#1D1D1F] dark:text-white">
                     {isTl ? 'Mga saksi at patunay' : 'Witnesses and proof'}
                   </label>
                   <input
@@ -2722,17 +2722,17 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     value={incidentWitness}
                     onChange={(e) => setIncidentWitness(e.target.value)}
                     placeholder={isTl ? 'hal. Guard J. Cruz; Subject Teacher; may kuha sa CCTV' : 'e.g. Guard J. Cruz; Subject Teacher; CCTV clip on file'}
-                    className="w-full px-3.5 py-2 rounded-xl saas-card-subtle text-xs font-bold text-[#0B1F4D] dark:text-white"
+                    className="w-full px-3.5 py-2 rounded-xl saas-card-subtle text-xs font-bold text-[#1D1D1F] dark:text-white"
                   />
 
                   {/* Multiple Evidence Upload (Photos / PDFs) */}
-                  <div className="mt-2 p-3 rounded-xl border border-dashed border-[#CBD5E1] dark:border-[#253B66] bg-[#F8FAFC] dark:bg-[#0B1527] space-y-2">
+                  <div className="mt-2 p-3 rounded-xl border border-dashed border-[#D1D1D6] dark:border-[#38383A] bg-[#F5F5F7] dark:bg-[#1C1C1E] space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-[#475569] dark:text-[#94A3B8] flex items-center gap-1.5">
-                        <ImageIcon className="w-3.5 h-3.5 text-[#1E469B] dark:text-[#7CB8F7]" />
+                      <span className="text-[11px] font-bold text-[#6E6E73] dark:text-[#A1A1A6] flex items-center gap-1.5">
+                        <ImageIcon className="w-3.5 h-3.5 text-[#007AFF] dark:text-[#409CFF]" />
                         <span>{isTl ? 'Maglakip ng Litrato / Dokumento ng Insidente (Multiple Files)' : 'Attach Incident Photos & Documents (Multiple)'}</span>
                       </span>
-                      <label className="btn-press cursor-pointer px-3 py-1.5 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-[11px] font-bold flex items-center gap-1 shadow-xs">
+                      <label className="btn-press cursor-pointer px-3 py-1.5 rounded-lg bg-[#007AFF] hover:bg-[#0062CC] text-white text-[11px] font-bold flex items-center gap-1 shadow-xs">
                         <Upload className="w-3 h-3" />
                         <span>{isTl ? 'Pumili ng Files' : 'Select Files'}</span>
                         <input
@@ -2763,10 +2763,10 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                         {incidentEvidenceFiles.map((file, idx) => (
                           <div
                             key={idx}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-[#0F1A30] border border-[#CBD5E1] dark:border-[#1E3158] text-xs font-medium text-[#0F172A] dark:text-white shadow-2xs"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-[#1C1C1E] border border-[#D1D1D6] dark:border-[#38383A] text-xs font-medium text-[#1D1D1F] dark:text-white shadow-2xs"
                           >
                             <span className="truncate max-w-[160px] text-[11px] font-semibold">{file.name}</span>
-                            <span className="text-[10px] text-[#64748B]">({(file.size / 1024).toFixed(0)} KB)</span>
+                            <span className="text-[10px] text-[#6E6E73]">({(file.size / 1024).toFixed(0)} KB)</span>
                             <button
                               type="button"
                               onClick={() => setIncidentEvidenceFiles((prev) => prev.filter((_, i) => i !== idx))}
@@ -2785,31 +2785,31 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               {/* Auto-Suggested Handbook Progressive Sanction Box */}
               <div className="p-4 rounded-xl saas-card-subtle space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-[#1E469B] dark:text-[#7CB8F7]">
+                  <span className="text-xs font-extrabold text-[#007AFF] dark:text-[#409CFF]">
                     {isTl
                       ? 'Sanction ayon sa Handbook'
                       : 'Sanction from the Handbook'}
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-md bg-[#1E469B] text-white text-[11px] font-bold">
+                  <span className="px-2.5 py-0.5 rounded-md bg-[#007AFF] text-white text-[11px] font-bold">
                     {selectedPolicy.classification}
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] leading-snug">
-                  <div className="p-2.5 rounded-lg bg-white dark:bg-[#0F1A30] border border-[#DCE5F2] dark:border-[#1E3158]">
-                    <p className="font-bold text-[#4A608A] dark:text-[#94A8D0]">1st Offense</p>
-                    <p className="font-semibold text-[#0B1F4D] dark:text-white mt-0.5">
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A]">
+                    <p className="font-bold text-[#6E6E73] dark:text-[#A1A1A6]">1st Offense</p>
+                    <p className="font-semibold text-[#1D1D1F] dark:text-white mt-0.5">
                       {isTl ? selectedPolicy.sanction1stTl : selectedPolicy.sanction1stEn}
                     </p>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-white dark:bg-[#0F1A30] border border-[#DCE5F2] dark:border-[#1E3158]">
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A]">
                     <p className="font-bold text-amber-600 dark:text-amber-400">2nd Offense</p>
-                    <p className="font-semibold text-[#0B1F4D] dark:text-white mt-0.5">
+                    <p className="font-semibold text-[#1D1D1F] dark:text-white mt-0.5">
                       {isTl ? selectedPolicy.sanction2ndTl : selectedPolicy.sanction2ndEn}
                     </p>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-white dark:bg-[#0F1A30] border border-[#DCE5F2] dark:border-[#1E3158]">
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A]">
                     <p className="font-bold text-rose-600 dark:text-rose-400">3rd Offense</p>
-                    <p className="font-semibold text-[#0B1F4D] dark:text-white mt-0.5">
+                    <p className="font-semibold text-[#1D1D1F] dark:text-white mt-0.5">
                       {isTl ? selectedPolicy.sanction3rdTl : selectedPolicy.sanction3rdEn}
                     </p>
                   </div>
@@ -2819,12 +2819,12 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               {/* Incident Narrative / Notes */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-[#0B1F4D] dark:text-white">
+                  <label className="block text-xs font-bold text-[#1D1D1F] dark:text-white">
                     {isTl
                       ? 'Buong Salaysay ng Nangyari (Incident Narrative & Notes)'
                       : 'Complete Incident Narrative & Notes'}
                   </label>
-                  <span className="text-[11px] font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                  <span className="text-[11px] font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">
                     {incidentNotes.trim().length > 0 ? `${incidentNotes.trim().length} characters` : (isTl ? 'Opsyonal' : 'Optional')}
                   </span>
                 </div>
@@ -2837,14 +2837,14 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       ? 'Ilagay ang buong detalye ng insidente, paunang aksyon ng guidance, o impormasyon mula sa ulat...'
                       : 'Enter complete summary of the incident, initial guidance action taken, or notes from student report...'
                   }
-                  className="w-full p-3.5 rounded-xl border border-[#CBD5E1] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-xs font-medium text-[#0B1F4D] dark:text-white leading-relaxed focus:outline-none focus:border-[#1E469B] focus:ring-1 focus:ring-[#1E469B]/30 min-h-[110px] resize-y"
+                  className="w-full p-3.5 rounded-xl border border-[#D1D1D6] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] text-xs font-medium text-[#1D1D1F] dark:text-white leading-relaxed focus:outline-none focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF]/30 min-h-[110px] resize-y"
                 />
               </div>
 
               {/* Anchored Directly Below Incident Narrative (No Floating / No Sticky Scroll Overlay) */}
-              <div className="mt-4 pt-4 border-t border-[#DCE5F2] dark:border-[#1E3158] flex flex-wrap items-center justify-between gap-3 bg-[#F8FAFC] dark:bg-[#0B1527] p-4 rounded-xl border border-[#CBD5E1] dark:border-[#253B66]">
+              <div className="mt-4 pt-4 border-t border-[#E5E5EA] dark:border-[#38383A] flex flex-wrap items-center justify-between gap-3 bg-[#F5F5F7] dark:bg-[#1C1C1E] p-4 rounded-xl border border-[#D1D1D6] dark:border-[#38383A]">
                 <div className="min-w-0 space-y-1">
-                  <p className="text-[11px] font-bold text-[#4A608A] dark:text-[#94A8D0]">
+                  <p className="text-[11px] font-bold text-[#6E6E73] dark:text-[#A1A1A6]">
                     {noStudentYet
                       ? isTl ? 'Wala pang napiling estudyante' : 'No student picked yet'
                       : isGroup
@@ -2857,7 +2857,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   </p>
                   {/* Only offer Parent notice checkbox if the offense is Major or consecutive minor (escalated) */}
                   {selectedStudentsList.length > 0 && selectedStudentsList.some((s) => outcomeFor(s, policyFor(s)).escalated) ? (
-                    <label className="inline-flex items-center gap-2 text-xs font-bold text-[#0B1F4D] dark:text-white cursor-pointer">
+                    <label className="inline-flex items-center gap-2 text-xs font-bold text-[#1D1D1F] dark:text-white cursor-pointer">
                       <input
                         type="checkbox"
                         checked={autoNotifyParent}
@@ -2887,7 +2887,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   className={`btn-press px-6 py-2.5 rounded-xl text-white text-xs sm:text-sm font-extrabold shadow-md whitespace-nowrap ${
                     selectedStudentNumbers.length === 0
                       ? 'bg-[#94A8D0] cursor-not-allowed'
-                      : 'bg-[#1E469B] hover:bg-[#16377E] ring-2 ring-[#7CB8F7]/60'
+                      : 'bg-[#007AFF] hover:bg-[#0062CC] ring-2 ring-[#7CB8F7]/60'
                   }`}
                 >
                   {selectedStudentNumbers.length === 0
@@ -2928,7 +2928,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   const c = cases.find((x) => x.caseCode === lastSavedCodes[0]);
                   if (c) openCaseDetails(c);
                 }}
-                className="px-3 py-1.5 rounded-lg saas-card-subtle text-xs font-bold text-[#0B1F4D] dark:text-white"
+                className="px-3 py-1.5 rounded-lg saas-card-subtle text-xs font-bold text-[#1D1D1F] dark:text-white"
               >
                 {isTl ? 'Tingnan ang case' : 'View the case'}
               </button>
@@ -2938,7 +2938,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   setLastSavedCodes([]);
                   setSubTab('add-report');
                 }}
-                className="px-3 py-1.5 rounded-lg bg-[#1E469B] text-white text-xs font-extrabold"
+                className="px-3 py-1.5 rounded-lg bg-[#007AFF] text-white text-xs font-extrabold"
               >
                 {isTl ? '＋ Isa pang case' : '＋ Another case'}
               </button>
@@ -2968,7 +2968,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
               }).length;
               const tiles = [
-                { k: 'todo', n: open.length, en: 'Need action', tl: 'Kailangang asikasuhin', chip: 'bg-[#1E469B]/10 text-[#1E469B] dark:bg-[#7CB8F7]/15 dark:text-[#7CB8F7]', icon: <FolderOpen className="w-4 h-4" aria-hidden />, on: caseStatusFilter === 'ALL' && flagF === 'all', go: () => { setFlagF('all'); setCaseStatusFilter('ALL'); } },
+                { k: 'todo', n: open.length, en: 'Need action', tl: 'Kailangang asikasuhin', chip: 'bg-[#007AFF]/10 text-[#007AFF] dark:bg-[#0A84FF]/15 dark:text-[#409CFF]', icon: <FolderOpen className="w-4 h-4" aria-hidden />, on: caseStatusFilter === 'ALL' && flagF === 'all', go: () => { setFlagF('all'); setCaseStatusFilter('ALL'); } },
                 { k: 'overdue', n: overdueN, en: `Overdue (over ${overdueDays} days)`, tl: `Overdue (higit ${overdueDays} araw)`, chip: 'bg-[#E11D48]/10 text-[#E11D48] dark:bg-[#FB7185]/15 dark:text-[#FB7185]', icon: <AlertTriangle className="w-4 h-4" aria-hidden />, on: flagF === 'overdue', go: () => { setCaseStatusFilter('ALL'); setFlagF('overdue'); } },
                 { k: 'conf', n: caseStatusCount.conference ?? 0, en: 'Parent conference', tl: 'Conference ng magulang', chip: 'bg-[#D97706]/10 text-[#D97706] dark:bg-[#FBBF24]/15 dark:text-[#FBBF24]', icon: <CalendarDays className="w-4 h-4" aria-hidden />, on: caseStatusFilter === 'conference', go: () => { setFlagF('all'); setCaseStatusFilter('conference'); } },
                 { k: 'done', n: doneMonth, en: 'Closed this month', tl: 'Naisara ngayong buwan', chip: 'bg-[#059669]/10 text-[#059669] dark:bg-[#34D399]/15 dark:text-[#34D399]', icon: <Check className="w-4 h-4" aria-hidden />, on: caseStatusFilter === 'done', go: () => { setFlagF('all'); setCaseStatusFilter('done'); } },
@@ -2981,7 +2981,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       type="button"
                       onClick={t.go}
                       aria-pressed={t.on}
-                      className={`bento-tile text-left rounded-[18px] px-4 py-3.5 flex items-center gap-3 transition-transform duration-150 hover:-translate-y-0.5 active:scale-[0.985] ${t.on ? 'ring-2 ring-[#1E469B]/40 dark:ring-[#7CB8F7]/40' : ''}`}
+                      className={`bento-tile text-left rounded-[18px] px-4 py-3.5 flex items-center gap-3 transition-transform duration-150 hover:-translate-y-0.5 active:scale-[0.985] ${t.on ? 'ring-2 ring-[#007AFF]/40 dark:ring-[#0A84FF]/40' : ''}`}
                     >
                       <span className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${t.chip}`}>{t.icon}</span>
                       <span className="min-w-0">
@@ -3016,7 +3016,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     type="button"
                     data-filter="clear"
                     onClick={() => { setGradeF('all'); setPeriodF('all'); setFlagF('all'); setFromF(''); setToF(''); }}
-                    className="h-9 px-3 rounded-full text-xs font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                    className="h-9 px-3 rounded-full text-xs font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                   >
                     <span data-filter-count>{isTl ? `${filteredCases.length} kaso` : `${filteredCases.length} case(s)`}</span> · {isTl ? 'Alisin ang filter' : 'Clear filters'}
                   </button>
@@ -3024,7 +3024,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
 
                 {/* Filter + sort (fewer controls on screen) */}
                 <details className="relative" data-case-filters>
-                  <summary className={`list-none [&::-webkit-details-marker]:hidden cursor-pointer h-9 px-3.5 rounded-full inline-flex items-center gap-1.5 text-xs font-medium transition-colors ${filtersOn ? 'bg-[#1E469B]/10 text-[#1E469B] dark:text-[#7CB8F7]' : 'bg-white dark:bg-white/[0.06] text-[#1D1D1F] dark:text-[#F5F5F7] shadow-[0_0_0_0.5px_rgb(15_23_42/0.1)] hover:bg-[#F5F5F7] dark:hover:bg-white/[0.1]'}`}>
+                  <summary className={`list-none [&::-webkit-details-marker]:hidden cursor-pointer h-9 px-3.5 rounded-full inline-flex items-center gap-1.5 text-xs font-medium transition-colors ${filtersOn ? 'bg-[#007AFF]/10 text-[#007AFF] dark:text-[#409CFF]' : 'bg-white dark:bg-white/[0.06] text-[#1D1D1F] dark:text-[#F5F5F7] shadow-[0_0_0_0.5px_rgb(15_23_42/0.1)] hover:bg-[#F5F5F7] dark:hover:bg-white/[0.1]'}`}>
                     <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden />
                     {isTl ? 'Filter at ayos' : 'Filter & sort'}
                   </summary>
@@ -3108,7 +3108,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       }}
                       className="w-full flex items-start gap-2.5 px-3 py-2.5 rounded-xl text-left hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                     >
-                      <Layers className="w-4 h-4 mt-0.5 text-[#1E469B] dark:text-[#7CB8F7] shrink-0" aria-hidden />
+                      <Layers className="w-4 h-4 mt-0.5 text-[#007AFF] dark:text-[#409CFF] shrink-0" aria-hidden />
                       <span>
                         <span className="block text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Mag-print ng 4 na call slip' : 'Print 4 call slips'}</span>
                         <span className="block text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Mga estudyanteng tatawagin pa, sa isang papel' : 'Students still to call, on one sheet'}</span>
@@ -3132,8 +3132,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
 
             <div className="space-y-5">
               {filteredCases.length === 0 && (
-                <div className="px-6 py-10 text-center space-y-3 rounded-xl bg-white dark:bg-[#0F1A30] border border-[#D3DDEE] dark:border-[#253B66]">
-                  <p className="text-sm font-bold text-[#0B1F4D] dark:text-white">
+                <div className="px-6 py-10 text-center space-y-3 rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A]">
+                  <p className="text-sm font-bold text-[#1D1D1F] dark:text-white">
                     {quickSearch.trim()
                       ? isTl
                         ? `Walang kasong tugma sa "${quickSearch.trim()}".`
@@ -3151,7 +3151,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       <button
                         type="button"
                         onClick={() => setCaseStatusFilter('ALL')}
-                        className="px-3 py-1.5 rounded-lg saas-card-subtle text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7]"
+                        className="px-3 py-1.5 rounded-lg saas-card-subtle text-xs font-bold text-[#007AFF] dark:text-[#409CFF]"
                       >
                         {isTl ? 'Ipakita lahat' : 'Show all cases'}
                       </button>
@@ -3159,7 +3159,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     <button
                       type="button"
                       onClick={() => setSubTab('add-report')}
-                      className="px-3 py-1.5 rounded-lg bg-[#1E469B] text-white text-xs font-bold"
+                      className="px-3 py-1.5 rounded-lg bg-[#007AFF] text-white text-xs font-bold"
                     >
                       {isTl ? '＋ Bagong kaso' : '＋ New case'}
                     </button>
@@ -3203,7 +3203,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       {/* avatar tinted by how serious the case is */}
                       {/* boy/girl avatar with a colored ring for how serious the case is */}
                       <span aria-hidden="true" data-stripe data-initials={initials} className={`relative rounded-full p-[2px] ${tone}`}>
-                        <span className="block rounded-full bg-white dark:bg-[#0F1B2E] p-[1.5px]">
+                        <span className="block rounded-full bg-white dark:bg-[#1C1C1E] p-[1.5px]">
                           <StudentGenderAvatar fullName={c.studentName} size="md" />
                         </span>
                         {!isResolved && age.days >= 7 && (
@@ -3249,7 +3249,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                             <span
                               key={i}
                               className={`h-1.5 flex-1 rounded-full ${
-                                i < doneSteps ? (isResolved ? 'bg-emerald-500' : 'bg-[#1E469B] dark:bg-[#5B8DEF]') : 'bg-[#E8E8ED] dark:bg-white/10'
+                                i < doneSteps ? (isResolved ? 'bg-emerald-500' : 'bg-[#007AFF] dark:bg-[#5B8DEF]') : 'bg-[#E8E8ED] dark:bg-white/10'
                               }`}
                             />
                           ))}
@@ -3271,7 +3271,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               type="button"
                               onClick={() => openComposerForCase(c)}
                               title={isTl ? 'Hindi kasama ang offense sa text' : 'The message never includes the offense'}
-                              className="btn-press h-8 px-4 rounded-full bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap"
+                              className="btn-press h-8 px-4 rounded-full bg-[#007AFF] hover:bg-[#0062CC] text-white text-xs font-semibold whitespace-nowrap"
                             >
                               {isTl ? 'I-text ang magulang' : 'Text parent'}
                             </button>
@@ -3280,7 +3280,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                             <button
                               type="button"
                               onClick={() => openCaseDetails(c)}
-                              className="btn-press h-8 px-4 rounded-full bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap"
+                              className="btn-press h-8 px-4 rounded-full bg-[#007AFF] hover:bg-[#0062CC] text-white text-xs font-semibold whitespace-nowrap"
                             >
                               {isTl ? 'Mag-schedule' : 'Schedule conference'}
                             </button>
@@ -3290,7 +3290,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               type="button"
                               data-card-flow={c.caseCode}
                               onClick={() => openCaseDetails(c)}
-                              className="btn-press h-8 px-4 rounded-full bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap"
+                              className="btn-press h-8 px-4 rounded-full bg-[#007AFF] hover:bg-[#0062CC] text-white text-xs font-semibold whitespace-nowrap"
                             >
                               {step.button}
                             </button>
@@ -3320,7 +3320,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                               <>
                                 <div
                                   role="menu"
-                                  className="absolute right-0 top-9 z-40 w-52 py-1 rounded-xl bg-white dark:bg-[#14223E] border border-[#CBD5E1] dark:border-[#253B66] shadow-xl"
+                                  className="absolute right-0 top-9 z-40 w-52 py-1 rounded-xl bg-white dark:bg-[#14223E] border border-[#D1D1D6] dark:border-[#38383A] shadow-xl"
                                 >
                                   {[
                                     {
@@ -3362,7 +3362,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                                           setCaseMenuOpen(null);
                                           m.run();
                                         }}
-                                        className="w-full text-left px-3.5 py-2 text-xs font-semibold text-[#0F172A] dark:text-white hover:bg-[#F4F7FC] dark:hover:bg-[#1B2C4F]"
+                                        className="w-full text-left px-3.5 py-2 text-xs font-semibold text-[#1D1D1F] dark:text-white hover:bg-[#F5F5F7] dark:hover:bg-[#1B2C4F]"
                                       >
                                         {m.label}
                                       </button>
@@ -3383,7 +3383,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     <button
                       type="button"
                       onClick={() => setBoardLimit((n) => n + BOARD_PAGE)}
-                      className="w-full py-2.5 rounded-xl border border-dashed border-[#B9C8E4] dark:border-[#2E4778] text-xs font-extrabold text-[#1E469B] dark:text-[#7CB8F7] hover:bg-white dark:hover:bg-[#0F1A30]"
+                      className="w-full py-2.5 rounded-xl border border-dashed border-[#B9C8E4] dark:border-[#38383A] text-xs font-extrabold text-[#007AFF] dark:text-[#409CFF] hover:bg-white dark:hover:bg-[#0F1A30]"
                     >
                       {isTl
                         ? `Ipakita pa ang ${Math.min(BOARD_PAGE, left)} (${left} pa ang natitira)`
@@ -3411,7 +3411,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                             type="button"
                             onClick={() => setShowDoneCases((v) => !v)}
                             aria-expanded={showDoneCases}
-                            className="flex items-center gap-2 text-[11px] font-extrabold tracking-[0.08em] uppercase text-[#4A608A] dark:text-[#94A8D0] hover:text-[#0B1F4D] dark:hover:text-white"
+                            className="flex items-center gap-2 text-[11px] font-extrabold tracking-[0.08em] uppercase text-[#6E6E73] dark:text-[#A1A1A6] hover:text-[#1D1D1F] dark:hover:text-white"
                           >
                             <span className={`inline-block transition-transform ${showDoneCases ? 'rotate-90' : ''}`}>▸</span>
                             {isTl ? 'Tapos na' : 'Done'} · {done.length}
@@ -3542,7 +3542,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                           <button
                             type="button"
                             onClick={() => void printSummary(c, 'print')}
-                            className="btn-press h-8 px-4 rounded-full bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1.5"
+                            className="btn-press h-8 px-4 rounded-full bg-[#007AFF] hover:bg-[#0062CC] text-white text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1.5"
                           >
                             <Printer className="w-3.5 h-3.5" aria-hidden />
                             {isTl ? 'I-print ang buod' : 'Print summary'}
@@ -3605,7 +3605,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               </div>
               <div className="flex items-center gap-2">
                 <details className="relative">
-                  <summary className={`list-none [&::-webkit-details-marker]:hidden cursor-pointer h-9 px-3.5 rounded-full inline-flex items-center gap-1.5 text-xs font-medium transition-colors ${enrolledFilter !== 'enrolled' || studentOffense !== 'all' ? 'bg-[#1E469B]/10 text-[#1E469B] dark:text-[#7CB8F7]' : 'bg-white dark:bg-white/[0.06] text-[#1D1D1F] dark:text-[#F5F5F7] shadow-[0_0_0_0.5px_rgb(15_23_42/0.1)] hover:bg-[#F5F5F7] dark:hover:bg-white/[0.1]'}`}>
+                  <summary className={`list-none [&::-webkit-details-marker]:hidden cursor-pointer h-9 px-3.5 rounded-full inline-flex items-center gap-1.5 text-xs font-medium transition-colors ${enrolledFilter !== 'enrolled' || studentOffense !== 'all' ? 'bg-[#007AFF]/10 text-[#007AFF] dark:text-[#409CFF]' : 'bg-white dark:bg-white/[0.06] text-[#1D1D1F] dark:text-[#F5F5F7] shadow-[0_0_0_0.5px_rgb(15_23_42/0.1)] hover:bg-[#F5F5F7] dark:hover:bg-white/[0.1]'}`}>
                     <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden />
                     {isTl ? 'Filter at ayos' : 'Filter & sort'}
                   </summary>
@@ -3636,7 +3636,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                                 {k === 'all' ? students.length : students.filter((s) => offenseLevel(s) === k).length}
                               </span>
                             </span>
-                            {studentOffense === k && <Check className="w-4 h-4 text-[#1E469B] dark:text-[#7CB8F7]" aria-hidden />}
+                            {studentOffense === k && <Check className="w-4 h-4 text-[#007AFF] dark:text-[#409CFF]" aria-hidden />}
                           </button>
                         ))}
                       </div>
@@ -3696,12 +3696,12 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 </p>
                 <div className="flex justify-center gap-2">
                   {sectionFilter !== 'ALL' && (
-                    <button type="button" onClick={() => setSectionFilter('ALL')} className="h-9 px-4 rounded-full text-xs font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04]">
+                    <button type="button" onClick={() => setSectionFilter('ALL')} className="h-9 px-4 rounded-full text-xs font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04]">
                       {isTl ? 'Ipakita lahat' : 'Show all students'}
                     </button>
                   )}
                   {students.length === 0 && (
-                    <button type="button" onClick={() => setSubTab('masterlist')} className="h-9 px-4 rounded-full bg-[#1E469B] text-white text-xs font-semibold">
+                    <button type="button" onClick={() => setSubTab('masterlist')} className="h-9 px-4 rounded-full bg-[#007AFF] text-white text-xs font-semibold">
                       {isTl ? 'I-import ang masterlist' : 'Import masterlist'}
                     </button>
                   )}
@@ -3778,13 +3778,13 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
             <div className="cdm-panel p-6 space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
                 <div>
-                  <div className="text-[11px] font-extrabold tracking-wider uppercase text-[#1E469B] dark:text-[#7CB8F7]">
+                  <div className="text-[11px] font-extrabold tracking-wider uppercase text-[#007AFF] dark:text-[#409CFF]">
                     REGISTRAR / STUDENT RECORDS
                   </div>
-                  <h2 className="text-xl font-extrabold text-[#0B1F4D] dark:text-white mt-0.5">
+                  <h2 className="text-xl font-extrabold text-[#1D1D1F] dark:text-white mt-0.5">
                     {isTl ? 'Mag-import ng Roster ng mga Estudyante' : 'Import Student Roster & Masterlist'}
                   </h2>
-                  <p className="text-xs text-[#4A608A] dark:text-[#94A8D0] mt-1">
+                  <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6] mt-1">
                     {isTl
                       ? 'Mag-upload ng opisyal na record nang maayos at may pre-validation bago pumasok sa database.'
                       : 'Add official school records with instant structural validation before database insertion.'}
@@ -3795,7 +3795,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   <button
                     type="button"
                     onClick={handleDownloadTemplate}
-                    className="btn-press px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:border-[#1E469B] text-xs font-bold text-[#0B1F4D] dark:text-white bg-white dark:bg-[#0B1528] flex items-center gap-2 shadow-sm"
+                    className="btn-press px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:border-[#007AFF] text-xs font-bold text-[#1D1D1F] dark:text-white bg-white dark:bg-[#1C1C1E] flex items-center gap-2 shadow-sm"
                   >
                     <DuotoneIcon name="clipboardText" size={16} />
                     <span>{isTl ? 'I-download ang CSV Template' : 'Download CSV Template'}</span>
@@ -3805,7 +3805,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     <button
                       type="button"
                       onClick={handleAutoFixMasterlist}
-                      className="btn-press px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-[#0B1F4D] text-xs font-extrabold shadow-sm flex items-center gap-1.5"
+                      className="btn-press px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-[#1D1D1F] text-xs font-extrabold shadow-sm flex items-center gap-1.5"
                     >
                       <DuotoneIcon name="warningCircle" size={15} />
                       <span>{isTl ? 'Auto-Fix Numbers' : 'Auto-Fix Numbers'}</span>
@@ -3816,7 +3816,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     type="button"
                     disabled={readyPreviewCount === 0 || savingMasterlist}
                     onClick={handleCommitMasterlistToDb}
-                    className="btn-press px-5 py-2 rounded-xl bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-extrabold shadow-sm disabled:opacity-40 flex items-center gap-2"
+                    className="btn-press px-5 py-2 rounded-xl bg-[#007AFF] hover:bg-[#0062CC] text-white text-xs font-extrabold shadow-sm disabled:opacity-40 flex items-center gap-2"
                   >
                     <DuotoneIcon name="checkSquareOffset" size={16} />
                     <span>
@@ -3830,7 +3830,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
 
               {/* 3-STEP GUIDE BOX (EXACT PATTERN FROM CDM PORTAL) */}
               <div className="space-y-3">
-                <h3 className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                <h3 className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">
                   {isTl ? 'Paano ito gumagana' : 'How it works'}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
@@ -3838,11 +3838,11 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="cdm-step-pill">1</span>
-                      <span className="text-xs font-black text-[#0B1F4D] dark:text-white">
+                      <span className="text-xs font-black text-[#1D1D1F] dark:text-white">
                         {isTl ? 'I-download ang Template' : 'Download the template'}
                       </span>
                     </div>
-                    <p className="text-[11.5px] text-[#4A608A] dark:text-[#94A8D0] leading-relaxed">
+                    <p className="text-[11.5px] text-[#6E6E73] dark:text-[#A1A1A6] leading-relaxed">
                       {isTl
                         ? 'Gamitin ang opisyal na format kada estudyante. Panatilihin ang eksaktong headers.'
                         : 'Use one row per student or record. Keep the exact column headers intact.'}
@@ -3853,11 +3853,11 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="cdm-step-pill">2</span>
-                      <span className="text-xs font-black text-[#0B1F4D] dark:text-white">
+                      <span className="text-xs font-black text-[#1D1D1F] dark:text-white">
                         {isTl ? 'Punan ang Detalye' : 'Fill official record details'}
                       </span>
                     </div>
-                    <p className="text-[11.5px] text-[#4A608A] dark:text-[#94A8D0] leading-relaxed">
+                    <p className="text-[11.5px] text-[#6E6E73] dark:text-[#A1A1A6] leading-relaxed">
                       {isTl
                         ? 'Student number, buong pangalan, baitang, seksyon, pangalan ng magulang, at mobile number.'
                         : 'Student number, full name, strand, section, parent name, and emergency contact number.'}
@@ -3868,11 +3868,11 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="cdm-step-pill">3</span>
-                      <span className="text-xs font-black text-[#0B1F4D] dark:text-white">
+                      <span className="text-xs font-black text-[#1D1D1F] dark:text-white">
                         {isTl ? 'I-preview at I-confirm' : 'Preview and confirm'}
                       </span>
                     </div>
-                    <p className="text-[11.5px] text-[#4A608A] dark:text-[#94A8D0] leading-relaxed">
+                    <p className="text-[11.5px] text-[#6E6E73] dark:text-[#A1A1A6] leading-relaxed">
                       {isTl
                         ? 'Suriin ang mga error bago pumasok sa database. Awtomatikong sasalain ang duplicates.'
                         : 'Correct any flagged errors first. Inactive and duplicate records are safely isolated.'}
@@ -3898,10 +3898,10 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               {/* STEP 1 — UPLOAD ROSTER DROPZONE (CDM STYLE) */}
               <div className="space-y-2 pt-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#0B1F4D] dark:text-white">
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1D1D1F] dark:text-white">
                     {isTl ? 'Mag-upload ng Roster File' : 'Upload Roster'}
                   </h3>
-                  <span className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">
+                  <span className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">
                     CSV or XLSX, up to 1,000 rows
                   </span>
                 </div>
@@ -3919,8 +3919,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   }}
                   className={`block rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition-colors ${
                     importDragOver
-                      ? 'border-[#1E469B] bg-blue-50/50 dark:bg-blue-950/30'
-                      : 'border-slate-300 dark:border-slate-700 hover:border-[#1E469B] hover:bg-slate-50/60 dark:hover:bg-slate-900/40'
+                      ? 'border-[#007AFF] bg-blue-50/50 dark:bg-blue-950/30'
+                      : 'border-slate-300 dark:border-slate-700 hover:border-[#007AFF] hover:bg-slate-50/60 dark:hover:bg-slate-900/40'
                   }`}
                 >
                   <input
@@ -3932,15 +3932,15 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       e.target.value = '';
                     }}
                   />
-                  <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/40 text-[#1E469B] dark:text-[#7CB8F7] flex items-center justify-center mx-auto mb-2">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/40 text-[#007AFF] dark:text-[#409CFF] flex items-center justify-center mx-auto mb-2">
                     <DuotoneIcon name="folderOpen" size={20} />
                   </div>
-                  <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                  <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">
                     {isTl
                       ? 'I-drag dito ang Excel o CSV file, o pindutin para pumili'
                       : 'Choose completed CSV / Excel file or drag and drop'}
                   </p>
-                  <p className="mt-1 text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                  <p className="mt-1 text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                     {isTl
                       ? 'Kahit anong ayos ng columns — awtomatikong tutukuyin ng scanner ang mga fields.'
                       : 'Automatic header matching with duplicate detection.'}
@@ -3965,15 +3965,15 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
             {importAnalysis && (
               <div className="rounded-2xl border border-[#CFD9F2] dark:border-[#243B6B] overflow-hidden">
                 <div className="px-5 py-4 bg-[#F1F5FD] dark:bg-[#12203F] border-b border-[#CFD9F2] dark:border-[#243B6B]">
-                  <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#2557BE] dark:text-[#7CB8F7]">
+                  <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#007AFF] dark:text-[#409CFF]">
                     {isTl ? 'Step 2 · I-check ang mga column' : 'Step 2 · Check the columns'}
                   </p>
-                  <h3 className="mt-0.5 text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                  <h3 className="mt-0.5 text-sm font-extrabold text-[#1D1D1F] dark:text-white">
                     {isTl
                       ? `Nakabasa ng ${importAnalysis.extract.rows.length} estudyante sa "${importAnalysis.fileName}"`
                       : `Found ${importAnalysis.extract.rows.length} students in "${importAnalysis.fileName}"`}
                   </h3>
-                  <p className="mt-1 text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                  <p className="mt-1 text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                     {importAnalysis.layouts.length > 1
                       ? isTl
                         ? `Binasa ang ${importAnalysis.layouts.length} sheet: ${importAnalysis.layouts.map((l) => l.sheetName).join(', ')}. `
@@ -4007,7 +4007,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     const meta = FIELD_LABELS[field];
                     return (
                       <div key={field} className="grid grid-cols-[150px_1fr] items-center gap-3 text-xs">
-                        <label htmlFor={`map-${field}`} className="font-bold text-[#0B1F4D] dark:text-white">
+                        <label htmlFor={`map-${field}`} className="font-bold text-[#1D1D1F] dark:text-white">
                           {isTl ? meta.tl : meta.en}
                           {meta.required && <span className="text-rose-600"> *</span>}
                         </label>
@@ -4028,7 +4028,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                             ))}
                           </select>
                           {sample && (
-                            <p className="mt-0.5 truncate text-[11px] text-[#687FA8] dark:text-[#89A7DF]">
+                            <p className="mt-0.5 truncate text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">
                               {isTl ? 'Hal.:' : 'e.g.'} {sample}
                             </p>
                           )}
@@ -4047,7 +4047,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   </p>
                 )}
 
-                <div className="px-5 py-3 flex justify-end gap-2 bg-[#F6F9FE] dark:bg-[#0E1A33] border-t border-[#E2E9F5] dark:border-[#1E3158]">
+                <div className="px-5 py-3 flex justify-end gap-2 bg-[#F5F5F7] dark:bg-[#1C1C1E] border-t border-[#E5E5EA] dark:border-[#38383A]">
                   <button
                     type="button"
                     onClick={() => setImportAnalysis(null)}
@@ -4059,7 +4059,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     type="button"
                     onClick={handleApplyImport}
                     disabled={importAnalysis.extract.rows.length === 0}
-                    className="btn-press px-5 py-2 rounded-lg bg-[#1E469B] hover:bg-[#16377E] text-white text-xs font-extrabold disabled:opacity-40"
+                    className="btn-press px-5 py-2 rounded-lg bg-[#007AFF] hover:bg-[#0062CC] text-white text-xs font-extrabold disabled:opacity-40"
                   >
                     {isTl
                       ? `Tama na → Ipakita ang ${importAnalysis.extract.rows.length} sa Preview`
@@ -4071,10 +4071,10 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
 
             {previewRows.length === 0 ? (
               <div className="p-8 rounded-2xl saas-card-subtle text-center space-y-3">
-                <p className="text-sm font-bold text-[#0B1F4D] dark:text-white">
+                <p className="text-sm font-bold text-[#1D1D1F] dark:text-white">
                   {isTl ? 'Wala pang naka-preview na estudyante.' : 'No students in the preview yet.'}
                 </p>
-                <p className="text-xs text-[#4A608A] dark:text-[#94A8D0]">
+                <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
                   {isTl
                     ? 'I-upload ang Excel sa itaas. Hindi sigurado sa format? Pindutin ang "I-download ang Template".'
                     : 'Upload the Excel file above. Not sure of the format? Press "Download Template".'}
@@ -4120,8 +4120,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                             ? 'bg-rose-600 text-white'
                             : key === 'ready'
                             ? 'bg-emerald-600 text-white'
-                            : 'bg-[#1E469B] text-white'
-                          : 'text-[#4A608A] dark:text-[#94A8D0] hover:text-[#0B1F4D] dark:hover:text-white'
+                            : 'bg-[#007AFF] text-white'
+                          : 'text-[#6E6E73] dark:text-[#A1A1A6] hover:text-[#1D1D1F] dark:hover:text-white'
                       }`}
                     >
                       {label} <span className="font-mono opacity-80">({count})</span>
@@ -4130,7 +4130,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 </div>
 
                 {previewPageCount > 1 && (
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#4A608A] dark:text-[#94A8D0]">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#6E6E73] dark:text-[#A1A1A6]">
                     <span className="font-mono">
                       {safePreviewPage * PREVIEW_PAGE_SIZE + 1}–
                       {Math.min((safePreviewPage + 1) * PREVIEW_PAGE_SIZE, filteredPreviewRows.length)}{' '}
@@ -4169,10 +4169,10 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     : 'No rows here.'}
                 </div>
               ) : (
-              <div className="overflow-x-auto rounded-xl border border-[#DCE5F2] dark:border-[#1E3158]">
+              <div className="overflow-x-auto rounded-xl border border-[#E5E5EA] dark:border-[#38383A]">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="saas-card-subtle border-b border-[#DCE5F2] dark:border-[#1E3158] text-[#4A608A] dark:text-[#94A8D0] font-extrabold">
+                    <tr className="saas-card-subtle border-b border-[#E5E5EA] dark:border-[#38383A] text-[#6E6E73] dark:text-[#A1A1A6] font-extrabold">
                       <th className="py-3 px-4">Status</th>
                       <th className="py-3 px-4">Student ID / LRN</th>
                       <th className="py-3 px-4">Full Name</th>
@@ -4182,13 +4182,13 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       <th className="py-3 px-4">Parent Gmail</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#E2E9F5] dark:divide-[#1E3158]">
+                  <tbody className="divide-y divide-[#E5E5EA] dark:divide-[#38383A]">
                     {pagedPreviewRows.map((row) => (
                       <tr
                         key={row.rowId}
                         className={
                           row.isValid
-                            ? 'bg-white dark:bg-[#0F1A30]'
+                            ? 'bg-white dark:bg-[#1C1C1E]'
                             : 'bg-rose-50/60 dark:bg-rose-950/25'
                         }
                       >
@@ -4236,7 +4236,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                             className="w-28 px-2.5 py-1 rounded-lg saas-card-subtle font-mono font-bold"
                           />
                           {previewSourceLabels[row.rowId] && (
-                            <p className="mt-0.5 text-[10px] text-[#687FA8] dark:text-[#89A7DF]">
+                            <p className="mt-0.5 text-[10px] text-[#6E6E73] dark:text-[#A1A1A6]">
                               {isTl ? 'Sa file:' : 'In file:'} {previewSourceLabels[row.rowId]}
                             </p>
                           )}
@@ -4411,7 +4411,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
             >
               <div className="w-full flex-1 min-h-0 rounded-[20px] panel-2026 flex flex-col overflow-hidden">
               {/* Apple sheet header (Dashboard theme): calm surface, big name, small chips */}
-              <div className="px-6 py-4 border-b border-black/[0.06] dark:border-white/[0.08] bg-white dark:bg-[#0F1B2E] flex items-center justify-between gap-3">
+              <div className="px-6 py-4 border-b border-black/[0.06] dark:border-white/[0.08] bg-white dark:bg-[#1C1C1E] flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3.5 min-w-0">
                   <StudentGenderAvatar fullName={openCase.studentName} size="md" />
                   <div className="min-w-0">
@@ -4463,7 +4463,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       Print
                     </button>
                     {openCase.status === 'Resolved' ? (
-                      <button type="button" onClick={() => handleUpdateCaseStatus(openCase, 'Open')} className="h-8 px-3 rounded-full bg-[#F5F5F7] dark:bg-white/[0.08] hover:bg-[#E8E8ED] dark:hover:bg-white/[0.14] text-[12px] font-medium inline-flex items-center gap-1.5 transition-colors text-[#1E469B] dark:text-[#7CB8F7]">
+                      <button type="button" onClick={() => handleUpdateCaseStatus(openCase, 'Open')} className="h-8 px-3 rounded-full bg-[#F5F5F7] dark:bg-white/[0.08] hover:bg-[#E8E8ED] dark:hover:bg-white/[0.14] text-[12px] font-medium inline-flex items-center gap-1.5 transition-colors text-[#007AFF] dark:text-[#409CFF]">
                         {isTl ? 'Buksan ulit' : 'Reopen'}
                       </button>
                     ) : (
@@ -4488,7 +4488,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                             }}
                             className="w-full flex items-start gap-2.5 text-left px-3 py-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                           >
-                            <ShieldCheck className="w-4 h-4 mt-0.5 text-[#1E469B] dark:text-[#7CB8F7] shrink-0" aria-hidden />
+                            <ShieldCheck className="w-4 h-4 mt-0.5 text-[#007AFF] dark:text-[#409CFF] shrink-0" aria-hidden />
                             <span>
                               <span className="block text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Isara: Hindi napatunayan' : 'Close: Not proven'}</span>
                               <span className="block text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Walang sapat na ebidensya o hindi totoo. Hindi bibilang na offense.' : 'Not enough proof or found untrue. Does not count as an offense.'}</span>
@@ -4528,7 +4528,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               </div>
 
               {/* body */}
-              <div className="overflow-y-auto clean-scroll space-y-4 p-5 bg-[#F5F5F7] dark:bg-[#0A1526]">
+              <div className="overflow-y-auto clean-scroll space-y-4 p-5 bg-[#F5F5F7] dark:bg-[#1C1C1E]">
                 {/* 1. 7-Step Progressive Flow Stepper & Action Card */}
                 {/* One save at a time (Golden Rule 1): while editing the record, the step panel is paused */}
                 {caseEditing && (
@@ -4644,7 +4644,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 <div className="space-y-5 pt-2">
                   <section className="space-y-2">
                     <h4 className="px-1 text-[13px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Detalye ng insidente' : 'Incident'}</h4>
-                    <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
+                    <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 divide-y divide-black/[0.06] dark:divide-white/[0.06]">
                       <div className="px-4 py-3 flex items-start justify-between gap-4">
                         <span className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6] shrink-0">{isTl ? 'Paglabag' : 'Offense'}</span>
                         <span className="text-[14px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7] text-right">{isTl ? openCase.offenseTitleTl : openCase.offenseTitleEn}</span>
@@ -4660,7 +4660,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       <div className="px-4 py-3 flex items-center justify-between gap-4">
                         <label htmlFor="edit-reported-by" className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6] shrink-0">{isTl ? 'Nag-ulat' : 'Reported by'}</label>
                         {caseEditing ? (
-                          <input id="edit-reported-by" type="text" value={editReportedBy} onChange={(e) => setEditReportedBy(e.target.value)} className="h-10 w-64 max-w-full px-3 rounded-xl border border-[#DDE3EC] dark:border-white/10 bg-white dark:bg-[#0A1526] text-[14px] text-[#1D1D1F] dark:text-white" />
+                          <input id="edit-reported-by" type="text" value={editReportedBy} onChange={(e) => setEditReportedBy(e.target.value)} className="h-10 w-64 max-w-full px-3 rounded-xl border border-[#E5E5EA] dark:border-white/10 bg-white dark:bg-[#1C1C1E] text-[14px] text-[#1D1D1F] dark:text-white" />
                         ) : (
                           <span className="text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] text-right">{openCase.reportedBy}</span>
                         )}
@@ -4671,7 +4671,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                           <span className="text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] text-right">
                             {openCaseStudent.parentName}
                             {openCaseStudent.parentPhone ? (
-                              <a href={`tel:${openCaseStudent.parentPhone.replace(/\D/g, '')}`} className="ml-1 text-[#1E469B] dark:text-[#7CB8F7] tabular-nums">· {openCaseStudent.parentPhone}</a>
+                              <a href={`tel:${openCaseStudent.parentPhone.replace(/\D/g, '')}`} className="ml-1 text-[#007AFF] dark:text-[#409CFF] tabular-nums">· {openCaseStudent.parentPhone}</a>
                             ) : (
                               <span className="text-[#8E8E93]"> · {isTl ? 'walang number' : 'no number'}</span>
                             )}
@@ -4681,7 +4681,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       <div className="px-4 py-3 space-y-1.5">
                         <label htmlFor="edit-notes" className="block text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Salaysay' : 'What happened'}</label>
                         {caseEditing ? (
-                          <textarea id="edit-notes" rows={3} value={editNotes} onChange={(e) => setEditNotes(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-[#DDE3EC] dark:border-white/10 bg-white dark:bg-[#0A1526] text-[14px] leading-relaxed text-[#1D1D1F] dark:text-white" />
+                          <textarea id="edit-notes" rows={3} value={editNotes} onChange={(e) => setEditNotes(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-[#E5E5EA] dark:border-white/10 bg-white dark:bg-[#1C1C1E] text-[14px] leading-relaxed text-[#1D1D1F] dark:text-white" />
                         ) : (
                           <p className="text-[14px] leading-relaxed text-[#1D1D1F] dark:text-[#F5F5F7] whitespace-pre-line">
                             {hideIncidentMarker(openCase.notes).replace(/^No notes added.$/, '').trim() || <span className="text-[#8E8E93]">{isTl ? 'Walang naisulat na kuwento.' : 'No narrative written.'}</span>}
@@ -4693,7 +4693,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
 
                   <section className="space-y-2">
                     <h4 className="px-1 text-[13px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Salaysay ng nag-ulat at testigo' : 'Reporter and witness statements'}</h4>
-                    <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 p-4">
+                    <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 p-4">
                       <StatementsPanel
                         caseCode={openCase.caseCode}
                         incidentCode={openCase.incidentCode}
@@ -4712,7 +4712,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
 
                   <section className="space-y-2">
                     <h4 className="px-1 text-[13px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Ebidensya' : 'Evidence'}</h4>
-                    <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 p-4">
+                    <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 p-4">
                       <EvidencePanel
                         caseCode={openCase.caseCode}
                         isTl={isTl}
@@ -4725,7 +4725,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
 
                   <section className="space-y-2">
                     <h4 className="px-1 text-[13px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Kasaysayan ng kaso' : 'Case history'}</h4>
-                    <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 px-4 py-3">
+                    <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 px-4 py-3">
                       {caseHistory === 'loading' ? (
                         <p className="text-[13px] text-[#8E8E93]">{isTl ? 'Kinukuha…' : 'Loading…'}</p>
                       ) : caseHistory === null ? (
@@ -4750,8 +4750,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
 
               {/* footer only while editing: Cancel / Save (the one action at that moment) */}
               {caseEditing && (
-                <div className="px-6 py-3 bg-white dark:bg-[#0F1B2E] border-t border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between gap-2">
-                  <button type="button" onClick={() => setCaseEditing(false)} className="h-10 px-5 rounded-full text-[14px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">
+                <div className="px-6 py-3 bg-white dark:bg-[#1C1C1E] border-t border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between gap-2">
+                  <button type="button" onClick={() => setCaseEditing(false)} className="h-10 px-5 rounded-full text-[14px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">
                     {isTl ? 'Huwag na' : 'Cancel'}
                   </button>
                   <button type="button" onClick={saveCaseEdit} className="btn-lit h-10 px-6 text-[14px] font-semibold">
@@ -4817,7 +4817,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     onClick={() => setWithdrawReason(r)}
                     className={`h-8 px-3 rounded-full text-xs font-medium transition-colors active:scale-[0.97] ${
                       withdrawReason === r
-                        ? 'bg-[#1E469B] text-white'
+                        ? 'bg-[#007AFF] text-white'
                         : 'bg-[#F5F5F7] dark:bg-white/[0.08] text-[#1D1D1F] dark:text-[#F5F5F7] hover:bg-[#E8E8ED] dark:hover:bg-white/[0.12]'
                     }`}
                   >
@@ -4831,14 +4831,14 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 value={withdrawReason}
                 onChange={(e) => setWithdrawReason(e.target.value)}
                 placeholder={isTl ? 'O isulat ang dahilan…' : 'Or type the reason…'}
-                className="w-full h-10 px-3 rounded-xl saas-card-subtle text-sm text-[#1D1D1F] dark:text-white focus:outline-none focus:border-[#1E469B]"
+                className="w-full h-10 px-3 rounded-xl saas-card-subtle text-sm text-[#1D1D1F] dark:text-white focus:outline-none focus:border-[#007AFF]"
               />
             </div>
             <div className="flex justify-end gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => setWithdrawFor(null)}
-                className="h-10 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                className="h-10 px-4 rounded-full text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
               >
                 {isTl ? 'Huwag na' : 'Cancel'}
               </button>
@@ -4955,21 +4955,21 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.96, opacity: 0, y: 6 }}
               transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-              className="w-full max-w-xl max-h-[calc(100dvh/var(--app-zoom,1)_-_2rem)] rounded-[22px] overflow-hidden flex flex-col bg-[#F5F5F7] dark:bg-[#0A1526] shadow-[0_0_0_0.5px_rgb(0_0_0/0.08),0_40px_100px_-20px_rgba(4,14,32,0.5)]"
+              className="w-full max-w-xl max-h-[calc(100dvh/var(--app-zoom,1)_-_2rem)] rounded-[22px] overflow-hidden flex flex-col bg-[#F5F5F7] dark:bg-[#1C1C1E] shadow-[0_0_0_0.5px_rgb(0_0_0/0.08),0_40px_100px_-20px_rgba(4,14,32,0.5)]"
             >
               {(() => {
                 const p = selectedStudentProfile;
                 const theirCases = cases.filter((c) => c.studentNumber === p.studentNumber).sort((a, b) => b.incidentDate.localeCompare(a.incidentDate));
                 const badge = attentionBadge(p);
                 const hasRecord = p.minorOffenseCount > 0 || p.majorOffenseCount > 0;
-                const group = 'rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 overflow-hidden divide-y divide-black/[0.06] dark:divide-white/[0.06]';
+                const group = 'rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 overflow-hidden divide-y divide-black/[0.06] dark:divide-white/[0.06]';
                 const row = 'px-4 py-3 flex items-center justify-between gap-4';
                 const label = 'text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]';
                 const value = 'text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] text-right';
                 return (
                   <>
                     {/* Apple sheet header */}
-                    <div className="px-6 py-4 bg-white dark:bg-[#0F1B2E] border-b border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between gap-3">
+                    <div className="px-6 py-4 bg-white dark:bg-[#1C1C1E] border-b border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3.5 min-w-0">
                         <StudentGenderAvatar fullName={p.fullName} size="lg" />
                         <div className="min-w-0">
@@ -5004,7 +5004,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                         <div className={row}>
                           <span className={label}>{isTl ? 'Mobile ng magulang' : 'Parent mobile'}</span>
                           {p.parentPhone ? (
-                            <a href={`tel:${p.parentPhone.replace(/\D/g, '')}`} className="text-[14px] text-[#1E469B] dark:text-[#7CB8F7] font-medium tabular-nums">{p.parentPhone}</a>
+                            <a href={`tel:${p.parentPhone.replace(/\D/g, '')}`} className="text-[14px] text-[#007AFF] dark:text-[#409CFF] font-medium tabular-nums">{p.parentPhone}</a>
                           ) : (
                             <span className={value}>{isTl ? 'walang number' : 'no number'}</span>
                           )}
@@ -5034,7 +5034,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                           {isTl ? 'Mga kaso niya' : 'Their cases'} <span className="font-normal text-[#8E8E93]">{theirCases.length}</span>
                         </p>
                         {theirCases.length === 0 ? (
-                          <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-[#DDE3EC] dark:border-white/10 px-4 py-5 flex items-center gap-3">
+                          <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 px-4 py-5 flex items-center gap-3">
                             <span className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 flex items-center justify-center"><Check className="w-4 h-4" aria-hidden /></span>
                             <span className="text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Walang kaso. Malinis ang record.' : 'No cases. Clean record.'}</span>
                           </div>
@@ -5068,7 +5068,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       </div>
 
                       {leaveFor && leaveFor.studentNumber === p.studentNumber && (
-                        <div className="rounded-2xl bg-white dark:bg-[#0F1B2E] border border-rose-200 dark:border-rose-900/60 p-4 space-y-2.5" data-leave-reasons>
+                        <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-rose-200 dark:border-rose-900/60 p-4 space-y-2.5" data-leave-reasons>
                           <p className="text-[13px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Bakit hindi na naka-enroll?' : 'Why is the student leaving?'}</p>
                           <div className="flex flex-wrap gap-2">
                             {(isTl ? [['Graduated', 'Graduated'], ['Transferred', 'Lumipat ng school'], ['Stopped', 'Huminto sa pag-aaral']] : [['Graduated', 'Graduated'], ['Transferred', 'Transferred'], ['Stopped', 'Stopped school']]).map(([k, t]) => (
@@ -5076,7 +5076,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                                 {t}
                               </button>
                             ))}
-                            <button type="button" onClick={() => setLeaveFor(null)} className="h-8 px-3.5 rounded-full text-[13px] text-[#1E469B] dark:text-[#7CB8F7]">
+                            <button type="button" onClick={() => setLeaveFor(null)} className="h-8 px-3.5 rounded-full text-[13px] text-[#007AFF] dark:text-[#409CFF]">
                               {isTl ? 'Huwag na' : 'Cancel'}
                             </button>
                           </div>
@@ -5085,13 +5085,13 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                     </div>
 
                     {/* footer: rare actions on the left, the one main action on the right */}
-                    <div className="px-5 py-3.5 bg-white dark:bg-[#0F1B2E] border-t border-black/[0.06] dark:border-white/[0.08] flex flex-wrap items-center justify-between gap-2">
+                    <div className="px-5 py-3.5 bg-white dark:bg-[#1C1C1E] border-t border-black/[0.06] dark:border-white/[0.08] flex flex-wrap items-center justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-2">
                         <button type="button" data-action="edit-student" onClick={() => setStudentFormFor(p)} className="h-9 px-4 rounded-full bg-[#F5F5F7] dark:bg-white/[0.08] hover:bg-[#E8E8ED] dark:hover:bg-white/[0.14] text-[13px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">
                           {isTl ? 'Baguhin' : 'Edit details'}
                         </button>
                         {p.enrolled === false ? (
-                          <button type="button" data-action="re-enroll" onClick={() => void setEnrollment(p, true)} className="h-9 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">
+                          <button type="button" data-action="re-enroll" onClick={() => void setEnrollment(p, true)} className="h-9 px-4 rounded-full text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">
                             {isTl ? 'Ibalik bilang naka-enroll' : 'Mark as enrolled again'}
                           </button>
                         ) : (
@@ -5107,7 +5107,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                           setSelectedStudentProfile(null);
                           setSubTab('add-report');
                         }}
-                        className="h-9 px-5 rounded-full bg-[#1E469B] hover:bg-[#16377E] text-white text-[13px] font-semibold inline-flex items-center gap-1.5"
+                        className="h-9 px-5 rounded-full bg-[#007AFF] hover:bg-[#0062CC] text-white text-[13px] font-semibold inline-flex items-center gap-1.5"
                       >
                         <Plus className="w-4 h-4" aria-hidden />
                         {isTl ? 'Bagong kaso' : 'New case'}

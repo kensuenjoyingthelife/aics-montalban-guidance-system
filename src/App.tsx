@@ -1,29 +1,43 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, Suspense, lazy } from 'react';
 import { installNoInspect } from './services/noInspect';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { SoundProvider } from './services/soundEngine';
 import { AicsSplashLoader } from './components/auth/AicsSplashLoader';
-import { LoginGate } from './pages/LoginGate';
 import { hasStaffSession, signOutStaff } from './services/staffAuth';
 import { ConfirmChangeProvider } from './components/ui/ConfirmChange';
 import { LoadingProvider } from './components/ui/LoadingCard';
-import { DashboardPage } from './pages/DashboardPage';
 import { StaffDirectoryAccount } from './services/authSecurityService';
 import { StudentAuthGate } from './pages/StudentAuthGate';
-import { GuidanceChatHead } from './components/GuidanceChatHead';
-import { StudentDashboard } from './pages/StudentDashboard';
 import { StudentPortalUser } from './services/studentAuthService';
 import { applyAdaptivePerformanceClass, isCapacitorNativeApp } from './services/devicePerformance';
 import { InactivityShield } from './components/security/InactivityShield';
 import { recordSecurityAudit } from './services/securityEngine';
-import { StudentPinLockScreen } from './components/student/StudentPinLockScreen';
 import { applyTextSize } from './services/textSize';
+import { christmasOn, loadChristmasMode, useChristmasMode } from './config/seasonalTheme';
+
+// Split downloads: a student only downloads the portal; the staff desktop app is a separate file.
+const LoginGate = lazy(() => import('./pages/LoginGate').then((m) => ({ default: m.LoginGate })));
+const DashboardPage = lazy(() => import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })));
+const GuidanceChatHead = lazy(() => import('./components/GuidanceChatHead').then((m) => ({ default: m.GuidanceChatHead })));
+const StudentDashboard = lazy(() => import('./pages/StudentDashboard').then((m) => ({ default: m.StudentDashboard })));
+const StudentPinLockScreen = lazy(() => import('./components/student/StudentPinLockScreen').then((m) => ({ default: m.StudentPinLockScreen })));
+// while a part loads: the plain app background (no flash, no spinner jump)
+const PartLoading = () => <div className="min-h-screen w-full bg-[#05112B]" aria-busy="true" />;
 
 export const App: React.FC = () => {
   // Apply saved text size immediately
   useEffect(() => {
     applyTextSize();
+  }, []);
+  // Filipino Christmas theme on/off (one switch: src/config/seasonalTheme.ts)
+  // the whole app re-draws when the Guidance Office switches the theme (Settings > Student portal look)
+  const xmasMode = useChristmasMode();
+  useEffect(() => {
+    document.documentElement.classList.toggle('xmas-on', christmasOn());
+  }, [xmasMode]);
+  useEffect(() => {
+    void loadChristmasMode();
   }, []);
 
   // Instant 0ms start: Skip opening splash animation completely on Mobile Site and Mobile App (APK)
@@ -122,6 +136,7 @@ export const App: React.FC = () => {
               onComplete={() => setShowSplash(false)}
             />
 
+            <Suspense fallback={<PartLoading />}>
             {/* ROUTING BY APPLICATION TARGET (STRICTLY SEPARATED) */}
             {isStaffApp ? (
               /* ====================================================
@@ -199,6 +214,7 @@ export const App: React.FC = () => {
                 />
               )
             )}
+            </Suspense>
             </LoadingProvider>
           </ConfirmChangeProvider>
         </LanguageProvider>

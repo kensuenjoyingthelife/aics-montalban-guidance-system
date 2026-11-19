@@ -176,7 +176,7 @@ export const DashboardBento: React.FC<Props> = (p) => {
                 onClick={p.onConferences}
                 className="mt-1 inline-flex items-center gap-2 h-8 pl-1 pr-3 rounded-full bg-white/[0.1] ring-1 ring-inset ring-white/15 hover:bg-white/[0.16] text-[13px] transition-colors max-w-full"
               >
-                <span className="px-2 py-0.5 rounded-full bg-[#F2CE70] text-[#0B1F4D] text-[11px] font-semibold shrink-0">
+                <span className="px-2 py-0.5 rounded-full bg-[#FFD60A] text-[#1D1D1F] text-[11px] font-semibold shrink-0">
                   {isTl ? 'Susunod' : 'Next'} · {p.nextUp.time}
                 </span>
                 <span className="truncate text-white/90">{p.nextUp.text}</span>
@@ -184,10 +184,10 @@ export const DashboardBento: React.FC<Props> = (p) => {
             )}
           </div>
           <button type="button" onClick={p.onConferences} title={isTl ? 'Tingnan ang gagawin ngayon' : "See today's to-do"} className="shrink-0 rounded-full active:scale-[0.97] transition-transform">
-            <Ring pct={todayTotal === 0 ? 1 : todayDone / todayTotal} size={104} stroke={9} track="rgb(255 255 255 / 0.14)" color="#F2CE70">
+            <Ring pct={todayTotal === 0 ? 1 : todayDone / todayTotal} size={104} stroke={9} track="rgb(255 255 255 / 0.14)" color="#FFD60A">
               <div className="text-center leading-tight">
                 {todayTotal === 0 ? (
-                  <Check className="w-8 h-8 mx-auto text-[#F2CE70]" strokeWidth={2.5} aria-hidden />
+                  <Check className="w-8 h-8 mx-auto text-[#FFD60A]" strokeWidth={2.5} aria-hidden />
                 ) : (
                   <>
                     <span className="block text-[24px] font-semibold tabular-nums">{todayDone}/{todayTotal}</span>
@@ -201,10 +201,10 @@ export const DashboardBento: React.FC<Props> = (p) => {
         {/* Needs attention (Golden Rule 4), frosted glass rows inside the hero */}
         <div className="relative mt-5 rounded-2xl bg-white/[0.08] ring-1 ring-inset ring-white/15 backdrop-blur-md divide-y divide-white/10">
           {[
-            { n: p.overdue, en: 'Overdue cases', tl: 'Overdue na kaso', go: p.onOverdue, dot: '#FB923C' },
-            { n: p.waiting, en: 'Sanctions waiting for parent notice', tl: 'Sanction na hindi pa alam ng magulang', go: p.onWaiting, dot: '#F2CE70' },
-            { n: p.callsPending, en: 'Parents to call', tl: 'Tatawagang magulang', go: p.onCalls, dot: '#FB7185' },
-            { n: p.sanctionsEnding, en: 'Sanctions ending by the next school day', tl: 'Matatapos na ang sanction (sa susunod na pasok)', go: p.onSanctionsEnding ?? p.onOpenCases, dot: '#34D399' },
+            { n: p.overdue, en: 'Overdue cases', tl: 'Overdue na kaso', go: p.onOverdue, dot: '#FF9F0A' },
+            { n: p.waiting, en: 'Sanctions waiting for parent notice', tl: 'Sanction na hindi pa alam ng magulang', go: p.onWaiting, dot: '#FFD60A' },
+            { n: p.callsPending, en: 'Parents to call', tl: 'Tatawagang magulang', go: p.onCalls, dot: '#FF453A' },
+            { n: p.sanctionsEnding, en: 'Sanctions ending by the next school day', tl: 'Matatapos na ang sanction (sa susunod na pasok)', go: p.onSanctionsEnding ?? p.onOpenCases, dot: '#30D158' },
           ].map((r) => (
             <button key={r.en} type="button" onClick={r.go} className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-white/[0.06] first:rounded-t-2xl last:rounded-b-2xl transition-colors">
               <span className="w-2 h-2 rounded-full shrink-0" style={{ background: r.n > 0 ? r.dot : 'rgb(255 255 255 / 0.3)' }} />
@@ -218,7 +218,7 @@ export const DashboardBento: React.FC<Props> = (p) => {
           <button
             type="button"
             onClick={p.onNewCase}
-            className="h-11 px-5 rounded-full bg-white text-[#0B1F4D] text-[14px] font-semibold inline-flex items-center gap-1.5 shadow-[0_6px_20px_-6px_rgb(0_0_0/0.4)] hover:bg-[#F5F5F7] active:scale-[0.97] transition-[background-color,transform] duration-150"
+            className="h-11 px-5 rounded-full bg-white text-[#1D1D1F] text-[14px] font-semibold inline-flex items-center gap-1.5 shadow-[0_6px_20px_-6px_rgb(0_0_0/0.4)] hover:bg-[#F5F5F7] active:scale-[0.97] transition-[background-color,transform] duration-150"
           >
             <Plus className="w-4 h-4" strokeWidth={2.5} aria-hidden />
             {isTl ? 'Bagong Kaso' : 'New Case'}
@@ -238,12 +238,12 @@ export const DashboardBento: React.FC<Props> = (p) => {
       <motion.button {...tile(1)} type="button" onClick={p.onOpenCases} title={isTl ? 'Buksan ang mga bukas na kaso' : 'Open the list of open cases'} className={widget}>
         <div className="flex items-center justify-between">
           <span className={label}>{isTl ? 'Bukas na kaso' : 'Open cases'}</span>
-          {chip('bg-[#1E469B]/10 text-[#1E469B] dark:bg-[#7CB8F7]/15 dark:text-[#7CB8F7]', <FolderOpen className="w-4 h-4" aria-hidden />)}
+          {chip('bg-[#007AFF]/10 text-[#007AFF] dark:bg-[#0A84FF]/15 dark:text-[#409CFF]', <FolderOpen className="w-4 h-4" aria-hidden />)}
         </div>
         <div className="flex items-end justify-between gap-3 mt-2">
           <span className={big}>{openCount}</span>
           {p.overdue > 0 && (
-            <span className="mb-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#FFF1E6] text-[#C2410C] dark:bg-[#C2410C]/20 dark:text-[#FDBA74]">
+            <span className="mb-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#FFF1E6] text-[#FF9500] dark:bg-[#FF9500]/20 dark:text-[#FDBA74]">
               {p.overdue} overdue
             </span>
           )}
@@ -251,13 +251,13 @@ export const DashboardBento: React.FC<Props> = (p) => {
         <svg viewBox="0 0 200 56" preserveAspectRatio="none" className="w-full h-12 mt-auto pt-2" aria-hidden>
           <defs>
             <linearGradient id="bento-spark" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.28" />
-              <stop offset="100%" stopColor="#3B82F6" stopOpacity="0" />
+              <stop offset="0%" stopColor="#007AFF" stopOpacity="0.28" />
+              <stop offset="100%" stopColor="#007AFF" stopOpacity="0" />
             </linearGradient>
           </defs>
           <path d={spark.area} fill="url(#bento-spark)" />
-          <path d={spark.line} fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-          <circle cx={spark.last[0]} cy={spark.last[1]} r="3" fill="#3B82F6" />
+          <path d={spark.line} fill="none" stroke="#007AFF" strokeWidth="2" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+          <circle cx={spark.last[0]} cy={spark.last[1]} r="3" fill="#007AFF" />
         </svg>
         <span className="text-[11px] text-[#8E8E93]">{isTl ? 'Bagong kaso, huling 14 araw' : 'New cases, last 14 days'}</span>
       </motion.button>
@@ -266,17 +266,17 @@ export const DashboardBento: React.FC<Props> = (p) => {
       <motion.button {...tile(2)} type="button" onClick={p.onCalls} title={isTl ? 'Tingnan ang mga tatawagan' : 'See parents to call'} className={widget}>
         <div className="flex items-center justify-between">
           <span className={label}>{isTl ? 'Tatawagan' : 'Parents to call'}</span>
-          {chip('bg-[#E11D48]/10 text-[#E11D48] dark:bg-[#FB7185]/15 dark:text-[#FB7185]', <PhoneCall className="w-4 h-4" aria-hidden />)}
+          {chip('bg-[#FF3B30]/10 text-[#FF3B30] dark:bg-[#FF453A]/15 dark:text-[#FF453A]', <PhoneCall className="w-4 h-4" aria-hidden />)}
         </div>
         <span className={`${big} mt-2`}>{p.callsPending}</span>
         <div className="mt-auto pt-3">
           {p.callsPending === 0 ? (
-            <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#059669] dark:text-[#34D399]">
-              <span className="w-5 h-5 rounded-full bg-[#059669]/12 dark:bg-[#34D399]/15 flex items-center justify-center"><Check className="w-3 h-3" strokeWidth={3} aria-hidden /></span>
+            <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#34C759] dark:text-[#30D158]">
+              <span className="w-5 h-5 rounded-full bg-[#34C759]/12 dark:bg-[#30D158]/15 flex items-center justify-center"><Check className="w-3 h-3" strokeWidth={3} aria-hidden /></span>
               {isTl ? 'Tapos lahat' : 'All caught up'}
             </span>
           ) : (
-            <span className="text-[13px] font-medium text-[#E11D48] dark:text-[#FB7185]">{isTl ? 'Naghihintay ng tawag' : 'Waiting for a call'}</span>
+            <span className="text-[13px] font-medium text-[#FF3B30] dark:text-[#FF453A]">{isTl ? 'Naghihintay ng tawag' : 'Waiting for a call'}</span>
           )}
           <span className="block text-[11px] text-[#8E8E93] mt-1">{isTl ? `${p.callsDone} natapos na` : `${p.callsDone} done so far`}</span>
         </div>
@@ -286,7 +286,7 @@ export const DashboardBento: React.FC<Props> = (p) => {
       <motion.button {...tile(3)} type="button" onClick={p.onStats} title={isTl ? 'Tingnan ang statistics' : 'See the statistics'} className={widget}>
         <div className="flex items-center justify-between">
           <span className={label}>{isTl ? 'Ngayong buwan' : 'This month'}</span>
-          {chip('bg-[#D97706]/10 text-[#D97706] dark:bg-[#FBBF24]/15 dark:text-[#FBBF24]', <FileText className="w-4 h-4" aria-hidden />)}
+          {chip('bg-[#FF9500]/10 text-[#FF9500] dark:bg-[#FFD60A]/15 dark:text-[#FFD60A]', <FileText className="w-4 h-4" aria-hidden />)}
         </div>
         <div className="flex items-baseline gap-2 mt-2">
           <span className={big}>{p.offensesThisMonth}</span>
@@ -296,7 +296,7 @@ export const DashboardBento: React.FC<Props> = (p) => {
           {monthly.map((m, i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-1">
               <div
-                className={`w-full rounded-[5px] ${i === monthly.length - 1 ? 'bg-gradient-to-t from-[#D97706] to-[#FBBF24]' : 'bg-[#E8E8ED] dark:bg-white/10'}`}
+                className={`w-full rounded-[5px] ${i === monthly.length - 1 ? 'bg-gradient-to-t from-[#FF9500] to-[#FFD60A]' : 'bg-[#E8E8ED] dark:bg-white/10'}`}
                 style={{ height: `${Math.max(4, (m.n / monthMax) * 36)}px` }}
               />
               <span className="text-[9.5px] text-[#8E8E93] leading-none">{m.label}</span>
@@ -309,10 +309,10 @@ export const DashboardBento: React.FC<Props> = (p) => {
       <motion.button {...tile(4)} type="button" onClick={p.onConferences} title={isTl ? 'Tingnan ang mga conference' : 'See the conferences'} className={widget}>
         <div className="flex items-center justify-between">
           <span className={label}>{isTl ? 'Pagdalo ngayong araw' : 'Attendance today'}</span>
-          {chip('bg-[#059669]/10 text-[#059669] dark:bg-[#34D399]/15 dark:text-[#34D399]', <CalendarCheck className="w-4 h-4" aria-hidden />)}
+          {chip('bg-[#34C759]/10 text-[#34C759] dark:bg-[#30D158]/15 dark:text-[#30D158]', <CalendarCheck className="w-4 h-4" aria-hidden />)}
         </div>
         <div className="flex items-center gap-4 mt-3">
-          <Ring pct={(p.attendance.ratePercent ?? 0) / 100} size={72} stroke={8} track="rgb(142 142 147 / 0.18)" color="#10B981">
+          <Ring pct={(p.attendance.ratePercent ?? 0) / 100} size={72} stroke={8} track="rgb(142 142 147 / 0.18)" color="#34C759">
             <span className="text-[15px] font-semibold tabular-nums text-[#1D1D1F] dark:text-[#F5F5F7]">
               {p.attendance.ratePercent === null ? '0%' : `${p.attendance.ratePercent}%`}
             </span>

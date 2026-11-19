@@ -27,7 +27,7 @@ export const Clock24: React.FC = React.memo(() => {
   return (
     <div className="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-full saas-card-subtle text-xs font-bold text-[#3B5284] dark:text-[#B8D0FA]">
       <span className="w-2 h-2 rounded-full bg-emerald-500" />
-      <span className="font-mono font-extrabold text-[#0B1F4D] dark:text-white">
+      <span className="font-mono font-extrabold text-[#1D1D1F] dark:text-white">
         {timeString}
       </span>
       <span className="opacity-50">·</span>

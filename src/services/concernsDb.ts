@@ -171,6 +171,38 @@ export async function fetchMessagesAfter(concernId: number, afterId: number): Pr
   }
 }
 
+// ---- Seen + typing (supabase/chat-seen-typing.sql). If that SQL is not run yet these quietly do nothing.
+export interface ChatState {
+  officeTyping: boolean;
+  studentTyping: boolean;
+  officeSeenUpTo: number; // last office message the student has seen
+  studentSeenUpTo: number; // last student message the office has seen
+}
+const rpc = (name: string, body: Record<string, unknown>) =>
+  fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, { method: 'POST', headers: headers(), body: JSON.stringify(body) });
+
+export async function markChatSeen(concernId: number, reader: 'office' | 'student'): Promise<void> {
+  try { await rpc('chat_mark_seen', { p_concern: concernId, p_reader: reader }); } catch { /* offline */ }
+}
+export async function setChatTyping(concernId: number, who: 'office' | 'student'): Promise<void> {
+  try { await rpc('chat_set_typing', { p_concern: concernId, p_who: who }); } catch { /* offline */ }
+}
+export async function fetchChatState(concernId: number): Promise<ChatState | null> {
+  try {
+    const res = await rpc('chat_state', { p_concern: concernId });
+    if (!res.ok) return null;
+    const j = (await res.json()) as Record<string, unknown>;
+    return {
+      officeTyping: !!j.office_typing,
+      studentTyping: !!j.student_typing,
+      officeSeenUpTo: Number(j.office_seen_upto) || 0,
+      studentSeenUpTo: Number(j.student_seen_upto) || 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /** last message per concern (for the "new reply" dot) */
 export async function fetchLastMessages(): Promise<Map<number, ConcernMessage>> {
   const out = new Map<number, ConcernMessage>();

@@ -441,7 +441,7 @@ export const StudentPairInteractiveWing: React.FC<{ className?: string }> = ({ c
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.96 }}
             transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
-            className="relative w-full px-5 py-4 rounded-2xl bg-[#081832]/90 border border-white/20 text-white shadow-2xl shadow-blue-950/80 backdrop-blur-xl text-center"
+            className="relative w-full px-5 py-4 rounded-2xl bg-[#081832]/90 border border-white/20 text-white shadow-2xl shadow-blue-950/80 backdrop-blur-xl lg-glass-bubble text-center"
           >
             {/* Top Amber Accent Bevel Lip */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent rounded-full" />

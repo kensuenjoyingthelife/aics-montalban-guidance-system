@@ -136,7 +136,7 @@ export async function registerStudentPortalAccount(params: RegisterStudentParams
       if (existing && existing.length > 0) {
         return {
           success: false,
-          error: `An account for Student ID ${cleanNumber} already exists. Please sign in or click Forgot Password.`,
+          error: "An account for this Student ID already exists. Please sign in, or tap Forgot Password if you cannot remember it.",
         };
       }
     }
@@ -251,6 +251,7 @@ export async function loginStudentPortal(
 ): Promise<{
   success: boolean;
   error?: string;
+  code?: 'no_account' | 'wrong_password' | 'deactivated' | 'offline';
   account?: StudentPortalUser;
 }> {
   try {
@@ -260,17 +261,18 @@ export async function loginStudentPortal(
     }
 
     // The password is checked inside the database (portal_login); the hash never comes to the browser.
-    const r = await rpc<{ ok: boolean; error?: string; reason?: string; account?: Record<string, unknown>; has_pin?: boolean }>(
-      'portal_login',
-      { p_number: cleanNumber, p_hash: await hashPassword(plainPassword) }
-    );
-    if (!r) return { success: false, error: 'Connection error with database.' };
+    type LoginRes = { ok: boolean; error?: string; reason?: string; account?: Record<string, unknown>; has_pin?: boolean };
+    const pHash = await hashPassword(plainPassword);
+    let r = await rpc<LoginRes>('portal_login', { p_number: cleanNumber, p_hash: pHash });
+    // the login box shows 23-0001; older accounts were saved without the dash, so try that too
+    if (r && !r.ok && (r.error === 'no_account' || r.error === 'wrong_password') && cleanNumber.includes('-')) {
+      r = await rpc<LoginRes>('portal_login', { p_number: cleanNumber.replace(/-/g, ''), p_hash: pHash });
+    }
+    if (!r) return { success: false, code: 'offline', error: 'Could not connect.' };
     if (!r.ok) {
-      if (r.error === 'no_account')
-        return { success: false, error: `No registered account found for Student ID: ${cleanNumber}. Please create an account first.` };
-      if (r.error === 'deactivated')
-        return { success: false, error: `This account is deactivated (${r.reason || 'Please visit the Guidance Office'}).` };
-      return { success: false, error: 'Incorrect password. Please verify or use Forgot Password.' };
+      if (r.error === 'no_account') return { success: false, code: 'no_account', error: 'Account not found.' };
+      if (r.error === 'deactivated') return { success: false, code: 'deactivated', error: 'Account turned off.' };
+      return { success: false, code: 'wrong_password', error: 'Wrong password.' };
     }
     const account = r.account ?? {};
     const master = await verifyStudentInMasterlist(cleanNumber);

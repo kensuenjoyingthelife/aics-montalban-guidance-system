@@ -1,69 +1,102 @@
 import React, { useState } from 'react';
+import {
+  Home as HomeIcon,
+  Plus,
+  FolderArchive,
+  MessageSquare,
+  ShieldCheck,
+  UserCircle2,
+  Smartphone,
+  Monitor,
+  ChevronLeft,
+  ChevronRight,
+  Lightbulb,
+  X,
+} from 'lucide-react';
+import { officeHoursText } from '../../services/scheduling';
 
-interface GuidedTourStep {
-  id: number;
-  badgeTl: string;
-  badgeEn: string;
-  titleTl: string;
-  titleEn: string;
-  descTl: string;
-  descEn: string;
-  importantNoteTl: string;
-  importantNoteEn: string;
-}
+type Step = {
+  icon: React.ElementType;
+  tone: string; // gradient class from index.css (nav-c-*)
+  title: [string, string]; // [Taglish, English]
+  body: [string, string];
+  phone: [string, string];
+  web: [string, string];
+  tip: [string, string];
+};
 
-const TOUR_STEPS: GuidedTourStep[] = [
+const steps = (hours: string): Step[] => [
   {
-    id: 1,
-    badgeTl: 'HAKBANG 1 NG 4 • PINAKAMAHALAGA',
-    badgeEn: 'STEP 1 OF 4 • MOST CRITICAL',
-    titleTl: '🔴 SOS Mascot Exit: Ligtas na Takbuhan',
-    titleEn: '🔴 SOS Mascot Exit: Instant Privacy Shield',
-    descTl:
-      'Ito ang lumulutang na bilog na Mukha ng Mascot sa screen ng phone mo! Pwede mo itong i-drag at ilipat sa kahit saang pwesto. Kapag may biglang lumapit na bully, sumilip na kaklase, o guro habang nag-susumite ka ng report, ISANG TAP LANG dito — agad magla-logout ang app, susubukang isara ang tab, at lilipat agad sa Google Search!',
-    descEn:
-      'This is the floating Mascot Head ball on your phone screen! You can drag and position it anywhere along the edges. If someone peeks or approaches while you are reporting, JUST ONE TAP instantly logs you out, attempts to close the tab, and escapes directly to Google Search!',
-    importantNoteTl: '💡 Protektado ka: Walang makakaalam o makakakitang nagbukas ka ng guidance portal.',
-    importantNoteEn: '💡 Total Protection: Nobody will ever know you had a guidance portal open.',
+    icon: HomeIcon,
+    tone: 'nav-c-home',
+    title: ['Ito ang Home mo', 'This is your Home'],
+    body: [
+      'Dito mo makikita agad: ang oras at petsa, ang huling report mo at ang lagay nito, kung bukas ang Guidance Office ngayon, at kung may bukas kang chat.',
+      'Here you see at a glance: the time and date, your latest report and where it stands, whether the Guidance Office is open now, and any open chat.',
+    ],
+    phone: ['Nasa ibaba ang menu: Home, Reports, Chat, Me.', 'The menu is at the bottom: Home, Reports, Chat, Me.'],
+    web: ['Nasa kanang gilid ang menu: Home, Reports, Chat, Me.', 'The menu is on the right side: Home, Reports, Chat, Me.'],
+    tip: ['Pindutin ang kahit anong card para buksan ito.', 'Tap any card to open it.'],
   },
   {
-    id: 2,
-    badgeTl: 'HAKBANG 2 NG 4 • KUMPIDENSYAL NA REPORT',
-    badgeEn: 'STEP 2 OF 4 • CONFIDENTIAL REPORTING',
-    titleTl: '📝 Page-by-Page Google Form Pag-uulat',
-    titleEn: '📝 Page-by-Page Structured Concern Submission',
-    descTl:
-      'Naka-organize na parang Google Form ang pag-report: 1. Category at Para Kanino, 2. Nambully o Suspect Details, at 3. Salaysay at Konteksto. Tanging ang lisensyadong Guidance Associate lamang ang makakabasa nito alinsunod sa Data Privacy Act (RA 10173).',
-    descEn:
-      'Submissions are organized step-by-step like a Google Form: 1. Category & Scope, 2. Bully or Suspect Details, and 3. Narrative & Context. Strictly accessible only by licensed Guidance Staff under the Data Privacy Act (RA 10173).',
-    importantNoteTl: '🔒 Hindi ito kailanman makikita ng kaklase, kakilala, o ibang guro.',
-    importantNoteEn: '🔒 Never disclosed to classmates, peers, or unauthorized teachers.',
+    icon: Plus,
+    tone: 'nav-c-home',
+    title: ['Paano mag-report', 'How to report'],
+    body: [
+      'Pindutin ang asul na + button. May 3 maikling hakbang: (1) piliin ang uri ng concern, (2) sabihin kung sino ang inirereklamo — okay lang kung hindi mo alam ang pangalan, (3) ikuwento ang nangyari. Pwede ka ring magdagdag ng litrato. Pindutin ang "Ipadala sa Guidance".',
+      'Tap the blue + button. There are 3 short steps: (1) pick the kind of concern, (2) say who it is about — it is okay if you do not know their name, (3) tell what happened. You can add photos too. Then tap "Send to Guidance".',
+    ],
+    phone: ['Ang + ay nasa kanan ng menu sa ibaba.', 'The + is to the right of the bottom menu.'],
+    web: ['Ang + ay nasa ibaba ng menu sa kanan. Pwede ring pindutin ang "Something to report?" sa Home.', 'The + is below the menu on the right. You can also click "Something to report?" on Home.'],
+    tip: ['Pwede kang mag-report para sa kaibigan o kaklase.', 'You can also report for a friend or classmate.'],
   },
   {
-    id: 3,
-    badgeTl: 'HAKBANG 3 NG 4 • REAL-TIME TRACKING & CHAT',
-    badgeEn: 'STEP 3 OF 4 • TRACKING & COUNSELOR CHAT',
-    titleTl: '💬 Status Tracker at 1-on-1 Guidance Chat',
-    titleEn: '💬 Real-Time Tracker & 1-on-1 Guidance Chat',
-    descTl:
-      'Mula sa menu (My Reports at Guidance Chat), masusubaybayan mo ang aksyon ng Guidance Office. Kapag na-review na ang iyong concern, magbubukas ang pribadong 1-on-1 chat upang makausap mo sila nang direkta sa iyong cellphone.',
-    descEn:
-      'From the menu (My Reports & Guidance Chat), easily track actions taken. Once reviewed, a private 1-on-1 chat channel opens so you can converse directly with the Guidance Associate.',
-    importantNoteTl: '🔔 Ligtas magtanong at mag-follow up sa oras ng opisina (8:00 AM - 5:00 PM).',
-    importantNoteEn: '🔔 Feel completely safe to ask questions or follow up during school hours.',
+    icon: FolderArchive,
+    tone: 'nav-c-history',
+    title: ['Tingnan ang lagay ng report', 'Check where your report stands'],
+    body: [
+      'Buksan ang Reports. Bawat report ay may kulay: kahel = Sinusuri ng Guidance, berde = Tinanggap, pula = Hindi tinanggap. Makikita mo rin ang petsa at ang report code mo.',
+      'Open Reports. Each report has a color: orange = Being reviewed, green = Accepted, red = Not accepted. You also see the date and your report code.',
+    ],
+    phone: ['Pindutin ang Reports sa menu sa ibaba.', 'Tap Reports in the bottom menu.'],
+    web: ['I-click ang Reports sa menu sa kanan.', 'Click Reports in the menu on the right.'],
+    tip: ['Pindutin ang paikot na arrow para i-refresh.', 'Tap the round arrow to refresh.'],
   },
   {
-    id: 4,
-    badgeTl: 'HAKBANG 4 NG 4 • AUTO-LOGOUT SHIELD',
-    badgeEn: 'STEP 4 OF 4 • AUTO-LOGOUT SHIELD',
-    titleTl: '⏱️ 15-Minuto Inactivity Protection',
-    titleEn: '⏱️ 15-Minute Inactivity Protection',
-    descTl:
-      'Kapag naiwan mong bukas ang cellphone mo o hindi mo nagalaw sa loob ng 15 minuto, kusa itong magsa-sign out upang maprotektahan ang iyong pribadong rekord laban sa mga sumisilip.',
-    descEn:
-      'If your phone is left unattended for 15 minutes, the system automatically signs out to ensure your confidential guidance records stay protected against prying eyes.',
-    importantNoteTl: '✨ Handa ka na! Laging bukas ang AICS Guidance Office para sa iyong kaligtasan at kapakanan.',
-    importantNoteEn: '✨ You are all set! The AICS Guidance Office is always ready to support your welfare.',
+    icon: MessageSquare,
+    tone: 'nav-c-chat',
+    title: ['Kausapin ang Guidance', 'Talk to Guidance'],
+    body: [
+      `Kapag tinanggap ng Guidance ang report mo, bubuksan nila ang isang pribadong chat. Doon ka nila kakausapin. Sumasagot sila sa oras ng opisina: ${hours}.`,
+      `When Guidance accepts your report, they open a private chat. That is where they will talk to you. They reply during office hours: ${hours}.`,
+    ],
+    phone: ['Pindutin ang Chat sa menu. May berdeng tuldok kapag may bukas na chat.', 'Tap Chat in the menu. A green dot means a chat is open.'],
+    web: ['I-click ang Chat sa kanan, o ang chat card sa Home.', 'Click Chat on the right, or the chat card on Home.'],
+    tip: ['Hindi pa mabubuksan ang chat habang sinusuri pa ang report.', 'The chat cannot open while the report is still being reviewed.'],
+  },
+  {
+    icon: ShieldCheck,
+    tone: 'nav-c-me',
+    title: ['Manatiling ligtas', 'Stay safe'],
+    body: [
+      'Kung may biglang sumilip, gamitin ang Quick Exit: agad kang mai-sign out at lilipat sa Google. Kusa ka ring masa-sign out kapag 15 minuto kang walang ginagawa (may babala 1 minuto bago nito). Ang Guidance Office lang ang makakabasa ng report mo.',
+      'If someone peeks, use Quick Exit: you are signed out at once and moved to Google. You are also signed out after 15 minutes of no activity (with a warning 1 minute before). Only the Guidance Office can read your report.',
+    ],
+    phone: ['Pindutin ang lumulutang na mukha (pwede itong i-drag) o ang pulang Quick Exit sa itaas.', 'Tap the floating face (you can drag it) or the red Quick Exit at the top.'],
+    web: ['I-click ang pulang Quick Exit sa kanang itaas, o pindutin ang Esc sa keyboard.', 'Click the red Quick Exit at the top right, or press Esc on the keyboard.'],
+    tip: ['Hindi sasabihin sa inireklamo kung sino ka.', 'The reported student is never told who you are.'],
+  },
+  {
+    icon: UserCircle2,
+    tone: 'nav-c-me',
+    title: ['Ang Me tab', 'The Me tab'],
+    body: [
+      'Sa Me, mababago mo ang wika (Taglish o English), light o dark mode, at tunog. Dito mo rin mai-install ang app, mabubuksan ulit ang gabay na ito, at makakapag-sign out.',
+      'In Me, you can change the language (Taglish or English), light or dark mode, and sound. You can also install the app, open this guide again, and sign out.',
+    ],
+    phone: ['Pindutin ang Me sa menu sa ibaba.', 'Tap Me in the bottom menu.'],
+    web: ['I-click ang Me sa menu sa kanan.', 'Click Me in the menu on the right.'],
+    tip: ['Handa ka na! Nandito ang Guidance Office para sa iyo.', 'You are all set! The Guidance Office is here for you.'],
   },
 ];
 
@@ -73,184 +106,91 @@ interface MobileAppTourModalProps {
   defaultLanguage?: 'tl' | 'en';
 }
 
-export const MobileAppTourModal: React.FC<MobileAppTourModalProps> = ({
-  isOpen,
-  onComplete,
-  defaultLanguage = 'tl',
-}) => {
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+export const MobileAppTourModal: React.FC<MobileAppTourModalProps> = ({ isOpen, onComplete, defaultLanguage = 'tl' }) => {
+  const [i, setI] = useState(0);
   const [lang, setLang] = useState<'tl' | 'en'>(defaultLanguage);
-  const isTl = lang === 'tl';
-
   if (!isOpen) return null;
 
-  const currentStep = TOUR_STEPS[currentStepIndex];
-  const isFirst = currentStepIndex === 0;
-  const isLast = currentStepIndex === TOUR_STEPS.length - 1;
-
-  const handleNext = () => {
-    if (isLast) {
-      onComplete();
-    } else {
-      setCurrentStepIndex((prev) => prev + 1);
-    }
-  };
-
-  const handleBack = () => {
-    if (!isFirst) {
-      setCurrentStepIndex((prev) => prev - 1);
-    }
-  };
+  const L = lang === 'tl' ? 0 : 1;
+  const all = steps(officeHoursText(lang === 'tl'));
+  const s = all[i];
+  const Icon = s.icon;
+  const last = i === all.length - 1;
+  const finish = () => { setI(0); onComplete(); };
 
   return (
-    <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md select-none">
-      <div className="relative w-full max-w-md bg-[#07132B] border-2 border-sky-400/70 rounded-3xl p-5 sm:p-6 shadow-2xl shadow-blue-950/90 flex flex-col text-white overflow-hidden max-h-[92vh] overflow-y-auto">
-        {/* Ambient Top Glow */}
-        <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-24 bg-sky-500/25 blur-3xl rounded-full pointer-events-none" />
-
-        {/* Top Header: Step Badge + Taglish/English Switcher */}
-        <div className="flex items-center justify-between pb-3 border-b border-white/10 gap-2 flex-wrap">
+    <div className="fixed inset-0 z-[999999] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/55 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={L === 0 ? 'Gabay sa paggamit' : 'How to use'}>
+      <div className="w-full sm:max-w-[560px] max-h-[92vh] overflow-y-auto rounded-t-[32px] sm:rounded-[32px] bg-white dark:bg-[#1C1C1E] text-[#1D1D1F] dark:text-white shadow-2xl">
+        {/* top bar */}
+        <div className="flex items-center justify-between gap-3 px-6 pt-5">
+          <span className="text-[14px] font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">
+            {L === 0 ? `Gabay · ${i + 1} sa ${all.length}` : `Guide · ${i + 1} of ${all.length}`}
+          </span>
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10px] font-black tracking-wider uppercase text-emerald-300 bg-emerald-500/15 border border-emerald-400/30 px-2.5 py-0.5 rounded-full">
-              {isTl ? currentStep.badgeTl : currentStep.badgeEn}
-            </span>
-          </div>
-
-          {/* Taglish / English Toggle */}
-          <div className="flex items-center p-0.5 rounded-full bg-black/50 border border-white/20">
-            <button
-              type="button"
-              onClick={() => setLang('tl')}
-              className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold transition-colors cursor-pointer ${
-                isTl ? 'bg-sky-500 text-white shadow-sm' : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              Taglish
-            </button>
-            <button
-              type="button"
-              onClick={() => setLang('en')}
-              className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold transition-colors cursor-pointer ${
-                !isTl ? 'bg-sky-500 text-white shadow-sm' : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              English
+            <div className="flex p-1 rounded-full bg-black/[0.05] dark:bg-white/[0.08]">
+              {(['tl', 'en'] as const).map((k) => (
+                <button key={k} type="button" onClick={() => setLang(k)} className={`h-8 px-3 rounded-full text-[13px] font-semibold ${lang === k ? 'bg-white dark:bg-white/20 shadow-sm' : 'text-[#6E6E73] dark:text-[#A1A1A6]'}`}>
+                  {k === 'tl' ? 'Taglish' : 'English'}
+                </button>
+              ))}
+            </div>
+            <button type="button" onClick={finish} title={L === 0 ? 'Isara' : 'Close'} aria-label={L === 0 ? 'Isara' : 'Close'} className="w-10 h-10 rounded-full bg-black/[0.05] dark:bg-white/[0.08] flex items-center justify-center">
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Visual Target Showcase Card */}
-        <div className="my-4 p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center text-center relative overflow-hidden">
-          {/* STEP 1: EXACT MATCH 3D MASCOT HEAD SOS BALL */}
-          {currentStep.id === 1 ? (
-            <div className="relative mb-3 flex items-center justify-center">
-              {/* Outer Pulsing Halo */}
-              <div className="relative w-16 h-16 rounded-full bg-slate-900/90 p-1 shadow-2xl shadow-rose-950/80 border-2 border-rose-500 flex items-center justify-center">
-                <span className="absolute inset-0 rounded-full bg-rose-500/30 animate-ping pointer-events-none" />
+        {/* content */}
+        <div className="px-6 pt-6 pb-2">
+          <span className={`w-16 h-16 rounded-[22px] ${s.tone} text-white flex items-center justify-center shadow-lg`}>
+            <Icon className="w-8 h-8" strokeWidth={2.2} />
+          </span>
+          <h2 className="mt-5 text-[28px] leading-tight font-bold tracking-tight">{s.title[L]}</h2>
+          <p className="mt-3 text-[16px] leading-relaxed text-[#3A3A3C] dark:text-[#D1D1D6]">{s.body[L]}</p>
 
-                {/* 3D EVE-Style Pearl Head Sphere */}
-                <div className="relative w-14 h-14 rounded-full mascot-shell-head flex items-center justify-center p-1 overflow-hidden shadow-inner">
-                  {/* Top Gloss Specular Highlight */}
-                  <div className="absolute top-1 left-2 w-5 h-2.5 bg-white/90 rounded-full blur-[0.8px] transform -rotate-30 pointer-events-none" />
-
-                  {/* Deep Obsidian Black Visor */}
-                  <div className="relative w-11 h-8 rounded-full mascot-visor-glass flex items-center justify-center gap-1.5 overflow-hidden">
-                    {/* Visor Glare Shine */}
-                    <div className="absolute -top-1 -left-1 w-7 h-3 bg-white/35 blur-[1px] rounded-full transform -rotate-12 pointer-events-none" />
-
-                    {/* Cute Glowing Cyan Smiling Eyes */}
-                    <svg className="w-3.5 h-3 overflow-visible" viewBox="0 0 20 14" fill="none">
-                      <path
-                        d="M 2 12 Q 10 1 18 12"
-                        stroke="#38BDF8"
-                        strokeWidth="4"
-                        strokeLinecap="round"
-                        className="drop-shadow-[0_0_5px_rgba(56,189,248,0.95)]"
-                      />
-                    </svg>
-                    <svg className="w-3.5 h-3 overflow-visible" viewBox="0 0 20 14" fill="none">
-                      <path
-                        d="M 2 12 Q 10 1 18 12"
-                        stroke="#38BDF8"
-                        strokeWidth="4"
-                        strokeLinecap="round"
-                        className="drop-shadow-[0_0_5px_rgba(56,189,248,0.95)]"
-                      />
-                    </svg>
-                  </div>
-
-                  {/* Red SOS Badge */}
-                  <span className="absolute bottom-1 px-1.5 py-[0.5px] rounded-full bg-rose-600 text-[7px] font-black text-white tracking-widest uppercase leading-none shadow-md border border-rose-400/40">
-                    SOS
-                  </span>
-                </div>
+          <div className="mt-5 rounded-[22px] bg-black/[0.04] dark:bg-white/[0.06] divide-y divide-black/[0.06] dark:divide-white/[0.08]">
+            {([
+              [Smartphone, L === 0 ? 'Sa phone (app)' : 'On the phone (app)', s.phone[L]],
+              [Monitor, L === 0 ? 'Sa website' : 'On the website', s.web[L]],
+            ] as const).map(([Ic, label, text]) => (
+              <div key={label} className="flex items-start gap-3 p-4">
+                <span className="w-9 h-9 rounded-full bg-white dark:bg-white/10 flex items-center justify-center shrink-0 shadow-sm"><Ic className="w-5 h-5 text-[#0A84FF]" /></span>
+                <span>
+                  <span className="block text-[14px] font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">{label}</span>
+                  <span className="block text-[15px] leading-snug">{text}</span>
+                </span>
               </div>
-              <span className="absolute -bottom-2 px-2 py-0.5 rounded-full bg-rose-600 text-[8px] font-black text-white uppercase border border-white shadow-md">
-                TAP TO ESCAPE
-              </span>
-            </div>
-          ) : currentStep.id === 2 ? (
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-2xl shadow-lg shadow-blue-500/30 mb-3 border border-white/20">
-              <span>✍️</span>
-            </div>
-          ) : currentStep.id === 3 ? (
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/30 mb-3 border border-white/20">
-              <span>💬</span>
-            </div>
-          ) : (
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-2xl shadow-lg shadow-amber-500/30 mb-3 border border-white/20">
-              <span>🛡️</span>
-            </div>
-          )}
-
-          <h3 className="text-base sm:text-lg font-black text-white tracking-tight mt-1">
-            {isTl ? currentStep.titleTl : currentStep.titleEn}
-          </h3>
-
-          <p className="text-xs text-sky-100/90 leading-relaxed mt-2 text-justify sm:text-center">
-            {isTl ? currentStep.descTl : currentStep.descEn}
-          </p>
-
-          <div className="mt-3 w-full p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-400/30 text-[11px] font-bold text-emerald-300 text-left flex items-start gap-2">
-            <span className="shrink-0 text-sm">💡</span>
-            <span>{isTl ? currentStep.importantNoteTl : currentStep.importantNoteEn}</span>
+            ))}
           </div>
+
+          <p className="mt-4 flex items-start gap-2.5 text-[15px] font-medium text-[#248A3D] dark:text-[#30D158]">
+            <Lightbulb className="w-5 h-5 mt-0.5 shrink-0" />
+            {s.tip[L]}
+          </p>
         </div>
 
-        {/* Step Dots Pagination */}
-        <div className="flex items-center justify-center gap-1.5 py-1 mb-4">
-          {TOUR_STEPS.map((s, idx) => (
-            <div
-              key={s.id}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                idx === currentStepIndex
-                  ? 'w-7 bg-sky-400 shadow-sm shadow-sky-400/50'
-                  : 'w-2 bg-white/20'
-              }`}
-            />
-          ))}
-        </div>
-
-        {/* Bottom Nav Controls */}
-        <div className="flex items-center justify-between gap-3 pt-3 border-t border-white/10">
-          <button
-            type="button"
-            onClick={handleBack}
-            disabled={isFirst}
-            className="px-4 py-2.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-xs font-bold text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
-          >
-            ← {isTl ? 'Bumalik' : 'Back'}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleNext}
-            className="flex-1 py-2.5 px-5 rounded-xl bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-600 hover:opacity-95 active:scale-98 text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-lg shadow-sky-500/30 flex items-center justify-center gap-2 transition-all cursor-pointer"
-          >
-            <span>{isLast ? (isTl ? 'Naiintindihan Ko Na! Simulan Na' : 'Got it! Get Started') : isTl ? 'Susunod (Next)' : 'Next Step'}</span>
-            <span>→</span>
-          </button>
+        {/* progress + buttons */}
+        <div className="sticky bottom-0 bg-white dark:bg-[#1C1C1E] px-6 pt-4 pb-6" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
+          <div className="flex justify-center gap-1.5 mb-4">
+            {all.map((_, k) => (
+              <button key={k} type="button" onClick={() => setI(k)} aria-label={`${k + 1}`} className={`h-2 rounded-full transition-[width] duration-200 ${k === i ? 'w-7 bg-[#0A84FF]' : 'w-2 bg-black/15 dark:bg-white/20'}`} />
+            ))}
+          </div>
+          <div className="flex items-center gap-3">
+            {i > 0 ? (
+              <button type="button" onClick={() => setI(i - 1)} className="h-14 px-5 rounded-full bg-black/[0.05] dark:bg-white/[0.08] text-[16px] font-semibold inline-flex items-center gap-1">
+                <ChevronLeft className="w-5 h-5" />{L === 0 ? 'Bumalik' : 'Back'}
+              </button>
+            ) : (
+              <button type="button" onClick={finish} className="h-14 px-5 rounded-full text-[16px] font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">
+                {L === 0 ? 'Laktawan' : 'Skip'}
+              </button>
+            )}
+            <button type="button" onClick={() => (last ? finish() : setI(i + 1))} className="flex-1 h-14 rounded-full sd-primary text-white text-[16px] font-semibold inline-flex items-center justify-center gap-2">
+              {last ? (L === 0 ? 'Simulan na' : 'Get started') : L === 0 ? 'Susunod' : 'Next'}
+              {!last && <ChevronRight className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
       </div>
     </div>

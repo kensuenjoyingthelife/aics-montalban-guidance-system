@@ -40,11 +40,11 @@ const SOLID_MAP: Record<TileColor, string> = {
 
 const SOFT_MAP: Record<TileColor, string> = {
   royal:
-    'bg-[#E4ECFC] text-[#1E469B] ring-1 ring-[#CFD9F2] dark:bg-[#1E469B]/25 dark:text-[#7CB8F7] dark:ring-[#4E92DF]/30',
+    'bg-[#EAF3FF] text-[#007AFF] ring-1 ring-[#CFD9F2] dark:bg-[#007AFF]/25 dark:text-[#409CFF] dark:ring-[#4E92DF]/30',
   cobalt:
-    'bg-[#E4ECFC] text-[#1E469B] ring-1 ring-[#CFD9F2] dark:bg-[#1E469B]/25 dark:text-[#7CB8F7] dark:ring-[#4E92DF]/30',
+    'bg-[#EAF3FF] text-[#007AFF] ring-1 ring-[#CFD9F2] dark:bg-[#007AFF]/25 dark:text-[#409CFF] dark:ring-[#4E92DF]/30',
   azure:
-    'bg-[#E8F3FF] text-[#2557BE] ring-1 ring-[#BBD9FB] dark:bg-[#4E92DF]/20 dark:text-[#9BCBFF] dark:ring-[#7CB8F7]/30',
+    'bg-[#E8F3FF] text-[#007AFF] ring-1 ring-[#BBD9FB] dark:bg-[#0A84FF]/20 dark:text-[#9BCBFF] dark:ring-[#0A84FF]/30',
   indigo:
     'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200/80 dark:bg-indigo-500/20 dark:text-indigo-300 dark:ring-indigo-400/30',
   teal:

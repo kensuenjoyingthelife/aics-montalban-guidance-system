@@ -140,24 +140,24 @@ export const HelpAssistant: React.FC<{
 
   // ---------- look ----------
   const row =
-    'w-full flex items-center justify-between gap-3 text-left px-3 py-2 rounded-xl bg-white dark:bg-[#0B1527] border border-[#DCE5F2] dark:border-[#1E3158] hover:border-[#1E469B] dark:hover:border-[#7CB8F7] text-[13px] font-semibold text-[#0B1F4D] dark:text-white btn-press';
+    'w-full flex items-center justify-between gap-3 text-left px-3 py-2 rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A] hover:border-[#007AFF] dark:hover:border-[#7CB8F7] text-[13px] font-semibold text-[#1D1D1F] dark:text-white btn-press';
   const qRow = (e: HelpEntry) => (
     <button key={e.id} type="button" data-help-q={e.id} onClick={() => openEntry(e)} className={row}>
       <span className="min-w-0">{textOf(e, lang).q}</span>
-      <span aria-hidden className="shrink-0 text-[#1E469B] dark:text-[#7CB8F7]">›</span>
+      <span aria-hidden className="shrink-0 text-[#007AFF] dark:text-[#409CFF]">›</span>
     </button>
   );
-  const card = 'rounded-2xl bg-white dark:bg-[#0F1D38] border border-[#DCE5F2] dark:border-[#1E3158] p-4 space-y-2.5 shadow-sm';
-  const sectionTitle = 'text-[11px] font-extrabold uppercase tracking-wide text-[#4A608A] dark:text-[#94A8D0]';
-  const me = 'max-w-[85%] rounded-2xl rounded-tr-md bg-[#1E469B] text-white px-4 py-2 text-sm whitespace-pre-wrap break-words';
+  const card = 'rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A] p-4 space-y-2.5 shadow-sm';
+  const sectionTitle = 'text-[11px] font-extrabold uppercase tracking-wide text-[#6E6E73] dark:text-[#A1A1A6]';
+  const me = 'max-w-[85%] rounded-2xl rounded-tr-md bg-[#007AFF] text-white px-4 py-2 text-sm whitespace-pre-wrap break-words';
 
   const home = (
     <div className="space-y-4" data-help-hello>
-      <p className="text-sm text-[#0B1F4D] dark:text-white">{u.hello}</p>
+      <p className="text-sm text-[#1D1D1F] dark:text-white">{u.hello}</p>
       <section className="space-y-2">
         <p className={sectionTitle}>⭐ {u.most}</p>
         <div className="space-y-1.5">{(allTop ? TOP : TOP.slice(0, 6)).map(qRow)}</div>
-        <button type="button" data-help-more onClick={() => setAllTop((v) => !v)} className="text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7] underline underline-offset-2">
+        <button type="button" data-help-more onClick={() => setAllTop((v) => !v)} className="text-xs font-bold text-[#007AFF] dark:text-[#409CFF] underline underline-offset-2">
           {allTop ? u.showLess : u.showAll(TOP.length)}
         </button>
       </section>
@@ -168,10 +168,10 @@ export const HelpAssistant: React.FC<{
             const label = catLabel(c.id);
             const icon = label.split(' ')[0];
             return (
-              <button key={c.id} type="button" data-help-cat={c.id} onClick={() => showCategory(c.id)} className="flex flex-col items-start gap-0.5 p-2.5 rounded-xl bg-white dark:bg-[#0B1527] border border-[#DCE5F2] dark:border-[#1E3158] hover:border-[#1E469B] dark:hover:border-[#7CB8F7] text-left btn-press">
+              <button key={c.id} type="button" data-help-cat={c.id} onClick={() => showCategory(c.id)} className="flex flex-col items-start gap-0.5 p-2.5 rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A] hover:border-[#007AFF] dark:hover:border-[#7CB8F7] text-left btn-press">
                 <span className="text-lg leading-none">{icon}</span>
-                <span className="text-xs font-extrabold text-[#0B1F4D] dark:text-white leading-tight">{label.slice(icon.length).trim()}</span>
-                <span className="text-[10.5px] text-[#4A608A] dark:text-[#94A8D0]">{u.count(catCounts[c.id])}</span>
+                <span className="text-xs font-extrabold text-[#1D1D1F] dark:text-white leading-tight">{label.slice(icon.length).trim()}</span>
+                <span className="text-[10.5px] text-[#6E6E73] dark:text-[#A1A1A6]">{u.count(catCounts[c.id])}</span>
               </button>
             );
           })}
@@ -183,29 +183,29 @@ export const HelpAssistant: React.FC<{
   return createPortal(
     <div className="fixed inset-0 z-[70] flex justify-end" data-help-assistant>
       <button type="button" aria-label={u.close} onClick={onClose} className="absolute inset-0 bg-[#06122B]/30 backdrop-blur-[2px] cursor-default" />
-      <aside role="dialog" aria-modal="true" aria-label={u.title} className="relative h-full w-[460px] max-w-full flex flex-col bg-[#F4F7FC] dark:bg-[#0A1428] border-l border-[#D3DDEE] dark:border-[#1E3158] shadow-2xl">
-        <header className="px-5 pt-4 pb-3 bg-white dark:bg-[#0F1D38] border-b border-[#DCE5F2] dark:border-[#1E3158] space-y-2">
+      <aside role="dialog" aria-modal="true" aria-label={u.title} className="relative h-full w-[460px] max-w-full flex flex-col bg-[#F5F5F7] dark:bg-[#0A1428] border-l border-[#E5E5EA] dark:border-[#38383A] shadow-2xl">
+        <header className="px-5 pt-4 pb-3 bg-white dark:bg-[#1C1C1E] border-b border-[#E5E5EA] dark:border-[#38383A] space-y-2">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-base font-extrabold text-[#0B1F4D] dark:text-white">💬 {u.title}</h2>
+            <h2 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">💬 {u.title}</h2>
             <div className="flex items-center gap-2">
-              <div role="group" aria-label="Language" className="inline-flex p-0.5 rounded-lg bg-[#EEF3FC] dark:bg-[#0B1527] border border-[#DCE5F2] dark:border-[#1E3158]" data-help-lang>
+              <div role="group" aria-label="Language" className="inline-flex p-0.5 rounded-lg bg-[#EAF3FF] dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A]" data-help-lang>
                 {(['tl', 'en'] as Lang[]).map((l) => (
-                  <button key={l} type="button" data-help-lang-btn={l} aria-pressed={lang === l} onClick={() => setLang(l)} className={`px-2.5 py-1 rounded-md text-[11px] font-extrabold ${lang === l ? 'bg-[#1E469B] text-white' : 'text-[#4A608A] dark:text-[#94A8D0]'}`}>
+                  <button key={l} type="button" data-help-lang-btn={l} aria-pressed={lang === l} onClick={() => setLang(l)} className={`px-2.5 py-1 rounded-md text-[11px] font-extrabold ${lang === l ? 'bg-[#007AFF] text-white' : 'text-[#6E6E73] dark:text-[#A1A1A6]'}`}>
                     {l === 'tl' ? 'Taglish' : 'English'}
                   </button>
                 ))}
               </div>
-              <button type="button" onClick={onClose} aria-label={u.close} title={`${u.close} (Esc)`} className="text-sm font-bold text-[#4A608A] hover:text-[#0B1F4D] dark:hover:text-white px-1">
+              <button type="button" onClick={onClose} aria-label={u.close} title={`${u.close} (Esc)`} className="text-sm font-bold text-[#6E6E73] hover:text-[#1D1D1F] dark:hover:text-white px-1">
                 ✕
               </button>
             </div>
           </div>
-          <p className="text-[11px] text-[#4A608A] dark:text-[#94A8D0]">🔒 {u.sub}</p>
+          <p className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">🔒 {u.sub}</p>
         </header>
 
         {msgs.length > 0 && (
-          <div className="px-4 py-2 border-b border-[#DCE5F2] dark:border-[#1E3158] bg-white/60 dark:bg-[#0F1D38]/60">
-            <button type="button" data-help-home onClick={() => setMsgs([])} className="text-xs font-bold text-[#1E469B] dark:text-[#7CB8F7]">
+          <div className="px-4 py-2 border-b border-[#E5E5EA] dark:border-[#38383A] bg-white/60 dark:bg-[#1C1C1E]/60">
+            <button type="button" data-help-home onClick={() => setMsgs([])} className="text-xs font-bold text-[#007AFF] dark:text-[#409CFF]">
               {u.back}
             </button>
           </div>
@@ -226,16 +226,16 @@ export const HelpAssistant: React.FC<{
                 if (m.from === 'category')
                   return (
                     <div key={m.id} className={card} data-help-category={m.cat}>
-                      <p className="text-sm text-[#0B1F4D] dark:text-white">{u.pick}</p>
+                      <p className="text-sm text-[#1D1D1F] dark:text-white">{u.pick}</p>
                       <div className="space-y-1.5">{HELP_KB.filter((e) => e.cat === m.cat).map(qRow)}</div>
                     </div>
                   );
                 if (m.from === 'none')
                   return (
                     <div key={m.id} className={card} data-help-none>
-                      <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">🤔 {u.none1}</p>
-                      <p className="text-sm text-[#0B1F4D] dark:text-white">{u.none2}</p>
-                      <button type="button" data-help-go="guide" onClick={() => onGo('guide')} className="px-3 py-1.5 rounded-lg bg-[#1E469B] text-white text-xs font-extrabold btn-press">
+                      <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">🤔 {u.none1}</p>
+                      <p className="text-sm text-[#1D1D1F] dark:text-white">{u.none2}</p>
+                      <button type="button" data-help-go="guide" onClick={() => onGo('guide')} className="px-3 py-1.5 rounded-lg bg-[#007AFF] text-white text-xs font-extrabold btn-press">
                         {goLabel('guide')} →
                       </button>
                       <div className="space-y-1.5">{TOP.slice(0, 6).map(qRow)}</div>
@@ -245,13 +245,13 @@ export const HelpAssistant: React.FC<{
                 const tx = textOf(e, lang);
                 return (
                   <div key={m.id} className={card} data-help-answer={e.id}>
-                    <p className="text-[15px] font-extrabold text-[#0B1F4D] dark:text-white leading-snug">{tx.q}</p>
-                    <p className="text-sm leading-relaxed text-[#0B1F4D] dark:text-white">{tx.a}</p>
+                    <p className="text-[15px] font-extrabold text-[#1D1D1F] dark:text-white leading-snug">{tx.q}</p>
+                    <p className="text-sm leading-relaxed text-[#1D1D1F] dark:text-white">{tx.a}</p>
                     {tx.steps && (
                       <ol className="space-y-1.5">
                         {tx.steps.map((s, i) => (
-                          <li key={i} className="flex gap-2.5 text-sm leading-relaxed text-[#0B1F4D] dark:text-white">
-                            <span className="shrink-0 mt-0.5 w-5 h-5 rounded-full bg-[#E4ECFC] dark:bg-[#192D58] text-[#1E469B] dark:text-[#7CB8F7] text-[11px] font-extrabold flex items-center justify-center">{i + 1}</span>
+                          <li key={i} className="flex gap-2.5 text-sm leading-relaxed text-[#1D1D1F] dark:text-white">
+                            <span className="shrink-0 mt-0.5 w-5 h-5 rounded-full bg-[#EAF3FF] dark:bg-[#2C2C2E] text-[#007AFF] dark:text-[#409CFF] text-[11px] font-extrabold flex items-center justify-center">{i + 1}</span>
                             <span className="min-w-0">{s}</span>
                           </li>
                         ))}
@@ -259,12 +259,12 @@ export const HelpAssistant: React.FC<{
                     )}
                     {tx.tip && <p className="text-xs rounded-xl bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 px-3 py-2">💡 {tx.tip}</p>}
                     {e.go && (
-                      <button type="button" data-help-go={e.go} onClick={() => onGo(e.go!)} className="px-3 py-1.5 rounded-lg bg-[#1E469B] text-white text-xs font-extrabold btn-press">
+                      <button type="button" data-help-go={e.go} onClick={() => onGo(e.go!)} className="px-3 py-1.5 rounded-lg bg-[#007AFF] text-white text-xs font-extrabold btn-press">
                         {goLabel(e.go)} →
                       </button>
                     )}
                     {m.more.length > 0 && (
-                      <div className="pt-2 mt-1 border-t border-[#EEF3FC] dark:border-[#1E3158] space-y-1.5">
+                      <div className="pt-2 mt-1 border-t border-[#EEF3FC] dark:border-[#38383A] space-y-1.5">
                         <p className={sectionTitle}>{u.related}</p>
                         {m.more.map((id) => BY_ID.get(id)).filter(Boolean).map((x) => qRow(x!))}
                       </div>
@@ -275,7 +275,7 @@ export const HelpAssistant: React.FC<{
         </div>
 
         <form
-          className="p-3 bg-white dark:bg-[#0F1D38] border-t border-[#DCE5F2] dark:border-[#1E3158] flex gap-2"
+          className="p-3 bg-white dark:bg-[#1C1C1E] border-t border-[#E5E5EA] dark:border-[#38383A] flex gap-2"
           onSubmit={(ev) => {
             ev.preventDefault();
             ask();
@@ -287,9 +287,9 @@ export const HelpAssistant: React.FC<{
             value={text}
             onChange={(ev) => setText(ev.target.value.slice(0, 200))}
             placeholder={u.placeholder}
-            className="flex-1 min-w-0 px-3 py-2.5 rounded-xl border border-[#C9D6EC] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-sm text-[#0B1F4D] dark:text-white focus:outline-none focus:ring-4 focus:ring-[#1E469B]/20"
+            className="flex-1 min-w-0 px-3 py-2.5 rounded-xl border border-[#E5E5EA] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] text-sm text-[#1D1D1F] dark:text-white focus:outline-none focus:ring-4 focus:ring-[#007AFF]/20"
           />
-          <button type="submit" data-help-send disabled={!text.trim()} className="px-4 py-2.5 rounded-xl bg-[#1E469B] text-white text-sm font-extrabold whitespace-nowrap disabled:opacity-50">
+          <button type="submit" data-help-send disabled={!text.trim()} className="px-4 py-2.5 rounded-xl bg-[#007AFF] text-white text-sm font-extrabold whitespace-nowrap disabled:opacity-50">
             {u.ask}
           </button>
         </form>

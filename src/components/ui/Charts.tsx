@@ -9,7 +9,7 @@ export interface LegendItem {
   shape?: 'line' | 'dash' | 'box' | 'dot';
 }
 export const Legend: React.FC<{ items: LegendItem[]; className?: string }> = ({ items, className = '' }) => (
-  <ul className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-bold text-[#4A608A] dark:text-[#94A8D0] ${className}`} data-legend>
+  <ul className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-bold text-[#6E6E73] dark:text-[#A1A1A6] ${className}`} data-legend>
     {items.map((it) => (
       <li key={it.label} className="inline-flex items-center gap-1.5 whitespace-nowrap">
         {it.shape === 'box' ? (
@@ -60,15 +60,15 @@ export const LineChart: React.FC<{
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label={ariaLabel} data-chart>
       {ticks.map((t) => (
         <g key={t}>
-          <line x1={padL} x2={W - padR} y1={y(t)} y2={y(t)} className="stroke-[#E4ECFC] dark:stroke-[#1E3158]" strokeWidth="1" />
-          <text x={padL - 6} y={y(t) + 4} textAnchor="end" className="fill-[#687FA8] dark:fill-[#89A7DF]" fontSize="11">
+          <line x1={padL} x2={W - padR} y1={y(t)} y2={y(t)} className="stroke-[#E5E5EA] dark:stroke-[#38383A]" strokeWidth="1" />
+          <text x={padL - 6} y={y(t) + 4} textAnchor="end" className="fill-[#8E8E93] dark:fill-[#8E8E93]" fontSize="11">
             {t}
             {suffix}
           </text>
         </g>
       ))}
       {labels.map((l, i) => (
-        <text key={l + i} x={x(i)} y={H - 6} textAnchor="middle" className="fill-[#687FA8] dark:fill-[#89A7DF]" fontSize="11">
+        <text key={l + i} x={x(i)} y={H - 6} textAnchor="middle" className="fill-[#8E8E93] dark:fill-[#8E8E93]" fontSize="11">
           {l}
         </text>
       ))}
@@ -98,7 +98,7 @@ export const LineChart: React.FC<{
             })}
             {s.values.map((v, i) =>
               v === null ? null : (
-                <circle key={i} cx={x(i)} cy={y(v)} r="4" fill={s.color} className="stroke-white dark:stroke-[#0F1A30]" strokeWidth="1.5">
+                <circle key={i} cx={x(i)} cy={y(v)} r="4" fill={s.color} className="stroke-white dark:stroke-[#1C1C1E]" strokeWidth="1.5">
                   <title>{`${s.name} · ${labels[i]}: ${v}${suffix}`}</title>
                 </circle>
               )
@@ -131,8 +131,8 @@ export const GroupedBars: React.FC<{
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label={ariaLabel} data-chart>
       {[0, niceTop / 2, niceTop].map((t) => (
         <g key={t}>
-          <line x1={padL} x2={W - 8} y1={y(t)} y2={y(t)} className="stroke-[#E4ECFC] dark:stroke-[#1E3158]" strokeWidth="1" />
-          <text x={padL - 6} y={y(t) + 4} textAnchor="end" className="fill-[#687FA8] dark:fill-[#89A7DF]" fontSize="11">
+          <line x1={padL} x2={W - 8} y1={y(t)} y2={y(t)} className="stroke-[#E5E5EA] dark:stroke-[#38383A]" strokeWidth="1" />
+          <text x={padL - 6} y={y(t) + 4} textAnchor="end" className="fill-[#8E8E93] dark:fill-[#8E8E93]" fontSize="11">
             {Math.round(t * 10) / 10}
           </text>
         </g>
@@ -147,7 +147,7 @@ export const GroupedBars: React.FC<{
                 <title>{`${s.name} · ${l}: ${s.values[i]}`}</title>
               </rect>
             ))}
-            <text x={cx} y={H - 6} textAnchor="middle" className="fill-[#687FA8] dark:fill-[#89A7DF]" fontSize="11">
+            <text x={cx} y={H - 6} textAnchor="middle" className="fill-[#8E8E93] dark:fill-[#8E8E93]" fontSize="11">
               {l}
             </text>
           </g>

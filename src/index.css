@@ -2307,3 +2307,367 @@ button.sd-row:hover { background: rgba(0, 0, 0, 0.03); }
 .sd-switch:checked { background: #34C759; }
 .sd-switch:checked::after { transform: translateX(20px); }
 :root.dark .sd-switch:not(:checked) { background: #39393D; }
+
+/* =============================================================================
+   STUDENT DASHBOARD — LIQUID GLASS (2026-11-18). Clean AICS gradient wallpaper + glass layers.
+   No decorative animation. Weak phones (html.lite) get solid surfaces with the same layout.
+   ============================================================================= */
+:root:not(.dark) .sd-canvas.student-portal-canvas {
+  background:
+    radial-gradient(900px 600px at 0% 0%, rgba(56, 189, 248, 0.30), transparent 60%),
+    radial-gradient(800px 600px at 100% 10%, rgba(165, 180, 252, 0.40), transparent 60%),
+    radial-gradient(900px 700px at 50% 100%, rgba(37, 99, 235, 0.18), transparent 65%),
+    linear-gradient(180deg, #F5F8FF 0%, #E9EFFF 100%) !important;
+  background-attachment: fixed !important;
+}
+:root.dark .sd-canvas.student-portal-canvas {
+  background:
+    radial-gradient(900px 600px at 0% 0%, rgba(37, 99, 235, 0.45), transparent 60%),
+    radial-gradient(800px 600px at 100% 15%, rgba(79, 70, 229, 0.40), transparent 60%),
+    radial-gradient(900px 700px at 50% 110%, rgba(56, 189, 248, 0.22), transparent 65%),
+    linear-gradient(180deg, #0A1633 0%, #0B1430 100%) !important;
+  background-attachment: fixed !important;
+}
+.sd-header { background: rgba(255, 255, 255, 0.55) !important; border-bottom: 1px solid rgba(255, 255, 255, 0.6) !important; }
+:root.dark .sd-header { background: rgba(10, 22, 51, 0.45) !important; border-bottom-color: rgba(255, 255, 255, 0.08) !important; }
+.lg-card, .sd-card, .lg-me .sd-list {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.58)) !important;
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
+  border-radius: 24px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 12px 32px -16px rgba(30, 70, 155, 0.28) !important;
+}
+:root.dark .lg-card, :root.dark .sd-card, :root.dark .lg-me .sd-list {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.05)) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 16px 40px -18px rgba(0, 0, 0, 0.7) !important;
+}
+.lg-me .sd-list { border-radius: 16px !important; }
+.lg-me .sd-list-title { margin-left: 16px; }
+.lg-hero {
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(125, 211, 252, 0.55), transparent 55%),
+    linear-gradient(135deg, #1E469B 0%, #2563EB 55%, #38BDF8 120%) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 20px 44px -18px rgba(37, 99, 235, 0.65) !important;
+}
+.lg-input { border-radius: 18px; background: rgba(255, 255, 255, 0.18); border: 1px solid rgba(255, 255, 255, 0.35); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+.lg-ink { color: #1D1D1F; }
+.lg-ink-soft { color: #5B6475; }
+:root.dark .lg-ink { color: #F5F5F7; }
+:root.dark .lg-ink-soft { color: #A9B4CC; }
+.lg-chip { background: rgba(15, 23, 42, 0.07); color: #1D1D1F; }
+:root.dark .lg-chip { background: rgba(255, 255, 255, 0.12); color: #F5F5F7; }
+.lg-chip-strong { background: #0A84FF; color: #FFFFFF; }
+.lg-line { background: rgba(15, 23, 42, 0.2); }
+:root.dark .lg-line { background: rgba(255, 255, 255, 0.25); }
+.lg-tone-amber { background: linear-gradient(160deg, rgba(255, 214, 102, 0.55), rgba(255, 255, 255, 0.6)) !important; }
+.lg-tone-green { background: linear-gradient(160deg, rgba(52, 211, 153, 0.45), rgba(255, 255, 255, 0.6)) !important; }
+.lg-tone-rose { background: linear-gradient(160deg, rgba(251, 113, 133, 0.42), rgba(255, 255, 255, 0.6)) !important; }
+:root.dark .lg-tone-amber { background: linear-gradient(160deg, rgba(245, 158, 11, 0.35), rgba(255, 255, 255, 0.05)) !important; }
+:root.dark .lg-tone-green { background: linear-gradient(160deg, rgba(16, 185, 129, 0.35), rgba(255, 255, 255, 0.05)) !important; }
+:root.dark .lg-tone-rose { background: linear-gradient(160deg, rgba(244, 63, 94, 0.32), rgba(255, 255, 255, 0.05)) !important; }
+.lg-tone-amber .lg-chip-strong { background: #FF9F0A; }
+.lg-tone-green .lg-chip-strong { background: #30D158; }
+.lg-tone-rose .lg-chip-strong { background: #FF453A; }
+.lg-capsule {
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5));
+  backdrop-filter: blur(22px) saturate(190%);
+  -webkit-backdrop-filter: blur(22px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 14px 36px -12px rgba(15, 23, 42, 0.35);
+}
+:root.dark .lg-capsule {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06));
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 16px 40px -12px rgba(0, 0, 0, 0.75);
+}
+.lg-pill { background: rgba(10, 132, 255, 0.12); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7); }
+:root.dark .lg-pill { background: rgba(255, 255, 255, 0.14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15); }
+.lg-plus { background: linear-gradient(135deg, #1E469B 0%, #2563EB 55%, #38BDF8 120%); box-shadow: 0 8px 18px -6px rgba(37, 99, 235, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+html.lite .lg-card, html.lite .sd-card, html.lite .lg-capsule, html.lite .sd-header, html.lite .lg-me .sd-list { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: #FFFFFF !important; }
+html.lite.dark .lg-card, html.lite.dark .sd-card, html.lite.dark .lg-capsule, html.lite.dark .sd-header, html.lite.dark .lg-me .sd-list { background: #18223A !important; }
+
+/* fixes: hero keeps its gradient in dark mode; page behind = wallpaper end color; inner groups on glass */
+:root .lg-card.lg-hero, :root.dark .lg-card.lg-hero {
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(125, 211, 252, 0.5), transparent 55%),
+    linear-gradient(135deg, #1E469B 0%, #2563EB 55%, #38BDF8 120%) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+:root.dark .lg-card.lg-hero { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 20px 44px -18px rgba(37, 99, 235, 0.55) !important; }
+html:has(.sd-canvas), body:has(.sd-canvas) { background: #E9EFFF !important; }
+html.dark:has(.sd-canvas), html.dark:has(.sd-canvas) body { background: #0B1430 !important; }
+.sd-canvas .student-footer { display: none !important; }
+.sd-canvas .sd-group { background: rgba(255, 255, 255, 0.45) !important; border: 1px solid rgba(255, 255, 255, 0.6) !important; }
+:root.dark .sd-canvas .sd-group { background: rgba(255, 255, 255, 0.05) !important; border-color: rgba(255, 255, 255, 0.08) !important; }
+.sd-canvas .sd-note { background: rgba(10, 132, 255, 0.08) !important; }
+/* chat on zoomed big screens: the portal content is zoomed (1.1 / 1.25), so the message list is shorter by that factor */
+
+
+:root.dark .lg-pill { background: rgba(10, 132, 255, 0.55) !important; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25) !important; }
+
+/* dashboard fills the screen itself, so it is never zoomed (keeps the rail and cards lined up) */
+.sd-canvas.student-portal-canvas > header, .sd-canvas.student-portal-canvas > main, .sd-canvas.student-portal-canvas > footer { zoom: 1 !important; }
+/* calendar + PH time card: the clean AICS gradient */
+.lg-card.lg-clock, :root.dark .lg-card.lg-clock {
+  background: radial-gradient(120% 160% at 100% 0%, rgba(125, 211, 252, 0.45), transparent 55%), linear-gradient(120deg, #1E469B 0%, #2563EB 55%, #4F46E5 110%) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 16px 36px -18px rgba(37, 99, 235, 0.6) !important;
+}
+.sd-canvas.student-portal-canvas { min-height: var(--sd-vh, 100dvh) !important; }
+
+/* Reports tab (Apple style): status colors + soft tinted cards */
+.lg-status-green { background: linear-gradient(135deg,#34C759,#30B158); }
+.lg-status-amber { background: linear-gradient(135deg,#FF9F0A,#FF7A00); }
+.lg-status-rose  { background: linear-gradient(135deg,#FF453A,#E0245E); }
+.lg-report { border-left: 5px solid transparent; }
+.lg-report-green { border-left-color: #30D158; }
+.lg-report-amber { border-left-color: #FF9F0A; }
+.lg-report-rose  { border-left-color: #FF453A; }
+.lg-line { background: rgba(60,60,67,0.22); }
+:root.dark .lg-line, html.dark .lg-line { background: rgba(235,235,245,0.22); }
+
+/* Home widget stack (Apple Clock-widget style) */
+.lg-card.lg-widget { background: linear-gradient(160deg,#0E1528,#070B16) !important; -webkit-backdrop-filter: none; backdrop-filter: none; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 24px 50px -24px rgba(7,11,22,0.7); }
+.wg-date { background: linear-gradient(150deg,#3B82F6 0%,#2563EB 45%,#4F46E5 100%); }
+.wg-time { background: linear-gradient(120deg,#FF5E3A 0%,#FF3B30 55%,#FF2D55 100%); }
+.wg-bar { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); }
+.wg-bar:hover { background: rgba(255,255,255,0.12); }
+
+/* AICS moving gradient (blobs move by transform only = smooth) */
+.lg-card.lg-widget { background: linear-gradient(140deg,#1E3A8A 0%,#1D4ED8 50%,#0EA5E9 100%) !important; }
+.wg-blob { position:absolute; width:70%; aspect-ratio:1; border-radius:9999px; filter:blur(60px); opacity:.75; pointer-events:none; will-change:transform; }
+.wg-b1 { background:#38BDF8; top:-25%; left:-20%; animation: wgA 14s ease-in-out infinite alternate; }
+.wg-b2 { background:#6366F1; bottom:-30%; right:-20%; animation: wgB 17s ease-in-out infinite alternate; }
+.wg-b3 { background:#E11D48; width:45%; top:35%; left:30%; opacity:.45; animation: wgC 20s ease-in-out infinite alternate; }
+@keyframes wgA { to { transform: translate(45%,35%) scale(1.15); } }
+@keyframes wgB { to { transform: translate(-40%,-35%) scale(1.2); } }
+@keyframes wgC { to { transform: translate(-50%,-30%) scale(.85); } }
+.wg-glass { background: rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.28); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); box-shadow: inset 0 1px 0 rgba(255,255,255,.35); }
+button.wg-glass:hover { background: rgba(255,255,255,0.22); }
+@media (prefers-reduced-motion: reduce) { .wg-blob { animation: none; } }
+html.lite .wg-blob { animation: none; filter: blur(30px); }
+html.lite .wg-glass { -webkit-backdrop-filter:none; backdrop-filter:none; background: rgba(255,255,255,0.2); }
+
+/* Floating nav: the chosen tab lifts out of the bar as a colored circle (transform only) */
+.nav-float { transition: transform .35s cubic-bezier(.34,1.56,.64,1), background-color .2s; }
+.nav-on { box-shadow: 0 10px 22px -8px rgba(8,20,60,.55), 0 0 0 5px rgba(255,255,255,.85); }
+html.dark .nav-on { box-shadow: 0 10px 22px -8px rgba(0,0,0,.7), 0 0 0 5px rgba(15,23,42,.9); }
+.nav-c-home { background: linear-gradient(135deg,#3B82F6,#1D4ED8); }
+.nav-c-history { background: linear-gradient(135deg,#FFB340,#FF7A00); }
+.nav-c-chat { background: linear-gradient(135deg,#34D399,#059669); }
+.nav-c-me { background: linear-gradient(135deg,#A78BFA,#6D28D9); }
+.nav-t-home { color:#2563EB; } .nav-t-history { color:#F97316; } .nav-t-chat { color:#059669; } .nav-t-me { color:#7C3AED; }
+html.dark .nav-t-home { color:#60A5FA; } html.dark .nav-t-history { color:#FDBA74; } html.dark .nav-t-chat { color:#6EE7B7; } html.dark .nav-t-me { color:#C4B5FD; }
+@media (prefers-reduced-motion: reduce) { .nav-float { transition: none; } }
+
+/* Edge/WebView2 adds its own eye + clear button to password boxes; we already have our own */
+input::-ms-reveal, input::-ms-clear { display: none; }
+
+/* Sign-in error: Apple-style alert + red ring on the field that is wrong */
+.login-alert { background: linear-gradient(135deg, rgba(120,16,32,0.92), rgba(80,10,30,0.92)); border: 1px solid rgba(255,99,99,0.35); box-shadow: 0 16px 36px -18px rgba(255,59,48,0.55); }
+html:not(.dark) .login-alert { background: linear-gradient(135deg, #B4232F, #8E1530); }
+html:root .cosmic-input.login-field-bad, html:root.dark .cosmic-input.login-field-bad { border-color: #FF453A !important; box-shadow: 0 0 0 2px #FF453A, 0 0 0 6px rgba(255,69,58,0.18) !important; }
+
+/* Clock widget: AICS Ocean (only blues: navy, royal blue, cyan moving together) */
+.lg-card.lg-widget { background: linear-gradient(150deg,#0B2A6F 0%,#1D4ED8 100%) !important; }
+.lg-card.lg-widget .wg-b1 { background:#38BDF8; opacity:.6; }
+.lg-card.lg-widget .wg-b2 { background:#2563EB; opacity:.7; }
+.lg-card.lg-widget .wg-b3 { background:#0EA5E9; opacity:.5; }
+
+/* Me tab: same text sizes as the other pages */
+.lg-me .sd-row { min-height: 56px; }
+.lg-me .sd-row-label { font-size: 16px; }
+.lg-me .sd-list-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+
+/* ============================================================================
+   DESKTOP APPLE STYLE (user, 2026-11-20). html.desk-app is set only while the
+   staff app is open (not the PIN login, not the student portal).
+   macOS look: system gray canvas, white cards, system blue, true-black dark mode.
+   ============================================================================ */
+html.desk-app body,
+html.desk-app .saas-workspace-canvas { background: #F5F5F7; color: #1D1D1F; }
+html.desk-app.dark body,
+html.desk-app.dark .saas-workspace-canvas { background: #000000; color: #F5F5F7; }
+
+html.desk-app,
+html.desk-app body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  letter-spacing: -0.006em;
+}
+
+/* cards */
+html.desk-app .saas-card,
+html.desk-app .panel-2026,
+html.desk-app .kpi-card-2026,
+html.desk-app .ring-card { border-radius: 18px; }
+html.desk-app.dark .saas-card,
+html.desk-app.dark .panel-2026,
+html.desk-app.dark .kpi-card-2026,
+html.desk-app.dark .ring-card {
+  background: #1C1C1E;
+  box-shadow: 0 0 0 0.5px rgb(255 255 255 / 0.08), 0 12px 32px -14px rgb(0 0 0 / 0.7);
+}
+html.desk-app .saas-card-subtle { background: #F5F5F7; border: 0; border-radius: 12px; color: #1D1D1F; }
+html.desk-app.dark .saas-card-subtle { background: #2C2C2E; border: 0; color: #F5F5F7; }
+
+/* top bar: frosted like a macOS toolbar */
+html.desk-app header.shrink-0 {
+  background: rgb(255 255 255 / 0.78) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-color: rgb(0 0 0 / 0.08) !important;
+}
+html.desk-app.dark header.shrink-0 { background: rgb(28 28 30 / 0.78) !important; border-color: rgb(255 255 255 / 0.08) !important; }
+
+/* text fields, dropdowns, text boxes */
+html.desk-app input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+html.desk-app select,
+html.desk-app textarea {
+  border-radius: 10px;
+  border-color: #D1D1D6;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+html.desk-app input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+html.desk-app select:focus,
+html.desk-app textarea:focus {
+  outline: none;
+  border-color: #007AFF !important;
+  box-shadow: 0 0 0 4px rgb(0 122 255 / 0.22) !important;
+}
+html.desk-app.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+html.desk-app.dark select,
+html.desk-app.dark textarea { background-color: #2C2C2E; border-color: #3A3A3C; color: #F5F5F7; }
+html.desk-app input[type="checkbox"],
+html.desk-app input[type="radio"] { accent-color: #007AFF; }
+
+/* pop-ups: soft dark veil + blur, big rounded sheet */
+html.desk-app .fixed.inset-0[class*="bg-black/"],
+html.desk-app .fixed.inset-0[class*="bg-[#06122B]"],
+html.desk-app .fixed.inset-0[class*="bg-[#040E20]"] {
+  background-color: rgb(0 0 0 / 0.32) !important;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+html.desk-app .fixed.inset-0.items-center > div[class*="rounded"],
+html.desk-app .fixed.inset-0.items-center > section[class*="rounded"],
+html.desk-app .fixed.inset-0.items-center > form[class*="rounded"] {
+  border-radius: 22px !important;
+  box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.08), 0 30px 80px -20px rgb(0 0 0 / 0.45) !important;
+}
+html.desk-app.dark .fixed.inset-0.items-center > div[class*="rounded"],
+html.desk-app.dark .fixed.inset-0.items-center > section[class*="rounded"],
+html.desk-app.dark .fixed.inset-0.items-center > form[class*="rounded"] {
+  box-shadow: 0 0 0 0.5px rgb(255 255 255 / 0.1), 0 30px 80px -20px rgb(0 0 0 / 0.8) !important;
+}
+
+/* buttons: rounder corners, gentle press */
+html.desk-app button.rounded-lg,
+html.desk-app a.rounded-lg { border-radius: 10px; }
+html.desk-app button.rounded-md { border-radius: 8px; }
+html.desk-app button:not(:disabled):active { transform: scale(0.97); }
+html.desk-app button { transition-property: transform, background-color, border-color, color, box-shadow, opacity; transition-duration: 150ms; }
+
+/* tables */
+html.desk-app table thead th { font-weight: 600; color: #6E6E73; }
+html.desk-app.dark table thead th { color: #A1A1A6; }
+
+/* thin scrollbars like macOS */
+html.desk-app ::-webkit-scrollbar { width: 10px; height: 10px; }
+html.desk-app ::-webkit-scrollbar-thumb { background: rgb(0 0 0 / 0.18); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }
+html.desk-app.dark ::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.22); border: 3px solid transparent; background-clip: content-box; }
+html.desk-app ::-webkit-scrollbar-track { background: transparent; }
+
+/* weak PCs: no blur */
+html.lite.desk-app header.shrink-0,
+html.lite.desk-app .fixed.inset-0 { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+
+/* ============================================================================
+   WEBSITE LOGIN ONLY (screens 1024px and up, never the APK). 2026-11-20
+   Day/night campus picture, Liquid Glass card, same sizes in light and dark.
+   The phone / APK login keeps its own mobile design (none of this applies there).
+   ============================================================================ */
+.login-bg { transition: opacity 900ms cubic-bezier(0.4, 0, 0.2, 1); will-change: opacity; }
+@media (prefers-reduced-motion: reduce) { .login-bg { transition: none; } }
+html.lite .login-bg { transition-duration: 0.01ms; }
+
+/* light/dark crossfade: snapshots fill the screen at their real size (no shrink or shift) */
+html.theme-xfade::view-transition-old(root),
+html.theme-xfade::view-transition-new(root) {
+  position: absolute; inset: 0; width: 100%; height: 100%; will-change: opacity;
+}
+
+@media (min-width: 1024px) {
+  /* same size in light and dark: only colors change */
+  html:root:is(.dark, :not(.dark)) body:not(.capacitor-mobile) .card-title-text { font-weight: 800 !important; letter-spacing: -0.02em !important; }
+  html:root:is(.dark, :not(.dark)) body:not(.capacitor-mobile) .card-subtitle-text { font-weight: 600 !important; }
+  html:root:is(.dark, :not(.dark)) body:not(.capacitor-mobile) .register-label { font-weight: 700 !important; }
+  html:root:is(.dark, :not(.dark)) body:not(.capacitor-mobile) .register-section-title { font-weight: 800 !important; letter-spacing: 0.04em !important; }
+  html:root:is(.dark, :not(.dark)) body:not(.capacitor-mobile) .card-back-button { font-weight: 800 !important; border-width: 1.5px !important; border-style: solid !important; }
+  html:root:is(.dark, :not(.dark)) body:not(.capacitor-mobile) .badge-correct,
+  html:root:is(.dark, :not(.dark)) body:not(.capacitor-mobile) .badge-wrong { font-weight: 800 !important; border-width: 1px !important; }
+  html:root:is(.dark, :not(.dark)) body:not(.capacitor-mobile) .badge-not-input { font-weight: 800 !important; border-width: 1.5px !important; border-style: solid !important; }
+  html:root:is(.dark, :not(.dark)) body:not(.capacitor-mobile) .cosmic-input::placeholder { font-weight: 500 !important; }
+
+  /* Liquid Glass card */
+  html.xmas-on body:not(.capacitor-mobile) .cosmic-glass-card.login-glass {
+    animation: none !important; background-size: auto !important; will-change: auto;
+    -webkit-backdrop-filter: blur(26px) saturate(180%); backdrop-filter: blur(26px) saturate(180%);
+    border-width: 1.5px !important; border-style: solid !important;
+  }
+  html.xmas-on:not(.dark) body:not(.capacitor-mobile) .cosmic-glass-card.login-glass {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.68)) !important;
+    border-color: rgba(255, 255, 255, 0.85) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(255, 255, 255, 0.35), 0 24px 60px -20px rgba(15, 30, 70, 0.45) !important;
+  }
+  html.xmas-on.dark body:not(.capacitor-mobile) .cosmic-glass-card.login-glass {
+    background: linear-gradient(160deg, rgba(20, 34, 70, 0.62), rgba(8, 16, 38, 0.55)) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 30px 70px -20px rgba(0, 0, 0, 0.75) !important;
+  }
+  html.xmas-on:not(.dark) body:not(.capacitor-mobile) .login-glass .cosmic-input { background: rgba(255, 255, 255, 0.88) !important; border-color: rgba(100, 116, 139, 0.55) !important; }
+  html.xmas-on.dark body:not(.capacitor-mobile) .login-glass .cosmic-input { background: rgba(6, 12, 28, 0.72) !important; border-color: rgba(255, 255, 255, 0.2) !important; }
+  html.xmas-on:not(.dark) body:not(.capacitor-mobile) .login-glass .cosmic-input:focus { background: #FFFFFF !important; border-color: #007AFF !important; box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.2) !important; }
+  html.xmas-on.dark body:not(.capacitor-mobile) .login-glass .cosmic-input:focus { background: rgba(6, 12, 28, 0.85) !important; border-color: #0A84FF !important; box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.3) !important; }
+  html.xmas-on.lite:not(.dark) body:not(.capacitor-mobile) .cosmic-glass-card.login-glass { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(255, 255, 255, 0.95) !important; }
+  html.xmas-on.lite.dark body:not(.capacitor-mobile) .cosmic-glass-card.login-glass { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(12, 22, 48, 0.95) !important; }
+
+  /* smoked glass: header bar, speech bubbles, footer */
+  html.xmas-on body:not(.capacitor-mobile) .lg-glass-bar,
+  html.xmas-on body:not(.capacitor-mobile) .lg-glass-bubble,
+  html.xmas-on body:not(.capacitor-mobile) .lg-glass-footer {
+    background: linear-gradient(160deg, rgba(14, 26, 56, 0.58), rgba(8, 16, 38, 0.5));
+    -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 18px 44px -18px rgba(0, 0, 0, 0.55);
+  }
+  html.xmas-on body:not(.capacitor-mobile) .lg-glass-footer { border-width: 1px 0 0; border-radius: 0; box-shadow: none; color: rgba(255, 255, 255, 0.85); }
+  html.xmas-on.dark body:not(.capacitor-mobile) .lg-glass-bar,
+  html.xmas-on.dark body:not(.capacitor-mobile) .lg-glass-bubble { background: linear-gradient(160deg, rgba(14, 24, 52, 0.62), rgba(6, 12, 30, 0.55)); border-color: rgba(255, 255, 255, 0.14); }
+  html.xmas-on.lite body .lg-glass-bar, html.xmas-on.lite body .lg-glass-bubble, html.xmas-on.lite body .lg-glass-footer { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(10, 20, 46, 0.92); }
+
+  /* main buttons: Apple system blue */
+  html.xmas-on body:not(.capacitor-mobile) .lg-signin-btn {
+    background: linear-gradient(180deg, #1A8CFF 0%, #007AFF 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 10px 24px -10px rgba(0, 122, 255, 0.75) !important;
+    font-weight: 700 !important;
+  }
+  html.xmas-on body:not(.capacitor-mobile) .lg-signin-btn:hover:not(:disabled) { filter: brightness(1.06); }
+  html.xmas-on.dark body:not(.capacitor-mobile) .lg-signin-btn { background: linear-gradient(180deg, #2A95FF 0%, #0A84FF 100%) !important; }
+}
+/* the APK never shows the website background */
+body.capacitor-mobile .login-web-only { display: none !important; }
+
+/* Christmas decorations (phone UI, Nov 15 - Jan 6): bulbs twinkle with opacity only */
+@keyframes xmasTwinkle { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+.xmas-bulb { animation: xmasTwinkle 1.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .xmas-bulb { animation: none; } }
+html.lite .xmas-bulb, body.low-tier-device .xmas-bulb { animation: none; }
+@keyframes xmasGlow { 0%, 100% { opacity: 0.12; } 50% { opacity: 0.38; } }
+.xmas-glow { animation: xmasGlow 2.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .xmas-glow { animation: none; } }
+html.lite .xmas-glow, body.low-tier-device .xmas-glow { animation: none; }

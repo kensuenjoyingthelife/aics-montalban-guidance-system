@@ -156,7 +156,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
           compact ? 'text-[10px]' : 'text-[11px]'
         } ${
           empty
-            ? 'text-[#687FA8] dark:text-[#89A7DF]'
+            ? 'text-[#6E6E73] dark:text-[#A1A1A6]'
             : check.ok
             ? 'text-emerald-600 dark:text-emerald-400'
             : 'text-rose-600 dark:text-rose-400'

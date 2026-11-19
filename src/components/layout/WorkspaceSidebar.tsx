@@ -62,12 +62,12 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
 
   const getBadgeStyle = (count: number) => {
     if (count >= 5) {
-      return 'bg-rose-600 text-white shadow-xs';
+      return 'bg-[#FF3B30] text-white';
     }
     if (count >= 3) {
-      return 'bg-amber-500 text-[#0B1F4D] font-bold shadow-xs';
+      return 'bg-[#FF9500] text-white font-semibold';
     }
-    return 'bg-amber-400 text-[#0B1F4D] font-bold shadow-xs';
+    return 'bg-black/[0.08] dark:bg-white/15 text-[#1D1D1F] dark:text-white font-semibold';
   };
 
   const getBadgeCount = (item: MainCategoryNavItem): number | undefined => {
@@ -82,24 +82,24 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
     <aside
       className={`relative z-30 shrink-0 h-screen sticky top-0 flex flex-col justify-between transition-[width] duration-200 select-none ${
         collapsed ? 'w-[76px]' : 'w-[264px]'
-      } bg-[#040E20] dark:bg-[#040B18] border-r border-[#D9A93E]/25 dark:border-[#1E3250] text-white`}
+      } bg-[#F5F5F7] dark:bg-[#1C1C1E] border-r border-[#E5E5EA] dark:border-[#38383A] text-[#1D1D1F] dark:text-white`}
     >
       {/* 1. Official Institutional Brand Header */}
-      <div className={`h-16 border-b border-[#D9A93E]/20 flex items-center shrink-0 ${
+      <div className={`h-16 border-b border-[#E5E5EA] dark:border-[#38383A] flex items-center shrink-0 ${
         collapsed ? 'justify-center px-2' : 'justify-between px-4 gap-3'
       }`}>
         <div className="flex items-center gap-3 min-w-0">
           <img
             src="/aics-logo.jpg"
             alt="AICS Montalban Seal"
-            className="w-10 h-10 rounded-full object-cover bg-white p-0.5 ring-1 ring-[#D9A93E]/60 shrink-0 shadow-sm"
+            className="w-10 h-10 rounded-full object-cover bg-white p-0.5 ring-1 ring-black/10 shrink-0 shadow-sm"
           />
           {!collapsed && (
             <div className="min-w-0">
-              <h2 className="text-[14px] font-semibold tracking-tight text-white truncate leading-tight">
+              <h2 className="text-[15px] font-semibold tracking-tight text-[#1D1D1F] dark:text-white truncate leading-tight">
                 AICS Montalban
               </h2>
-              <p className="text-[11px] font-medium text-[#F2CE70] truncate">
+              <p className="text-[12px] font-medium text-[#6E6E73] dark:text-[#A1A1A6] truncate">
                 Guidance Office
               </p>
             </div>
@@ -114,7 +114,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
               soundFX.playToggleSwitch(!collapsed);
               onToggleCollapse();
             }}
-            className="w-7 h-7 rounded-md hover:bg-white/10 flex items-center justify-center text-[#9BCBFF] hover:text-white shrink-0 transition-colors"
+            className="w-7 h-7 rounded-full hover:bg-black/[0.06] dark:hover:bg-white/10 flex items-center justify-center text-[#8E8E93] hover:text-[#1D1D1F] dark:hover:text-white shrink-0 transition-colors"
           >
             <svg
               className="w-4 h-4"
@@ -141,7 +141,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
               soundFX.playToggleSwitch(!collapsed);
               onToggleCollapse();
             }}
-            className="w-8 h-8 rounded-lg bg-white/8 hover:bg-white/15 flex items-center justify-center text-[#9BCBFF] hover:text-white transition-colors"
+            className="w-8 h-8 rounded-full bg-black/[0.05] hover:bg-black/[0.09] dark:bg-white/10 dark:hover:bg-white/15 flex items-center justify-center text-[#8E8E93] hover:text-[#1D1D1F] dark:hover:text-white transition-colors"
           >
             <svg
               className="w-4 h-4 rotate-180"
@@ -163,7 +163,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
         {/* GROUP 1: DAILY CORE OPERATIONS */}
         <div>
           {!collapsed && (
-            <div className="px-3 pt-1 pb-1.5 text-xs font-semibold text-[#9BCBFF] flex items-center justify-between">
+            <div className="px-3 pt-1 pb-1.5 text-[12px] font-semibold text-[#8E8E93] flex items-center justify-between">
               <span>{isTl ? 'Araw-araw na gawain' : 'Daily operations'}</span>
             </div>
           )}
@@ -187,23 +187,23 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                   title={label}
                   className={`w-full flex items-center ${
                     collapsed ? 'justify-center p-2.5' : 'justify-between px-3 py-2'
-                  } rounded-[8px] text-left transition-[transform,background-color,color] duration-150 active:scale-[0.98] ${
+                  } rounded-[10px] text-left transition-[transform,background-color,color] duration-150 active:scale-[0.98] ${
                     isActive
-                      ? 'bg-white/15 text-white font-semibold border-l-[3px] border-[#7CB8F7] shadow-xs'
-                      : 'text-[#DCE8FF]/85 hover:bg-white/8 hover:text-white font-medium'
+                      ? 'bg-[#007AFF] text-white font-semibold shadow-[0_1px_2px_rgba(0,0,0,0.12)]'
+                      : 'text-[#1D1D1F] dark:text-[#F5F5F7] hover:bg-black/[0.05] dark:hover:bg-white/[0.08] font-medium'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <span
                       className={`w-5 h-5 flex items-center justify-center shrink-0 transition-colors ${
-                        isActive ? 'text-[#7CB8F7]' : 'text-[#9BCBFF]/75'
+                        isActive ? 'text-white' : 'text-[#007AFF] dark:text-[#409CFF]'
                       }`}
                     >
                       <DuotoneIcon name={item.icon} size={18} />
                     </span>
 
                     {!collapsed && (
-                      <span className="text-[13.5px] tracking-tight truncate">
+                      <span className="text-[14px] tracking-tight truncate">
                         {label}
                       </span>
                     )}
@@ -225,9 +225,9 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
         </div>
 
         {/* GROUP 2: RECORDS & SETTINGS */}
-        <div className="pt-2 border-t border-white/10">
+        <div className="pt-2 border-t border-[#E5E5EA] dark:border-[#38383A]">
           {!collapsed && (
-            <div className="px-3 pt-1 pb-1.5 text-xs font-semibold text-slate-400">
+            <div className="px-3 pt-1 pb-1.5 text-[12px] font-semibold text-[#8E8E93]">
               {isTl ? 'Rekord at pamamahala' : 'Management & records'}
             </div>
           )}
@@ -252,23 +252,23 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                   title={label}
                   className={`w-full flex items-center ${
                     collapsed ? 'justify-center p-2.5' : 'justify-between px-3 py-2'
-                  } rounded-[8px] text-left transition-all duration-150 ${
+                  } rounded-[10px] text-left transition-all duration-150 ${
                     isActive
-                      ? 'bg-white/15 text-white font-bold border-l-[3.5px] border-[#7CB8F7] shadow-sm'
-                      : 'text-[#DCE8FF]/75 hover:bg-white/8 hover:text-white font-medium'
+                      ? 'bg-[#007AFF] text-white font-semibold shadow-[0_1px_2px_rgba(0,0,0,0.12)]'
+                      : 'text-[#1D1D1F] dark:text-[#F5F5F7] hover:bg-black/[0.05] dark:hover:bg-white/[0.08] font-medium'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <span
                       className={`w-5 h-5 flex items-center justify-center shrink-0 transition-colors ${
-                        isActive ? 'text-[#7CB8F7]' : 'text-[#9BCBFF]/70'
+                        isActive ? 'text-white' : 'text-[#007AFF] dark:text-[#409CFF]'
                       }`}
                     >
                       <DuotoneIcon name={item.icon} size={18} />
                     </span>
 
                     {!collapsed && (
-                      <span className="text-[13.5px] tracking-tight truncate">
+                      <span className="text-[14px] tracking-tight truncate">
                         {label}
                       </span>
                     )}
@@ -291,7 +291,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
       </nav>
 
       {/* 3. Bottom Controls Section */}
-      <div className="p-3 border-t border-white/10 space-y-1.5 shrink-0">
+      <div className="p-3 border-t border-[#E5E5EA] dark:border-[#38383A] space-y-1 shrink-0">
         {/* Language Switcher (TL / EN) */}
         <button
           type="button"
@@ -303,10 +303,10 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
           title={isTl ? 'Lumipat sa English' : 'Switch to Tagalog'}
           className={`w-full flex items-center ${
             collapsed ? 'justify-center p-2' : 'px-3 py-2'
-          } rounded-[8px] text-[13px] font-medium text-[#DCE8FF]/80 hover:bg-white/6 hover:text-white transition-colors`}
+          } rounded-[10px] text-[13px] font-medium text-[#3A3A3C] dark:text-[#D1D1D6] hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-colors`}
         >
           <div className="flex items-center gap-3 min-w-0">
-            <span className="w-5 h-5 rounded-[4px] bg-white/10 flex items-center justify-center text-[10px] font-black text-[#9BCBFF] shrink-0 border border-white/15">
+            <span className="w-5 h-5 rounded-[6px] bg-black/[0.06] dark:bg-white/10 flex items-center justify-center text-[10px] font-bold text-[#007AFF] dark:text-[#409CFF] shrink-0">
               {isTl ? 'TL' : 'EN'}
             </span>
             {!collapsed && (
@@ -324,16 +324,16 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
           title={isTl ? 'Baguhin ang laki ng letra (5 antas)' : 'Adjust Font Size (5 levels)'}
           className={`w-full flex items-center ${
             collapsed ? 'justify-center p-2' : 'px-3 py-2'
-          } rounded-[8px] text-[13px] font-medium text-[#DCE8FF]/80 hover:bg-white/6 hover:text-white transition-colors`}
+          } rounded-[10px] text-[13px] font-medium text-[#3A3A3C] dark:text-[#D1D1D6] hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-colors`}
         >
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <span className="w-5 h-5 rounded-[4px] bg-white/10 flex items-center justify-center text-[10px] font-black text-[#9BCBFF] shrink-0 border border-white/15">
+            <span className="w-5 h-5 rounded-[6px] bg-black/[0.06] dark:bg-white/10 flex items-center justify-center text-[10px] font-bold text-[#007AFF] dark:text-[#409CFF] shrink-0">
               {TEXT_SIZES.find((s) => s.id === currentSize)?.short ?? 'S'}
             </span>
             {!collapsed && (
               <span className="truncate flex items-center justify-between gap-2 flex-1">
                 <span>{isTl ? 'Sukat ng Letra' : 'Font Size'}</span>
-                <span className="text-[11px] text-[#9BCBFF]/90 font-semibold uppercase tracking-wider">
+                <span className="text-[12px] text-[#8E8E93] font-semibold">
                   {isTl
                     ? TEXT_SIZES.find((s) => s.id === currentSize)?.tl
                     : TEXT_SIZES.find((s) => s.id === currentSize)?.en}
@@ -350,11 +350,11 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
           title={isTl ? 'Palitan ang dark / light mode' : 'Switch dark / light mode'}
           className={`w-full flex items-center ${
             collapsed ? 'justify-center p-2' : 'px-3 py-2'
-          } rounded-[8px] text-[13px] font-medium text-[#DCE8FF]/80 hover:bg-white/6 hover:text-white transition-colors`}
+          } rounded-[10px] text-[13px] font-medium text-[#3A3A3C] dark:text-[#D1D1D6] hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-colors`}
         >
           <div className="flex items-center gap-3 min-w-0">
             <svg
-              className="w-4 h-4 text-[#9BCBFF]/70 shrink-0"
+              className="w-4 h-4 text-[#8E8E93] shrink-0"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -382,11 +382,11 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
           title={isTl ? 'I-lock ang Session' : 'Lock Session'}
           className={`w-full flex items-center ${
             collapsed ? 'justify-center p-2' : 'px-3 py-2'
-          } rounded-[8px] text-[13px] font-medium text-[#DCE8FF]/80 hover:bg-rose-500/15 hover:text-rose-200 transition-colors`}
+          } rounded-[10px] text-[13px] font-medium text-[#3A3A3C] dark:text-[#D1D1D6] hover:bg-[#FF3B30]/10 hover:text-[#FF3B30] transition-colors`}
         >
           <div className="flex items-center gap-3 min-w-0">
             <svg
-              className="w-4 h-4 text-[#9BCBFF]/70 shrink-0"
+              className="w-4 h-4 text-[#8E8E93] shrink-0"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"

@@ -35,9 +35,9 @@ export const useConfirmChange = (): ConfirmFn => {
 };
 
 const toneBtn = {
-  primary: 'bg-[#1E469B] hover:bg-[#16377E]',
-  danger: 'bg-rose-600 hover:bg-rose-700',
-  success: 'bg-emerald-600 hover:bg-emerald-700',
+  primary: 'bg-[#007AFF] hover:bg-[#0062CC]',
+  danger: 'bg-[#FF3B30] hover:bg-[#E0352B]',
+  success: 'bg-[#34C759] hover:bg-[#2DB14F]',
 };
 
 export const ConfirmChangeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -86,7 +86,7 @@ export const ConfirmChangeProvider: React.FC<{ children: React.ReactNode }> = ({
             exit={{ opacity: 0 }}
             onClick={() => close(false)}
             data-confirm-open
-            className="fixed inset-0 !m-0 z-[120] bg-[#06122B]/45 backdrop-blur-[3px] flex items-center justify-center p-4"
+            className="fixed inset-0 !m-0 z-[120] bg-black/30 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div
               role="dialog"
@@ -97,21 +97,21 @@ export const ConfirmChangeProvider: React.FC<{ children: React.ReactNode }> = ({
               exit={{ scale: 0.96, opacity: 0, y: 6 }}
               transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg rounded-[24px] p-1.5 bg-white/30 dark:bg-sky-400/10 border border-white/50 dark:border-sky-400/20 shadow-[0_32px_90px_-12px_rgba(4,14,32,0.55)] overflow-hidden"
+              className="w-full max-w-lg rounded-[24px] bg-white dark:bg-[#1C1C1E] shadow-[0_0_0_0.5px_rgba(0,0,0,0.08),0_30px_80px_-20px_rgba(0,0,0,0.45)] overflow-hidden"
             >
-              <div className="w-full rounded-[20px] panel-2026 overflow-hidden">
-              <div className="px-6 py-4 bg-gradient-to-r from-[#06132B] via-[#0D2658] to-[#15387E] text-white">
-                <p className="text-[10.5px] font-extrabold tracking-[0.16em] uppercase text-[#F2CE70]">
-                  {isTl ? 'KUMPIRMAHIN BAGO I-SAVE' : 'CONFIRM BEFORE SAVING'}
+              <div className="w-full overflow-hidden">
+              <div className="px-6 pt-6 pb-3">
+                <p className="text-[12px] font-semibold text-[#8E8E93]">
+                  {isTl ? 'I-check bago i-save' : 'Check before saving'}
                 </p>
                 <h3
                   id="confirm-change-title"
-                  className="mt-1 text-base sm:text-lg font-extrabold text-white tracking-tight"
+                  className="mt-0.5 text-[20px] font-semibold text-[#1D1D1F] dark:text-white tracking-tight"
                 >
                   {opts.title}
                 </h3>
                 {opts.description && (
-                  <p className="mt-1 text-xs font-medium text-sky-100/85">
+                  <p className="mt-1 text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">
                     {opts.description}
                   </p>
                 )}
@@ -119,16 +119,16 @@ export const ConfirmChangeProvider: React.FC<{ children: React.ReactNode }> = ({
 
               {opts.rows.every((r) => r.before === undefined) ? (
                 <div className="px-6 pb-2 max-h-[50vh] overflow-y-auto">
-                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#687FA8] dark:text-[#89A7DF] pb-1.5 border-b border-[#E2E9F5] dark:border-[#1E3158]">
+                  <p className="text-[12px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] pb-1.5 border-b border-[#E5E5EA] dark:border-[#38383A]">
                     {isTl ? 'Mga detalye' : 'Details'}
                   </p>
                   {opts.rows.map((r, i) => (
                     <div
                       key={i}
-                      className="grid grid-cols-[110px_1fr] gap-x-3 items-start py-2 border-b border-[#EEF2F9] dark:border-[#172644] last:border-b-0 text-[13px]"
+                      className="grid grid-cols-[110px_1fr] gap-x-3 items-start py-2 border-b border-[#F2F2F7] dark:border-[#2C2C2E] last:border-b-0 text-[13px]"
                     >
-                      <span className="font-bold text-[#4A608A] dark:text-[#94A8D0]">{r.label}</span>
-                      <span className="break-words font-bold text-[#0B1F4D] dark:text-white">
+                      <span className="font-bold text-[#6E6E73] dark:text-[#A1A1A6]">{r.label}</span>
+                      <span className="break-words font-bold text-[#1D1D1F] dark:text-white">
                         {r.after || '—'}
                       </span>
                     </div>
@@ -144,7 +144,7 @@ export const ConfirmChangeProvider: React.FC<{ children: React.ReactNode }> = ({
                     <col className="w-[31%]" />
                   </colgroup>
                   <thead>
-                    <tr className="text-left text-[10px] font-extrabold uppercase tracking-wider text-[#687FA8] dark:text-[#89A7DF] border-b border-[#E2E9F5] dark:border-[#1E3158]">
+                    <tr className="text-left text-[12px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] border-b border-[#E5E5EA] dark:border-[#38383A]">
                       <th className="pb-2 font-extrabold" />
                       <th className="pb-2 font-extrabold">{isTl ? 'Dati' : 'Before'}</th>
                       <th className="pb-2" />
@@ -157,16 +157,16 @@ export const ConfirmChangeProvider: React.FC<{ children: React.ReactNode }> = ({
                   return (
                     <tr
                       key={i}
-                      className="align-top border-b border-[#EEF2F9] dark:border-[#172644] last:border-b-0"
+                      className="align-top border-b border-[#F2F2F7] dark:border-[#2C2C2E] last:border-b-0"
                     >
-                      <td className="py-2.5 pr-3 font-bold text-[#0B1F4D] dark:text-white">{r.label}</td>
+                      <td className="py-2.5 pr-3 font-bold text-[#1D1D1F] dark:text-white">{r.label}</td>
                       <td
                         className={`py-2.5 pr-2 break-words ${
                           r.before === undefined
                             ? 'italic text-[#8A9BBD] dark:text-[#6E84B0]'
                             : unchanged
-                            ? 'text-[#4A608A] dark:text-[#94A8D0]'
-                            : 'text-rose-700 dark:text-rose-300 line-through decoration-rose-400/60'
+                            ? 'text-[#6E6E73] dark:text-[#A1A1A6]'
+                            : 'text-[#8E8E93] line-through'
                         }`}
                       >
                         {r.before === undefined ? (isTl ? 'wala pa' : 'none') : r.before || '—'}
@@ -177,8 +177,8 @@ export const ConfirmChangeProvider: React.FC<{ children: React.ReactNode }> = ({
                       <td
                         className={`py-2.5 break-words font-bold ${
                           unchanged
-                            ? 'text-[#4A608A] dark:text-[#94A8D0] font-medium'
-                            : 'text-emerald-700 dark:text-emerald-300'
+                            ? 'text-[#6E6E73] dark:text-[#A1A1A6] font-medium'
+                            : 'text-[#1D1D1F] dark:text-white'
                         }`}
                       >
                         {r.after || '—'}
@@ -197,19 +197,19 @@ export const ConfirmChangeProvider: React.FC<{ children: React.ReactNode }> = ({
                 </div>
               )}
 
-              <div className="px-6 py-4 mt-3 flex justify-end gap-2 bg-[#F6F9FE] dark:bg-[#0E1A33] border-t border-[#E2E9F5] dark:border-[#1E3158]">
+              <div className="px-6 pt-3 pb-6 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => close(false)}
-                  className="btn-press px-4 py-2 rounded-lg saas-card-subtle text-xs font-bold text-[#0B1F4D] dark:text-white"
+                  className="btn-press h-10 px-5 rounded-full bg-black/[0.05] dark:bg-white/10 text-[14px] font-semibold text-[#1D1D1F] dark:text-white"
                 >
-                  {isTl ? 'Bumalik / I-edit' : 'Go back & edit'}
+                  {isTl ? 'Bumalik' : 'Go back'}
                 </button>
                 <button
                   ref={confirmBtn}
                   type="button"
                   onClick={() => close(true)}
-                  className={`btn-press px-5 py-2 rounded-lg text-white text-xs font-extrabold shadow-sm ${toneBtn[tone]}`}
+                  className={`btn-press h-10 px-5 rounded-full text-white text-[14px] font-semibold ${toneBtn[tone]}`}
                 >
                   {opts.confirmLabel ?? (isTl ? 'Oo, i-save' : 'Yes, save')}
                 </button>

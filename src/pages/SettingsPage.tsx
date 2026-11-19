@@ -33,8 +33,9 @@ import { smsInfo } from '../services/smsText';
 import { findSensitiveWords } from '../services/parentComms';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../services/supabaseClient';
 import type { HandbookClassification } from '../data/stage3MockData';
+import { getChristmasMode, applyChristmasMode, useChristmasMode, isChristmasSeason, type ChristmasMode } from '../config/seasonalTheme';
 
-type Section = 'office' | 'people' | 'offenses' | 'students' | 'sms' | 'security' | 'backup';
+type Section = 'office' | 'people' | 'offenses' | 'students' | 'sms' | 'portal' | 'security' | 'backup';
 interface Props {
   onTriggerToast: (msg: string, undo?: () => void, next?: ToastNextAction) => void;
 }
@@ -49,14 +50,14 @@ const LEVEL_TONE: Record<string, string> = {
   Serious: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200',
   Grave: 'bg-rose-600 text-white',
 };
-const btn = 'px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap';
-const primary = `${btn} px-5 py-2.5 bg-[#1E469B] text-white disabled:opacity-50`;
+const btn = 'px-3.5 py-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap';
+const primary = `${btn} px-5 py-2.5 bg-[#007AFF] text-white disabled:opacity-50`;
 const ghost = `${btn} px-3 py-2 saas-card-subtle`;
 const card = 'rounded-2xl saas-card';
-const sub = 'text-xs text-[#4A608A] dark:text-[#94A8D0]';
-const h2 = 'text-base font-extrabold text-[#0B1F4D] dark:text-white';
-const label = 'block text-[11px] font-extrabold text-[#4A608A] dark:text-[#94A8D0] mb-1';
-const input = 'w-full px-3 py-2 rounded-xl border border-[#D3DDEE] dark:border-[#253B66] bg-white dark:bg-[#0B1527] text-sm text-[#0B1F4D] dark:text-white';
+const sub = 'text-xs text-[#6E6E73] dark:text-[#A1A1A6]';
+const h2 = 'text-base font-extrabold text-[#1D1D1F] dark:text-white';
+const label = 'block text-[11px] font-extrabold text-[#6E6E73] dark:text-[#A1A1A6] mb-1';
+const input = 'w-full px-3 py-2 rounded-xl border border-[#E5E5EA] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] text-sm text-[#1D1D1F] dark:text-white';
 const errText = 'text-xs font-bold text-rose-700 dark:text-rose-300';
 const toMin = (t: string) => {
   const m = /^(\d{1,2}):(\d{2})$/.exec(t || '');
@@ -76,7 +77,7 @@ const DayPicker: React.FC<{ value: string[]; onChange: (d: string[]) => void; is
           aria-pressed={on}
           data-day-toggle={`${id}-${d}`}
           onClick={() => onChange(on ? value.filter((x) => x !== d) : WEEK.filter((x) => x === d || value.includes(x)))}
-          className={`w-12 py-2 rounded-lg text-xs font-extrabold border ${on ? 'bg-[#1E469B] text-white border-[#1E469B]' : 'border-[#D3DDEE] dark:border-[#253B66] text-[#4A608A] dark:text-[#94A8D0]'}`}
+          className={`w-12 py-2 rounded-lg text-xs font-extrabold border ${on ? 'bg-[#007AFF] text-white border-[#007AFF]' : 'border-[#E5E5EA] dark:border-[#38383A] text-[#6E6E73] dark:text-[#A1A1A6]'}`}
         >
           {isTl ? WEEK_TL[d] : WEEK_EN[d]}
         </button>
@@ -95,15 +96,15 @@ const Modal: React.FC<{ title: string; onClose: () => void; children: React.Reac
   }, [onClose]);
   return createPortal(
     <div className="fixed inset-0 z-[80] !m-0 bg-black/50 flex items-center justify-center p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div role="dialog" aria-modal="true" aria-label={title} className={`w-full ${wide ? 'max-w-2xl' : 'max-w-lg'} max-h-[92vh] flex flex-col rounded-2xl bg-white dark:bg-[#0F1A30] border border-[#D3DDEE] dark:border-[#253B66] shadow-2xl`}>
-        <div className="px-6 py-4 border-b border-[#DCE5F2] dark:border-[#1E3158] flex items-center justify-between">
+      <div role="dialog" aria-modal="true" aria-label={title} className={`w-full ${wide ? 'max-w-2xl' : 'max-w-lg'} max-h-[92vh] flex flex-col rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A] shadow-2xl`}>
+        <div className="px-6 py-4 border-b border-[#E5E5EA] dark:border-[#38383A] flex items-center justify-between">
           <h3 className={h2}>{title}</h3>
-          <button type="button" onClick={onClose} aria-label="Close" title="Close" className="w-8 h-8 rounded-lg text-[#4A608A] hover:bg-slate-100 dark:hover:bg-slate-800">
+          <button type="button" onClick={onClose} aria-label="Close" title="Close" className="w-8 h-8 rounded-lg text-[#6E6E73] hover:bg-slate-100 dark:hover:bg-slate-800">
             
           </button>
         </div>
         <div className="p-6 space-y-4 overflow-y-auto">{children}</div>
-        <div className="px-6 py-4 border-t border-[#DCE5F2] dark:border-[#1E3158] flex justify-end gap-2">{footer}</div>
+        <div className="px-6 py-4 border-t border-[#E5E5EA] dark:border-[#38383A] flex justify-end gap-2">{footer}</div>
       </div>
     </div>,
     document.body
@@ -126,6 +127,7 @@ const SettingsPage: React.FC<Props> = ({ onTriggerToast }) => {
     ['offenses', isTl ? 'Offenses at patakaran' : 'Offenses & rules', isTl ? 'Handbook, antas, sanction' : 'Handbook, levels, sanctions'],
     ['students', isTl ? 'Impormasyon ng estudyante' : 'Student fields', isTl ? 'Ano ang hinihingi sa "Add student"' : 'What "Add student" asks for'],
     ['sms', isTl ? 'SMS templates' : 'SMS templates', isTl ? 'Mensahe sa magulang' : 'Messages to parents'],
+    ['portal', isTl ? 'Itsura ng student portal' : 'Student portal look', isTl ? 'Christmas theme o main theme' : 'Christmas theme or main theme'],
     ['security', isTl ? 'Accounts at security' : 'Accounts & security', isTl ? 'Staff, PIN, sign-out' : 'Staff, PIN, sign-out'],
     ['backup', isTl ? 'Backup at retention' : 'Backup & retention', isTl ? 'I-download ang lahat ng data' : 'Download all data'],
   ];
@@ -144,10 +146,10 @@ const SettingsPage: React.FC<Props> = ({ onTriggerToast }) => {
                 soundFX.playToggleSwitch(true);
                 setSection(id);
               }}
-              className={`w-full text-left rounded-xl px-3 py-2.5 ${section === id ? 'bg-[#1E469B] text-white' : 'hover:bg-[#EEF3FC] dark:hover:bg-[#13203B] text-[#0B1F4D] dark:text-white'}`}
+              className={`w-full text-left rounded-xl px-3 py-2.5 ${section === id ? 'bg-[#007AFF] text-white' : 'hover:bg-[#EAF3FF] dark:hover:bg-[#13203B] text-[#1D1D1F] dark:text-white'}`}
             >
               <span className="block text-sm font-extrabold">{title}</span>
-              <span className={`block text-[11px] ${section === id ? 'text-white/80' : 'text-[#4A608A] dark:text-[#94A8D0]'}`}>{hint}</span>
+              <span className={`block text-[11px] ${section === id ? 'text-white/80' : 'text-[#6E6E73] dark:text-[#A1A1A6]'}`}>{hint}</span>
             </button>
           ))}
           <p className={`${sub} px-3 pt-2`}> {isTl ? 'Naitatala sa Audit Trail ang bawat pagbabago.' : 'Every change is kept in the Audit Trail.'}</p>
@@ -163,6 +165,7 @@ const SettingsPage: React.FC<Props> = ({ onTriggerToast }) => {
           {section === 'offenses' && <OffensesSection isTl={isTl} toast={onTriggerToast} />}
           {section === 'students' && <StudentFieldsSection isTl={isTl} toast={onTriggerToast} />}
           {section === 'sms' && <SmsSection isTl={isTl} toast={onTriggerToast} />}
+          {section === 'portal' && <PortalLookSection isTl={isTl} toast={onTriggerToast} />}
           {section === 'security' && <SecuritySection isTl={isTl} toast={onTriggerToast} />}
           {section === 'backup' && <BackupSection isTl={isTl} toast={onTriggerToast} />}
         </div>
@@ -226,6 +229,83 @@ const PinGate: React.FC<{ isTl: boolean; onOk: () => void }> = ({ isTl, onOk }) 
 };
 
 // ------------------------------------------------------------------ 1. Office days & hours (+ closed days)
+// Student portal look: Christmas theme on/off for EVERY student (website + mobile). Saved in the database.
+const PortalLookSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }> = ({ isTl, toast }) => {
+  const confirmChange = useConfirmChange();
+  const current = useChristmasMode();
+  const [busy, setBusy] = useState(false);
+  const words: Record<ChristmasMode, [string, string, string, string]> = {
+    auto: ['Auto (recommended)', 'Auto (recommended)', 'Christmas from Nov 15 to Jan 6, then the main theme by itself.', 'Christmas mula Nov 15 hanggang Jan 6, tapos kusang babalik sa main theme.'],
+    on: ['Christmas theme', 'Christmas theme', 'Always the Christmas look: campus picture, parol, lights, tune on the login.', 'Laging Christmas: campus picture, parol, ilaw, at tugtog sa login.'],
+    off: ['Main theme', 'Main theme', 'The normal look, no Christmas decorations anywhere.', 'Ang normal na itsura, walang Christmas decorations kahit saan.'],
+  };
+  const name = (m: ChristmasMode) => (isTl ? words[m][1] : words[m][0]);
+  const choose = async (next: ChristmasMode) => {
+    if (next === current || busy) return;
+    const ok = await confirmChange({
+      title: isTl ? 'Palitan ang itsura ng student portal?' : 'Change the student portal look?',
+      description: isTl ? 'Makikita ito ng lahat ng estudyante (website at phone) sa susunod na bukas o refresh nila.' : 'Every student (website and phone) sees it the next time they open or refresh the portal.',
+      rows: [{ label: isTl ? 'Itsura' : 'Look', before: name(current), after: name(next) }],
+      confirmLabel: isTl ? 'Oo, palitan' : 'Yes, change it',
+    });
+    if (!ok) return;
+    setBusy(true);
+    const prev = getChristmasMode();
+    const saved = await saveConfig('seasonal_theme', { christmas: next });
+    setBusy(false);
+    if (!saved) return toast(NOT_SAVED(isTl));
+    applyChristmasMode(next);
+    soundFX.playSuccessCheck();
+    toast(
+      isTl ? ` Naka-${name(next)} na ang student portal. Makikita ito ng mga estudyante pag nag-refresh sila.` : ` The student portal is now on ${name(next)}. Students see it when they refresh.`,
+      async () => {
+        if (await saveConfig('seasonal_theme', { christmas: prev })) applyChristmasMode(prev);
+      }
+    );
+  };
+  const nowShowing = current === 'on' || (current === 'auto' && isChristmasSeason());
+  return (
+    <section className={`${card} p-5 space-y-4`}>
+      <div>
+        <h2 className={h2}>{isTl ? 'Itsura ng student portal' : 'Student portal look'}</h2>
+        <p className={sub}>
+          {isTl ? 'Para sa login at loob ng student portal (website at phone). Hindi nito binabago ang desktop app na ito.' : 'For the login and the inside of the student portal (website and phone). It does not change this desktop app.'}
+        </p>
+      </div>
+      <div role="radiogroup" aria-label={isTl ? 'Itsura ng student portal' : 'Student portal look'} className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {(['auto', 'on', 'off'] as const).map((m) => {
+          const on = current === m;
+          return (
+            <button
+              key={m}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              disabled={busy}
+              data-portal-look={m}
+              onClick={() => void choose(m)}
+              className={`text-left rounded-2xl p-4 border-2 transition-colors ${on ? 'border-[#007AFF] bg-[#EAF3FF] dark:bg-[#0A84FF]/15' : 'border-[#E5E5EA] dark:border-[#38383A] hover:border-[#007AFF]/50'} disabled:opacity-60`}
+            >
+              <span className="flex items-center justify-between gap-2">
+                <span className="text-[15px] font-semibold text-[#1D1D1F] dark:text-white">{name(m)}</span>
+                <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${on ? 'border-[#007AFF]' : 'border-[#C7C7CC]'}`}>{on &&<span className="w-2.5 h-2.5 rounded-full bg-[#007AFF]" />}</span>
+              </span>
+              <span className={`block mt-1 ${sub}`}>{isTl ? words[m][3] : words[m][2]}</span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-[13px] text-[#1D1D1F] dark:text-white">
+        {isTl ? 'Ngayon, makikita ng mga estudyante: ' : 'Students see right now: '}
+        <b>{nowShowing ? (isTl ? 'Christmas theme' : 'Christmas theme') : isTl ? 'Main theme' : 'Main theme'}</b>
+      </p>
+      <p className={sub}>
+        {isTl ? 'Pwede pa ring i-off ng bawat estudyante ang mga dekorasyon sa loob ng portal (Me > Pamaskong dekorasyon).' : 'Each student can still hide the decorations inside the portal (Me > Christmas decorations).'}
+      </p>
+    </section>
+  );
+};
+
 const OfficeSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }> = ({ isTl, toast }) => {
   const cfg = useAppConfig();
   const confirmChange = useConfirmChange();
@@ -325,7 +405,7 @@ const OfficeSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
           </label>
         </div>
         <div className="rounded-xl saas-card-subtle p-3">
-          <p className="text-xs font-extrabold text-[#0B1F4D] dark:text-white" data-slot-preview>
+          <p className="text-xs font-extrabold text-[#1D1D1F] dark:text-white" data-slot-preview>
             {isTl ? `${slots.length} conference time bawat araw:` : `${slots.length} conference times a day:`}
           </p>
           <p className={sub}>{slots.map((t) => fmtClock(t).replace(/^0/, '')).join(' · ') || '—'}</p>
@@ -361,7 +441,7 @@ const OfficeSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
             <span className={label}>{isTl ? 'Dahilan' : 'Reason'}</span>
             <input data-closed-reason value={reason} onChange={(e) => setReason(e.target.value.slice(0, 120))} placeholder={isTl ? 'hal. Bonifacio Day' : 'e.g. Bonifacio Day'} className={input} />
           </label>
-          <button type="button" data-action="add-closed" disabled={!day || reason.trim().length < 2 || dup} onClick={() => void addClosed()} className={`${btn} px-4 py-2.5 bg-[#1E469B] text-white disabled:opacity-50`}>
+          <button type="button" data-action="add-closed" disabled={!day || reason.trim().length < 2 || dup} onClick={() => void addClosed()} className={`${btn} px-4 py-2.5 bg-[#007AFF] text-white disabled:opacity-50`}>
             + {isTl ? 'Idagdag' : 'Add'}
           </button>
         </div>
@@ -370,7 +450,7 @@ const OfficeSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
           {upcoming.length === 0 && <p className={sub}>{isTl ? 'Walang darating na araw na walang pasok.' : 'No upcoming closed days.'}</p>}
           {[...upcoming, ...past].slice(0, 60).map((d) => (
             <div key={d.id} data-closed-row={d.day} className={`flex items-center justify-between gap-3 rounded-xl px-3 py-2 saas-card-subtle ${d.day < todayISO() ? 'opacity-60' : ''}`}>
-              <span className="text-sm text-[#0B1F4D] dark:text-white">
+              <span className="text-sm text-[#1D1D1F] dark:text-white">
                 <b>{new Intl.DateTimeFormat(isTl ? 'fil-PH' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(d.day + 'T00:00:00'))}</b> · {d.reason}
                 {d.day < todayISO() ? ` · ${isTl ? 'lumipas na' : 'past'}` : ''}
               </span>
@@ -503,8 +583,8 @@ const PeopleSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
   return (
     <div className="space-y-4">
       {/* CARD 1: OFFICIAL FORM SIGNATORIES (FULL CONTROL) */}
-      <section className={`${card} p-5 space-y-4 border-2 border-[#1E469B]/30`} data-section="signatories">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#DCE5F2] dark:border-[#1E3158] pb-3">
+      <section className={`${card} p-5 space-y-4 border-2 border-[#007AFF]/30`} data-section="signatories">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E5E5EA] dark:border-[#38383A] pb-3">
           <div>
             <h2 className={h2}>{isTl ? 'Mga Opisyal na Pipirma sa mga Dokumento' : 'Official Form Signatories & Approvers'}</h2>
             <p className={sub}>
@@ -513,7 +593,7 @@ const PeopleSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
                 : 'Default names and positions on every form. You can also change them in the preview before printing.'}
             </p>
           </div>
-          <span className="px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase bg-[#EEF3FC] dark:bg-[#13203B] text-[#1E469B] dark:text-[#7CB8F7] border border-[#1E469B]/30">
+          <span className="px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase bg-[#EAF3FF] dark:bg-[#2C2C2E] text-[#007AFF] dark:text-[#409CFF] border border-[#007AFF]/30">
             {isTl ? 'Awtomatikong Ginagamit sa PDF' : 'Active on all PDFs'}
           </span>
         </div>
@@ -543,7 +623,7 @@ const PeopleSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
               placeholder="e.g. Registered Guidance Counselor (RGC)"
               className={input}
             />
-            <span className="block text-[10px] text-[#4A608A] dark:text-[#94A8D0] mt-1">
+            <span className="block text-[10px] text-[#6E6E73] dark:text-[#A1A1A6] mt-1">
               {isTl ? 'Pumipirma sa Case Evaluations at DepEd Reports' : 'Signs Evaluations & DepEd Reports'}
             </span>
           </label>
@@ -578,7 +658,7 @@ const PeopleSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
 
       {/* CARD 2: CAMPUS & OFFICIAL LETTERHEAD SETTINGS */}
       <section className={`${card} p-5 space-y-4`} data-section="campus">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#DCE5F2] dark:border-[#1E3158] pb-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E5E5EA] dark:border-[#38383A] pb-3">
           <div>
             <h2 className={h2}>{isTl ? 'Impormasyon ng Campus at Liham (Letterhead)' : 'Campus & Letterhead Header Configuration'}</h2>
             <p className={sub}>
@@ -683,7 +763,7 @@ const PeopleSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
             <h2 className={h2}>{isTl ? 'Schedule ng iba pang tao' : 'Other people’s schedules'}</h2>
             <p className={sub}>{isTl ? 'hal. kailan nasa school ang Principal — para alam kung kailan puwede ang conference na kailangan siya.' : 'e.g. when the Principal is in school — so you know when a conference that needs them can happen.'}</p>
           </div>
-          <button type="button" data-action="add-person" onClick={() => setEdit('new')} className={`${btn} px-4 py-2 bg-[#1E469B] text-white`}>
+          <button type="button" data-action="add-person" onClick={() => setEdit('new')} className={`${btn} px-4 py-2 bg-[#007AFF] text-white`}>
             + {isTl ? 'Magdagdag' : 'Add person'}
           </button>
         </div>
@@ -692,7 +772,7 @@ const PeopleSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }>
           {cfg.people.map((p) => (
             <div key={p.id} data-person-row={p.name} className="flex flex-wrap items-center justify-between gap-3 rounded-xl px-3 py-2.5 saas-card-subtle">
               <div className="min-w-0">
-                <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">
                   {p.name} <span className={sub}>· {p.role}</span>
                 </p>
                 <p className={sub}>
@@ -882,7 +962,7 @@ const OffensesSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
             <h2 className={h2}>{isTl ? `Mga offense sa handbook (${active.length})` : `Handbook offenses (${active.length})`}</h2>
             <p className={sub}>{isTl ? 'Ito ang mapipili sa "+ New case". Ang sanction ay para sa 1st, 2nd at 3rd na beses.' : 'These can be picked in "+ New case". Sanctions are for the 1st, 2nd and 3rd time.'}</p>
           </div>
-          <button type="button" data-action="add-offense" onClick={() => setEdit('new')} className={`${btn} px-4 py-2 bg-[#1E469B] text-white`}>
+          <button type="button" data-action="add-offense" onClick={() => setEdit('new')} className={`${btn} px-4 py-2 bg-[#007AFF] text-white`}>
             + {isTl ? 'Magdagdag ng offense' : 'Add offense'}
           </button>
         </div>
@@ -898,7 +978,7 @@ const OffensesSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
           {active.map((o) => (
             <div key={o.id} data-offense-row={o.policyCode} className="flex flex-wrap items-start justify-between gap-3 rounded-xl px-3 py-2.5 saas-card-subtle">
               <div className="min-w-0">
-                <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">
                   <span className={`mr-2 px-2 py-0.5 rounded-full text-[11px] ${LEVEL_TONE[o.classification]}`}>{o.classification}</span>
                   {isTl ? o.titleTl : o.titleEn} <span className={sub}>· {o.policyCode}</span>
                 </p>
@@ -924,7 +1004,7 @@ const OffensesSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
               <div className="mt-2 space-y-1.5">
                 {removed.map((o) => (
                   <div key={o.id} className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 saas-card-subtle opacity-70">
-                    <span className="text-sm text-[#0B1F4D] dark:text-white">
+                    <span className="text-sm text-[#1D1D1F] dark:text-white">
                       {isTl ? o.titleTl : o.titleEn} <span className={sub}>· {o.policyCode}</span>
                     </span>
                     <button type="button" onClick={() => void setActive(o, true)} className={ghost}>
@@ -1036,7 +1116,7 @@ const OffenseWindow: React.FC<{ isTl: boolean; offense: OffenseRow | null; onClo
         <span className={label}>{isTl ? 'Antas *' : 'Level *'}</span>
         <div className="flex flex-wrap gap-1.5">
           {LEVELS.map((l) => (
-            <button key={l} type="button" data-level={l} aria-pressed={f.classification === l} onClick={() => setF({ ...f, classification: l })} className={`px-3 py-1.5 rounded-full text-xs font-extrabold border ${f.classification === l ? `${LEVEL_TONE[l]} border-transparent ring-2 ring-[#1E469B]` : 'border-[#D3DDEE] dark:border-[#253B66] text-[#4A608A] dark:text-[#94A8D0]'}`}>
+            <button key={l} type="button" data-level={l} aria-pressed={f.classification === l} onClick={() => setF({ ...f, classification: l })} className={`px-3 py-1.5 rounded-full text-xs font-extrabold border ${f.classification === l ? `${LEVEL_TONE[l]} border-transparent ring-2 ring-[#007AFF]` : 'border-[#E5E5EA] dark:border-[#38383A] text-[#6E6E73] dark:text-[#A1A1A6]'}`}>
               {l}
             </button>
           ))}
@@ -1116,7 +1196,7 @@ const StudentFieldsSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToa
                 <input aria-label={`${CORE_FIELD_WORDS[k][0]} (English)`} value={f.labels[k]?.en ?? ''} placeholder={CORE_FIELD_WORDS[k][0]} onChange={(e) => setLabel(k, 'en', e.target.value)} className={input} />
                 <input aria-label={`${CORE_FIELD_WORDS[k][1]} (Tagalog)`} value={f.labels[k]?.tl ?? ''} placeholder={CORE_FIELD_WORDS[k][1]} onChange={(e) => setLabel(k, 'tl', e.target.value)} className={input} />
                 {optional ? (
-                  <label className="inline-flex items-center gap-2 text-xs font-bold text-[#0B1F4D] dark:text-white whitespace-nowrap">
+                  <label className="inline-flex items-center gap-2 text-xs font-bold text-[#1D1D1F] dark:text-white whitespace-nowrap">
                     <input
                       type="checkbox"
                       data-toggle-field={k}
@@ -1126,7 +1206,7 @@ const StudentFieldsSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToa
                     {isTl ? 'Ipakita' : 'Show'}
                   </label>
                 ) : (
-                  <span className="text-[11px] font-extrabold text-[#4A608A] dark:text-[#94A8D0] whitespace-nowrap">{isTl ? 'Kailangan' : 'Required'}</span>
+                  <span className="text-[11px] font-extrabold text-[#6E6E73] dark:text-[#A1A1A6] whitespace-nowrap">{isTl ? 'Kailangan' : 'Required'}</span>
                 )}
               </div>
             );
@@ -1141,7 +1221,7 @@ const StudentFieldsSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToa
             <h2 className={h2}>{isTl ? `Sariling field (${active.length})` : `Your own fields (${active.length})`}</h2>
             <p className={sub}>{isTl ? 'hal. Adviser, Address, Birthday, Emergency contact. Lalabas ito sa "Add student" at sa record ng estudyante.' : 'e.g. Adviser, Address, Birthday, Emergency contact. Shown in "Add student" and the student record.'}</p>
           </div>
-          <button type="button" data-action="add-field" onClick={() => setEdit('new')} className={`${btn} px-4 py-2 bg-[#1E469B] text-white`}>
+          <button type="button" data-action="add-field" onClick={() => setEdit('new')} className={`${btn} px-4 py-2 bg-[#007AFF] text-white`}>
             + {isTl ? 'Magdagdag ng field' : 'Add field'}
           </button>
         </div>
@@ -1150,7 +1230,7 @@ const StudentFieldsSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToa
           {active.map((c, i) => (
             <div key={c.key} data-custom-field={c.labelEn} className="flex flex-wrap items-center justify-between gap-3 rounded-xl px-3 py-2.5 saas-card-subtle">
               <div className="min-w-0">
-                <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">
+                <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">
                   {isTl ? c.labelTl || c.labelEn : c.labelEn} {c.required && <span className="text-rose-600">*</span>}
                 </p>
                 <p className={sub}>
@@ -1180,7 +1260,7 @@ const StudentFieldsSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToa
             <p className={sub}>{isTl ? 'Mga inalis (nakatago, hindi nabura ang naitala):' : 'Removed (hidden, saved information kept):'}</p>
             {removed.map((c) => (
               <div key={c.key} className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 saas-card-subtle opacity-70">
-                <span className="text-sm text-[#0B1F4D] dark:text-white">{isTl ? c.labelTl || c.labelEn : c.labelEn}</span>
+                <span className="text-sm text-[#1D1D1F] dark:text-white">{isTl ? c.labelTl || c.labelEn : c.labelEn}</span>
                 <button type="button" onClick={() => setF({ ...f, custom: f.custom.map((x) => (x.key === c.key ? { ...x, active: true } : x)) })} className={ghost}>
                   {isTl ? 'Ibalik' : 'Bring back'}
                 </button>
@@ -1275,7 +1355,7 @@ const FieldWindow: React.FC<{ isTl: boolean; field: CustomField | null; taken: s
         <span className={label}>{isTl ? 'Uri' : 'Type'}</span>
         <div className="flex flex-wrap gap-1.5">
           {(Object.keys(TYPE_WORDS) as CustomField['type'][]).map((t) => (
-            <button key={t} type="button" data-field-type={t} aria-pressed={type === t} onClick={() => setType(t)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${type === t ? 'bg-[#1E469B] text-white border-[#1E469B]' : 'border-[#D3DDEE] dark:border-[#253B66] text-[#4A608A] dark:text-[#94A8D0]'}`}>
+            <button key={t} type="button" data-field-type={t} aria-pressed={type === t} onClick={() => setType(t)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${type === t ? 'bg-[#007AFF] text-white border-[#007AFF]' : 'border-[#E5E5EA] dark:border-[#38383A] text-[#6E6E73] dark:text-[#A1A1A6]'}`}>
               {TYPE_WORDS[t][isTl ? 1 : 0]}
             </button>
           ))}
@@ -1287,7 +1367,7 @@ const FieldWindow: React.FC<{ isTl: boolean; field: CustomField | null; taken: s
           <input data-field-options value={opts} onChange={(e) => setOpts(e.target.value.slice(0, 300))} placeholder="Catholic, Christian, Muslim, Other" className={input} />
         </label>
       )}
-      <label className="inline-flex items-center gap-2 text-sm font-bold text-[#0B1F4D] dark:text-white">
+      <label className="inline-flex items-center gap-2 text-sm font-bold text-[#1D1D1F] dark:text-white">
         <input type="checkbox" data-field-required checked={required} onChange={(e) => setRequired(e.target.checked)} />
         {isTl ? 'Kailangang sagutan (required)' : 'Must be filled in (required)'}
       </label>
@@ -1346,7 +1426,7 @@ const SmsSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }> = 
         return (
           <div key={k} className="space-y-1.5" data-sms-template={k}>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-extrabold text-[#0B1F4D] dark:text-white">{isTl ? tl : en}</span>
+              <span className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">{isTl ? tl : en}</span>
               <button type="button" onClick={() => setT({ ...t, [k]: DEFAULTS.smsTemplates[k] })} className={`${btn} saas-card-subtle`} title={isTl ? 'Ibalik ang orihinal na mensahe' : 'Go back to the original message'}>
                 {isTl ? 'Orihinal' : 'Original'}
               </button>
@@ -1355,7 +1435,7 @@ const SmsSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] }> = 
             <p className={sub}>
               <b>{isTl ? 'Ganito ang matatanggap:' : 'The parent gets:'}</b> {sample(t[k])}
             </p>
-            <p className={`text-xs font-bold ${info.parts > 1 ? 'text-amber-700 dark:text-amber-300' : 'text-[#4A608A] dark:text-[#94A8D0]'}`}>
+            <p className={`text-xs font-bold ${info.parts > 1 ? 'text-amber-700 dark:text-amber-300' : 'text-[#6E6E73] dark:text-[#A1A1A6]'}`}>
               {isTl ? `${info.length} letra · ${info.parts} SMS` : `${info.length} letters · ${info.parts} SMS`}
               {info.parts > 1 ? (isTl ? ' — paikliin para 1 SMS lang' : ' — shorten it to 1 SMS') : ''}
             </p>
@@ -1459,7 +1539,7 @@ const SecuritySection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
             <h2 className={h2}>{isTl ? 'Mga staff account' : 'Staff accounts'}</h2>
             <p className={sub}>{isTl ? 'Ang mga email na ito lang ang makakatanggap ng sign-in code (OTP).' : 'Only these emails can receive the sign-in code (OTP).'}</p>
           </div>
-          <button type="button" data-action="add-staff" onClick={() => setEdit('new')} className={`${btn} px-4 py-2 bg-[#1E469B] text-white`}>
+          <button type="button" data-action="add-staff" onClick={() => setEdit('new')} className={`${btn} px-4 py-2 bg-[#007AFF] text-white`}>
             + {isTl ? 'Magdagdag ng account' : 'Add account'}
           </button>
         </div>
@@ -1467,7 +1547,7 @@ const SecuritySection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
           {cfg.staff.map((a) => (
             <div key={a.id} data-staff-row={a.email} className={`flex flex-wrap items-center justify-between gap-3 rounded-xl px-3 py-2.5 saas-card-subtle ${a.active ? '' : 'opacity-60'}`}>
               <div className="min-w-0">
-                <p className="text-sm font-extrabold text-[#0B1F4D] dark:text-white break-all">
+                <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white break-all">
                   {a.fullName} <span className={sub}>· {a.email}</span>
                 </p>
                 <p className={sub}>

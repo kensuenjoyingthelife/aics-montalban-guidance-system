@@ -532,7 +532,7 @@ export const GuidanceChatHead: React.FC = () => {
           style={getWindowCornerStyle()}
           role="dialog"
           aria-label="Guidance Assistant Chat Window"
-          className="bg-white dark:bg-[#18191a] border border-[#cbd5e1] dark:border-[#3a3b3c] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 select-none relative group/window"
+          className="bg-white dark:bg-[#18191a] border border-[#D1D1D6] dark:border-[#3a3b3c] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 select-none relative group/window"
         >
           {/* Messenger Style Clean Header */}
           <div

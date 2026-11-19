@@ -123,30 +123,30 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 6 }}
               transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
-              className="w-full max-w-sm rounded-2xl bg-white dark:bg-[#0B1527] border border-[#94A3B8] dark:border-[#253B66] p-5 shadow-2xl relative overflow-hidden"
+              className="w-full max-w-sm rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#94A3B8] dark:border-[#38383A] p-5 shadow-2xl relative overflow-hidden"
               role="alertdialog"
               aria-busy="true"
               aria-live="assertive"
             >
               {/* Subtle top indicator bar */}
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#1E469B] via-sky-500 to-indigo-600 animate-pulse" />
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#007AFF] via-sky-500 to-indigo-600 animate-pulse" />
 
               <div className="flex items-start gap-4">
-                <div className="p-3 rounded-xl bg-blue-50 dark:bg-[#13233F] border border-blue-200 dark:border-blue-800/60 shrink-0 text-[#1E469B] dark:text-[#7CB8F7]">
+                <div className="p-3 rounded-xl bg-blue-50 dark:bg-[#13233F] border border-blue-200 dark:border-blue-800/60 shrink-0 text-[#007AFF] dark:text-[#409CFF]">
                   {isOffline ? (
                     <WifiOff className="w-6 h-6 text-rose-500" />
                   ) : (
-                    <Loader2 className="w-6 h-6 animate-spin text-[#1E469B] dark:text-[#7CB8F7]" />
+                    <Loader2 className="w-6 h-6 animate-spin text-[#007AFF] dark:text-[#409CFF]" />
                   )}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-bold text-[#0F172A] dark:text-white leading-tight">
+                  <h4 className="text-sm font-bold text-[#1D1D1F] dark:text-white leading-tight">
                     {isOffline
                       ? isTl ? 'Nawalan ng Koneksyon' : 'Offline Mode Detected'
                       : title}
                   </h4>
-                  <p className="text-xs text-[#64748B] dark:text-[#94A8D0] mt-1 leading-relaxed">
+                  <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6] mt-1 leading-relaxed">
                     {isOffline
                       ? isTl
                         ? 'Walang aktibong internet. Sinusubukang i-sync ang data kapag bumalik ang linya.'
@@ -178,7 +178,7 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
                   <button
                     type="button"
                     onClick={() => stopLoading()}
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#64748B] dark:text-[#94A8D0] hover:text-[#0F172A] dark:hover:text-white border border-[#CBD5E1] dark:border-[#253B66] active:scale-[0.97] transition-all"
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#6E6E73] dark:text-[#A1A1A6] hover:text-[#1D1D1F] dark:hover:text-white border border-[#D1D1D6] dark:border-[#38383A] active:scale-[0.97] transition-all"
                   >
                     {isTl ? 'Isara ang abiso' : 'Dismiss notice'}
                   </button>

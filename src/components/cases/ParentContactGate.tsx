@@ -64,7 +64,7 @@ export const ParentContactGate: React.FC<{
     setNoEmail(true);
   };
   const input =
-    'w-full h-11 px-3.5 rounded-xl border bg-white dark:bg-[#0A1526] text-[15px] text-[#1D1D1F] dark:text-[#F5F5F7] focus:outline-none';
+    'w-full h-11 px-3.5 rounded-xl border bg-white dark:bg-[#1C1C1E] text-[15px] text-[#1D1D1F] dark:text-[#F5F5F7] focus:outline-none';
 
   return createPortal(
     <div className="fixed inset-0 z-[120] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
@@ -123,7 +123,7 @@ export const ParentContactGate: React.FC<{
               value={em}
               onChange={(e) => setEm(e.target.value.slice(0, 120))}
               placeholder="pangalan@gmail.com"
-              className={`${input} ${em && !emailOk(em) ? 'border-rose-400' : 'border-[#DDE3EC] dark:border-white/10 focus:border-[#1E469B]'}`}
+              className={`${input} ${em && !emailOk(em) ? 'border-rose-400' : 'border-[#E5E5EA] dark:border-white/10 focus:border-[#007AFF]'}`}
             />
             {em && !emailOk(em) && <span className="block text-[12px] text-rose-700 dark:text-rose-300">{isTl ? 'Hindi tama ang ayos ng email (hal. pangalan@gmail.com).' : 'Not a valid email (e.g. name@gmail.com).'}</span>}
           </label>
@@ -138,7 +138,7 @@ export const ParentContactGate: React.FC<{
             </button>
           ) : emailMode === 'ask' ? (
             <>
-              <button type="button" onClick={markNoEmail} className="h-10 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">
+              <button type="button" onClick={markNoEmail} className="h-10 px-4 rounded-full text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">
                 {isTl ? 'Walang record' : 'No record'}
               </button>
               <button type="button" onClick={() => setEmailMode('input')} className="btn-lit h-10 px-5 text-[13px] font-semibold">
@@ -147,7 +147,7 @@ export const ParentContactGate: React.FC<{
             </>
           ) : (
             <>
-              <button type="button" onClick={() => setEmailMode('ask')} className="h-10 px-4 rounded-full text-[13px] font-medium text-[#1E469B] dark:text-[#7CB8F7] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">
+              <button type="button" onClick={() => setEmailMode('ask')} className="h-10 px-4 rounded-full text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">
                 {isTl ? 'Bumalik' : 'Back'}
               </button>
               <button type="button" disabled={!emailOk(em) || saving} onClick={() => void save(em.trim())} className="btn-lit h-10 px-5 text-[13px] font-semibold disabled:opacity-40">
