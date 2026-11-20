@@ -830,19 +830,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         <div className="absolute inset-0 bg-gradient-to-b from-[#06112C]/30 via-transparent to-[#03091A]/90 pointer-events-none" />
       </div>
 
-      {/* Campus background: day picture in light mode, night picture in dark mode (crossfade on toggle) */}
-      {xmas ? (
-      <div className={`login-web-only hidden lg:block fixed inset-0 z-0 pointer-events-none ${isNight ? 'bg-[#0B1A3A]' : 'bg-[#7FB6E8]'}`} aria-hidden="true">
-        <img src="/login-day.webp" alt="" decoding="async" {...{ fetchpriority: "high" }} onError={(e) => { e.currentTarget.style.display = 'none'; }} className="login-bg absolute inset-0 w-full h-full object-cover object-[42%_50%]" style={{ opacity: isNight ? 0 : 1 }} />
-        <img src="/login-night.webp" alt="" decoding="async" {...{ fetchpriority: "high" }} onError={(e) => { e.currentTarget.style.display = 'none'; }} className="login-bg absolute inset-0 w-full h-full object-cover object-[42%_50%]" style={{ opacity: isNight ? 1 : 0 }} />
-        <div className={`absolute inset-0 transition-opacity duration-700 ${isNight ? 'bg-gradient-to-b from-black/25 via-black/10 to-black/45' : 'bg-gradient-to-b from-black/10 via-transparent to-black/30'}`} />
-      </div>
-      ) : (
-        <>
-          {isDesktop && <div className="hidden lg:block"><CelestialBackground /></div>}
-          {isDesktop && <div className="hidden lg:block"><WavyBackground /></div>}
-        </>
-      )}
+      {/* Aurora Northern Lights is the primary background across all screen sizes.
+          If xmas theme is explicitly active and not on desktop, optional subtle overlay */}
 
       {/* Top Floating Glass Island Navbar */}
       <header className="relative z-30 w-full px-3 sm:px-6 pt-12 sm:pt-4 safe-area-top">
