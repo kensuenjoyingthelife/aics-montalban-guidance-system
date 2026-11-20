@@ -121,42 +121,71 @@ export const LiveCameraCaptureModal: React.FC<LiveCameraCaptureModalProps> = ({
     if (!videoRef.current) return;
     const video = videoRef.current;
 
-    // Capture the ACTUAL full resolution of the video stream
-    let width = video.videoWidth || 1280;
-    let height = video.videoHeight || 720;
+    // Source resolution of video stream
+    const vWidth = video.videoWidth || 1280;
+    const vHeight = video.videoHeight || 720;
 
-    // Cap maximum dimension to 1440px to ensure zero lag while preserving full camera detail
-    const maxDimension = 1440;
-    if (width > maxDimension || height > maxDimension) {
-      if (width > height) {
-        height = Math.round((height * maxDimension) / width);
-        width = maxDimension;
+    // Define the guide crop ratio: 3:4 for portrait face selfie, ~1.586:1 for ID card
+    const cropAspectRatio = currentFacing === 'environment' ? (1.586 / 1) : (3 / 4);
+
+    let cropW = vWidth;
+    let cropH = vHeight;
+
+    // The on-screen guide rectangle occupies ~75% width for selfie (3:4) or ~85% for ID
+    if (currentFacing === 'user') {
+      // 3:4 ratio box centered in video frame
+      if (vWidth / vHeight > cropAspectRatio) {
+        // Video is wider than 3:4 (e.g. 16:9 widescreen)
+        cropH = vHeight * 0.88;
+        cropW = cropH * cropAspectRatio;
       } else {
-        width = Math.round((width * maxDimension) / height);
-        height = maxDimension;
+        // Video is taller than 3:4
+        cropW = vWidth * 0.85;
+        cropH = cropW / cropAspectRatio;
       }
+    } else {
+      // Landscape ID card frame
+      cropW = vWidth * 0.85;
+      cropH = cropW / cropAspectRatio;
     }
 
+    const cropX = Math.max(0, (vWidth - cropW) / 2);
+    const cropY = Math.max(0, (vHeight - cropH) / 2);
+
+    // Target output dimensions (clean, high-resolution cropped avatar/ID)
+    const outWidth = Math.round(Math.min(900, cropW));
+    const outHeight = Math.round(outWidth / cropAspectRatio);
+
     const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = outWidth;
+    canvas.height = outHeight;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // If front camera, mirror horizontally so selfie looks natural
+    // If front camera, mirror horizontally so selfie matches on-screen preview
     if (currentFacing === 'user') {
-      ctx.translate(width, 0);
+      ctx.translate(outWidth, 0);
       ctx.scale(-1, 1);
     }
 
-    // Capture FULL frame (not cropped to 2x2 or square)
-    ctx.drawImage(video, 0, 0, width, height);
+    // Crop STRICTLY to the guide rectangle area on the face / ID
+    ctx.drawImage(
+      video,
+      cropX,
+      cropY,
+      cropW,
+      cropH,
+      0,
+      0,
+      outWidth,
+      outHeight
+    );
 
     canvas.toBlob(
       (blob) => {
         if (!blob) return;
-        const fileName = `live_full_${Date.now()}.jpg`;
+        const fileName = `live_guide_crop_${Date.now()}.jpg`;
         const file = new File([blob], fileName, { type: 'image/jpeg' });
         const previewUrl = URL.createObjectURL(blob);
 
@@ -165,7 +194,7 @@ export const LiveCameraCaptureModal: React.FC<LiveCameraCaptureModalProps> = ({
         onClose();
       },
       'image/jpeg',
-      0.75
+      0.82
     );
   };
 
