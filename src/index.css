@@ -70,20 +70,20 @@
 }
 
 .dark {
-  --portal-canvas: #050C18;       /* Deep obsidian midnight canvas (CDM: #07100c) */
-  --portal-surface: #0A1526;      /* Matte dark navy card surface (CDM: #0d1913) */
-  --portal-surface-soft: #0E1D34; /* Elevated secondary dark surface (CDM: #11231a) */
-  --portal-ink: #EDF4FC;          /* Crisp alabaster-ice white text (CDM: #edf7f0) */
-  --portal-muted: #94A8C4;        /* Muted slate-sky secondary copy (CDM: #a9baaf) */
-  --portal-border: #1E3250;       /* Crisp 1px structural navy hairline border (CDM: #263a2f) */
-  --portal-shadow: 0 24px 60px rgba(0, 0, 0, 0.42);
+  --portal-canvas: #18191A;       /* Facebook / Apple OLED Charcoal Canvas (#18191A) */
+  --portal-surface: #242526;      /* Elevated primary card surface (#242526) */
+  --portal-surface-soft: #303031; /* Subtle secondary interactive surface (#303031) */
+  --portal-ink: #E4E6EB;          /* Primary High-legibility text (#E4E6EB) */
+  --portal-muted: #B0B3B8;        /* Clean secondary muted text (#B0B3B8) */
+  --portal-border: #3A3B3C;       /* Crisp structural border (#3A3B3C) */
+  --portal-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
 
-  --ink: #EDF4FC;
-  --muted: #94A8C4;
-  --line: #1E3250;
-  --line-strong: #2B4770;
-  --surface: #0A1526;
-  --surface-subtle: #0E1D34;
+  --ink: #E4E6EB;
+  --muted: #B0B3B8;
+  --line: #3A3B3C;
+  --line-strong: #4E4F50;
+  --surface: #242526;
+  --surface-subtle: #303031;
 }
 
 @layer base {
@@ -101,8 +101,8 @@
   }
 
   .dark body {
-    background-color: #050B18;
-    color: #F8FAFC;
+    background-color: #18191A;
+    color: #E4E6EB;
   }
 }
 
@@ -2700,9 +2700,9 @@ body.capacitor-mobile .wg-blob { display: none !important; }
    ============================================================================ */
 @media (max-width: 1023px) {
   html:root:is(.dark, :not(.dark)) body .sd-canvas.student-portal-canvas { background: #F2F2F7 !important; background-attachment: scroll !important; }
-  html:root.dark body .sd-canvas.student-portal-canvas { background: #000000 !important; }
+  html:root.dark body .sd-canvas.student-portal-canvas { background: #18191A !important; }
 
-  /* cards: flat white, no shadow / tint / glass */
+  /* cards: flat white in light mode, comfortable charcoal card (#242526) in dark mode */
   html body .sd-canvas .lg-card:not(.lg-widget) {
     background: #FFFFFF !important;
     border: 0 !important;
@@ -2711,22 +2711,32 @@ body.capacitor-mobile .wg-blob { display: none !important; }
     backdrop-filter: none !important;
     border-radius: 18px !important;
   }
-  html.dark body .sd-canvas .lg-card:not(.lg-widget) { background: #1C1C1E !important; }
+  html.dark body .sd-canvas .lg-card:not(.lg-widget) {
+    background: #242526 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
   html body .sd-canvas .lg-card.lg-widget { box-shadow: none !important; border: 0 !important; border-radius: 22px !important; }
+  html.dark body .sd-canvas .lg-card.lg-widget {
+    background: #242526 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
 
-  /* header: plain bar, no lights (one Christmas spot on phones: the Home card) */
+  /* header: Facebook / iOS Charcoal Header in Dark Mode */
   html body .sd-canvas .sd-header {
     background: rgba(242, 242, 247, 0.92) !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
     border-bottom: 0.5px solid rgba(0, 0, 0, 0.12) !important;
   }
-  html.dark body .sd-canvas .sd-header { background: rgba(0, 0, 0, 0.92) !important; border-bottom-color: rgba(255, 255, 255, 0.12) !important; }
+  html.dark body .sd-canvas .sd-header {
+    background: rgba(24, 25, 26, 0.95) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+  }
   .sd-header .xmas-lights { display: none !important; }
 
-  /* the tab bar */
+  /* the tab bar: #242526 Charcoal in dark mode */
   .m-tabbar { background: rgba(249, 249, 249, 0.96); border-top: 0.5px solid rgba(0, 0, 0, 0.16); }
-  html.dark .m-tabbar { background: rgba(22, 22, 24, 0.96); border-top-color: rgba(255, 255, 255, 0.14); }
+  html.dark .m-tabbar { background: rgba(36, 37, 38, 0.96); border-top-color: rgba(255, 255, 255, 0.12); }
   .m-tabbar button { -webkit-tap-highlight-color: transparent; }
   .m-tabbar button:active { opacity: 0.6; }
 }

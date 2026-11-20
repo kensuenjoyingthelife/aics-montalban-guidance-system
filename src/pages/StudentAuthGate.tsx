@@ -2255,23 +2255,28 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
       {/* ====================================================
           DATA PRIVACY TERMS & CONDITIONS MODAL
-          (Appears strictly before opening Create Account form)
+          (Apple iOS System Modal Sheet Style & SF Pro Typography)
           ==================================================== */}
       {showPrivacyModal && (
-          <div className="fixed inset-0 z-50 bg-[#06122B]/90 flex items-center justify-center p-4 sm:p-6" data-terms-modal>
-            <div className="w-full max-w-2xl rounded-3xl cosmic-glass-card terms-still p-6 sm:p-8 space-y-6 shadow-2xl max-h-[90vh] flex flex-col">
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-white/10 dark:border-white/10 pb-4">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-6" data-terms-modal>
+            <div className="w-full max-w-xl rounded-t-[28px] sm:rounded-[28px] bg-[#F2F2F7] dark:bg-[#1C1C1E] text-slate-900 dark:text-white border border-slate-300/80 dark:border-white/10 shadow-2xl max-h-[88vh] flex flex-col overflow-hidden font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','SF_Pro_Display','Inter',sans-serif]">
+              {/* Apple Drag Indicator Pill (Mobile Sheet Handle) */}
+              <div className="sm:hidden w-full flex justify-center pt-2.5 pb-1">
+                <div className="w-9 h-1 rounded-full bg-slate-400/50 dark:bg-white/20" />
+              </div>
+
+              {/* Apple Header Bar */}
+              <div className="px-5 py-4 border-b border-slate-300/60 dark:border-white/10 flex items-center justify-between bg-white/70 dark:bg-[#2C2C2E]/70 backdrop-blur-lg">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-400">
-                    <FileText className="w-5 h-5 text-sky-400" />
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                    <Shield className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-lg sm:text-xl font-extrabold card-title-text">
-                      {isTl ? 'Kasunduan sa Data Privacy at Paggamit ng Portal' : 'Data Privacy Agreement & Terms of Use'}
+                    <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">
+                      {isTl ? 'Kasunduan sa Data Privacy' : 'Data Privacy Agreement'}
                     </h2>
-                    <p className="text-xs card-subtitle-text">
-                      Republic Act No. 10173 (Data Privacy Act of 2012)
+                    <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 tracking-normal">
+                      Republic Act No. 10173 · DepEd Child Protection
                     </p>
                   </div>
                 </div>
@@ -2281,80 +2286,96 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     soundFX.playBackspace();
                     setShowPrivacyModal(false);
                   }}
-                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-colors"
+                  className="w-7 h-7 rounded-full bg-slate-200/80 dark:bg-white/15 hover:bg-slate-300 dark:hover:bg-white/25 flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer"
                 >
                   ✕
                 </button>
               </div>
 
-              {/* Scrollable Terms Content */}
-              <div className="flex-1 overflow-y-auto pr-2 space-y-4 text-xs sm:text-sm register-inner-card p-4 sm:p-5 rounded-2xl leading-relaxed text-slate-800 dark:text-slate-200">
-                <div className="p-3.5 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 border border-blue-400/40 text-blue-900 dark:text-blue-200 text-xs font-semibold">
-                  🛡️ {isTl
-                    ? 'Mahalaga: Ang portal na ito ay nilikha para protektahan ang iyong kaligtasan at kapakanan bilang mag-aaral ng AICS Montalban. Basahin ang sumusunod na kasunduan bago magparehistro.'
-                    : 'Important: This portal is created to safeguard your well-being and privacy as an AICS Montalban student. Please review the following agreement prior to account creation.'}
+              {/* Apple Inset Grouped List Content */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-[13px] leading-relaxed">
+                {/* Info Callout */}
+                <div className="p-3.5 rounded-2xl bg-blue-500/10 dark:bg-blue-500/15 border border-blue-400/30 text-blue-900 dark:text-blue-200 text-xs font-semibold flex items-start gap-2.5">
+                  <span className="text-sm">🛡️</span>
+                  <span>
+                    {isTl
+                      ? 'Nilikha ang portal na ito upang protektahan ang iyong kaligtasan at kapakanan sa AICS Montalban. Pakisuyong basahin ang kasunduan bago magparehistro.'
+                      : 'This portal is designed to safeguard your well-being and privacy as an AICS student. Please review these terms prior to account registration.'}
+                  </span>
                 </div>
 
-                <div className="space-y-1.5 p-3 rounded-xl bg-slate-100/60 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                  <h4 className="font-extrabold text-[#0B1F4D] dark:text-white text-xs sm:text-sm flex items-center gap-2">
-                    <span>1.</span>
-                    <span>{isTl ? 'Proteksyon sa ilalim ng RA 10173 (Data Privacy Act)' : 'Protection under RA 10173 (Data Privacy Act)'}</span>
-                  </h4>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                {/* Section 1 */}
+                <div className="p-4 rounded-2xl bg-white dark:bg-[#2C2C2E] border border-slate-200/80 dark:border-white/5 shadow-xs space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-bold flex items-center justify-center">1</span>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-[13px]">
+                      {isTl ? 'Proteksyon sa ilalim ng RA 10173 (Data Privacy)' : 'Protection under RA 10173'}
+                    </h3>
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300 text-xs pl-7">
                     {isTl
-                      ? 'Ang lahat ng personal na impormasyon (Pangalan, Contact Number, Student ID, at Larawan) na iyong ilalagay ay ituturing na mahigpit na kumpidensyal. Tanging ang lisensyadong Guidance Associate at Counseling Office lamang ang may pahintulot na humawak ng iyong datos.'
-                      : 'All personal data provided (Name, Contact Number, Student ID, and Photo Uploads) will be treated with absolute confidentiality. Only authorized Guidance Associates and Counselors are granted access to your records.'}
+                      ? 'Lahat ng personal na impormasyon (Pangalan, Contact Number, Student ID, at Live Selfie) ay ituturing na mahigpit na kumpidensyal. Tanging ang Guidance Office lamang ang may pahintulot na humawak nito.'
+                      : 'All personal data (Name, Contact Number, Student ID, and Live Photo) will be held with strict confidentiality, exclusively accessible by authorized Guidance counselors.'}
                   </p>
                 </div>
 
-                <div className="space-y-1.5 p-3 rounded-xl bg-slate-100/60 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                  <h4 className="font-extrabold text-[#0B1F4D] dark:text-white text-xs sm:text-sm flex items-center gap-2">
-                    <span>2.</span>
-                    <span>{isTl ? 'Proteksyon Laban sa Retaliation o Pagganti' : 'Non-Retaliation & Safety Assurance'}</span>
-                  </h4>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                {/* Section 2 */}
+                <div className="p-4 rounded-2xl bg-white dark:bg-[#2C2C2E] border border-slate-200/80 dark:border-white/5 shadow-xs space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-bold flex items-center justify-center">2</span>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-[13px]">
+                      {isTl ? 'Proteksyon Laban sa Retaliation (Pagganti)' : 'Non-Retaliation & Safety Assurance'}
+                    </h3>
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300 text-xs pl-7">
                     {isTl
-                      ? 'Ginawa ang sistema upang mapigilan ang anumang uri ng paghihiganti o harassment. Ang iyong isinumiteng reklamo o chat history ay HINDI kailanman ibubunyag sa inirereklamong kaklase, estudyante, o hindi awtorisadong kawani ng paaralan.'
-                      : 'The system strictly prohibits retaliation. Your reports and counseling discussions will NEVER be disclosed to reported individuals, fellow students, or unauthorized school personnel.'}
+                      ? 'Mahigpit na ipinagbabawal ang anumang uri ng paghihiganti. Ang iyong isinumiteng reklamo ay HINDI kailanman ibubunyag sa inirereklamong kaklase o hindi awtorisadong tao.'
+                      : 'Retaliation is strictly prohibited. Your concerns and statements will NEVER be disclosed to reported peers or unauthorized parties.'}
                   </p>
                 </div>
 
-                <div className="space-y-1.5 p-3 rounded-xl bg-slate-100/60 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                  <h4 className="font-extrabold text-[#0B1F4D] dark:text-white text-xs sm:text-sm flex items-center gap-2">
-                    <span>3.</span>
-                    <span>{isTl ? 'Awtomatikong Pag-Logout para sa Iyong Kaligtasan' : 'Automatic Session Termination for Discretion'}</span>
-                  </h4>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                {/* Section 3 */}
+                <div className="p-4 rounded-2xl bg-white dark:bg-[#2C2C2E] border border-slate-200/80 dark:border-white/5 shadow-xs space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-bold flex items-center justify-center">3</span>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-[13px]">
+                      {isTl ? 'Awtomatikong Pag-Logout para sa Seguridad' : 'Automatic Session Security Lock'}
+                    </h3>
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300 text-xs pl-7">
                     {isTl
-                      ? 'Para sa iyong seguridad sakaling maiwan mo ang iyong cellphone o computer na nakabukas sa silid-aralan o internet shop, awtomatikong magla-lock out ang iyong account pagkatapos ng 15 minuto ng walang aktibidad upang walang makakita ng iyong mga ulat.'
-                      : 'To protect you in case you leave your device unattended in a classroom or computer laboratory, your session will automatically terminate after 15 minutes of inactivity so no evidence is left visible.'}
+                      ? 'Sakaling maiwan mo ang iyong cellphone o computer, awtomatikong magla-lock out ang iyong session pagkatapos ng 15 minuto upang walang makakita ng iyong ulat.'
+                      : 'To protect you if a device is left unattended, sessions terminate automatically after 15 minutes of inactivity.'}
                   </p>
                 </div>
 
-                <div className="space-y-1.5 p-3 rounded-xl bg-slate-100/60 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                  <h4 className="font-extrabold text-[#0B1F4D] dark:text-white text-xs sm:text-sm flex items-center gap-2">
-                    <span>4.</span>
-                    <span>{isTl ? 'Tapat at Makatotohanang Pag-uulat' : 'Truthfulness of Information'}</span>
-                  </h4>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                {/* Section 4 */}
+                <div className="p-4 rounded-2xl bg-white dark:bg-[#2C2C2E] border border-slate-200/80 dark:border-white/5 shadow-xs space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-bold flex items-center justify-center">4</span>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-[13px]">
+                      {isTl ? 'Tapat at Makatotohanang Pag-uulat' : 'Truthfulness of Information'}
+                    </h3>
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300 text-xs pl-7">
                     {isTl
-                      ? 'Sumasang-ayon ka na maging tapat sa lahat ng impormasyong ilalagay. Ang sadyang pagpapasa ng gawa-gawang paratang laban sa kapwa estudyante ay may karampatang disiplina alinsunod sa AICS Student Handbook.'
-                      : 'You agree to provide factual and truthful information. Malicious or fabricated reports against peers are subject to institutional disciplinary measures under the AICS Student Handbook.'}
+                      ? 'Sumasang-ayon ka na maging tapat sa mga isusulat. Ang sadyang pagpapasa ng gawa-gawang paratang ay may karampatang disiplina alinsunod sa Student Handbook.'
+                      : 'You agree to provide honest information. Malicious or fabricated reports are subject to institutional disciplinary measures under school policy.'}
                   </p>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-white/10 dark:border-white/10">
+              {/* Apple Action Bar */}
+              <div className="p-4 bg-white/70 dark:bg-[#2C2C2E]/70 backdrop-blur-lg border-t border-slate-300/60 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2.5 safe-area-bottom">
                 <button
                   type="button"
                   onClick={() => {
                     soundFX.playBackspace();
                     setShowPrivacyModal(false);
                   }}
-                  className="btn-press w-full sm:w-auto px-5 py-2.5 rounded-xl card-back-button text-xs font-bold"
+                  className="btn-press w-full sm:w-auto px-5 py-3 rounded-xl bg-slate-200 dark:bg-white/10 text-slate-800 dark:text-slate-200 text-xs font-bold transition-all hover:bg-slate-300 dark:hover:bg-white/15"
                 >
-                  {isTl ? 'Hindi Sumasang-ayon (Bumalik)' : 'Decline & Go Back'}
+                  {isTl ? 'Bumalik' : 'Cancel'}
                 </button>
 
                 <button
@@ -2365,10 +2386,10 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     setShowPrivacyModal(false);
                     setMode('register');
                   }}
-                  className="btn-press w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2"
+                  className="btn-press w-full sm:w-auto px-6 py-3 rounded-xl bg-[#007AFF] hover:bg-[#0062CC] text-white font-bold text-xs shadow-md shadow-blue-500/20 flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <span>✓</span>
-                  <span>{isTl ? 'Nauunawaan Ko at Sumasang-ayon Ako' : 'I Understand & Agree to Terms'}</span>
+                  <Check className="w-4 h-4" />
+                  <span>{isTl ? 'Sumasang-ayon Ako' : 'Agree & Continue'}</span>
                 </button>
               </div>
             </div>
