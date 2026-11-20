@@ -650,7 +650,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       setLoginError(
         turnstileBroken
           ? isTl ? 'Hindi gumana ang security check. I-refresh ang page, tapos subukan ulit.' : 'The security check did not load. Refresh the page, then try again.'
-          : isTl ? 'Pindutin muna ang "Verify you are human" sa ilalim ng Sign In.' : 'First tick "Verify you are human" under the Sign In button.'
+          : isTl ? 'Hintayin munang matapos ang security check sa ilalim ng Sign In (green check), tapos Sign In ulit.' : 'Wait for the security check under the Sign In button to finish (green check), then Sign In again.'
       );
       return;
     }
@@ -671,7 +671,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       setLoginErrorTitle(isTl ? 'Hindi pumasa sa security check' : 'Security check did not pass');
       setLoginErrorField(null);
       setLoginTriesLeft(null);
-      setLoginError(isTl ? 'Pindutin ulit ang "Verify you are human", tapos Sign In.' : 'Tick "Verify you are human" again, then Sign In.');
+      setLoginError(isTl ? 'Hintayin ulit ang green check sa security check, tapos Sign In.' : 'Wait for the green check in the security check again, then Sign In.');
       return;
     }
 
