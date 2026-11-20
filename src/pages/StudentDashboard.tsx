@@ -237,6 +237,83 @@ const PhoneDateLine: React.FC<{ isTl: boolean }> = ({ isTl }) => {
   return <p className="text-[14px] lg-ink-soft tabular-nums">{d} · {tm}</p>;
 };
 
+/** Mobile Home: Aurora Date & Live Philippine Time Widget */
+const MobileAuroraDateTimeWidget: React.FC<{ isTl: boolean }> = ({ isTl }) => {
+  const now = usePhNow();
+  const tz = 'Asia/Manila';
+  const loc = isTl ? 'fil-PH' : 'en-US';
+  
+  // Date components
+  const monthStr = new Intl.DateTimeFormat(loc, { timeZone: tz, month: 'short' }).format(now).toUpperCase();
+  const dayStr = new Intl.DateTimeFormat('en-US', { timeZone: tz, day: 'numeric' }).format(now);
+  const yearStr = new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric' }).format(now);
+  const weekdayStr = new Intl.DateTimeFormat(loc, { timeZone: tz, weekday: 'long' }).format(now);
+
+  // Time components
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+  }).formatToParts(now);
+
+  const hour = parts.find((p) => p.type === 'hour')?.value || '12';
+  const minute = parts.find((p) => p.type === 'minute')?.value || '00';
+  const second = parts.find((p) => p.type === 'second')?.value || '00';
+  const dayPeriod = parts.find((p) => p.type === 'dayPeriod')?.value || 'AM';
+
+  return (
+    <div className="relative rounded-[22px] p-3.5 sm:p-4 overflow-hidden border border-cyan-400/30 dark:border-cyan-400/20 shadow-lg shadow-blue-950/20 text-white"
+      style={{
+        background: 'linear-gradient(135deg, rgba(8, 28, 68, 0.95) 0%, rgba(14, 45, 98, 0.92) 50%, rgba(18, 20, 64, 0.95) 100%)',
+      }}
+    >
+      {/* Aurora Ambient Ribbons */}
+      <div
+        className="absolute -top-6 -left-6 w-36 h-24 rounded-full blur-[24px] pointer-events-none opacity-60"
+        style={{ background: 'radial-gradient(circle, rgba(6, 182, 212, 0.7) 0%, rgba(16, 185, 129, 0.4) 60%, transparent 80%)' }}
+      />
+      <div
+        className="absolute -bottom-6 -right-6 w-36 h-24 rounded-full blur-[26px] pointer-events-none opacity-50"
+        style={{ background: 'radial-gradient(circle, rgba(168, 85, 247, 0.6) 0%, rgba(56, 189, 248, 0.4) 60%, transparent 80%)' }}
+      />
+
+      <div className="relative z-10 flex items-center justify-between gap-3">
+        {/* Left Side: Date */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex flex-col items-center justify-center shrink-0 shadow-inner">
+            <span className="text-[9px] font-black uppercase text-cyan-300 leading-tight">{monthStr}</span>
+            <span className="text-[16px] font-black tabular-nums text-white leading-none">{dayStr}</span>
+          </div>
+          <div className="min-w-0 leading-tight">
+            <p className="text-[11px] font-bold text-cyan-300 uppercase tracking-wider truncate">{weekdayStr}</p>
+            <p className="text-[13px] font-black tracking-tight text-white tabular-nums truncate">
+              {monthStr} {dayStr}, {yearStr}
+            </p>
+          </div>
+        </div>
+
+        {/* Vertical Divider */}
+        <div className="h-9 w-[1px] bg-white/15 shrink-0" />
+
+        {/* Right Side: Hour:Min:Sec PH Time */}
+        <div className="text-right shrink-0 leading-none">
+          <div className="flex items-baseline justify-end gap-1">
+            <span className="text-[20px] font-black tracking-tight font-mono tabular-nums text-white drop-shadow-sm">
+              {hour}:{minute}:{second}
+            </span>
+            <span className="text-[11px] font-black text-cyan-300 uppercase">{dayPeriod}</span>
+          </div>
+          <p className="text-[9.5px] font-bold text-sky-200/70 tracking-widest uppercase mt-1">
+            {isTl ? 'PH TIME (PHT)' : 'PH TIME (PHT)'}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSignOut }) => {
   const { locale, setLocale } = useLanguage();
   const { theme, toggleThemeWithAura } = useTheme();
@@ -1364,17 +1441,26 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
           const firstOpen = history.find((c) => c.chatStatus === 'Open');
           const row = 'w-full flex items-center gap-3 px-4 py-3 text-left active:bg-black/[0.04] dark:active:bg-white/[0.06]';
           return (
-          <div className="m-home lg:hidden space-y-6 pt-1">
-            {/* large title: shrinks into the header when it scrolls away */}
-            <div ref={greetRef} className="px-1">
-              <p className="text-[28px] leading-tight font-bold tracking-tight lg-ink">{greet}</p>
-              <div className="mt-0.5 flex items-center gap-2 flex-wrap">
-                <PhoneDateLine isTl={isTl} />
-                {decor && <PaskoChip isTl={isTl} className="!h-6 !px-2.5 !text-[12px]" />}
-              </div>
+          <div className="m-home lg:hidden space-y-4 pt-1">
+            {/* 1. Top Greeting Title: Good morning AICSIAN */}
+            <div ref={greetRef} className="px-1 space-y-1.5">
+              <p className="text-[26px] leading-tight font-black tracking-tight lg-ink">
+                {isTl ? `${greet} AICSIAN` : `${greet} AICSIAN`}
+              </p>
+              
+              {/* 2. Christmas Countdown Pill */}
+              {decor && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-600/90 text-white text-[12px] font-bold shadow-md shadow-rose-950/30 border border-white/20">
+                  <span>⭐</span>
+                  <PaskoChip isTl={isTl} className="!h-auto !p-0 !bg-transparent !shadow-none !border-0 text-white !text-[12px] font-bold" />
+                </div>
+              )}
             </div>
 
-            {/* GUIDANCE OFFICE HOURS WIDGET (Replaces single banner with full interactive week schedule & live status) */}
+            {/* 3. New Aurora Date & Live Philippine Time Widget */}
+            <MobileAuroraDateTimeWidget isTl={isTl} />
+
+            {/* 4. GUIDANCE OFFICE HOURS WIDGET */}
             <div className="relative rounded-[26px] p-5 bg-[#0F224A] text-white shadow-xl border border-white/10 overflow-hidden space-y-4">
               {decor && <HollySprig className="absolute top-3.5 right-3.5 w-10 h-7" />}
               
