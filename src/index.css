@@ -2671,3 +2671,23 @@ html.lite .xmas-bulb, body.low-tier-device .xmas-bulb { animation: none; }
 .xmas-glow { animation: xmasGlow 2.6s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .xmas-glow { animation: none; } }
 html.lite .xmas-glow, body.low-tier-device .xmas-glow { animation: none; }
+
+/* Sign In / Forgot Password / Create Account: no animations at all (user, 2026-11-20) */
+html.auth-still *,
+html.auth-still *::before,
+html.auth-still *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Phone + APK inside the portal: no looping decorative motion (it made the app feel slow) */
+@media (max-width: 1023px) {
+  .wg-blob, .xmas-bulb, .xmas-glow, .animate-ping, .animate-bounce { animation: none !important; }
+  .wg-blob { display: none !important; }
+}
+body.capacitor-mobile .wg-blob,
+body.capacitor-mobile .xmas-bulb,
+body.capacitor-mobile .xmas-glow,
+body.capacitor-mobile .animate-ping,
+body.capacitor-mobile .animate-bounce { animation: none !important; }
+body.capacitor-mobile .wg-blob { display: none !important; }

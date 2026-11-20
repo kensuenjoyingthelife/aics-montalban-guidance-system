@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import {
   User,
   Lock,
@@ -14,13 +14,10 @@ import {
   XCircle,
   CheckCircle2,
 } from 'lucide-react';
-import { useStudentEncouragementWings, StudentPairInteractiveWing } from '../components/auth/StudentEncouragementWing';
-import { SoundTogglePill, soundFX, useSound } from '../services/soundEngine';
-import { christmasMusic } from '../services/christmasMusic';
+import { StudentPairInteractiveWing } from '../components/auth/StudentEncouragementWing';
+import { soundFX } from '../services/soundEngine';
 import { SkyThemePill, useTheme } from '../context/ThemeContext';
 import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
-import { SafezoneMascot } from '../components/auth/SafezoneMascot';
-import { AicyForgotWing } from '../components/auth/AicyForgotWing';
 import { CloudflareTurnstile } from '../components/auth/CloudflareTurnstile';
 import { ChristmasLights, HollySprig } from '../components/student/ChristmasDecor';
 import { christmasOn } from '../config/seasonalTheme';
@@ -123,25 +120,24 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   const { theme } = useTheme();
   const isNight = theme === 'dark';
   const xmas = christmasOn();
-  // Christmas lights tune on the login only: follows the SFX button at the top (on = plays, off = quiet).
-  // Browsers allow sound only after the first tap/key, so it waits for that.
-  const { soundEnabled } = useSound();
+  // No sounds at all on Sign In, Forgot Password and Create Account (user, 2026-11-20): faster and quieter.
+  // ...and no animations (user, 2026-11-20): html.auth-still stops CSS motion, MotionConfig stops Framer Motion
   useEffect(() => {
-    if (!xmas || !soundEnabled) {
-      christmasMusic.stop();
-      return;
-    }
-    const go = () => christmasMusic.start();
-    const ua = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation;
-    if (ua?.hasBeenActive) go();
-    window.addEventListener('pointerdown', go, { once: true });
-    window.addEventListener('keydown', go, { once: true });
+    soundFX.muted = true;
+    document.documentElement.classList.add('auth-still');
     return () => {
-      window.removeEventListener('pointerdown', go);
-      window.removeEventListener('keydown', go);
-      christmasMusic.stop();
+      soundFX.muted = false;
+      document.documentElement.classList.remove('auth-still');
     };
-  }, [xmas, soundEnabled]);
+  }, []);
+  // big-screen-only decorations are not mounted at all on phones / the APK (they used to run hidden)
+  const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width: 1024px)').matches && !document.body.classList.contains('capacitor-mobile'));
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const sync = () => setIsDesktop(mq.matches && !document.body.classList.contains('capacitor-mobile'));
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
   // the light/dark toggle crossfades the whole login screen instead of the circle reveal
   // website only (1024px and up, not the APK): the phone keeps its own toggle animation
   useEffect(() => {
@@ -153,22 +149,13 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     return () => { mq.removeEventListener('change', sync); root.classList.remove('theme-xfade'); };
   }, []);
   const isTl = locale === 'tl';
-  const { boyWing, girlWing } = useStudentEncouragementWings();
 
   const [mode, setMode] = useState<PortalAuthMode>('login');
 
   // Carousel state for rotating psychiatrist mental health & anti-bullying affirmations
-  const [affirmationIndex, setAffirmationIndex] = useState(0);
-  const [isCarouselPaused, setIsCarouselPaused] = useState(false);
-
-  useEffect(() => {
-    // Automatically pause carousel while student is registering to ensure 100% smooth, stutter-free input typing
-    if (isCarouselPaused || mode === 'register') return;
-    const interval = setInterval(() => {
-      setAffirmationIndex((prev) => (prev + 1) % MENTAL_HEALTH_AFFIRMATIONS.length);
-    }, 4500);
-    return () => clearInterval(interval);
-  }, [isCarouselPaused, mode]);
+  // one message per visit (no rotating carousel: it re-drew the whole page every few seconds)
+  const [affirmationIndex] = useState(() => Math.floor(Math.random() * MENTAL_HEALTH_AFFIRMATIONS.length));
+  const [, setIsCarouselPaused] = useState(false);
 
   // ==========================================
   // LOGIN FORM STATE & SECURITY
@@ -779,6 +766,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   };
 
   return (
+    <MotionConfig transition={{ duration: 0 }}>
     <div className={`min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none student-portal-canvas bg-[#05112B] text-white ${
       mode === 'login' ? 'lg:h-screen lg:overflow-hidden' : 'overflow-y-auto'
     }`}>
@@ -791,8 +779,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       </div>
       ) : (
         <>
-          <div className="hidden lg:block"><CelestialBackground /></div>
-          <div className="hidden lg:block"><WavyBackground /></div>
+          {isDesktop && <div className="hidden lg:block"><CelestialBackground /></div>}
+          {isDesktop && <div className="hidden lg:block"><WavyBackground /></div>}
         </>
       )}
 
@@ -846,7 +834,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               <RefreshCw className="w-4 h-4" />
             </button>
             <div className="flex items-center p-1 rounded-full bg-white/10 dark:bg-white/5 border border-white/15 dark:border-white/10 shadow-inner">
-              <SoundTogglePill />
               <div className="h-4 w-[1px] bg-white/20 mx-1" />
               <LocaleSwitchPill />
               <div className="h-4 w-[1px] bg-white/20 mx-1" />
@@ -910,7 +897,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               {/* Toggles cluster & Quick Refresh Button */}
               <div className="flex items-center gap-2">
                 <div className="flex items-center p-1 rounded-full bg-slate-950/70 border border-white/25 shadow-xl backdrop-blur-md">
-                  <SoundTogglePill />
                   <div className="h-3.5 w-[1px] bg-white/20 mx-1" />
                   <LocaleSwitchPill />
                   <div className="h-3.5 w-[1px] bg-white/20 mx-1" />
@@ -946,18 +932,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               transition={{ duration: 0.5, delay: 0.1 }}
               className="hidden lg:flex shrink-0 items-end justify-center w-full max-w-lg xl:max-w-xl order-1 lg:order-none"
             >
-              <StudentPairInteractiveWing />
-            </motion.div>
-          )}
-          {/* Forgot password: Aicy the robot on the left (website), card on the right, same layout as sign-in */}
-          {mode === 'forgot' && (
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="hidden lg:flex shrink-0 items-end justify-center w-full max-w-lg xl:max-w-xl order-1 lg:order-none"
-            >
-              <AicyForgotWing isTl={isTl} />
+              {isDesktop && <StudentPairInteractiveWing />}
             </motion.div>
           )}
 
@@ -977,12 +952,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
           {mode === 'login' && (
             <div className="space-y-4">
               <div className="text-center space-y-3 pb-2 sm:pb-4 lg:hidden">
-                {/* Mobile App: Friendly Animated Safezone Robot Companion in White-Blue Gradient Card (Visible only on Mobile) */}
-                <div className="block lg:hidden my-2">
-                  <div className="p-3 sm:p-4 rounded-3xl bg-gradient-to-br from-white via-sky-50 to-blue-100/80 dark:from-slate-900/90 dark:via-sky-950/50 dark:to-blue-900/40 border-2 border-sky-300/80 dark:border-sky-500/40 shadow-lg shadow-sky-950/10 dark:shadow-none flex flex-col items-center justify-center">
-                    <SafezoneMascot />
-                  </div>
-                </div>
 
                 {/* Mobile Phone Only: 3.5s Rotating Affirmation Carousel (Clean without quotation marks "") */}
                 <div
@@ -2374,5 +2343,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         isTl={isTl}
       />
     </div>
+    </MotionConfig>
   );
 };

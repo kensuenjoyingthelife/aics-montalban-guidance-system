@@ -278,71 +278,8 @@ export const QuickExitButton: React.FC<QuickExitButtonProps> = ({ onTrigger, cla
   // ==========================================
   // RENDER: MOBILE IPHONE ASSISTIVETOUCH MASCOT HEAD BALL
   // ==========================================
-  if (isMobile) {
-    return (
-      <div
-        ref={ballRef}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerCancel}
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          zIndex: 2147483647, // Maximum 32-bit integer z-index: GUARANTEED always in front of all cards and modals
-          touchAction: 'none',
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
-          cursor: 'grab',
-          willChange: 'transform',
-        }}
-        className="sos-draggable-ball select-none active:scale-95"
-        aria-label="SOS Quick Exit Mascot Button"
-      >
-        {/* Floating Circle Container Shaped Like the 3D Robot Mascot Head */}
-        <div className="relative w-14 h-14 rounded-full bg-slate-900/90 p-1 shadow-2xl shadow-rose-950/70 border-2 border-rose-500/80 flex items-center justify-center backdrop-blur-md">
-          {/* Subtle Outer Pulsing Soft Red/Cyan Warning Halo */}
-          <span className="absolute inset-0 rounded-full bg-rose-500/25 animate-ping pointer-events-none" />
-
-          {/* 3D EVE-Style Pearl Head Sphere */}
-          <div className="relative w-12 h-12 rounded-full mascot-shell-head flex items-center justify-center p-1 overflow-hidden pointer-events-none shadow-inner">
-            {/* Top Gloss Specular Highlight */}
-            <div className="absolute top-1 left-2 w-4 h-2 bg-white/85 rounded-full blur-[0.8px] transform -rotate-30 pointer-events-none" />
-
-            {/* Deep Obsidian Black Visor */}
-            <div className="relative w-9 h-7 rounded-full mascot-visor-glass flex items-center justify-center gap-1.5 overflow-hidden">
-              {/* Visor Glare Shine */}
-              <div className="absolute -top-1 -left-1 w-6 h-3 bg-white/30 blur-[1px] rounded-full transform -rotate-12 pointer-events-none" />
-
-              {/* Cute Glowing Cyan Smiling Eyes (Curved Arcs) */}
-              <svg className="w-3 h-2.5 overflow-visible" viewBox="0 0 20 14" fill="none">
-                <path
-                  d="M 2 12 Q 10 1 18 12"
-                  stroke="#38BDF8"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  className="drop-shadow-[0_0_5px_rgba(56,189,248,0.95)]"
-                />
-              </svg>
-              <svg className="w-3 h-2.5 overflow-visible" viewBox="0 0 20 14" fill="none">
-                <path
-                  d="M 2 12 Q 10 1 18 12"
-                  stroke="#38BDF8"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  className="drop-shadow-[0_0_5px_rgba(56,189,248,0.95)]"
-                />
-              </svg>
-            </div>
-
-            {/* Subtle Clean Indicator at bottom of mascot head (No SOS text) */}
-            <span className="absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-rose-500 shadow-xs border border-rose-300/60" />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // No moving / draggable robot ball anymore (user, 2026-11-20): the same quiet button on phone and website.
+  void isMobile;
 
   // ==========================================
   // RENDER: DESKTOP SLEEK PILL
@@ -351,12 +288,12 @@ export const QuickExitButton: React.FC<QuickExitButtonProps> = ({ onTrigger, cla
     <button
       type="button"
       onClick={executeEmergencyExit}
-      title="Emergency Quick Exit (Hotkey: Esc)"
+      title="Quick Exit: leave this page at once (key: Esc)" aria-label="Quick Exit"
       className={`group px-3 py-1.5 rounded-full bg-rose-600/90 hover:bg-rose-500 text-white border border-rose-400/50 shadow-lg shadow-rose-950/40 text-[11px] font-black tracking-wide flex items-center gap-1.5 transition-all active:scale-95 ${className}`}
     >
-      <span className="w-2 h-2 rounded-full bg-rose-300 animate-ping" />
       <LogOut className="w-3.5 h-3.5" />
-      <span>Quick Exit [Esc]</span>
+      <span className="hidden lg:inline">Quick Exit [Esc]</span>
+      <span className="lg:hidden">Exit</span>
     </button>
   );
 };

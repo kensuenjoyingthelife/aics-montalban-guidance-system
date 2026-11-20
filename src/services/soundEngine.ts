@@ -10,6 +10,8 @@ import { isCapacitorNativeApp } from './devicePerformance';
 class TechSoundEngine {
   private ctx: AudioContext | null = null;
   private enabled: boolean = true;
+  /** true while the student login / forgot password / create account screens are open: no sounds at all */
+  public muted = false;
   private lastHoverTime: number = 0;
   private lastKeyTime: number = 0;
 
@@ -23,7 +25,7 @@ class TechSoundEngine {
   }
 
   private getContext(): AudioContext | null {
-    if (!this.enabled || typeof window === 'undefined') return null;
+    if (!this.enabled || this.muted || typeof window === 'undefined') return null;
     if (!this.ctx) {
       const AudioCtx =
         window.AudioContext ||

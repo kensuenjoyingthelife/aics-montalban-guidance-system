@@ -1022,21 +1022,21 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
         <div className="relative w-full px-4 sm:px-6 lg:px-8 py-3 lg:py-0 lg:h-[92px] flex items-center gap-3 sm:gap-4">
           <img src="/aics-logo.jpg" alt="AICS" className="w-12 h-12 sm:w-14 sm:h-14 lg:w-[60px] lg:h-[60px] rounded-full object-cover bg-white shrink-0 ring-1 ring-black/5 shadow-sm" />
           <div className="min-w-0 flex-1 leading-tight">
-            <p className="text-[14px] sm:text-[18px] lg:text-[17px] xl:text-[22px] font-bold tracking-tight text-[#0F2557] dark:text-white uppercase lg:whitespace-nowrap">Asian Institute of Computer Studies</p>
+            <p className="text-[14px] sm:text-[18px] lg:text-[17px] xl:text-[22px] font-bold tracking-tight text-[#0F2557] dark:text-white uppercase lg:whitespace-nowrap truncate"><span className="sm:hidden">AICS Montalban</span><span className="hidden sm:inline">Asian Institute of Computer Studies</span></p>
             <p className="text-[12px] sm:text-[14px] text-[#1E469B] dark:text-[#9CC3FF] truncate">
-              <span className="font-semibold uppercase">Montalban Branch</span>
-              <span className="text-[#6E6E73] dark:text-[#A1A1A6]"> · {user.fullName}</span>
+              <span className="hidden sm:inline font-semibold uppercase">Montalban Branch</span>
+              <span className="text-[#6E6E73] dark:text-[#A1A1A6]"><span className="hidden sm:inline"> · </span>{user.fullName}</span>
             </p>
           </div>
           {decor && (
-            <div className="absolute right-2 top-0 lg:static lg:shrink-0 lg:self-start flex items-start gap-1.5 lg:gap-3 pointer-events-none" aria-hidden="true">
+            <div className="hidden lg:flex shrink-0 self-start items-start gap-3 pointer-events-none" aria-hidden="true">
               <PaskoGreeting isTl={isTl} className="hidden lg:inline-flex mt-8 mr-1" />
               <Parol color="red" className="w-6 h-[40px] lg:w-9 lg:h-[60px] text-[#8E8E93]" />
               <Parol color="gold" delay={0.8} className="w-5 h-[33px] lg:w-8 lg:h-[52px] text-[#8E8E93]" />
               <Parol color="blue" delay={1.6} className="hidden lg:block w-7 h-[46px] lg:w-9 lg:h-[60px] text-[#8E8E93]" />
             </div>
           )}
-          <div className="hidden lg:flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
             <QuickExitButton onTrigger={onSignOut} />
           </div>
         </div>
@@ -1066,10 +1066,6 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
         </div>
       )}
 
-      {/* Mobile Floating AssistiveTouch SOS Mascot Ball (Always Top-Level at Root Body Z-Index) */}
-      <div className="md:hidden">
-        <QuickExitButton onTrigger={onSignOut} />
-      </div>
 
       {/* Inactivity Warning Banner (Discreetly alerts student when only 60s left) */}
       <AnimatePresence>

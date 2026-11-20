@@ -60,7 +60,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     // Low tier check: Instant switch with zero delay on low-spec devices
     const { isLowTier, prefersReducedMotion } = detectDeviceTier();
-    if (isLowTier || prefersReducedMotion) {
+    if (isLowTier || prefersReducedMotion || document.documentElement.classList.contains('auth-still')) {
       setTheme(nextTheme);
       return;
     }
