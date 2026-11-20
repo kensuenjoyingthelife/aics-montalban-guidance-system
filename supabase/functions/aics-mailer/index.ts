@@ -285,6 +285,41 @@ Deno.serve(async (req) => {
     }
   }
 
+  // ---- student portal Sign In (Phase 2): Cloudflare check + login in ONE server call.
+  // Only this function (service role) may run portal_login; the public key cannot call it directly anymore.
+  if (p.type === 'portal-login') {
+    const secret = Deno.env.get('TURNSTILE_SECRET_KEY');
+    const url = Deno.env.get('SUPABASE_URL');
+    const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!secret || !url || !service) return json({ ok: false, error: 'offline' });
+    const token = String(p.token || '');
+    const num = String(p.number || '').trim().slice(0, 32);
+    const hash = String(p.hash || '').slice(0, 256);
+    if (!token || token.length > 2048) return json({ ok: false, error: 'not_human' });
+    if (!num || !hash) return json({ ok: false, error: 'wrong_password' });
+    const ip = req.headers.get('cf-connecting-ip') || (req.headers.get('x-forwarded-for') || '').split(',')[0].trim();
+    const form = new URLSearchParams({ secret, response: token });
+    if (ip) form.set('remoteip', ip);
+    try {
+      const v = (await (await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: form })).json()) as { success?: boolean };
+      if (!v.success) return json({ ok: false, error: 'not_human' });
+    } catch {
+      return json({ ok: false, error: 'offline' });
+    }
+    const login = async (n: string) => {
+      const r = await fetch(`${url}/rest/v1/rpc/portal_login`, {
+        method: 'POST',
+        headers: { apikey: service, Authorization: `Bearer ${service}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_number: n, p_hash: hash }),
+      });
+      return r.ok ? ((await r.json()) as Record<string, unknown>) : null;
+    };
+    let out = await login(num);
+    // the login box shows 23-0001; older accounts were saved without the dash
+    if (out && !out.ok && (out.error === 'no_account' || out.error === 'wrong_password') && num.includes('-')) out = await login(num.replace(/-/g, ''));
+    return json(out ?? { ok: false, error: 'offline' });
+  }
+
   // ---- staff: PIN only (first screen). Lockout is kept on the server.
   if (p.type === 'staff-pin') {
     const err = await checkOfficePin(String(p.pin || ''));

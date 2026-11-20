@@ -247,11 +247,12 @@ export async function registerStudentPortalAccount(params: RegisterStudentParams
  */
 export async function loginStudentPortal(
   studentNumber: string,
-  plainPassword: string
+  plainPassword: string,
+  turnstileToken: string
 ): Promise<{
   success: boolean;
   error?: string;
-  code?: 'no_account' | 'wrong_password' | 'deactivated' | 'offline';
+  code?: 'no_account' | 'wrong_password' | 'deactivated' | 'offline' | 'not_human';
   account?: StudentPortalUser;
 }> {
   try {
@@ -260,15 +261,23 @@ export async function loginStudentPortal(
       return { success: false, error: 'Please enter both Student ID and Password.' };
     }
 
-    // The password is checked inside the database (portal_login); the hash never comes to the browser.
+    // Sign In goes through the server: it checks Cloudflare (siteverify) AND the password (portal_login)
+    // in one call. The public key cannot run portal_login directly. The hash never comes back to the browser.
     type LoginRes = { ok: boolean; error?: string; reason?: string; account?: Record<string, unknown>; has_pin?: boolean };
     const pHash = await hashPassword(plainPassword);
-    let r = await rpc<LoginRes>('portal_login', { p_number: cleanNumber, p_hash: pHash });
-    // the login box shows 23-0001; older accounts were saved without the dash, so try that too
-    if (r && !r.ok && (r.error === 'no_account' || r.error === 'wrong_password') && cleanNumber.includes('-')) {
-      r = await rpc<LoginRes>('portal_login', { p_number: cleanNumber.replace(/-/g, ''), p_hash: pHash });
+    let r: LoginRes | null = null;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/aics-mailer`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'portal-login', token: turnstileToken, number: cleanNumber, hash: pHash }),
+      });
+      r = res.ok ? ((await res.json()) as LoginRes) : null;
+    } catch {
+      r = null;
     }
-    if (!r) return { success: false, code: 'offline', error: 'Could not connect.' };
+    if (!r || r.error === 'offline') return { success: false, code: 'offline', error: 'Could not connect.' };
+    if (r.error === 'not_human') return { success: false, code: 'not_human', error: 'Security check did not pass.' };
     if (!r.ok) {
       if (r.error === 'no_account') return { success: false, code: 'no_account', error: 'Account not found.' };
       if (r.error === 'deactivated') return { success: false, code: 'deactivated', error: 'Account turned off.' };

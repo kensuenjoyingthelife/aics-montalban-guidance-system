@@ -31,7 +31,6 @@ import {
   loginStudentPortal,
   sendForgotPasswordOtp,
   resetPasswordWithOtp,
-  verifyTurnstileToken,
 } from '../services/studentAuthService';
 import { studentLoginRateLimiter, studentForgotRateLimiter, studentRegisterRateLimiter } from '../services/rateLimiter';
 
@@ -662,23 +661,19 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     setLoginErrorField(null);
     setLoginTriesLeft(null);
 
-    const human = await verifyTurnstileToken(turnstileToken);
+    const res = await loginStudentPortal(loginStudentNumber, loginPassword, turnstileToken);
+    setLoginLoading(false);
     // a token works only once: always show a fresh box for the next try
     setTurnstileToken(null);
     setTurnstileKey((k) => k + 1);
-    if (!human.ok) {
-      setLoginLoading(false);
+    if (res.code === 'not_human') {
+      // not a wrong password: do not count it against the 5 tries
       setLoginErrorTitle(isTl ? 'Hindi pumasa sa security check' : 'Security check did not pass');
-      setLoginError(
-        human.offline
-          ? isTl ? 'Hindi maka-connect. Tingnan ang internet, tapos pindutin ulit ang "Verify you are human".' : 'Could not connect. Check your internet, then tick "Verify you are human" again.'
-          : isTl ? 'Pindutin ulit ang "Verify you are human", tapos Sign In.' : 'Tick "Verify you are human" again, then Sign In.'
-      );
+      setLoginErrorField(null);
+      setLoginTriesLeft(null);
+      setLoginError(isTl ? 'Pindutin ulit ang "Verify you are human", tapos Sign In.' : 'Tick "Verify you are human" again, then Sign In.');
       return;
     }
-
-    const res = await loginStudentPortal(loginStudentNumber, loginPassword);
-    setLoginLoading(false);
 
     if (!res.success || !res.account) {
       // Record failed attempt in Rate Limiter
