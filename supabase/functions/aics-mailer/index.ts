@@ -267,6 +267,24 @@ Deno.serve(async (req) => {
   try { p = await req.json(); } catch { return json({ ok: false, error: 'Bad request' }, 400); }
   const locale = p.locale === 'tl' ? 'tl' : 'en';
 
+  // ---- student portal: Cloudflare Turnstile check on the SERVER (siteverify). The secret never leaves Supabase.
+  if (p.type === 'turnstile') {
+    const secret = Deno.env.get('TURNSTILE_SECRET_KEY');
+    if (!secret) return json({ ok: false, error: 'not-set-up' });
+    const token = String(p.token || '');
+    if (!token || token.length > 2048) return json({ ok: false, error: 'missing-token' });
+    const ip = req.headers.get('cf-connecting-ip') || (req.headers.get('x-forwarded-for') || '').split(',')[0].trim();
+    const form = new URLSearchParams({ secret, response: token });
+    if (ip) form.set('remoteip', ip);
+    try {
+      const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: form });
+      const d = (await r.json()) as { success?: boolean; 'error-codes'?: string[] };
+      return json(d.success ? { ok: true } : { ok: false, error: (d['error-codes'] || ['failed']).join(',') });
+    } catch {
+      return json({ ok: false, error: 'cloudflare-unreachable' });
+    }
+  }
+
   // ---- staff: PIN only (first screen). Lockout is kept on the server.
   if (p.type === 'staff-pin') {
     const err = await checkOfficePin(String(p.pin || ''));

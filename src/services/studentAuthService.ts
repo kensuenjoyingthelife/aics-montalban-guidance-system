@@ -423,3 +423,22 @@ export async function resetPasswordWithOtp(
     return { success: false, error: msg };
   }
 }
+
+/**
+ * Cloudflare Turnstile: the token from the "Verify you are human" box is checked on the SERVER
+ * (aics-mailer Edge Function -> Cloudflare siteverify). Each token works once.
+ */
+export async function verifyTurnstileToken(token: string): Promise<{ ok: boolean; offline?: boolean }> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/aics-mailer`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'turnstile', token }),
+    });
+    if (!res.ok) return { ok: false, offline: true };
+    const d = (await res.json()) as { ok?: boolean; error?: string };
+    return { ok: !!d.ok, offline: d.error === 'cloudflare-unreachable' };
+  } catch {
+    return { ok: false, offline: true };
+  }
+}

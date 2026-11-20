@@ -31,6 +31,7 @@ import {
   loginStudentPortal,
   sendForgotPasswordOtp,
   resetPasswordWithOtp,
+  verifyTurnstileToken,
 } from '../services/studentAuthService';
 import { studentLoginRateLimiter, studentForgotRateLimiter, studentRegisterRateLimiter } from '../services/rateLimiter';
 
@@ -181,6 +182,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
   // Cloudflare Turnstile Token State
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileKey, setTurnstileKey] = useState(0); // bump = fresh Cloudflare box (each token works once)
+  const [turnstileBroken, setTurnstileBroken] = useState(false);
   const CLOUDFLARE_SITE_KEY = '0x4AAAAAAGAqyhAW68d155yA';
 
   // PWA & Mobile App Install Prompt State
@@ -640,11 +643,39 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       return;
     }
 
+    // 3. Cloudflare: must pass "Verify you are human", then the SERVER checks the token (siteverify)
+    if (!turnstileToken) {
+      setLoginErrorTitle(isTl ? 'Isang hakbang pa' : 'One more step');
+      setLoginErrorField(null);
+      setLoginTriesLeft(null);
+      setLoginError(
+        turnstileBroken
+          ? isTl ? 'Hindi gumana ang security check. I-refresh ang page, tapos subukan ulit.' : 'The security check did not load. Refresh the page, then try again.'
+          : isTl ? 'Pindutin muna ang "Verify you are human" sa ilalim ng Sign In.' : 'First tick "Verify you are human" under the Sign In button.'
+      );
+      return;
+    }
+
     setLoginLoading(true);
     setLoginError(null);
     setLoginErrorTitle(null);
     setLoginErrorField(null);
     setLoginTriesLeft(null);
+
+    const human = await verifyTurnstileToken(turnstileToken);
+    // a token works only once: always show a fresh box for the next try
+    setTurnstileToken(null);
+    setTurnstileKey((k) => k + 1);
+    if (!human.ok) {
+      setLoginLoading(false);
+      setLoginErrorTitle(isTl ? 'Hindi pumasa sa security check' : 'Security check did not pass');
+      setLoginError(
+        human.offline
+          ? isTl ? 'Hindi maka-connect. Tingnan ang internet, tapos pindutin ulit ang "Verify you are human".' : 'Could not connect. Check your internet, then tick "Verify you are human" again.'
+          : isTl ? 'Pindutin ulit ang "Verify you are human", tapos Sign In.' : 'Tick "Verify you are human" again, then Sign In.'
+      );
+      return;
+    }
 
     const res = await loginStudentPortal(loginStudentNumber, loginPassword);
     setLoginLoading(false);
@@ -1122,13 +1153,14 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 {/* Cloudflare Turnstile Human & Bot Shield (Positioned below Sign In button) */}
                 <div className="flex justify-center">
                   <CloudflareTurnstile
+                    key={turnstileKey}
                     siteKey={CLOUDFLARE_SITE_KEY}
                     onVerify={(token) => {
                       setTurnstileToken(token);
                       soundFX.playToggleSwitch(true);
                     }}
                     onExpire={() => setTurnstileToken(null)}
-                    onError={(err) => console.warn('Turnstile security notice:', err)}
+                    onError={() => { setTurnstileToken(null); setTurnstileBroken(true); }}
                   />
                 </div>
               </form>

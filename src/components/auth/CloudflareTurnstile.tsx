@@ -52,10 +52,6 @@ export const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
         } catch {}
         widgetIdRef.current = null;
       }
-
-      // Check current hostname for development fallback if Cloudflare rejects custom host
-      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      // If custom key has domain mismatch on localhost, testing key 1x00000000000000000000AA always passes
       const effectiveKey = siteKey;
 
       try {
@@ -68,24 +64,7 @@ export const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
           },
           'error-callback': (code: string) => {
             console.warn('Turnstile client error code:', code);
-            // Cloudflare domain mismatch error codes: 110200, 300030, 600010, etc.
-            // Automatically re-render using Cloudflare's Official Always-Pass Key (1x00000000000000000000AA)
-            // This guarantees zero "Troubleshoot" or "Unable to connect" failure on ANY domain (Vercel, custom domain, or localhost)
-            if (containerRef.current && window.turnstile) {
-              try {
-                window.turnstile.remove(id);
-                const fallbackId = window.turnstile.render(containerRef.current, {
-                  sitekey: '1x00000000000000000000AA', // Cloudflare Official Always-Pass Public Testing Key
-                  theme,
-                  size: 'normal',
-                  callback: (token: string) => onVerify(token),
-                });
-                widgetIdRef.current = fallbackId;
-                return;
-              } catch (err) {
-                console.warn('Fallback turnstile render failed:', err);
-              }
-            }
+            // real key only: no silent switch to Cloudflare's always-pass test key (a bot could force that)
             if (onError) onError(code);
           },
           'expired-callback': () => {
