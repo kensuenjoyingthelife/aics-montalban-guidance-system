@@ -2,6 +2,7 @@ package com.aics.kalangba;
 
 import android.os.Bundle;
 import android.view.View;
+import android.view.WindowManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
@@ -10,7 +11,11 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+
+        // Privacy (confidential reports): no screenshots / screen recording, and the
+        // recent-apps preview shows a blank card instead of the report or chat.
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
+
         // Ultra-Smooth 60FPS Native Hardware Acceleration & Cache Tuning
         try {
             WebView webView = getBridge().getWebView();

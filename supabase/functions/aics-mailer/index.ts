@@ -320,6 +320,28 @@ Deno.serve(async (req) => {
     return json(out ?? { ok: false, error: 'offline' });
   }
 
+  // ---- student portal: change password (current password checked in the database). Service role only.
+  if (p.type === 'portal-change-password') {
+    const url = Deno.env.get('SUPABASE_URL');
+    const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!url || !service) return json({ ok: false, error: 'offline' });
+    const num = String(p.number || '').trim().slice(0, 32);
+    const oldHash = String(p.oldHash || '').slice(0, 256);
+    const newHash = String(p.newHash || '').slice(0, 256);
+    if (!num || !oldHash || !newHash) return json({ ok: false, error: 'wrong_password' });
+    const call = async (n: string) => {
+      const r = await fetch(`${url}/rest/v1/rpc/portal_change_password`, {
+        method: 'POST',
+        headers: { apikey: service, Authorization: `Bearer ${service}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_number: n, p_old_hash: oldHash, p_new_hash: newHash }),
+      });
+      return r.ok ? ((await r.json()) as Record<string, unknown>) : null;
+    };
+    let out = await call(num);
+    if (out && !out.ok && out.error === 'no_account' && num.includes('-')) out = await call(num.replace(/-/g, ''));
+    return json(out ?? { ok: false, error: 'offline' });
+  }
+
   // ---- staff: PIN only (first screen). Lockout is kept on the server.
   if (p.type === 'staff-pin') {
     const err = await checkOfficePin(String(p.pin || ''));

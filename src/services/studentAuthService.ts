@@ -451,3 +451,29 @@ export async function verifyTurnstileToken(token: string): Promise<{ ok: boolean
     return { ok: false, offline: true };
   }
 }
+
+/**
+ * Change password (Me > Change password). The server checks the current password first;
+ * the public key cannot call the database function directly.
+ */
+export async function changeStudentPassword(
+  studentNumber: string,
+  currentPassword: string,
+  newPassword: string
+): Promise<{ ok: boolean; code?: 'wrong_password' | 'deactivated' | 'offline' | 'no_account' }> {
+  try {
+    const [oldHash, newHash] = await Promise.all([hashPassword(currentPassword), hashPassword(newPassword)]);
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/aics-mailer`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'portal-change-password', number: studentNumber.trim(), oldHash, newHash }),
+    });
+    if (!res.ok) return { ok: false, code: 'offline' };
+    const d = (await res.json()) as { ok?: boolean; error?: string };
+    if (d.ok) return { ok: true };
+    const e = d.error;
+    return { ok: false, code: e === 'deactivated' || e === 'no_account' || e === 'offline' ? e : 'wrong_password' };
+  } catch {
+    return { ok: false, code: 'offline' };
+  }
+}

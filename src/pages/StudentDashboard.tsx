@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
+import { useConfirmChange } from '../components/ui/ConfirmChange';
 import {
   Menu,
   X,
@@ -56,7 +57,7 @@ import { notificationService } from '../services/notificationService';
 import { isCapacitorNativeApp } from '../services/devicePerformance';
 import { SkyThemePill, useTheme } from '../context/ThemeContext';
 import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
-import { StudentPortalUser } from '../services/studentAuthService';
+import { StudentPortalUser, changeStudentPassword } from '../services/studentAuthService';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../services/supabaseClient';
 import { loadAppConfig, useAppConfig } from '../services/appConfig';
 import { officeHoursText, isOfficeDay, todayISO, SLOT_STARTS, SLOT_MINUTES } from '../services/scheduling';
@@ -296,6 +297,44 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // ---- phones / APK: the report is saved ON THIS PHONE while typing (never sent), and checked before sending
+  const isPhoneUI = typeof window !== 'undefined' && (!window.matchMedia('(min-width: 1024px)').matches || isCapacitorNativeApp());
+  const confirmChange = useConfirmChange();
+  const DRAFT_KEY = `aics_report_draft_v1_${user.studentNumber}`;
+  const [draftRestored, setDraftRestored] = useState(false);
+  const draftLoaded = useRef(false);
+  useEffect(() => {
+    if (!isPhoneUI || draftLoaded.current) return;
+    draftLoaded.current = true;
+    try {
+      const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+      if (!d || !String(d.whatHappened || d.suspectName || d.friendName || '').trim()) return;
+      setReportType(d.reportType ?? reportType); setReportingRole(d.reportingRole ?? 'self');
+      setFriendName(d.friendName ?? ''); setFriendGradeSection(d.friendGradeSection ?? '');
+      setKnowsSuspect(d.knowsSuspect ?? 'no'); setSuspectName(d.suspectName ?? ''); setSuspectDetails(d.suspectDetails ?? '');
+      setWhatHappened(d.whatHappened ?? ''); setHappenedWhen(d.happenedWhen ?? ''); setHappenedWhere(d.happenedWhere ?? '');
+      setWitnesses(d.witnesses ?? ''); setIsUrgent(!!d.isUrgent);
+      setDraftRestored(true);
+    } catch { /* no draft */ }
+  }, []);
+  useEffect(() => {
+    if (!isPhoneUI || !draftLoaded.current) return;
+    const id = window.setTimeout(() => {
+      const has = (whatHappened + suspectName + suspectDetails + friendName + happenedWhere + witnesses).trim();
+      try {
+        if (has) localStorage.setItem(DRAFT_KEY, JSON.stringify({ reportType, reportingRole, friendName, friendGradeSection, knowsSuspect, suspectName, suspectDetails, whatHappened, happenedWhen, happenedWhere, witnesses, isUrgent }));
+        else localStorage.removeItem(DRAFT_KEY);
+      } catch { /* storage full or private mode */ }
+    }, 600);
+    return () => window.clearTimeout(id);
+  }, [reportType, reportingRole, friendName, friendGradeSection, knowsSuspect, suspectName, suspectDetails, whatHappened, happenedWhen, happenedWhere, witnesses, isUrgent]);
+  const discardDraft = () => {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    setFriendName(''); setFriendGradeSection(''); setKnowsSuspect('no'); setSuspectName(''); setSuspectDetails('');
+    setWhatHappened(''); setHappenedWhen(''); setHappenedWhere(''); setWitnesses(''); setIsUrgent(false); setReportingRole('self');
+    setDraftRestored(false);
+  };
   const [submittedConcernCode, setSubmittedConcernCode] = useState<string | null>(null);
 
   // History State
@@ -649,6 +688,41 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   const [mRepId, setMRepId] = useState<number | null>(null);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+  // Change password (phones / APK)
+  const [showPw, setShowPw] = useState(false);
+  const [pwCur, setPwCur] = useState('');
+  const [pwNew, setPwNew] = useState('');
+  const [pwNew2, setPwNew2] = useState('');
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const pwRules = [
+    [pwNew.length >= 6, isTl ? '6+ karakter' : '6+ characters'],
+    [/\d/.test(pwNew), isTl ? 'May numero' : 'A number'],
+    [/[A-Z]/.test(pwNew), isTl ? 'May malaking letra' : 'An uppercase letter'],
+    [/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(pwNew), isTl ? 'May simbolo' : 'A symbol'],
+    [!!pwNew && pwNew === pwNew2, isTl ? 'Magkapareho ang dalawa' : 'Both new passwords match'],
+  ] as const;
+  const pwReady = !!pwCur && pwRules.every(([ok]) => ok) && pwNew !== pwCur;
+  const closePw = () => { setShowPw(false); setPwCur(''); setPwNew(''); setPwNew2(''); setPwMsg(null); };
+  const savePw = async () => {
+    if (!pwReady || pwBusy) return;
+    setPwBusy(true);
+    setPwMsg(null);
+    const res = await changeStudentPassword(user.studentNumber, pwCur, pwNew);
+    setPwBusy(false);
+    if (res.ok) {
+      setPwCur(''); setPwNew(''); setPwNew2('');
+      setPwMsg({ ok: true, text: isTl ? 'Napalitan na ang password mo. Gamitin ito sa susunod na login.' : 'Your password is changed. Use it the next time you sign in.' });
+      return;
+    }
+    setPwMsg({
+      ok: false,
+      text:
+        res.code === 'offline' ? (isTl ? 'Hindi maka-connect. Tingnan ang internet, tapos subukan ulit.' : 'Could not connect. Check your internet, then try again.')
+        : res.code === 'deactivated' ? (isTl ? 'Naka-off ang account mo. Pumunta sa Guidance Office.' : 'Your account is turned off. Please visit the Guidance Office.')
+        : isTl ? 'Mali ang kasalukuyang password. Subukan ulit.' : 'The current password is wrong. Try again.',
+    });
+  };
   const hasPin = !!user.quickPin;
   const lockNow = () => {
     try { localStorage.setItem('student_pin_locked', 'true'); } catch { /* private mode */ }
@@ -797,6 +871,26 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       return;
     }
 
+    if (isPhoneUI) {
+      const short = (s: string, n = 140) => (s.length > n ? s.slice(0, n).trimEnd() + '…' : s);
+      const ok = await confirmChange({
+        title: isTl ? 'Ipadala ang report?' : 'Send this report?',
+        description: isTl ? 'Tingnan muna kung tama. Pindutin ang Bumalik para mag-edit.' : 'Check that it is right. Tap Go back to edit.',
+        rows: [
+          { label: isTl ? 'Uri' : 'Type', after: reportType },
+          { label: isTl ? 'Para kay' : 'For', after: reportingRole === 'peer' ? friendName || (isTl ? 'Kaibigan / kaklase' : 'A friend / classmate') : isTl ? 'Sarili ko' : 'Myself' },
+          { label: isTl ? 'Tungkol kay' : 'About', after: knowsSuspect === 'yes' && suspectName ? suspectName : isTl ? 'Hindi kilala' : 'Not known' },
+          ...(happenedWhen ? [{ label: isTl ? 'Kailan' : 'When', after: happenedWhen }] : []),
+          ...(happenedWhere ? [{ label: isTl ? 'Saan' : 'Where', after: happenedWhere }] : []),
+          { label: isTl ? 'Nangyari' : 'What happened', after: short(whatHappened.trim()) },
+          ...(evidencePhotos.length ? [{ label: isTl ? 'Litrato' : 'Photos', after: String(evidencePhotos.length) }] : []),
+          ...(isUrgent ? [{ label: isTl ? 'Agarang tulong' : 'Urgent', after: isTl ? 'Oo' : 'Yes' }] : []),
+        ],
+        confirmLabel: isTl ? 'Ipadala' : 'Send',
+      });
+      if (!ok) return;
+    }
+
     setSubmitting(true);
     setSubmitError(null);
 
@@ -855,6 +949,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
       soundFX.playSuccessCheck();
       setSubmittedConcernCode(refCode);
+      try { localStorage.removeItem(`aics_report_draft_v1_${user.studentNumber}`); } catch { /* ignore */ }
+      setDraftRestored(false);
       recordSecurityAudit('REPORT_SUBMITTED', user.studentNumber);
 
       // Trigger instant submission confirmation notification on phone
@@ -1031,6 +1127,10 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 <span className="flex items-center gap-3"><span className="w-7 h-7 rounded-lg bg-[#5856D6] text-white flex items-center justify-center"><ShieldIcon className="w-4 h-4" /></span><span className="sd-row-label">{isTl ? 'Privacy at kaligtasan' : 'Privacy & safety'}</span></span>
                 <ChevronRight className="w-4 h-4 text-[#C7C7CC]" />
               </button>
+              <button type="button" onClick={() => setShowPw(true)} className="sd-row w-full text-left">
+                <span className="flex items-center gap-3"><span className="w-7 h-7 rounded-lg bg-[#FF9500] text-white flex items-center justify-center"><LockIcon className="w-4 h-4" /></span><span className="sd-row-label">{isTl ? 'Palitan ang password' : 'Change password'}</span></span>
+                <ChevronRight className="w-4 h-4 text-[#C7C7CC]" />
+              </button>
               {hasPin && (
                 <button type="button" onClick={lockNow} className="sd-row w-full text-left">
                   <span className="flex items-center gap-3"><span className="w-7 h-7 rounded-lg bg-[#8E8E93] text-white flex items-center justify-center"><LockIcon className="w-4 h-4" /></span><span className="sd-row-label">{isTl ? 'I-lock ang app ngayon' : 'Lock the app now'}</span></span>
@@ -1072,6 +1172,44 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 </div>
               )}
             </div>
+
+            {/* Change password sheet (phones) */}
+            {showPw && createPortal(
+              <div className="fixed inset-0 z-[99999] flex items-end lg:hidden" role="dialog" aria-modal="true" aria-label={isTl ? 'Palitan ang password' : 'Change password'}>
+                <div className="absolute inset-0 bg-black/40" onClick={closePw} />
+                <form onSubmit={(e) => { e.preventDefault(); void savePw(); }} className="relative w-full rounded-t-[22px] bg-white dark:bg-[#1C1C1E] px-5 pt-3 pb-[calc(20px+env(safe-area-inset-bottom))] max-h-[90dvh] overflow-y-auto">
+                  <span className="block mx-auto w-9 h-1.5 rounded-full bg-[#C7C7CC] dark:bg-[#48484A]" />
+                  <div className="mt-3 flex items-center justify-between">
+                    <button type="button" onClick={closePw} className="text-[16px] text-[#0A84FF]">{isTl ? 'Kanselahin' : 'Cancel'}</button>
+                    <p className="text-[17px] font-semibold text-[#1D1D1F] dark:text-white">{isTl ? 'Password' : 'Password'}</p>
+                    <button type="submit" disabled={!pwReady || pwBusy} className="text-[16px] font-semibold text-[#0A84FF] disabled:text-[#C7C7CC] dark:disabled:text-[#48484A]">{pwBusy ? (isTl ? 'Sandali…' : 'Saving…') : isTl ? 'I-save' : 'Save'}</button>
+                  </div>
+                  {pwMsg && (
+                    <p role={pwMsg.ok ? 'status' : 'alert'} className={`mt-4 px-3 py-2.5 rounded-[12px] text-[14px] ${pwMsg.ok ? 'bg-[#34C759]/[0.12] text-[#248A3D] dark:text-[#30D158]' : 'bg-[#FF3B30]/[0.1] text-[#D70015] dark:text-[#FF6961]'}`}>{pwMsg.text}</p>
+                  )}
+                  <div className="mt-4 rounded-[14px] bg-[#F2F2F7] dark:bg-[#2C2C2E] divide-y divide-black/[0.06] dark:divide-white/[0.08]">
+                    {([
+                      [pwCur, setPwCur, isTl ? 'Kasalukuyan' : 'Current', 'current-password'],
+                      [pwNew, setPwNew, isTl ? 'Bago' : 'New', 'new-password'],
+                      [pwNew2, setPwNew2, isTl ? 'Ulitin ang bago' : 'Repeat new', 'new-password'],
+                    ] as const).map(([v, set, label, ac], i) => (
+                      <label key={i} className="flex items-center gap-3 px-4 h-12">
+                        <span className="w-[108px] shrink-0 text-[15px] text-[#1D1D1F] dark:text-white">{label}</span>
+                        <input type="password" value={v} onChange={(e) => { (set as (s: string) => void)(e.target.value); setPwMsg(null); }} autoComplete={ac} className="flex-1 min-w-0 bg-transparent text-[15px] text-[#1D1D1F] dark:text-white outline-none" />
+                      </label>
+                    ))}
+                  </div>
+                  <ul className="mt-3 px-1 grid grid-cols-2 gap-x-3 gap-y-1">
+                    {pwRules.map(([ok, label], i) => (
+                      <li key={i} className={`text-[13px] flex items-center gap-1.5 ${ok ? 'text-[#248A3D] dark:text-[#30D158]' : 'text-[#8E8E93]'}`}>{ok ? <CheckCircle2 className="w-3.5 h-3.5" /> : <span className="w-3.5 h-3.5 rounded-full border border-current" />}{label}</li>
+                    ))}
+                  </ul>
+                  {pwNew && pwNew === pwCur && <p className="mt-2 px-1 text-[13px] text-[#D70015] dark:text-[#FF6961]">{isTl ? 'Dapat iba ang bagong password sa luma.' : 'The new password must be different from the current one.'}</p>}
+                  <p className="mt-3 px-1 text-[12.5px] text-[#8E8E93]">{isTl ? 'Nakalimutan ang kasalukuyang password? Mag-sign out at gamitin ang "Forgot Password?".' : 'Forgot the current one? Sign out and use "Forgot Password?".'}</p>
+                </form>
+              </div>,
+              document.body
+            )}
 
             {/* Privacy & safety sheet (phones) */}
             {showPrivacy && createPortal(
@@ -1453,6 +1591,13 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
         {activeTab === 'submit' && (
           <div className="lg:grid lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)] lg:gap-5 lg:items-start pt-2 lg:pt-0">
+          {draftRestored && (
+            <div className="lg:hidden mb-3 lg-card px-4 py-3 flex items-center gap-3" role="status">
+              <span className="w-8 h-8 rounded-full bg-[#0A84FF] text-white flex items-center justify-center shrink-0"><FileText className="w-4 h-4" /></span>
+              <span className="min-w-0 flex-1 text-[14px] lg-ink">{isTl ? 'Naibalik ang draft mo (litrato hindi kasama).' : 'Your draft is back (photos are not saved).'}</span>
+              <button type="button" onClick={discardDraft} className="text-[14px] font-semibold text-[#FF3B30] shrink-0">{isTl ? 'Burahin' : 'Discard'}</button>
+            </div>
+          )}
           {/* LEFT (website): who is reporting, the steps, office now */}
           <aside className="hidden lg:flex flex-col gap-5 sticky top-[112px]">
             <div className="lg-card lg-widget relative overflow-hidden p-6 text-white">
