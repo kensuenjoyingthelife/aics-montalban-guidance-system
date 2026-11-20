@@ -36,6 +36,8 @@ export interface FormInput {
   /** edited list of signers (max 6), replaces the form's own signature row */
   signRows?: SignRow[];
   signers?: { associate?: { name: string; title: string }; principal?: { name: string; title: string } };
+  /** conference form + case summary: "Parent contacted 6 times (5 no answer); reached on Nov 19, 2026." */
+  contactLine?: string;
 }
 
 const esc = (v: unknown) => String(v ?? '').replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch] as string);
@@ -182,7 +184,8 @@ export function buildFormHtml(f: FormInput, origin = ''): string {
   } else if (f.kind === 'conference') {
     body = `${who}
       <table class="info"><tr><td>Date &amp; time</td><td>${esc(f.when || '')}</td><td>Offense</td><td>${esc(c.offenseTitleEn)}</td></tr>
-      <tr><td>Incident date</td><td>${esc(long(c.incidentDate))}</td><td>Level</td><td>${esc(c.severity)}</td></tr></table>
+      <tr><td>Incident date</td><td>${esc(long(c.incidentDate))}</td><td>Level</td><td>${esc(c.severity)}</td></tr>
+      ${f.contactLine ? `<tr><td>Parent contact</td><td colspan="3">${esc(f.contactLine)}</td></tr>` : ''}</table>
       <h3>Present</h3><p>☐ Parent / guardian &nbsp; ☐ Student &nbsp; ☐ Adviser &nbsp; ☐ Guidance staff &nbsp; ☐ Others: ____________</p>
       <h3>What was discussed</h3>${lines(4)}
       <h3>Student's side</h3>${c.explanation ? `<p class="box">${esc(c.explanation)}</p>` : lines(3)}
@@ -239,6 +242,7 @@ export function buildFormHtml(f: FormInput, origin = ''): string {
           <td>3. Parent summons</td>
           <td>${summonsCount > 0 ? `<b>${summonsCount}</b> summons sent (no offense details in SMS).` : '<b>Not recorded</b>'}</td>
         </tr>
+        ${f.contactLine ? `<tr><td>Calls / texts to the parent</td><td>${esc(f.contactLine)}</td></tr>` : ''}
         <tr>
           <td>4. Parent conference</td>
           <td>${c.parentConferenceStatus === 'Attended' ? `<b>Attended</b> on <b>${esc(hearingDateStr)}</b>${c.conferenceAttendedBy ? ` by ${esc(c.conferenceAttendedBy)}` : ''}.` : c.proceededWithoutParent ? '<b>Continued without the parent</b> after repeated summons.' : '<b>Not held yet</b>'}</td>

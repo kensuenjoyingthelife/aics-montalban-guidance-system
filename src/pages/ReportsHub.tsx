@@ -28,6 +28,8 @@ import {
 } from '../services/reportStats';
 import { fetchHandoverNotes, fetchHandoverCounts, addHandoverNote, HandoverNote } from '../services/handoverDb';
 import { todayISO } from '../services/scheduling';
+import { fetchContactLogsFromDb, type ContactLogEntry } from '../services/supabaseClient';
+import { summarizeContacts } from '../services/contactSummary';
 import { LineChart, GroupedBars, Legend } from '../components/ui/Charts';
 import { useAppConfig } from '../services/appConfig';
 import { useConfirmChange } from '../components/ui/ConfirmChange';
@@ -118,6 +120,30 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
   const [ref, setRef] = useState<Date>(new Date());
   const [group, setGroup] = useState<GroupKind>('type');
   const [from, to] = useMemo(() => periodRange(kind, ref), [kind, ref]);
+  // parent contact attempts (calls / texts / student call-outs)
+  const [contactLogs, setContactLogs] = useState<ContactLogEntry[]>([]);
+  useEffect(() => {
+    let alive = true;
+    void fetchContactLogsFromDb(2000).then((l) => { if (alive && l) setContactLogs(l); });
+    return () => { alive = false; };
+  }, []);
+  const contactStats = useMemo(() => {
+    const inP = contactLogs.filter((l) => { const d = (l.when || '').slice(0, 10); return d >= from && d <= to; });
+    const byCase = new Map<string, ContactLogEntry[]>();
+    inP.forEach((l) => byCase.set(l.caseCode, [...(byCase.get(l.caseCode) ?? []), l]));
+    const sums = [...byCase.values()].map((ls) => summarizeContacts(ls));
+    const reachedCases = sums.filter((s) => s.firstReachedAt);
+    const s = summarizeContacts(inP);
+    return {
+      attempts: inP.length,
+      parents: byCase.size,
+      reachedPct: byCase.size ? Math.round((reachedCases.length / byCase.size) * 100) : null,
+      avgTries: reachedCases.length ? Math.round((reachedCases.reduce((a, x) => a + x.triesBeforeReached, 0) / reachedCases.length) * 10) / 10 : null,
+      noAnswer: s.noAnswer,
+      reschedule: s.reschedule,
+      wrongNumber: s.wrongNumber,
+    };
+  }, [contactLogs, from, to]);
   const stats = useMemo(() => offenseStats(cases, from, to, group), [cases, from, to, group]);
   const bars = useMemo(() => trend(cases, kind, from, to), [cases, kind, from, to]);
   const isCurrent = to >= today && from <= today;
@@ -385,6 +411,33 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                 ]}
               />
               <Legend items={[{ color: C_ATT, label: isTl ? 'Dumalo' : 'Attended', shape: 'box' }, { color: C_MISS, label: isTl ? 'Hindi dumalo' : 'Did not attend', shape: 'box' }]} />
+            </section>
+            <section className={`${card} p-5 space-y-3 xl:col-span-2`} data-contact-stats>
+              <h2 className={h2}>{isTl ? 'Pag-contact sa magulang' : 'Parent contact'}</h2>
+              <p className={sub}>{isTl ? 'Mga tawag, text at student call-out sa panahong ito.' : 'Calls, texts and student call-outs in this period.'}</p>
+              {contactStats.attempts === 0 ? (
+                <p className="text-sm text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Walang naitalang tawag o text sa panahong ito.' : 'No calls or texts recorded in this period.'}</p>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+                    {([
+                      [String(contactStats.attempts), isTl ? 'tawag / text' : 'calls / texts', isTl ? `sa ${contactStats.parents} magulang` : `to ${contactStats.parents} parent${contactStats.parents === 1 ? '' : 's'}`],
+                      [contactStats.reachedPct === null ? '—' : `${contactStats.reachedPct}%`, isTl ? 'naabot' : 'reached', isTl ? 'ng mga magulang na tinawagan' : 'of parents contacted'],
+                      [contactStats.avgTries === null ? '—' : String(contactStats.avgTries), isTl ? 'tawag bago maabot' : 'tries before reached', isTl ? 'average' : 'on average'],
+                      [String(contactStats.reschedule), isTl ? 'humiling ng ibang araw' : 'asked for a new date', isTl ? `${contactStats.noAnswer} walang sumagot` : `${contactStats.noAnswer} no answer`],
+                    ] as const).map(([n, label, hint], i) => (
+                      <div key={i} className="rounded-xl saas-card-subtle p-3">
+                        <p className="text-2xl font-extrabold text-[#1D1D1F] dark:text-white tabular-nums">{n}</p>
+                        <p className="text-[13px] font-semibold text-[#1D1D1F] dark:text-white">{label}</p>
+                        <p className={sub}>{hint}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {contactStats.wrongNumber > 0 && (
+                    <p className="text-xs font-semibold text-rose-700 dark:text-rose-300">{isTl ? `${contactStats.wrongNumber} tawag na maling number. Ayusin ang number sa record ng estudyante.` : `${contactStats.wrongNumber} call(s) hit a wrong number. Fix the number in the student's record.`}</p>
+                  )}
+                </>
+              )}
             </section>
             <section className={`${card} p-5 space-y-2`}>
               <h2 className={h2}>{isTl ? 'Porsyento ng dumalong magulang' : 'Parent attendance rate'}</h2>

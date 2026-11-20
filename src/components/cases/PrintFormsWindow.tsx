@@ -8,6 +8,8 @@ import { FormKind, FORM_TITLES, buildFormHtml, printHtml, downloadFormDocument, 
 import { Plus, X as XIcon } from 'lucide-react';
 import { isOfficeDay, todayISO, addDays } from '../../services/scheduling';
 import { getAppConfig, saveConfig } from '../../services/appConfig';
+import { fetchContactLogsForCase, type ContactLogEntry } from '../../services/supabaseClient';
+import { contactLine } from '../../services/contactSummary';
 
 const DESC: Record<FormKind, [string, string]> = {
   callSlip: ['Pass for the student to go to the Guidance Office', 'Pase para pumunta ang estudyante sa Guidance Office'],
@@ -101,12 +103,19 @@ export const PrintFormsWindow: React.FC<{
       : '';
   const input = 'w-full h-10 px-3 rounded-xl border border-[#E5E5EA] dark:border-white/10 bg-white dark:bg-[#1C1C1E] text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] focus:outline-none focus:border-[#007AFF]';
   const label = 'block text-[12px] font-medium text-[#6E6E73] dark:text-[#A1A1A6] mb-1';
+  // calls / texts to the parent (conference form + case summary)
+  const [contactLogs, setContactLogs] = useState<ContactLogEntry[]>([]);
+  useEffect(() => {
+    let alive = true;
+    void fetchContactLogsForCase(c.caseCode).then((l) => { if (alive && l) setContactLogs(l); });
+    return () => { alive = false; };
+  }, [c.caseCode]);
   const previewHtml = useMemo(() => {
     return buildFormHtml(
-      { kind, c, stu, when, promises, suspensionDays: days, suspensionStart: start, returnDate: back, signer, signRows: rows },
+      { kind, c, stu, when, promises, suspensionDays: days, suspensionStart: start, returnDate: back, signer, signRows: rows, contactLine: contactLogs.length ? contactLine(contactLogs) : undefined },
       window.location.origin
     );
-  }, [kind, c, stu, when, promises, days, start, back, signer, rows]);
+  }, [kind, c, stu, when, promises, days, start, back, signer, rows, contactLogs]);
 
   const [activeTab, setActiveTab] = useState<'preview' | 'options'>('preview');
 

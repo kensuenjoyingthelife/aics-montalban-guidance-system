@@ -25,6 +25,17 @@ const noEmailList = (): string[] => {
     return [];
   }
 };
+/** the office said "No record" for this parent's Gmail: stop asking */
+export const parentEmailMarkedNone = (studentNumber: string) => noEmailList().includes(studentNumber);
+export const markParentEmailNone = (studentNumber: string) => {
+  try {
+    localStorage.setItem(NO_EMAIL_KEY, JSON.stringify([...new Set([...noEmailList(), studentNumber])]));
+  } catch {
+    /* only for this session */
+  }
+};
+/** real email check (the old inline one was missing backslashes and refused any address with an "s") */
+export const isEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e.trim());
 
 export const ParentContactGate: React.FC<{
   studentNumber: string;
@@ -45,7 +56,9 @@ export const ParentContactGate: React.FC<{
   const [err, setErr] = useState('');
   const phErr = useMemo(() => phoneProblem(ph, isTl), [ph, isTl]);
 
-  if (!needPhone && !askEmail) return null;
+  // Gmail is no longer asked here: the Schedule step highlights the email field in green instead.
+  void askEmail;
+  if (!needPhone) return null;
 
   const save = async (withEmail: string) => {
     setSaving(true);

@@ -797,6 +797,39 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     <div className={`min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none student-portal-canvas bg-[#05112B] text-white ${
       mode === 'login' ? 'lg:h-screen lg:overflow-hidden' : 'overflow-y-auto'
     }`}>
+      {/* AICS Northern Lights Aurora Ribbon & Fluid Gradient Background */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden" aria-hidden="true">
+        {/* Deep navy midnight canvas base */}
+        <div className="absolute inset-0 bg-[#06112C] dark:bg-[#03091A]" />
+        
+        {/* Aurora Main Ribbon 1: Neon Cyan & Emerald Green Wave (From Reference Photo) */}
+        <div
+          className="absolute -top-[10%] left-[-15%] w-[120vw] h-[70vh] blur-[60px] opacity-75 dark:opacity-65 transform-gpu -rotate-[18deg] pointer-events-none"
+          style={{
+            background: 'radial-gradient(ellipse at center, rgba(16, 185, 129, 0.45) 0%, rgba(6, 182, 212, 0.55) 30%, rgba(56, 189, 248, 0.35) 60%, transparent 80%)',
+          }}
+        />
+
+        {/* Aurora Luminous Core 2: Bright White-Cyan Ribbon Spine */}
+        <div
+          className="absolute top-[10%] left-[5%] w-[90vw] h-[35vh] blur-[45px] opacity-70 dark:opacity-55 transform-gpu -rotate-[22deg] pointer-events-none"
+          style={{
+            background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.35) 25%, rgba(34, 211, 238, 0.6) 50%, rgba(56, 189, 248, 0.4) 75%, transparent 100%)',
+          }}
+        />
+
+        {/* Aurora Atmospheric Ribbon 3: Violet / Soft Purple Drift (Reference Accent) */}
+        <div
+          className="absolute top-[25%] -right-[20%] w-[100vw] h-[80vh] blur-[80px] opacity-60 dark:opacity-50 transform-gpu -rotate-[12deg] pointer-events-none"
+          style={{
+            background: 'radial-gradient(ellipse at center, rgba(168, 85, 247, 0.4) 0%, rgba(99, 102, 241, 0.45) 40%, rgba(30, 70, 155, 0.35) 70%, transparent 85%)',
+          }}
+        />
+
+        {/* Deep Royal Midnight Base Vignette */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#06112C]/30 via-transparent to-[#03091A]/90 pointer-events-none" />
+      </div>
+
       {/* Campus background: day picture in light mode, night picture in dark mode (crossfade on toggle) */}
       {xmas ? (
       <div className={`login-web-only hidden lg:block fixed inset-0 z-0 pointer-events-none ${isNight ? 'bg-[#0B1A3A]' : 'bg-[#7FB6E8]'}`} aria-hidden="true">
@@ -812,7 +845,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       )}
 
       {/* Top Floating Glass Island Navbar */}
-      <header className="relative z-30 w-full px-3 sm:px-6 pt-3 sm:pt-4 safe-area-top">
+      <header className="relative z-30 w-full px-3 sm:px-6 pt-12 sm:pt-4 safe-area-top">
         {/* ====================================================
             DESKTOP NAVBAR: Original Classic Glass Capsule (Hidden on mobile)
             ==================================================== */}

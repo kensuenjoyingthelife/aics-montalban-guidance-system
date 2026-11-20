@@ -14,6 +14,7 @@ import { StudentForm, StudentFormValue } from '../components/students/StudentFor
 import { CaseFlowPanel, FlowAction, flowState, isMinorCase } from '../components/cases/CaseFlowPanel';
 import { StatementStation } from '../components/cases/StatementStation';
 import { PrintFormsWindow } from '../components/cases/PrintFormsWindow';
+import { ParentContactHistory } from '../components/cases/ParentContactHistory';
 import { EvidencePanel } from '../components/cases/EvidencePanel';
 import { StatementsPanel } from '../components/cases/StatementsPanel';
 import { DateField } from '../components/ui/DateField';
@@ -4629,6 +4630,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   }}
                 />
                 </div>
+                {/* every call / text to the parent for this case (proof the school tried to reach them) */}
+                <ParentContactHistory caseCode={openCase.caseCode} isTl={isTl} refreshKey={(openCase.summonsCount ?? 0) + (openCase.parentConferenceStatus ?? '')} />
                 
                 {stationCase && (
                   <StatementStation 

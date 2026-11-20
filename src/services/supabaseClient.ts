@@ -1047,3 +1047,19 @@ export async function insertCaseStatement(s: Omit<CaseStatement, 'id' | 'created
     return reportWrite(null, 'insertCaseStatement');
   }
 }
+
+/** every call / text / call-out for ONE case, oldest first (for the case record and printed forms) */
+export async function fetchContactLogsForCase(caseCode: string): Promise<ContactLogEntry[] | null> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/contact_logs?select=*&case_code=eq.${encodeURIComponent(caseCode)}&order=id.asc&limit=500`, { headers: getHeaders() });
+    if (!res.ok) return null;
+    const rows = (await res.json()) as Record<string, unknown>[];
+    return rows.map((r) => ({
+      id: String(r.id), when: String(r.created_at ?? ''), caseCode: String(r.case_code ?? ''), appointmentCode: String(r.appointment_code ?? ''),
+      studentName: String(r.student_name ?? ''), parentName: String(r.parent_name ?? ''), method: String(r.method ?? ''),
+      result: String(r.result ?? ''), note: String(r.note ?? ''), actor: String(r.actor ?? ''),
+    }));
+  } catch {
+    return null;
+  }
+}

@@ -15,7 +15,7 @@ import {
 import { suggestSlots, freeSlotsOn, slotLabel, todayISO, addDays, isOfficeDay, parseISO, officeHoursText, daySlots, sanctionEndFrom } from '../../services/scheduling';
 import { findSensitiveWords, type Channel } from '../../services/parentComms';
 import { DateField } from '../ui/DateField';
-import { ParentContactGate, phoneProblem } from './ParentContactGate';
+import { ParentContactGate, phoneProblem, parentEmailMarkedNone, markParentEmailNone, isEmail } from './ParentContactGate';
 import { buildFolderHtml, buildBatchCallSlipsHtml, printHtml, type FormKind } from '../../services/printForms';
 import { summonsLevel, summonsAttempt, summonsLabel, summonsMessage, maxSummons } from '../../services/summonsLadder';
 import { smsInfo } from '../../services/smsText';
@@ -266,6 +266,13 @@ export const CaseFlowPanel: React.FC<{
   const [parentPhoneInput, setParentPhoneInput] = useState<string>(student?.parentPhone ?? '');
   const [parentEmailInput, setParentEmailInput] = useState<string>(student?.parentEmail ?? '');
   const [savingContact, setSavingContact] = useState<boolean>(false);
+  // Gmail guideline (instead of a pop-up): show the contact fields with the email in green when it is missing
+  const [emailNoneNow, setEmailNoneNow] = useState(false);
+  useEffect(() => {
+    if (next === 'Schedule Conference' && student && !(student.parentEmail || '').trim() && !parentEmailMarkedNone(student.studentNumber)) {
+      setEditingContact(true);
+    }
+  }, [next, student?.studentNumber, student?.parentEmail]);
 
   useEffect(() => {
     if (student) {
@@ -835,10 +842,31 @@ export const CaseFlowPanel: React.FC<{
                             <input type="tel" value={parentPhoneInput} onChange={(e) => setParentPhoneInput(e.target.value)} placeholder="0917-000-0000" className={`${input} h-10 rounded-xl text-[13px] tabular-nums ${phoneProblem(parentPhoneInput, isTl) ? 'border-rose-400' : ''}`} />
                             {phoneProblem(parentPhoneInput, isTl) && <span className="block text-[12px] text-rose-700 dark:text-rose-300">{phoneProblem(parentPhoneInput, isTl)}</span>}
                           </label>
-                          <label className="block space-y-1">
-                            <span className="block text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Email ng magulang (opsyonal)' : 'Parent email (optional)'}</span>
-                            <input type="email" value={parentEmailInput} onChange={(e) => setParentEmailInput(e.target.value)} placeholder="parent@example.com" className={`${input} h-10 rounded-xl text-[13px]`} />
-                          </label>
+                          {(() => {
+                            // green guideline: no Gmail on file yet and the office has not said "No record"
+                            const guide = !(student.parentEmail || '').trim() && !parentEmailMarkedNone(student.studentNumber) && !emailNoneNow;
+                            const bad = !!parentEmailInput.trim() && !isEmail(parentEmailInput);
+                            return (
+                              <label className="block space-y-1">
+                                <span className={`block text-[12px] ${guide && !bad ? 'font-semibold text-[#248A3D] dark:text-[#30D158]' : 'text-[#6E6E73] dark:text-[#A1A1A6]'}`}>{isTl ? 'Gmail ng magulang (opsyonal)' : 'Parent Gmail (optional)'}</span>
+                                <input
+                                  type="email"
+                                  value={parentEmailInput}
+                                  onChange={(e) => setParentEmailInput(e.target.value.slice(0, 120))}
+                                  placeholder="pangalan@gmail.com"
+                                  className={`${input} h-10 rounded-xl text-[13px] ${bad ? '!border-rose-400' : guide ? '!border-[#34C759] ring-4 ring-[#34C759]/20' : ''}`}
+                                />
+                                {bad ? (
+                                  <span className="block text-[12px] text-rose-700 dark:text-rose-300">{isTl ? 'Hindi tama ang ayos ng email (hal. pangalan@gmail.com).' : 'Not a valid email (e.g. name@gmail.com).'}</span>
+                                ) : guide ? (
+                                  <span className="block text-[12px] text-[#248A3D] dark:text-[#30D158]">
+                                    {isTl ? 'Kung alam mo, ilagay ang Gmail para may email din ang magulang bukod sa SMS. ' : 'If you know it, add the Gmail so the parent also gets an email besides the SMS. '}
+                                    <button type="button" onClick={() => { markParentEmailNone(student.studentNumber); setEmailNoneNow(true); }} className="font-semibold underline underline-offset-2">{isTl ? 'Walang record' : 'No record'}</button>
+                                  </span>
+                                ) : null}
+                              </label>
+                            );
+                          })()}
                           <div className="sm:col-span-2 flex justify-end gap-2">
                             <button
                               type="button"
@@ -854,7 +882,7 @@ export const CaseFlowPanel: React.FC<{
                             </button>
                             <button
                               type="button"
-                              disabled={savingContact || !!phoneProblem(parentPhoneInput, isTl) || (!!parentEmailInput.trim() && !/^[^s@]+@[^s@]+.[^s@]{2,}$/.test(parentEmailInput.trim()))}
+                              disabled={savingContact || !!phoneProblem(parentPhoneInput, isTl) || (!!parentEmailInput.trim() && !isEmail(parentEmailInput))}
                               onClick={async () => {
                                 if (!onUpdateStudentContact) {
                                   setEditingContact(false);
