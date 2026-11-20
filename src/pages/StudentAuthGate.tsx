@@ -797,12 +797,12 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     <div className={`min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none student-portal-canvas bg-[#05112B] text-white ${
       mode === 'login' ? 'lg:h-screen lg:overflow-hidden' : 'overflow-y-auto'
     }`}>
-      {/* AICS Northern Lights Aurora Ribbon & Fluid Gradient Background */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden" aria-hidden="true">
+      {/* AICS Northern Lights Aurora Gradient Background (Mobile View / Phones Only - lg:hidden) */}
+      <div className="lg:hidden fixed inset-0 z-0 pointer-events-none overflow-hidden" aria-hidden="true">
         {/* Deep navy midnight canvas base */}
         <div className="absolute inset-0 bg-[#06112C] dark:bg-[#03091A]" />
         
-        {/* Aurora Main Ribbon 1: Neon Cyan & Emerald Green Wave (From Reference Photo) */}
+        {/* Aurora Main Ribbon 1: Neon Cyan & Emerald Green Wave */}
         <div
           className="absolute -top-[10%] left-[-15%] w-[120vw] h-[70vh] blur-[60px] opacity-75 dark:opacity-65 transform-gpu -rotate-[18deg] pointer-events-none"
           style={{
@@ -818,7 +818,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
           }}
         />
 
-        {/* Aurora Atmospheric Ribbon 3: Violet / Soft Purple Drift (Reference Accent) */}
+        {/* Aurora Atmospheric Ribbon 3: Violet / Soft Purple Drift */}
         <div
           className="absolute top-[25%] -right-[20%] w-[100vw] h-[80vh] blur-[80px] opacity-60 dark:opacity-50 transform-gpu -rotate-[12deg] pointer-events-none"
           style={{
@@ -830,8 +830,19 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         <div className="absolute inset-0 bg-gradient-to-b from-[#06112C]/30 via-transparent to-[#03091A]/90 pointer-events-none" />
       </div>
 
-      {/* Aurora Northern Lights is the primary background across all screen sizes.
-          If xmas theme is explicitly active and not on desktop, optional subtle overlay */}
+      {/* Campus background: day picture in light mode, night picture in dark mode (crossfade on toggle) - DESKTOP WEBSITE 100% ORIGINAL */}
+      {xmas ? (
+      <div className={`login-web-only hidden lg:block fixed inset-0 z-0 pointer-events-none ${isNight ? 'bg-[#0B1A3A]' : 'bg-[#7FB6E8]'}`} aria-hidden="true">
+        <img src="/login-day.webp" alt="" decoding="async" {...{ fetchpriority: "high" }} onError={(e) => { e.currentTarget.style.display = 'none'; }} className="login-bg absolute inset-0 w-full h-full object-cover object-[42%_50%]" style={{ opacity: isNight ? 0 : 1 }} />
+        <img src="/login-night.webp" alt="" decoding="async" {...{ fetchpriority: "high" }} onError={(e) => { e.currentTarget.style.display = 'none'; }} className="login-bg absolute inset-0 w-full h-full object-cover object-[42%_50%]" style={{ opacity: isNight ? 1 : 0 }} />
+        <div className={`absolute inset-0 transition-opacity duration-700 ${isNight ? 'bg-gradient-to-b from-black/25 via-black/10 to-black/45' : 'bg-gradient-to-b from-black/10 via-transparent to-black/30'}`} />
+      </div>
+      ) : (
+        <>
+          {isDesktop && <div className="hidden lg:block"><CelestialBackground /></div>}
+          {isDesktop && <div className="hidden lg:block"><WavyBackground /></div>}
+        </>
+      )}
 
       {/* Top Floating Glass Island Navbar */}
       <header className="relative z-30 w-full px-3 sm:px-6 pt-12 sm:pt-4 safe-area-top">

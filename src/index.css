@@ -306,7 +306,7 @@
   color: #1E469B !important;
 }
 
-/* 3. CARD SURFACES (DARK CARD in Dark Mode vs WARMUP WHITE-AZURE & AURORA TINT in Light Mode) */
+/* 3. CARD SURFACES (DARK CARD in Dark Mode vs LIGHT CARD in Light Mode) */
 :root.dark .cosmic-glass-card {
   position: relative;
   background: linear-gradient(
@@ -331,26 +331,21 @@
   will-change: background-position;
 }
 
-/* Light Mode: Warmup soft white transitioning smoothly into sky-blue, electric cyan & aurora glow (NEVER flat pure white) */
 :root:not(.dark) .cosmic-glass-card {
   position: relative;
   background: linear-gradient(
-    155deg,
-    #F4F8FD 0%,
-    #E8F2FC 32%,
-    #D9ECFD 65%,
-    #CCE5FC 100%
+    145deg,
+    #FFFFFF 0%,
+    #F0F7FF 35%,
+    #E1EFFF 70%,
+    #D0E5FF 100%
   ) !important;
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border-radius: 32px;
-  border: 1.5px solid rgba(96, 165, 250, 0.55) !important;
+  border: 1.5px solid #94A3B8 !important;
   box-shadow:
-    0 20px 45px -10px rgba(30, 64, 175, 0.18),
-    0 6px 18px -4px rgba(14, 165, 233, 0.12),
-    0 0 35px -8px rgba(6, 182, 212, 0.22),
-    inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.95),
-    inset 0 -1.5px 3px 0 rgba(186, 230, 253, 0.4) !important;
+    0 15px 35px -5px rgba(30, 58, 138, 0.12),
+    0 4px 12px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
   color: #0B1F4D !important;
 }
 
@@ -493,16 +488,16 @@ body.low-tier-device .cosmic-glass-card {
   border: 1.5px solid rgba(147, 197, 253, 0.25) !important;
 }
 
-/* Light Mode Section Cards (Warmup White-to-Azure with soft cyan tint, never flat stark white) */
+/* Light Mode Section Cards (Solid Contrast: #F1F5F9 Slate Background, Crisp 1.5px #94A3B8 Border, Deep Text) */
 :root:not(.dark) .register-section-card {
-  background: linear-gradient(155deg, #F3F8FE 0%, #E7F2FC 60%, #DCECFB 100%) !important;
-  border: 1.5px solid rgba(96, 165, 250, 0.45) !important;
-  box-shadow: 0 4px 14px rgba(30, 64, 175, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  background: linear-gradient(160deg, #FFFFFF 0%, #F4F9FF 100%) !important;
+  border: 1.5px solid #94A3B8 !important;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06) !important;
 }
 :root:not(.dark) .register-inner-card {
-  background: linear-gradient(155deg, #FAFCFF 0%, #EFF6FE 100%) !important;
-  border: 1.5px solid rgba(147, 197, 253, 0.6) !important;
-  box-shadow: 0 2px 8px rgba(30, 64, 175, 0.05) !important;
+  background: #FFFFFF !important;
+  border: 1.5px solid #94A3B8 !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05) !important;
 }
 
 /* 7. UPLOAD DROPZONES */
@@ -589,12 +584,7 @@ body.low-tier-device .cosmic-glass-card {
   }
 }
 
-/* ==========================================================================
-   Capacitor & Mobile App Top Notch & Status-Bar (Instagram / Facebook Standard)
-   Status bar height on modern iOS & Android is between 44px to 54px.
-   We reserve a dedicated blank clearance so the phone's clock, battery,
-   and camera notch never overlap the app's top header.
-   ========================================================================== */
+/* Capacitor & Mobile Notch Safe-Areas */
 .safe-area-top {
   padding-top: max(48px, calc(env(safe-area-inset-top, 0px) + 20px)) !important;
 }
@@ -2629,22 +2619,14 @@ html.theme-xfade::view-transition-new(root) {
     border-width: 1.5px !important; border-style: solid !important;
   }
   html.xmas-on:not(.dark) body:not(.capacitor-mobile) .cosmic-glass-card.login-glass {
-    /* Gradient of White into Soft Sky-Azure Blue (No pure white) */
-    background: linear-gradient(165deg, rgba(255, 255, 255, 0.95) 0%, rgba(238, 245, 255, 0.92) 50%, rgba(219, 234, 254, 0.88) 100%) !important;
-    border-color: #60A5FA !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1), 0 24px 60px -20px rgba(14, 52, 128, 0.28) !important;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.68)) !important;
+    border-color: rgba(255, 255, 255, 0.85) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(255, 255, 255, 0.35), 0 24px 60px -20px rgba(15, 30, 70, 0.45) !important;
   }
   html.xmas-on.dark body:not(.capacitor-mobile) .cosmic-glass-card.login-glass {
-    /* Deep Velvet Duotone Aurora Sweep: Soft emerald & cyan mist into rich midnight sapphire */
-    background: linear-gradient(145deg, rgba(6, 45, 78, 0.78) 0%, rgba(8, 24, 60, 0.75) 45%, rgba(18, 14, 52, 0.72) 100%) !important;
-    border: 1.5px solid transparent !important;
-    border-image: linear-gradient(135deg, rgba(6, 182, 212, 0.6) 0%, rgba(56, 189, 248, 0.45) 40%, rgba(168, 85, 247, 0.5) 80%, rgba(236, 72, 153, 0.35) 100%) 1 !important;
-    border-radius: 26px !important;
-    box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.3),
-      inset 0 -1px 0 rgba(6, 182, 212, 0.2),
-      0 0 35px -10px rgba(6, 182, 212, 0.25),
-      0 30px 70px -20px rgba(0, 0, 0, 0.85) !important;
+    background: linear-gradient(160deg, rgba(20, 34, 70, 0.62), rgba(8, 16, 38, 0.55)) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 30px 70px -20px rgba(0, 0, 0, 0.75) !important;
   }
   html.xmas-on:not(.dark) body:not(.capacitor-mobile) .login-glass .cosmic-input { background: rgba(255, 255, 255, 0.88) !important; border-color: rgba(100, 116, 139, 0.55) !important; }
   html.xmas-on.dark body:not(.capacitor-mobile) .login-glass .cosmic-input { background: rgba(6, 12, 28, 0.72) !important; border-color: rgba(255, 255, 255, 0.2) !important; }
@@ -2763,31 +2745,29 @@ body.capacitor-mobile .wg-blob { display: none !important; }
   html body .sd-canvas .lg-card.m-plain { background: transparent !important; padding: 0 !important; }
 }
 @media (max-width: 1023px) {
-  /* phone login: Apple translucent frost glass with visible luminous borders */
+  /* phone login: warmup white gradient into soft blue & aurora rim (NOT plain flat white) */
   html:root:is(.dark, :not(.dark)) body .cosmic-glass-card.login-glass {
     border-radius: 26px !important;
     border-width: 1.5px !important;
     border-style: solid !important;
   }
   html:root:not(.dark) body .cosmic-glass-card.login-glass {
-    /* Gradient of White into Soft Sky-Azure Blue (No pure white) */
-    background: linear-gradient(165deg, rgba(255, 255, 255, 0.94) 0%, rgba(240, 246, 255, 0.92) 50%, rgba(224, 238, 255, 0.88) 100%) !important;
-    border-color: #60A5FA !important;
-    box-shadow: 0 20px 45px -10px rgba(14, 52, 128, 0.22), inset 0 1px 0 rgba(255, 255, 255, 1), 0 0 0 1px rgba(96, 165, 250, 0.3) !important;
-    backdrop-filter: blur(24px) !important;
-    -webkit-backdrop-filter: blur(24px) !important;
+    background: linear-gradient(160deg, #F5F9FD 0%, #E9F3FC 50%, #DCECFB 100%) !important;
+    border-color: rgba(96, 165, 250, 0.6) !important;
+    box-shadow: 0 15px 35px -8px rgba(30, 64, 175, 0.16), 0 0 25px -6px rgba(6, 182, 212, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+  }
+  html:root:not(.dark) body .cosmic-glass-card .register-section-card {
+    background: linear-gradient(155deg, #F4F8FE 0%, #E8F2FC 60%, #DDECFB 100%) !important;
+    border: 1.5px solid rgba(96, 165, 250, 0.45) !important;
+  }
+  html:root:not(.dark) body .cosmic-glass-card .register-inner-card {
+    background: linear-gradient(155deg, #FAFCFF 0%, #EFF6FE 100%) !important;
+    border: 1.5px solid rgba(147, 197, 253, 0.6) !important;
   }
   html:root.dark body .cosmic-glass-card.login-glass {
-    /* Mobile Phone Dark Mode: Deep Duotone Aurora Card with Glowing Cyan-to-Purple Rim */
-    background: linear-gradient(145deg, rgba(7, 36, 68, 0.82) 0%, rgba(8, 22, 54, 0.8) 50%, rgba(16, 12, 46, 0.78) 100%) !important;
+    background: linear-gradient(145deg, rgba(7, 36, 68, 0.85) 0%, rgba(8, 22, 54, 0.82) 50%, rgba(16, 12, 46, 0.80) 100%) !important;
     border-color: rgba(56, 189, 248, 0.45) !important;
-    box-shadow: 
-      0 0 30px -8px rgba(6, 182, 212, 0.3),
-      0 24px 60px -15px rgba(0, 0, 0, 0.85),
-      inset 0 1px 0 rgba(255, 255, 255, 0.35),
-      inset 0 -1px 0 rgba(168, 85, 247, 0.25) !important;
-    backdrop-filter: blur(24px) !important;
-    -webkit-backdrop-filter: blur(24px) !important;
+    box-shadow: 0 0 30px -8px rgba(6, 182, 212, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
   }
   html body .lg-signin-btn, html body .cosmic-glass-card button[type="submit"] { box-shadow: 0 4px 14px rgba(30, 70, 155, 0.35) !important; }
   /* Me: grouped lists without shadows */
