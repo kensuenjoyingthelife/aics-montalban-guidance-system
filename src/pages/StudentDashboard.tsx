@@ -1374,39 +1374,56 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
               </div>
             </div>
 
-            {/* STATUS CARD: the one thing that matters now (never a report name or message text) */}
-            {loadingHistory && history.length === 0 ? (
-              <div className="m-skel h-[132px] rounded-[22px]" aria-busy="true" aria-label={isTl ? 'Kinukuha' : 'Loading'} />
-            ) : (() => {
-              const s = unreadCount > 0
-                ? { tone: 'from-[#0A84FF] to-[#0060DF]', icon: <MessageSquare className="w-6 h-6" />, title: isTl ? 'May sagot na ang Guidance' : 'Guidance replied', text: isTl ? 'May bagong mensahe para sa iyo.' : 'You have a new message.', cta: isTl ? 'Buksan ang chat' : 'Open chat', go: () => (firstOpen ? openConcernChat(firstOpen) : goTab('chat')), step: -1 }
-                : nRev > 0
-                ? { tone: 'from-[#FF9F0A] to-[#F57C00]', icon: <Clock className="w-6 h-6" />, title: isTl ? 'Sinusuri ang report mo' : 'Your report is being reviewed', text: isTl ? 'Bubuksan ng Guidance ang chat kapag tinanggap.' : 'Guidance opens a chat when they accept it.', cta: isTl ? 'Tingnan' : 'View', go: () => goTab('history'), step: 1 }
-                : openChats > 0
-                ? { tone: 'from-[#30D158] to-[#1FA347]', icon: <CheckCircle2 className="w-6 h-6" />, title: isTl ? 'Tinanggap ang report mo' : 'Your report was accepted', text: isTl ? 'Bukas ang chat. Pwede mong kausapin ang Guidance.' : 'The chat is open. You can talk to Guidance.', cta: isTl ? 'Buksan ang chat' : 'Open chat', go: () => (firstOpen ? openConcernChat(firstOpen) : goTab('chat')), step: 2 }
-                : history.length > 0
-                ? { tone: 'from-[#1E469B] to-[#0A84FF]', icon: <ShieldIcon className="w-6 h-6" />, title: isTl ? 'Ligtas ka rito' : 'You are safe here', text: isTl ? 'Pindutin ang + kapag may bago kang gustong sabihin.' : 'Tap + whenever there is something new to tell.', cta: isTl ? 'Mag-report' : 'Report', go: () => goTab('submit'), step: -1 }
-                : { tone: 'from-[#1E469B] to-[#0A84FF]', icon: <ShieldIcon className="w-6 h-6" />, title: isTl ? 'Ligtas ka rito' : 'You are safe here', text: isTl ? 'Confidential ang bawat report. Ang Guidance Office lang ang makakabasa.' : 'Every report is confidential. Only the Guidance Office reads it.', cta: '', go: () => goTab('submit'), step: -1 };
-              return (
-                <button type="button" onClick={s.go} className={`m-press w-full rounded-[22px] p-4 text-left text-white bg-gradient-to-br ${s.tone}`}>
-                  <span className="flex items-start gap-3">
-                    <span className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center shrink-0">{s.icon}</span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-[17px] font-semibold leading-snug">{s.title}</span>
-                      <span className="block mt-0.5 text-[14px] text-white/85 leading-snug">{s.text}</span>
-                    </span>
-                  </span>
-                  <span className="mt-3 flex items-center justify-between gap-3">
-                    {s.step >= 0 ? (
-                      <span className="flex items-center gap-1.5" aria-label={isTl ? 'Lagay ng report' : 'Report progress'}>
-                        {[0, 1, 2].map((i) => <span key={i} className={`h-1.5 rounded-full ${i <= s.step ? 'w-7 bg-white' : 'w-4 bg-white/35'}`} />)}
-                      </span>
-                    ) : <span />}
-                    {s.cta ? <span className="h-8 px-3.5 rounded-full bg-white/20 text-[14px] font-semibold inline-flex items-center gap-1">{s.cta}<ChevronRight className="w-4 h-4" /></span> : <span />}
-                  </span>
-                </button>
-              );
-            })()}
+            {/* GUIDANCE OFFICE HOURS WIDGET (Replaces single banner with full interactive week schedule & live status) */}
+            <div className="relative rounded-[26px] p-5 bg-[#0F224A] text-white shadow-xl border border-white/10 overflow-hidden space-y-4">
+              {decor && <HollySprig className="absolute top-3.5 right-3.5 w-10 h-7" />}
+              
+              {/* Top header row: Orange clock circle badge + "Guidance Office" title */}
+              <div className="flex items-center gap-3">
+                <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 shadow-md ${openNow ? 'bg-[#30D158] text-white' : 'bg-[#FF9F0A] text-white'}`}>
+                  <ClockIcon className="w-5 h-5 stroke-[2.5]" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold tracking-tight text-white/90">Guidance Office</h3>
+                  <p className="text-[11px] text-white/60 font-medium">{isTl ? 'Lunes – Biyernes (8:00 AM – 5:00 PM)' : 'Mon – Fri · 8:00 AM – 5:00 PM'}</p>
+                </div>
+              </div>
+
+              {/* Status Headline & next opening/closing detail */}
+              <div className="space-y-1">
+                <p className="text-[26px] font-black tracking-tight leading-none text-white">
+                  {openNow ? (isTl ? 'Bukas ngayon' : 'Open now') : isTl ? 'Sarado ngayon' : 'Closed now'}
+                </p>
+                <p className="text-xs font-semibold text-sky-200/80">
+                  {officeNote}
+                </p>
+                {openNow && (
+                  <div className="mt-2.5 h-1.5 rounded-full bg-white/15 overflow-hidden">
+                    <div className="h-full rounded-full bg-[#30D158]" style={{ width: `${dayPct}%` }} />
+                  </div>
+                )}
+              </div>
+
+              {/* Mon to Fri 5-day Calendar Slots (Exact 1:1 match with Desktop Reference Widget) */}
+              <div className="flex justify-between items-center gap-1.5 pt-1">
+                {week.map((d) => (
+                  <div
+                    key={d.iso}
+                    title={d.open ? (isTl ? 'Bukas' : 'Open') : isTl ? 'Sarado' : 'Closed'}
+                    className={`flex-1 py-2.5 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-center transition-all ${
+                      d.today
+                        ? 'bg-gradient-to-b from-[#1E469B] to-[#0A84FF] text-white shadow-md shadow-blue-900/50 ring-1 ring-white/40'
+                        : d.open
+                        ? 'bg-white/10 text-white/90 border border-white/5'
+                        : 'bg-white/5 text-white/35'
+                    }`}
+                  >
+                    <span className="text-[10px] font-bold tracking-wider uppercase opacity-80">{d.label}</span>
+                    <span className="text-[15px] font-black tabular-nums">{d.num}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {/* the one main action (the tab bar + also opens it) */}
             <button type="button" onClick={() => goTab('submit')} className="m-press w-full lg-card flex items-center gap-3 p-3 text-left">
