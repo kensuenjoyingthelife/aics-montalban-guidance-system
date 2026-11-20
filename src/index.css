@@ -529,11 +529,12 @@ body.low-tier-device .cosmic-glass-card {
   color: rgba(147, 197, 253, 0.55) !important;
 }
 :root:not(.dark) .checklist-bar {
-  background: #FFFFFF !important;
-  border: 1.5px solid #BAD2F7 !important;
+  background: #E2EEFC !important;
+  border: 1.5px solid #94A3B8 !important;
 }
 :root:not(.dark) .checklist-dim {
-  color: #64748B !important;
+  color: #334155 !important;
+  font-weight: 700 !important;
 }
 
 /* 9. LIVE STATUS BADGES */

@@ -794,8 +794,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
   return (
     <MotionConfig transition={{ duration: 0 }}>
-    <div className={`min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans select-none student-portal-canvas bg-[#05112B] text-white ${
-      mode === 'login' ? 'lg:h-screen lg:overflow-hidden' : 'overflow-y-auto'
+    <div className={`min-h-screen w-full relative flex flex-col justify-between font-sans select-none student-portal-canvas bg-[#05112B] text-white overflow-x-hidden ${
+      mode === 'login' ? 'lg:h-screen lg:overflow-hidden' : 'min-h-[100dvh]'
     }`}>
       {/* AICS Northern Lights Aurora Gradient Background (Mobile View / Phones Only - lg:hidden) */}
       <div className="lg:hidden fixed inset-0 z-0 pointer-events-none overflow-hidden" aria-hidden="true">
@@ -1554,18 +1554,18 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                           soundFX.playToggleSwitch(true);
                           setActiveCameraModal('personal');
                         }}
-                        className="w-full h-36 rounded-2xl border-2 border-dashed border-cyan-500/50 hover:border-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 flex flex-col items-center justify-center text-center p-4 transition-all"
+                        className="w-full h-36 rounded-2xl border-2 border-dashed border-cyan-600/80 dark:border-cyan-400/80 bg-cyan-50/90 dark:bg-cyan-950/40 hover:bg-cyan-100 dark:hover:bg-cyan-900/50 flex flex-col items-center justify-center text-center p-4 transition-all shadow-sm cursor-pointer"
                       >
-                        <div className="w-10 h-10 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center animate-pulse border border-cyan-500/40">
-    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="3" />
-      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-    </svg>
-  </div>
-                        <span className="text-sm font-black text-cyan-300 mt-2">
+                        <div className="w-12 h-12 rounded-full bg-cyan-600 text-white dark:bg-cyan-400 dark:text-cyan-950 flex items-center justify-center shadow-md mb-1">
+                          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="3" />
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                          </svg>
+                        </div>
+                        <span className="text-sm font-black text-cyan-950 dark:text-cyan-200 mt-1">
                           {isTl ? 'Pindutin para sa Live Selfie (Bawal Upload)' : 'Tap for Live Face Selfie (Upload Disabled)'}
                         </span>
-                        <span className="text-[11px] text-slate-300 mt-1">
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 mt-0.5">
                           {isTl ? 'Kumuha ng malinaw na litrato ng iyong mukha' : 'Take a clear frontal photo of your face'}
                         </span>
                       </button>
