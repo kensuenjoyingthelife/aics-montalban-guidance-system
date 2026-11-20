@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { StudentPairInteractiveWing } from '../components/auth/StudentEncouragementWing';
 import { soundFX } from '../services/soundEngine';
+import { isCapacitorNativeApp } from '../services/devicePerformance';
 import { SkyThemePill, useTheme } from '../context/ThemeContext';
 import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
 import { CloudflareTurnstile } from '../components/auth/CloudflareTurnstile';
@@ -985,7 +986,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   onMouseLeave={() => setIsCarouselPaused(false)}
                   onTouchStart={() => setIsCarouselPaused(true)}
                   onTouchEnd={() => setIsCarouselPaused(false)}
-                  className="lg:hidden min-h-[50px] flex items-center justify-center px-4 py-2 rounded-2xl bg-blue-500/10 dark:bg-white/5 border border-blue-400/20 shadow-inner relative overflow-hidden transition-all"
+                  className="lg:hidden min-h-[40px] flex items-center justify-center px-2 relative overflow-hidden"
                   title="Anti-Bullying & Confidential Guidance Shield"
                 >
                   <AnimatePresence mode="wait">
@@ -1181,7 +1182,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               </div>
 
               {/* Download Android APK & PWA Install (Mobile Screen Only - hidden on desktop website) */}
-              <div className="lg:hidden pt-2 space-y-2">
+              <div className={`lg:hidden pt-2 space-y-2 ${isCapacitorNativeApp() ? '!hidden' : ''}`}>
                 {/* Mobile-Only PWA Home Screen Install Banner */}
                 <button
                   type="button"

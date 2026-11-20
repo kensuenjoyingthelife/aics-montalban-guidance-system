@@ -2691,3 +2691,89 @@ body.capacitor-mobile .xmas-glow,
 body.capacitor-mobile .animate-ping,
 body.capacitor-mobile .animate-bounce { animation: none !important; }
 body.capacitor-mobile .wg-blob { display: none !important; }
+
+/* ============================================================================
+   PHONE / TABLET PORTAL (under 1024px + the APK): calm "native app" look. 2026-11-20
+   Same content as the website, but flat: plain grouped background, white cards
+   without heavy shadows or tints, a real bottom tab bar. The website is not touched.
+   ============================================================================ */
+@media (max-width: 1023px) {
+  html:root:is(.dark, :not(.dark)) body .sd-canvas.student-portal-canvas { background: #F2F2F7 !important; background-attachment: scroll !important; }
+  html:root.dark body .sd-canvas.student-portal-canvas { background: #000000 !important; }
+
+  /* cards: flat white, no shadow / tint / glass */
+  html body .sd-canvas .lg-card:not(.lg-widget) {
+    background: #FFFFFF !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border-radius: 18px !important;
+  }
+  html.dark body .sd-canvas .lg-card:not(.lg-widget) { background: #1C1C1E !important; }
+  html body .sd-canvas .lg-card.lg-widget { box-shadow: none !important; border: 0 !important; border-radius: 22px !important; }
+
+  /* header: plain bar, no lights (one Christmas spot on phones: the Home card) */
+  html body .sd-canvas .sd-header {
+    background: rgba(242, 242, 247, 0.92) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.12) !important;
+  }
+  html.dark body .sd-canvas .sd-header { background: rgba(0, 0, 0, 0.92) !important; border-bottom-color: rgba(255, 255, 255, 0.12) !important; }
+  .sd-header .xmas-lights { display: none !important; }
+
+  /* the tab bar */
+  .m-tabbar { background: rgba(249, 249, 249, 0.96); border-top: 0.5px solid rgba(0, 0, 0, 0.16); }
+  html.dark .m-tabbar { background: rgba(22, 22, 24, 0.96); border-top-color: rgba(255, 255, 255, 0.14); }
+  .m-tabbar button { -webkit-tap-highlight-color: transparent; }
+  .m-tabbar button:active { opacity: 0.6; }
+}
+@media (max-width: 1023px) {
+  html body .sd-canvas::before, html body .sd-canvas::after { display: none !important; }
+  .sd-header button[aria-label="Quick Exit"] { box-shadow: none !important; border: 0 !important; }
+}
+@media (max-width: 1023px) {
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  /* report details as a plain list */
+  .rep-details { gap: 0 !important; border-radius: 14px; overflow: hidden; }
+  html body .sd-canvas .rep-details > div { background: transparent !important; border-radius: 0 !important; padding: 10px 2px !important; border-bottom: 0.5px solid rgba(60, 60, 67, 0.18); }
+  html body .sd-canvas .rep-details > div:last-child { border-bottom: 0; }
+  html.dark body .sd-canvas .rep-details > div { border-bottom-color: rgba(235, 235, 245, 0.16); }
+  /* chat: the conversation list is just a row of chips */
+  html body .sd-canvas .lg-card.m-plain { background: transparent !important; padding: 0 !important; }
+}
+@media (max-width: 1023px) {
+  /* phone login: one plain sheet, no double border, no heavy shadows */
+  html:root:is(.dark, :not(.dark)) body .cosmic-glass-card.login-glass {
+    border-width: 0 !important; box-shadow: none !important; border-radius: 26px !important;
+  }
+  html:root:not(.dark) body .cosmic-glass-card.login-glass { background: #FFFFFF !important; }
+  html:root.dark body .cosmic-glass-card.login-glass { background: #1C1C1E !important; }
+  html body .lg-signin-btn, html body .cosmic-glass-card button[type="submit"] { box-shadow: none !important; }
+  /* Me: grouped lists without shadows */
+  html body .sd-canvas .sd-list { box-shadow: none !important; border: 0 !important; }
+  /* Reports refresh button: flat */
+  html body .sd-canvas .lg-capsule { box-shadow: none !important; }
+}
+@media (max-width: 1023px) {
+  /* slim header like Instagram / Facebook */
+  html body .sd-canvas .sd-header > div { padding-top: 8px !important; padding-bottom: 8px !important; }
+  html body .sd-canvas .sd-header img { width: 36px !important; height: 36px !important; }
+}
+@media (max-width: 1023px) {
+  /* press feedback like a native app (opacity + tiny scale, 100 ms, no layout work) */
+  .m-press, .m-home button, html body .sd-canvas .lg-card button { transition: opacity 100ms ease, transform 100ms ease; -webkit-tap-highlight-color: transparent; }
+  .m-press:active, .m-home button:active { opacity: 0.72; transform: scale(0.985); }
+  /* skeleton placeholders while loading (static: no animation, no lag) */
+  .m-skel { background: rgba(120, 120, 128, 0.14); }
+  html.dark .m-skel { background: rgba(120, 120, 128, 0.24); }
+  /* Exit: calm gray (still always visible; Esc still works on keyboards) */
+  html body .sd-canvas .sd-header button[aria-label="Quick Exit"] { background: rgba(120, 120, 128, 0.16) !important; color: #1D1D1F !important; }
+  html.dark body .sd-canvas .sd-header button[aria-label="Quick Exit"] { background: rgba(120, 120, 128, 0.32) !important; color: #FFFFFF !important; }
+}
+@media (max-width: 1023px) {
+  /* Messenger-style conversation: exactly fills the space between the header and the tab bar */
+  .m-chat-open .m-conv { height: calc(100dvh - 120px - env(safe-area-inset-bottom)); }
+}
