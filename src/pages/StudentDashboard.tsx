@@ -1255,7 +1255,10 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
             <p className="text-[14px] sm:text-[18px] lg:text-[17px] xl:text-[22px] font-bold tracking-tight text-[#0F2557] dark:text-white uppercase lg:whitespace-nowrap truncate"><span className="sm:hidden">AICS Montalban</span><span className="hidden sm:inline">Asian Institute of Computer Studies</span></p>
             <p className="text-[11px] sm:text-[14px] text-[#1E469B] dark:text-[#9CC3FF] truncate">
               <span className="hidden sm:inline font-semibold uppercase">Montalban Branch</span>
-              <span className="text-[#6E6E73] dark:text-[#A1A1A6]"><span className="hidden sm:inline"> · </span><span className={titleInHeader && activeTab === 'home' ? 'hidden lg:inline' : ''}>{user.fullName}</span>{titleInHeader && activeTab === 'home' && <span className="lg:hidden font-semibold text-[#1D1D1F] dark:text-white">{greet}</span>}</span>
+              <span className="text-[#6E6E73] dark:text-[#A1A1A6]">
+                <span className="hidden sm:inline"> · Confidential Guidance Portal</span>
+                <span className="sm:hidden">Confidential Portal</span>
+              </span>
             </p>
           </div>
           {decor && (
@@ -1364,7 +1367,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
           <div className="m-home lg:hidden space-y-6 pt-1">
             {/* large title: shrinks into the header when it scrolls away */}
             <div ref={greetRef} className="px-1">
-              <p className="text-[28px] leading-tight font-bold tracking-tight lg-ink">{greet}{firstName ? `, ${firstName}` : ''}</p>
+              <p className="text-[28px] leading-tight font-bold tracking-tight lg-ink">{greet}</p>
               <div className="mt-0.5 flex items-center gap-2 flex-wrap">
                 <PhoneDateLine isTl={isTl} />
                 {decor && <PaskoChip isTl={isTl} className="!h-6 !px-2.5 !text-[12px]" />}
