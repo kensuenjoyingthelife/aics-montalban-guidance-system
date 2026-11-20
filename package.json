@@ -10,7 +10,8 @@
     "test:qa": "node scripts/qa-stage1.mjs",
     "tauri": "tauri",
     "desktop": "tauri dev",
-    "desktop:build": "tauri build"
+    "desktop:build": "tauri build",
+    "apk:sync": "vite build && node -e \"require('fs').readdirSync('dist').filter(f=>f.endsWith('.apk')).forEach(f=>require('fs').unlinkSync('dist/'+f))\" && cap sync android"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.2",
