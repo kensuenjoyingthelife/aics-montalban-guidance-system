@@ -49,7 +49,13 @@ export const App: React.FC = () => {
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
       isCapacitorNativeApp();
     if (isMobileDevice) return false;
-    return true;
+    // Student portal website: no opening animation either (it blocked the login for ~4 s). Staff desktop app only.
+    const staff =
+      '__TAURI_INTERNALS__' in window ||
+      '__TAURI__' in window ||
+      new URLSearchParams(window.location.search).get('mode') === 'staff' ||
+      window.location.hash.toLowerCase().includes('staff');
+    return staff;
   });
   // no right-click (except in text boxes) and no inspect shortcuts in real builds
   useEffect(() => installNoInspect(), []);
