@@ -97,27 +97,27 @@ interface StudentConcernHistory {
   reviewedAt: string;
 }
 
-/** Report categories (values stay the same as before; only the look changed). */
+/** Report categories (values stay the same for database compatibility, without exposing severity labels to students). */
 const CONCERN_GROUPS = [
-  { en: 'Serious', tl: 'Mabigat', tone: 'bg-[#FF3B30]/[0.12] text-[#FF3B30]', items: [
-    { v: 'Physical Bullying & Fighting', en: 'Bullying or fighting', tl: 'Bullying o away', icon: Hand },
-    { v: 'Cyberbullying & Online Harassment', en: 'Cyberbullying', tl: 'Cyberbullying', icon: Smartphone },
-    { v: 'Vaping / Smoking Infraction', en: 'Vaping or smoking', tl: 'Vape o sigarilyo', icon: Wind },
-    { v: 'Extortion & Coercion', en: 'Asking for money or threats', tl: 'Panghihingi ng pera o pananakot', icon: Coins },
-    { v: 'Weapons & Dangerous Contraband', en: 'Weapons or dangerous items', tl: 'Matalim o delikadong gamit', icon: Scissors },
-    { v: 'Vandalism & Campus Property Damage', en: 'Damage to school property', tl: 'Pagsira ng gamit ng school', icon: Hammer },
-    { v: 'Cutting Classes & Truancy', en: 'Cutting classes', tl: 'Pag-cutting', icon: DoorOpen },
-    { v: 'Forgery & Tampering of Records', en: 'Fake signature or records', tl: 'Pekeng pirma o records', icon: PenLine },
-  ] },
-  { en: 'Minor', tl: 'Magaan', tone: 'bg-[#FF9F0A]/[0.16] text-[#E08600]', items: [
-    { v: 'Habitual Tardiness', en: 'Always late', tl: 'Laging late', icon: AlarmClock },
-    { v: 'Improper Uniform & Dress Code', en: 'Uniform or dress code', tl: 'Uniporme o gupit', icon: Shirt },
-    { v: 'Improper Use of School ID', en: 'School ID', tl: 'School ID', icon: BadgeCheck },
-    { v: 'Classroom Disruption', en: 'Noise in class', tl: 'Ingay sa klase', icon: Volume2 },
-    { v: 'Littering on Campus', en: 'Littering', tl: 'Pagkakalat', icon: Trash2 },
-    { v: 'Unauthorized Device Use', en: 'Phone use in class', tl: 'Cellphone sa klase', icon: PhoneOff },
-    { v: 'Other Disciplinary Infraction', en: 'Something else', tl: 'Iba pa', icon: MoreHorizontal },
-  ] },
+  {
+    items: [
+      { v: 'Physical Bullying & Fighting', en: 'Bullying or fighting', tl: 'Bullying o away', icon: Hand },
+      { v: 'Cyberbullying & Online Harassment', en: 'Cyberbullying', tl: 'Cyberbullying', icon: Smartphone },
+      { v: 'Vaping / Smoking Infraction', en: 'Vaping or smoking', tl: 'Vape o sigarilyo', icon: Wind },
+      { v: 'Extortion & Coercion', en: 'Asking for money or threats', tl: 'Panghihingi ng pera o pananakot', icon: Coins },
+      { v: 'Weapons & Dangerous Contraband', en: 'Weapons or dangerous items', tl: 'Matalim o delikadong gamit', icon: Scissors },
+      { v: 'Vandalism & Campus Property Damage', en: 'Damage to school property', tl: 'Pagsira ng gamit ng school', icon: Hammer },
+      { v: 'Cutting Classes & Truancy', en: 'Cutting classes', tl: 'Pag-cutting', icon: DoorOpen },
+      { v: 'Forgery & Tampering of Records', en: 'Fake signature or records', tl: 'Pekeng pirma o records', icon: PenLine },
+      { v: 'Habitual Tardiness', en: 'Always late', tl: 'Laging late', icon: AlarmClock },
+      { v: 'Improper Uniform & Dress Code', en: 'Uniform or dress code', tl: 'Uniporme o gupit', icon: Shirt },
+      { v: 'Improper Use of School ID', en: 'School ID', tl: 'School ID', icon: BadgeCheck },
+      { v: 'Classroom Disruption', en: 'Noise in class', tl: 'Ingay sa klase', icon: Volume2 },
+      { v: 'Littering on Campus', en: 'Littering', tl: 'Pagkakalat', icon: Trash2 },
+      { v: 'Unauthorized Device Use', en: 'Phone use in class', tl: 'Cellphone sa klase', icon: PhoneOff },
+      { v: 'Other Disciplinary Infraction', en: 'Something else', tl: 'Iba pa', icon: MoreHorizontal },
+    ],
+  },
 ] as const;
 const fieldCls = 'w-full h-14 px-4 rounded-2xl cosmic-input text-[16px] font-medium focus:outline-none';
 const primaryBtn = 'btn-press h-14 px-7 rounded-full sd-primary text-white text-[16px] font-semibold inline-flex items-center justify-center gap-2 shadow-lg shadow-blue-900/25';
@@ -1798,23 +1798,21 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
             <form onSubmit={handleSubmitConcern} className="space-y-6">
               {formStep === 1 && (
                 <div className="space-y-6">
-                  {CONCERN_GROUPS.map((g) => (
-                    <div key={g.en}>
-                      <p className="mb-3 text-[15px] font-bold lg-ink-soft">{isTl ? g.tl : g.en}</p>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
-                        {g.items.map((c) => {
-                          const on = reportType === c.v;
-                          const Ic = c.icon;
-                          return (
-                            <button key={c.v} type="button" onClick={() => setReportType(c.v)} aria-pressed={on} className={`min-h-[96px] p-4 rounded-[22px] text-left flex flex-col justify-between gap-2 border-2 transition-colors duration-150 active:scale-[0.98] ${on ? 'border-[#0A84FF] bg-[#0A84FF]/[0.08] dark:bg-[#0A84FF]/20' : 'border-transparent lg-chip hover:border-[#0A84FF]/30'}`}>
-                              <span className={`w-10 h-10 rounded-full flex items-center justify-center ${on ? 'nav-c-home text-white' : g.tone}`}><Ic className="w-5 h-5" /></span>
-                              <span className="text-[15px] leading-snug font-semibold lg-ink">{isTl ? c.tl : c.en}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
+                  <div>
+                    <p className="mb-3 text-[15px] font-bold lg-ink-soft">{isTl ? 'Pumili ng uri ng insidente' : 'Select incident type'}</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
+                      {CONCERN_GROUPS[0].items.map((c) => {
+                        const on = reportType === c.v;
+                        const Ic = c.icon;
+                        return (
+                          <button key={c.v} type="button" onClick={() => setReportType(c.v)} aria-pressed={on} className={`min-h-[96px] p-4 rounded-[22px] text-left flex flex-col justify-between gap-2 border-2 transition-colors duration-150 active:scale-[0.98] ${on ? 'border-[#0A84FF] bg-[#0A84FF]/[0.08] dark:bg-[#0A84FF]/20' : 'border-transparent lg-chip hover:border-[#0A84FF]/30'}`}>
+                            <span className={`w-10 h-10 rounded-full flex items-center justify-center ${on ? 'nav-c-home text-white' : 'bg-blue-500/[0.12] text-blue-500 dark:text-blue-400'}`}><Ic className="w-5 h-5" /></span>
+                            <span className="text-[15px] leading-snug font-semibold lg-ink">{isTl ? c.tl : c.en}</span>
+                          </button>
+                        );
+                      })}
                     </div>
-                  ))}
+                  </div>
 
                   <div>
                     <p className="mb-3 text-[15px] font-bold lg-ink-soft">{isTl ? 'Para kanino ang report?' : 'Who is this report for?'}</p>
