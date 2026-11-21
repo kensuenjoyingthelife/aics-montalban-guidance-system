@@ -85,9 +85,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return;
     }
 
-    // website login: one clean crossfade of the whole screen (day <-> night picture), no circle
-    const crossfade = document.documentElement.classList.contains('theme-xfade');
-    if (!crossfade) spawnAuraRing(x, y);
+    // On desktop website (login & portal), we reveal via an expansive circular celestial sweep originating from the click coordinate.
+    // Low-end / mobile fallbacks retain lightweight transition.
+    spawnAuraRing(x, y);
 
     const maxRadius = Math.hypot(
       Math.max(x, window.innerWidth - x),
@@ -107,13 +107,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       transition.ready
         .then(() => {
-          if (crossfade) {
-            document.documentElement.animate(
-              { opacity: [0, 1] },
-              { duration: (navigator.hardwareConcurrency || 8) <= 4 ? 500 : 850, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', pseudoElement: '::view-transition-new(root)' }
-            );
-            return;
-          }
           document.documentElement.animate(
             {
               clipPath: [
@@ -122,7 +115,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               ],
             },
             {
-              duration: 440,
+              duration: 450,
               easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
               pseudoElement: '::view-transition-new(root)',
             }
@@ -147,7 +140,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           activeVT = null;
           root.classList.remove('theme-fading');
         }
-      }, crossfade ? 1600 : 1200);
+      }, 1000);
     } catch {
       setTheme(nextTheme);
       root.classList.remove('theme-fading');
@@ -180,7 +173,7 @@ export const SkyThemePill: React.FC = () => {
       onClick={(e) => toggleThemeWithAura(e)}
       aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
       title={isDark ? 'Switch to Day Mode' : 'Switch to Night Mode'}
-      className="btn-press relative inline-flex items-center w-[74px] h-[30px] rounded-full p-1 overflow-hidden border transition-colors select-none shadow-sm cursor-pointer"
+      className="btn-press relative inline-flex items-center w-[74px] h-[30px] rounded-full p-1 overflow-hidden border transition-[border-color,background-color] select-none shadow-sm cursor-pointer active:scale-[0.96]"
       style={{
         background: isDark
           ? 'linear-gradient(135deg, #071128 0%, #132E6B 100%)'
@@ -189,41 +182,51 @@ export const SkyThemePill: React.FC = () => {
       }}
     >
       {!isDark ? (
-        <span className="pointer-events-none absolute right-2 flex items-center gap-0.5 text-[10px] font-bold text-white/95">
-          <span>☁</span>
-          <span className="text-[8px] opacity-80">☁</span>
+        <span className="pointer-events-none absolute right-2 flex items-center gap-1 text-[11px] text-white/90">
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+          </svg>
         </span>
       ) : (
-        <span className="pointer-events-none absolute left-2.5 flex items-center gap-1 text-[10px] font-bold text-[#9BCBFF]">
-          <span>✦</span>
-          <span className="text-[8px] opacity-75">★</span>
+        <span className="pointer-events-none absolute left-2.5 flex items-center gap-1 text-[11px] text-[#9BCBFF]/90">
+          <svg className="w-3 h-3 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z" />
+          </svg>
         </span>
       )}
 
       <motion.span
         layout
-        transition={{ type: 'spring', stiffness: 520, damping: 32 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
         className={`z-10 flex items-center justify-center w-[22px] h-[22px] rounded-full shadow-md ${
           isDark
             ? 'ml-auto bg-[#0E1D3D] text-[#7CB8F7] ring-1 ring-[#7CB8F7]/60'
             : 'mr-auto bg-white text-[#F59E0B] ring-1 ring-white'
         }`}
       >
-        {isDark ? (
-          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-          </svg>
-        ) : (
-          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="12" cy="12" r="5" />
-            <path
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41"
-            />
-          </svg>
-        )}
+        <motion.div
+          key={isDark ? 'moon' : 'sun'}
+          initial={{ rotate: -45, scale: 0.85, opacity: 0 }}
+          animate={{ rotate: 0, scale: 1, opacity: 1 }}
+          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          className="flex items-center justify-center"
+        >
+          {isDark ? (
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+          ) : (
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="5" />
+              <path
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41"
+              />
+            </svg>
+          )}
+        </motion.div>
       </motion.span>
     </button>
   );

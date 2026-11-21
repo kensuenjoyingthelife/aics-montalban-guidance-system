@@ -2591,7 +2591,7 @@ html.lite.desk-app .fixed.inset-0 { -webkit-backdrop-filter: none !important; ba
    Day/night campus picture, Liquid Glass card, same sizes in light and dark.
    The phone / APK login keeps its own mobile design (none of this applies there).
    ============================================================================ */
-.login-bg { transition: opacity 900ms cubic-bezier(0.4, 0, 0.2, 1); will-change: opacity; }
+.login-bg { transition: opacity 450ms cubic-bezier(0.22, 1, 0.36, 1); will-change: opacity; }
 @media (prefers-reduced-motion: reduce) { .login-bg { transition: none; } }
 html.lite .login-bg { transition-duration: 0.01ms; }
 
