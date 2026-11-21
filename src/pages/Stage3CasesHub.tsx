@@ -1634,11 +1634,11 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       }
       msg = isNoShow
         ? isTl
-          ? `Naitala: hindi dumating ang magulang (ika-${currentCount} patawag). Susunod: pumili ng bagong araw.`
-          : `Saved: the parent did not come (summons ${currentCount}). Next: pick a new date.`
+          ? `Naitala: hindi dumalo ang magulang (ika-${currentCount} patawag). Susunod: pumili ng bagong araw.`
+          : `Saved: the parent did not attend (summons ${currentCount}). Next: pick a new date.`
         : isTl
         ? 'Naitala: dumating ang magulang. Susunod: Desisyon.'
-        : 'Saved: the parent came. Next: Decision.';
+        : 'Saved: the parent attended. Next: Decision.';
     } else if (a.kind === 'notified') {
       const isNoShow = a.conferenceStatus === 'No-Show';
       const activate = !isNoShow && c.sanctionStatus === 'Pending parent notice';
@@ -4600,7 +4600,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                           onTriggerToast(
                             on
                               ? isTl ? 'Hihintayin ang lahat ng magulang bago magdesisyon.' : 'Decisions now wait for every parent.'
-                              : isTl ? 'Pwede nang mauna ang estudyanteng dumating ang magulang.' : 'A student whose parent came can now go first.'
+                              : isTl ? 'Pwede nang mauna ang estudyanteng dumalo ang magulang.' : 'A student whose parent attended can now go first.'
                           );
                         }
                       : undefined

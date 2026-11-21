@@ -365,3 +365,19 @@ export async function makePinRecord(pin: string): Promise<{ salt: string; hash: 
 }
 /** fill {student} and {when} */
 export const fillTemplate = (tpl: string, student: string, when: string) => tpl.replace(/\{student\}/g, student).replace(/\{when\}/g, when);
+
+/** "Mon–Fri, 6:00 AM–4:00 PM" from Settings › Office hours (tl = "Lunes–Biyernes, …") */
+export function officeHoursText(tl = false, h: OfficeHours = getAppConfig().officeHours): string {
+  const ORDER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const TL: Record<string, string> = { Mon: 'Lunes', Tue: 'Martes', Wed: 'Miyerkules', Thu: 'Huwebes', Fri: 'Biyernes', Sat: 'Sabado', Sun: 'Linggo' };
+  const days = ORDER.filter((d) => h.days.includes(d));
+  const name = (d: string) => (tl ? TL[d] : d);
+  const idx = days.map((d) => ORDER.indexOf(d));
+  const run = idx.length > 1 && idx.every((v, i) => i === 0 || v === idx[i - 1] + 1);
+  const dayText = !days.length ? '' : run ? `${name(days[0])}–${name(days[days.length - 1])}` : days.map(name).join(', ');
+  const t = (s: string) => {
+    const [hh, mm] = s.split(':').map(Number);
+    return `${((hh + 11) % 12) + 1}:${String(mm || 0).padStart(2, '0')} ${hh < 12 ? 'AM' : 'PM'}`;
+  };
+  return `${dayText}, ${t(h.start)}–${t(h.end)}`;
+}

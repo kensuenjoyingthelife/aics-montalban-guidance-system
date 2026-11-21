@@ -4,6 +4,7 @@
 // - Deactivate fake account. Chat messages are kept forever (no edit/delete in the DB).
 // - Students never see case records; the chat shows the office as "Guidance Office".
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { officeHoursText, getAppConfig } from '../services/appConfig';
 import { createPortal } from 'react-dom';
 import type { CasePrefill } from './Stage3CasesHub';
 import { useLanguage } from '../context/LanguageContext';
@@ -128,7 +129,10 @@ function typeTheme(type: string): { tone: Tone; Icon: LucideIcon } {
 function officeOpenNow(): boolean {
   const d = new Date();
   const h = d.getHours() + d.getMinutes() / 60;
-  return isOfficeDay(todayISO()) && h >= 8 && h < 17;
+  // same hours as Settings › Office hours
+  const { start, end } = getAppConfig().officeHours;
+  const toH = (s: string) => { const [hh, mm] = s.split(":").map(Number); return hh + (mm || 0) / 60; };
+  return isOfficeDay(todayISO()) && h >= toH(start) && h < toH(end);
 }
 
 const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToast, onOpenCase, onCreateCase, onChanged, initialTab }) => {
@@ -269,7 +273,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
     const first = await sendMessage(
       c.id,
       'office',
-      'Natanggap na po ng Guidance Office ang iyong concern. Puwede kang mag-reply dito. Sasagot kami sa oras ng opisina (Lunes–Biyernes, 8:00 AM–5:00 PM).'
+      `Natanggap na po ng Guidance Office ang iyong concern. Puwede kang mag-reply dito. Sasagot kami sa oras ng opisina (${officeHoursText(true)}).`
     );
     if (first) setLastMsg((m) => new Map(m).set(c.id, first));
     void insertActivityLogInDb({
@@ -1425,7 +1429,7 @@ const ChatsView: React.FC<{
           <p className={`px-5 py-2 text-xs font-bold ${open ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300' : 'bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200'}`}>
             
             {open
-              ? isTl ? 'Bukas ang office ngayon (Lunes–Biyernes, 8:00 AM–5:00 PM). Makikita ng estudyante ang mensahe mo bilang "Guidance Office".' : 'The office is open now (Mon–Fri, 8:00 AM–5:00 PM). The student sees your messages as "Guidance Office".'
+              ? isTl ? `Bukas ang office ngayon (${officeHoursText(true)}). Makikita ng estudyante ang mensahe mo bilang "Guidance Office".` : `The office is open now (${officeHoursText(false)}). The student sees your messages as "Guidance Office".`
               : isTl ? 'Sarado ang office ngayon. Makikita ng estudyante na sasagot kayo sa susunod na oras ng opisina.' : 'The office is closed now. The student is told you will reply during office hours.'}
           </p>
           <div className="h-[calc(100dvh/var(--app-zoom,1)-430px)] min-h-[260px] overflow-y-auto px-5 py-4 space-y-2 bg-[#F5F5F7] dark:bg-[#1C1C1E]">

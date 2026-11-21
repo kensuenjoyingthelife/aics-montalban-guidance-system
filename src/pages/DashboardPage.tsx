@@ -3701,7 +3701,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                     en: 'Hold the parent conference',
                     tl: 'Gawin ang parent conference',
                     dEn: 'Schedule it and send the notice. On the day, press Attended or Did not attend. A follow-up is made when the parent does not come.',
-                    dTl: 'I-schedule at padalhan ng abiso. Sa araw mismo, pindutin ang Dumalo o Hindi dumalo. May follow-up kapag hindi dumating ang magulang.',
+                    dTl: 'I-schedule at padalhan ng abiso. Sa araw mismo, pindutin ang Dumalo o Hindi dumalo. May follow-up kapag hindi dumalo ang magulang.',
                     aEn: 'Open Parents',
                     aTl: 'Buksan ang Parents',
                     run: go(() => openParents()),

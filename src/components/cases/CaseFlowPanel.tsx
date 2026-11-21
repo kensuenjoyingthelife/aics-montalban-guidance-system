@@ -747,15 +747,15 @@ export const CaseFlowPanel: React.FC<{
                   <p className="flex items-start gap-2 text-[13px] text-amber-900 dark:text-amber-200">
                     <RotateCcw className="w-4 h-4 mt-0.5 shrink-0" aria-hidden />
                     {isTl
-                      ? `Hindi dumating ang magulang sa ika-${c.summonsCount || 1} patawag. Pumili ng bagong araw.`
-                      : `The parent did not come to summons ${c.summonsCount || 1}. Pick a new date.`}
+                      ? `Hindi dumalo ang magulang sa ika-${c.summonsCount || 1} patawag. Pumili ng bagong araw.`
+                      : `The parent did not attend summons ${c.summonsCount || 1}. Pick a new date.`}
                   </p>
                   {/* After repeated no-shows the case may not stay stuck forever (due process) */}
                   {(c.summonsCount || 0) >= maxSummons() && (
                     <div className="pt-2.5 border-t border-amber-200 dark:border-amber-900/50 space-y-2">
                       <label htmlFor="pwp-reason" className="block text-[12px] text-amber-900 dark:text-amber-200">
                         {isTl
-                          ? `${c.summonsCount} beses nang hindi dumating. Pwede nang tumuloy sa Desisyon nang wala ang magulang. Dahilan:`
+                          ? `${c.summonsCount} beses nang hindi dumalo. Pwede nang tumuloy sa Desisyon nang wala ang magulang. Dahilan:`
                           : `${c.summonsCount} summons without the parent. You may go on to the Decision without them. Reason:`}
                       </label>
                       <div className="flex flex-wrap items-center gap-2">
@@ -1262,8 +1262,8 @@ export const CaseFlowPanel: React.FC<{
               <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label={isTl ? 'Dumating ba ang magulang?' : 'Did the parent come?'}>
                 {(
                   [
-                    ['Attended', isTl ? 'Dumating' : 'Came', isTl ? 'Susunod: Desisyon' : 'Next: Decision', Check, 'emerald'],
-                    ['No-Show', isTl ? 'Hindi dumating' : 'Did not come', isTl ? 'Pipili ng bagong araw' : 'Pick a new date next', RotateCcw, 'amber'],
+                    ['Attended', isTl ? 'Dumalo' : 'Attended', isTl ? 'Susunod: Desisyon' : 'Next: Decision', Check, 'emerald'],
+                    ['No-Show', isTl ? 'Hindi dumalo' : 'Did not attend', isTl ? 'Pipili ng bagong araw' : 'Pick a new date next', RotateCcw, 'amber'],
                   ] as const
                 ).map(([k, title, sub, Ic, tone]) => {
                   const on = parentStatus === k;
@@ -1354,8 +1354,8 @@ export const CaseFlowPanel: React.FC<{
                         <div className="seg-track p-0.5 inline-flex" role="radiogroup" aria-label={g.studentName}>
                           {([
                             [null, isTl ? 'Hindi pa' : 'Not yet'],
-                            ['Attended', isTl ? 'Dumating' : 'Came'],
-                            ['No-Show', isTl ? 'Hindi dumating' : 'Did not come'],
+                            ['Attended', isTl ? 'Dumalo' : 'Attended'],
+                            ['No-Show', isTl ? 'Hindi dumalo' : 'Did not attend'],
                           ] as ['Attended' | 'No-Show' | null, string][]).map(([k, lbl]) => (
                             <button
                               key={String(k)}
@@ -1403,7 +1403,7 @@ export const CaseFlowPanel: React.FC<{
                   }}
                   className={`btn-lit ${parentStatus === 'Attended' ? 'btn-lit-green' : ''} h-11 px-6 text-[14px] font-semibold`}
                 >
-                  {parentStatus === 'No-Show' ? (isTl ? 'I-save: hindi dumating' : 'Save: did not come') : isTl ? 'I-save: dumating ang magulang' : 'Save: parent came'}
+                  {parentStatus === 'No-Show' ? (isTl ? 'I-save: hindi dumalo' : 'Save: did not attend') : isTl ? 'I-save: dumalo ang magulang' : 'Save: parent attended'}
                 </button>
               </div>
             </div>
@@ -1553,7 +1553,7 @@ export const CaseFlowPanel: React.FC<{
                       <span>
                         <span className="block text-[14px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Hintayin ang lahat bago magdesisyon' : 'Wait for everyone before deciding'}</span>
                         <span className="block text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">
-                          {isTl ? 'Kapag naka-off, pwedeng mauna ang estudyanteng dumating ang magulang.' : 'When off, a student whose parent came can go first.'}
+                          {isTl ? 'Kapag naka-off, pwedeng mauna ang estudyanteng dumalo ang magulang.' : 'When off, a student whose parent attended can go first.'}
                         </span>
                       </span>
                     </label>
@@ -1687,7 +1687,7 @@ export const CaseFlowPanel: React.FC<{
                     ? [[
                         isTl ? 'Magulang' : 'Parent',
                         c.proceededWithoutParent
-                          ? isTl ? 'Hindi dumating; tumuloy nang wala' : 'Did not come; went on without'
+                          ? isTl ? 'Hindi dumalo; tumuloy nang wala' : 'Did not attend; went on without'
                           : c.parentConferenceStatus === 'Attended'
                           ? isTl ? `Dumating${c.conferenceAttendedBy ? ` (${c.conferenceAttendedBy})` : ''}` : `Came${c.conferenceAttendedBy ? ` (${c.conferenceAttendedBy})` : ''}`
                           : '—',

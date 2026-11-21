@@ -7,6 +7,9 @@ import { isCapacitorNativeApp } from './devicePerformance';
  * - 0 KB external audio files, 0ms decoding delay, runs on native audio thread.
  * - Inspired by Creamy Mechanical Keyboards + PS5 / Futuristic Sci-Fi UI + macOS Audio.
  */
+/** true = no "success" sound after a save (errors still beep). Set to false to bring it back. */
+const QUIET_SAVES: boolean = true;
+
 class TechSoundEngine {
   private ctx: AudioContext | null = null;
   private enabled: boolean = true;
@@ -69,6 +72,8 @@ class TechSoundEngine {
    * Crisp, satisfying 2-note emerald check chime (G5 -> D6 with warm harmonic pop)
    */
   public playSuccessCheck(): void {
+    // Saves are quiet now (a sound on every save got tiring). Only errors make a sound.
+    if (QUIET_SAVES) return;
     const ctx = this.getContext();
     if (!ctx) return;
 
