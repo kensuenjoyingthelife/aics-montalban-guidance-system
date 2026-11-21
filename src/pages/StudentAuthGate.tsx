@@ -124,12 +124,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   // No sounds at all on Sign In, Forgot Password and Create Account (user, 2026-11-20): faster and quieter.
   // ...and no animations (user, 2026-11-20): html.auth-still stops CSS motion, MotionConfig stops Framer Motion
   useEffect(() => {
-    soundFX.muted = true;
-    document.documentElement.classList.add('auth-still');
-    return () => {
-      soundFX.muted = false;
-      document.documentElement.classList.remove('auth-still');
-    };
+    soundFX.muted = false;
   }, []);
   // big-screen-only decorations are not mounted at all on phones / the APK (they used to run hidden)
   const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width: 1024px)').matches && !document.body.classList.contains('capacitor-mobile'));

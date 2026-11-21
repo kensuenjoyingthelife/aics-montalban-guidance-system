@@ -58,9 +58,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const nextTheme: ThemeMode = theme === 'light' ? 'dark' : 'light';
     soundFX.playThemeAuraSweep(nextTheme === 'dark');
 
-    // Low tier check: Instant switch with zero delay on low-spec devices
+    // Low tier check: Instant switch on low-spec devices, but allow desktop website view to run the transition
+    const isDesktopWeb = window.innerWidth >= 1024 && !document.body.classList.contains('capacitor-mobile');
     const { isLowTier, prefersReducedMotion } = detectDeviceTier();
-    if (isLowTier || prefersReducedMotion || document.documentElement.classList.contains('auth-still')) {
+    if ((!isDesktopWeb && isLowTier) || prefersReducedMotion) {
       setTheme(nextTheme);
       return;
     }
