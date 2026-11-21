@@ -1471,19 +1471,17 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 </div>
                 <div>
                   <h3 className="text-sm font-bold tracking-tight text-white/90">Guidance Office</h3>
-                  <p className="text-[11px] text-white/60 font-medium">{isTl ? 'Lunes – Biyernes (8:00 AM – 5:00 PM)' : 'Mon – Fri · 8:00 AM – 5:00 PM'}</p>
+                  <p className="text-[11px] text-white/60 font-medium">{hoursText}</p>
                 </div>
               </div>
 
-              {/* Status Headline & next opening/closing detail */}
+              {/* Status Headline & next opening/closing detail (from real Guidance App settings) */}
               <div className="space-y-1">
                 <p className="text-[26px] font-black tracking-tight leading-none text-white">
                   {openNow ? (isTl ? 'Bukas ngayon' : 'Open now') : isTl ? 'Sarado ngayon' : 'Closed now'}
                 </p>
                 <p className="text-xs font-semibold text-sky-200/80">
-                  {openNow
-                    ? (isTl ? 'Sasara ng 5:00 PM' : 'Closes today at 5:00 PM')
-                    : (isTl ? 'Bubukas sa Lunes, 8:00 AM' : 'Opens Monday at 8:00 AM')}
+                  {officeNote}
                 </p>
                 {openNow && (
                   <div className="mt-2.5 h-1.5 rounded-full bg-white/15 overflow-hidden">
