@@ -2714,25 +2714,6 @@ html.aics-app-switched body {
   user-select: none !important;
   transition: filter 120ms ease-out !important;
 }
-html.aics-app-switched::after {
-  content: "AICS SafeZone · Confidential Protected";
-  position: fixed;
-  inset: 0;
-  z-index: 99999999;
-  background: rgba(3, 8, 22, 0.88);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #38bdf8;
-  font-family: system-ui, -apple-system, sans-serif;
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  pointer-events: none;
-}
 /* ============================================================================
    PHONE / TABLET PORTAL (under 1024px + the APK): calm "native app" look. 2026-11-20
    Same content as the website, but flat: plain grouped background, white cards

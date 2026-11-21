@@ -87,9 +87,9 @@ export function installNoInspect(): void {
   // (window blur triggers during touch scrolling, input focus, or iframe clicks, which causes scroll lag/hangs!)
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
-      document.documentElement.classList.add('aics-app-switched');
+      showFloatingPrivacyOverlay();
     } else {
-      document.documentElement.classList.remove('aics-app-switched');
+      hideFloatingPrivacyOverlay();
     }
   });
 
@@ -154,4 +154,50 @@ function triggerScreenshotShield(): void {
       shield.style.pointerEvents = 'none';
     }
   }, 1800);
+}
+
+let floatingOverlay: HTMLElement | null = null;
+
+function showFloatingPrivacyOverlay(): void {
+  document.documentElement.classList.add('aics-app-switched');
+  if (!floatingOverlay) {
+    floatingOverlay = document.createElement('div');
+    floatingOverlay.id = 'aics-floating-privacy-overlay';
+    floatingOverlay.style.position = 'fixed';
+    floatingOverlay.style.inset = '0';
+    floatingOverlay.style.zIndex = '99999999';
+    floatingOverlay.style.backgroundColor = 'rgba(4, 11, 28, 0.96)';
+    floatingOverlay.style.backdropFilter = 'blur(28px)';
+    floatingOverlay.style.display = 'flex';
+    floatingOverlay.style.flexDirection = 'column';
+    floatingOverlay.style.alignItems = 'center';
+    floatingOverlay.style.justifyContent = 'center';
+    floatingOverlay.style.color = '#ffffff';
+    floatingOverlay.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+    floatingOverlay.style.textAlign = 'center';
+    floatingOverlay.style.padding = '24px';
+    floatingOverlay.style.transition = 'opacity 120ms ease-out';
+    floatingOverlay.innerHTML = `
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;">
+        <div style="position: relative; width: 68px; height: 68px; border-radius: 50%; padding: 3px; background: rgba(56, 189, 248, 0.2); border: 1.5px solid rgba(56, 189, 248, 0.45); box-shadow: 0 0 24px rgba(56, 189, 248, 0.25);">
+          <img src="/aics-logo.jpg" alt="AICS" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+          <span style="font-size: 15px; font-weight: 800; color: #38bdf8; letter-spacing: 0.08em; text-transform: uppercase;">AICS SAFEZONE</span>
+          <span style="font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 0.05em; text-transform: uppercase;">CONFIDENTIAL PROTECTED</span>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(floatingOverlay);
+  }
+  floatingOverlay.style.opacity = '1';
+  floatingOverlay.style.pointerEvents = 'auto';
+}
+
+function hideFloatingPrivacyOverlay(): void {
+  document.documentElement.classList.remove('aics-app-switched');
+  if (floatingOverlay) {
+    floatingOverlay.style.opacity = '0';
+    floatingOverlay.style.pointerEvents = 'none';
+  }
 }
