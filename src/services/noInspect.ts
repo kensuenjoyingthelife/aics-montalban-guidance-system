@@ -83,23 +83,13 @@ export function installNoInspect(): void {
   });
 
   // 4. App-Switcher / Background Blur Privacy Shield (GCash / Banking App Style)
-  // When user swipes up to view app cards or switches apps, instantly blur & mask content
-  const handleAppBlur = () => {
-    document.documentElement.classList.add('aics-app-switched');
-  };
-
-  const handleAppFocus = () => {
-    document.documentElement.classList.remove('aics-app-switched');
-  };
-
-  window.addEventListener('blur', handleAppBlur);
-  window.addEventListener('focus', handleAppFocus);
-
+  // ONLY trigger on true document hidden (visibilitychange), NEVER on window blur
+  // (window blur triggers during touch scrolling, input focus, or iframe clicks, which causes scroll lag/hangs!)
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
-      handleAppBlur();
+      document.documentElement.classList.add('aics-app-switched');
     } else {
-      handleAppFocus();
+      document.documentElement.classList.remove('aics-app-switched');
     }
   });
 
