@@ -1210,33 +1210,33 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               </div>
 
               {/* Download Android APK & PWA Install (Mobile Screen Only - hidden on desktop website) */}
-              <div className={`lg:hidden pt-2 space-y-2 ${isCapacitorNativeApp() ? '!hidden' : ''}`}>
+              <div className={`lg:hidden pt-3 space-y-2.5 ${isCapacitorNativeApp() ? '!hidden' : ''}`}>
                 {/* Mobile-Only PWA Home Screen Install Banner */}
                 <button
                   type="button"
                   onClick={handleInstallApp}
-                  className="lg:hidden btn-press w-full p-2.5 rounded-xl bg-gradient-to-r from-sky-500/20 to-blue-600/25 hover:from-sky-500/30 hover:to-blue-600/35 border border-sky-400/40 flex items-center justify-between gap-3 text-left transition-all cursor-pointer"
+                  className="lg:hidden btn-press w-full p-3 rounded-2xl bg-gradient-to-r from-sky-500/15 via-blue-600/20 to-sky-500/15 hover:from-sky-500/25 hover:to-blue-600/30 border border-sky-400/35 dark:border-sky-400/25 flex items-center justify-between gap-3 text-left transition-all cursor-pointer shadow-sm"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-400 to-[#1E469B] flex items-center justify-center text-white shadow-sm shrink-0">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-400 to-[#1E469B] flex items-center justify-center text-white shadow-sm shrink-0">
                       <Download className="w-4 h-4 text-white" />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[11px] font-black text-sky-900 dark:text-sky-200 uppercase tracking-wider">
-                          {isTl ? 'I-install sa Home Screen' : 'Install Mobile App'}
+                        <span className="text-[12px] font-bold text-slate-900 dark:text-white tracking-tight">
+                          {isTl ? 'I-install sa Home Screen (Web App)' : 'Install to Home Screen (Web App)'}
                         </span>
-                        <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 font-extrabold border border-emerald-400/30">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-sky-500/15 text-sky-600 dark:text-sky-300 font-bold border border-sky-400/30">
                           PWA
                         </span>
                       </div>
-                      <p className="text-[10px] text-sky-800/90 dark:text-sky-300 font-bold uppercase tracking-wider truncate">
-                        ANDROID &amp; IOS
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-normal truncate">
+                        {isTl ? 'Para sa mabilis na pagbukas sa browser' : 'Add shortcut directly to your mobile screen'}
                       </p>
                     </div>
                   </div>
-                  <span className="text-[11px] font-black text-sky-600 dark:text-sky-300 shrink-0">
-                    {isTl ? 'I-install →' : 'Install →'}
+                  <span className="text-[12px] font-semibold text-sky-600 dark:text-sky-400 shrink-0">
+                    {isTl ? 'I-install' : 'Install'} →
                   </span>
                 </button>
 
@@ -1245,10 +1245,10 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   href="/aics-kalang-ba.apk"
                   download="AICS_Kalang_Ba.apk"
                   onClick={() => soundFX.playToggleSwitch(true)}
-                  className="btn-press w-full p-2.5 sm:p-3 rounded-xl bg-gradient-to-r from-sky-500/15 via-blue-600/20 to-indigo-600/20 hover:from-sky-500/25 hover:via-blue-600/30 hover:to-indigo-600/30 border border-sky-400/40 dark:border-sky-400/30 flex items-center justify-between gap-3 text-left transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md group"
+                  className="btn-press w-full p-3 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-teal-600/20 to-emerald-500/15 hover:from-emerald-500/25 hover:to-teal-600/30 border border-emerald-400/35 dark:border-emerald-400/25 flex items-center justify-between gap-3 text-left transition-all duration-200 cursor-pointer shadow-sm group"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-sky-600 flex items-center justify-center text-white shadow-sm shrink-0 group-hover:scale-105 transition-transform duration-200">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-white shadow-sm shrink-0 group-hover:scale-105 transition-transform duration-200">
                       <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="3" y="11" width="18" height="10" rx="2" />
                         <circle cx="12" cy="5" r="2" />
@@ -1259,19 +1259,19 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-black text-slate-800 dark:text-white tracking-wide">
-                          {isTl ? 'I-download ang Android APK' : 'Download Android APK'}
+                        <span className="text-[12px] font-bold text-slate-900 dark:text-white tracking-tight">
+                          {isTl ? 'I-download ang Android APK (Mobile App)' : 'Download Android APK (Mobile App)'}
                         </span>
-                        <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-extrabold border border-emerald-400/30">
-                          .apk
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-400/30">
+                          APK
                         </span>
                       </div>
-                      <p className="text-[10px] text-slate-600 dark:text-sky-200/70 font-medium truncate">
-                        {isTl ? 'Direktang installer para sa Android phones' : 'Official native Android package for students'}
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-normal truncate">
+                        {isTl ? 'Opisyal na offline-ready mobile application' : 'Official native Android installer package'}
                       </p>
                     </div>
                   </div>
-                  <span className="text-xs font-bold text-sky-600 dark:text-sky-300 flex items-center gap-1 shrink-0 group-hover:translate-x-0.5 transition-transform duration-200">
+                  <span className="text-[12px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 shrink-0 group-hover:translate-x-0.5 transition-transform duration-200">
                     <Download className="w-3.5 h-3.5" />
                   </span>
                 </a>
