@@ -82,16 +82,43 @@ export function installNoInspect(): void {
     }
   });
 
-  // 4. App-Switcher / Background Blur Privacy Shield (GCash / Banking App Style)
-  // ONLY trigger on true document hidden (visibilitychange), NEVER on window blur
-  // (window blur triggers during touch scrolling, input focus, or iframe clicks, which causes scroll lag/hangs!)
+  // 4. App-Switcher & Multi-Window Floating Privacy Shield (GCash / Banking App Style)
+  // Triggers when app is minimized, tab hidden, or window leaves active viewport
+  let hideTimer: number | null = null;
+
+  const triggerShield = () => {
+    if (hideTimer) window.clearTimeout(hideTimer);
+    showFloatingPrivacyOverlay();
+  };
+
+  const removeShield = () => {
+    // Graceful unmask on return
+    hideTimer = window.setTimeout(() => {
+      hideFloatingPrivacyOverlay();
+    }, 50);
+  };
+
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
-      showFloatingPrivacyOverlay();
+      triggerShield();
     } else {
-      hideFloatingPrivacyOverlay();
+      removeShield();
     }
   });
+
+  window.addEventListener('pagehide', triggerShield);
+  window.addEventListener('pageshow', removeShield);
+
+  // When user swipes up to recent apps on Android / iOS, window fires blur
+  // To avoid scroll interruption, we only trigger if window is truly blurred while document active element isn't an input
+  window.addEventListener('blur', () => {
+    const isEditing = document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
+    if (!isEditing) {
+      triggerShield();
+    }
+  });
+
+  window.addEventListener('focus', removeShield);
 
   // 5. Block Dragging of images, buttons, and logos to prevent unauthorized asset extraction
   window.addEventListener(

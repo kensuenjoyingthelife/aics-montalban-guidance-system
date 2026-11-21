@@ -1481,7 +1481,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   {openNow ? (isTl ? 'Bukas ngayon' : 'Open now') : isTl ? 'Sarado ngayon' : 'Closed now'}
                 </p>
                 <p className="text-xs font-semibold text-sky-200/80">
-                  {officeNote}
+                  {openNow
+                    ? (isTl ? 'Sasara ng 5:00 PM' : 'Closes today at 5:00 PM')
+                    : (isTl ? 'Bubukas sa Lunes, 8:00 AM' : 'Opens Monday at 8:00 AM')}
                 </p>
                 {openNow && (
                   <div className="mt-2.5 h-1.5 rounded-full bg-white/15 overflow-hidden">
