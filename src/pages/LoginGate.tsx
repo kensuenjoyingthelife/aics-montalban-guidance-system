@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { checkPinOnServer, startStaffLogin, verifyStaffCode } from '../services/staffAuth';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLanguage, LocaleSwitchPill } from '../context/LanguageContext';
@@ -67,10 +68,14 @@ interface LoginGateProps {
   onEnterDashboard: (staff: StaffDirectoryAccount) => void;
 }
 
+/** privacy: only the first 4 characters of the email are shown, the rest are * */
+const maskEmail = (e: string) => e.slice(0, 4) + '*'.repeat(Math.max(0, e.length - 4));
+
 export const LoginGate: React.FC<LoginGateProps> = ({
   onEnterDashboard,
 }) => {
   const { locale, t } = useLanguage();
+  const isTl = locale === 'tl';
 
   const [step, setStep] = useState<AuthStep>('pin');
 
@@ -112,7 +117,9 @@ export const LoginGate: React.FC<LoginGateProps> = ({
 
   // Step 2: Staff Email State (Empty by default for strict RA 10173 Data Privacy compliance!)
   const [email, setEmail] = useState<string>('');
+  const [showEmail, setShowEmail] = useState(false); // eye toggle: hidden (aics****) by default
   const [isSendingEmail, setIsSendingEmail] = useState<boolean>(false);
+  const [busyStep, setBusyStep] = useState<null | 'pin' | 'email' | 'otp'>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
 
   // Step 3: 6-Character OTP State
@@ -140,7 +147,8 @@ export const LoginGate: React.FC<LoginGateProps> = ({
   const handleVerifyPin = useCallback(
     async (code: string) => {
       if (Math.ceil((readLock().until - Date.now()) / 1000) > 0) return;
-      const pinErr = await checkPinOnServer(code);
+      setBusyStep('pin');
+      const pinErr = await checkPinOnServer(code).finally(() => setBusyStep(null));
       if (pinErr === 'network') {
         soundFX.playError();
         setPinError(locale === 'tl' ? 'Walang koneksyon sa server. I-check ang internet, tapos subukan ulit.' : 'Cannot reach the server. Check the internet, then try again.');
@@ -290,7 +298,8 @@ export const LoginGate: React.FC<LoginGateProps> = ({
     };
 
     try {
-      const result = await startStaffLogin(pinRef.current, cleanedEmail, locale);
+      setBusyStep('email');
+      const result = await startStaffLogin(pinRef.current, cleanedEmail, locale).finally(() => setBusyStep(null));
       if (!result.ok) {
         setIsSendingEmail(false);
         soundFX.playError();
@@ -330,7 +339,8 @@ export const LoginGate: React.FC<LoginGateProps> = ({
   const handleVerifyOtp = async (codeToVerify: string) => {
     if (!activeOtp) return;
     const clean = codeToVerify.trim().toUpperCase();
-    const res = await verifyStaffCode(activeOtp.email, clean);
+    setBusyStep('otp');
+    const res = await verifyStaffCode(activeOtp.email, clean).finally(() => setBusyStep(null));
 
     if (res.ok) {
       soundFX.playVerifiedFanfare();
@@ -495,6 +505,28 @@ export const LoginGate: React.FC<LoginGateProps> = ({
             <SkyThemePill />
           </div>
           <div className="relative z-10 w-full max-w-[440px] h-[590px] rounded-[32px] aics-true-glass overflow-hidden flex flex-col transition-all duration-300">
+            {busyStep && (
+              <div role="status" aria-live="polite" className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-white/80 dark:bg-[#0B1730]/85 backdrop-blur-md">
+                <span className="relative w-14 h-14" aria-hidden="true">
+                  <span className="absolute inset-0 rounded-full border-[3px] border-[#007AFF]/20" />
+                  <span className="absolute inset-0 rounded-full border-[3px] border-transparent border-t-[#007AFF] animate-spin" />
+                </span>
+                <div className="text-center px-8">
+                  <p className="text-[17px] font-semibold text-[#0B1F4D] dark:text-white">
+                    {busyStep === 'pin' ? (isTl ? 'Sinusuri ang PIN…' : 'Checking your PIN…') : busyStep === 'email' ? (isTl ? 'Ipinapadala ang code…' : 'Sending your code…') : isTl ? 'Sinusuri ang code…' : 'Checking your code…'}
+                  </p>
+                  <p className="mt-1 text-[13px] text-[#3B5284] dark:text-[#B8D0FA]">
+                    {busyStep === 'pin' ? (isTl ? 'Ligtas itong sinusuri sa server.' : 'It is checked safely on the server.') : busyStep === 'email' ? (isTl ? 'Ilang segundo lang. Tingnan ang Gmail mo.' : 'This takes a few seconds. Then check your Gmail.') : isTl ? 'Halos tapos na.' : 'Almost done.'}
+                  </p>
+                </div>
+                <ol className="flex items-center gap-2" aria-label={isTl ? 'Mga hakbang' : 'Steps'}>
+                  {(['pin', 'email', 'otp'] as const).map((s, i) => {
+                    const at = ['pin', 'email', 'otp'].indexOf(busyStep);
+                    return <li key={s} className={`h-1.5 rounded-full ${i < at ? 'w-6 bg-emerald-500' : i === at ? 'w-10 bg-[#007AFF]' : 'w-6 bg-black/10 dark:bg-white/15'}`} />;
+                  })}
+                </ol>
+              </div>
+            )}
             {/* Top Accent Rim */}
             <div className="h-1.5 w-full shrink-0 bg-gradient-to-r from-[#1E469B] via-[#4E92DF] to-[#7CB8F7]" />
 
@@ -671,18 +703,47 @@ export const LoginGate: React.FC<LoginGateProps> = ({
                           >
                             {t.emailLabel}
                           </label>
+                          <div className="relative">
                           <input
                             id="staff-email"
-                            type="email"
+                            type="text"
+                            inputMode="email"
                             autoComplete="email"
-                            value={email}
+                            spellCheck={false}
+                            autoCapitalize="none"
+                            value={showEmail ? email : maskEmail(email)}
+                            onSelect={(e) => {
+                              if (showEmail) return;
+                              // typing / erasing happens at the end only (the hidden part cannot be edited in the middle)
+                              const el = e.currentTarget;
+                              const end = el.value.length;
+                              if (el.selectionStart !== end || el.selectionEnd !== end) el.setSelectionRange(end, end);
+                            }}
                             onChange={(e) => {
-                              setEmail(e.target.value);
+                              const v = e.target.value;
+                              if (showEmail) { setEmail(v.replace(/\s/g, '')); setEmailError(null); return; }
+                              const shown = maskEmail(email);
+                              let next: string;
+                              if (!v.includes('*')) next = v; // first letters, paste or autofill: take it as typed
+                              else if (v.length > shown.length && v.startsWith(shown)) next = email + v.slice(shown.length);
+                              else if (v.length < shown.length) next = email.slice(0, v.length);
+                              else next = email;
+                              setEmail(next.replace(/\s/g, ''));
                               setEmailError(null);
                             }}
                             placeholder={t.emailPlaceholder}
-                            className="w-full px-4 py-3.5 rounded-2xl bg-white dark:bg-[#162C5C] border-2 border-[#B8CCF0] dark:border-[#355CA8] text-[#0B1F4D] dark:text-white placeholder-[#687FA8] dark:placeholder-[#89A7DF] text-sm sm:text-base font-bold focus:outline-none focus:border-[#1E469B] dark:focus:border-[#7CB8F7] shadow-sm"
+                            className="w-full pl-4 pr-14 py-3.5 rounded-2xl bg-white dark:bg-[#162C5C] border-2 border-[#B8CCF0] dark:border-[#355CA8] text-[#0B1F4D] dark:text-white placeholder-[#687FA8] dark:placeholder-[#89A7DF] text-sm sm:text-base font-bold focus:outline-none focus:border-[#1E469B] dark:focus:border-[#7CB8F7] shadow-sm"
                           />
+                          <button
+                            type="button"
+                            onClick={() => setShowEmail((s) => !s)}
+                            aria-label={showEmail ? (isTl ? 'Itago ang email' : 'Hide email') : (isTl ? 'Ipakita ang email' : 'Show email')}
+                            title={showEmail ? (isTl ? 'Itago ang email' : 'Hide email') : (isTl ? 'Ipakita ang email' : 'Show email')}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center text-[#687FA8] dark:text-[#89A7DF] hover:bg-black/[0.05] dark:hover:bg-white/10"
+                          >
+                            {showEmail ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
+                          </div>
                           {emailError && (
                             <p className="text-xs font-extrabold text-rose-600 dark:text-rose-300">
                               {emailError}
@@ -758,7 +819,7 @@ export const LoginGate: React.FC<LoginGateProps> = ({
                             {locale === 'tl' ? 'Naipadala sa Gmail:' : 'Sent to Gmail inbox:'}
                           </p>
                           <p className="text-xs sm:text-sm font-extrabold text-[#0B1F4D] dark:text-white truncate">
-                            {activeOtp.email} ·{' '}
+                            {maskEmail(activeOtp.email)} ·{' '}
                             <span className="font-mono text-[#1E469B] dark:text-[#7CB8F7]">
                               {formatTimeRemaining(otpSecondsLeft)}
                             </span>
@@ -834,36 +895,28 @@ export const LoginGate: React.FC<LoginGateProps> = ({
                       <div className="flex justify-center">
                         <div className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-500/25 border border-emerald-300 dark:border-emerald-400/50 text-emerald-800 dark:text-white text-xs sm:text-[13px] font-extrabold">
                           <span>✓</span>
-                          <span>{t.sessionReadyBadge}</span>
+                          <span>{isTl ? 'Pumasa sa lahat ng security check' : 'All security checks passed'}</span>
                         </div>
                       </div>
 
-                      <div className="p-5 rounded-2xl aics-card-tile space-y-2.5 text-left">
-                        <div>
-                          <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#3B5284] dark:text-[#B8D0FA]">
-                            {t.sessionUserLabel}
-                          </p>
-                          <p className="text-sm sm:text-base font-extrabold text-[#0B1F4D] dark:text-white truncate">
-                            {verifiedStaff.email}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#3B5284] dark:text-[#B8D0FA]">
-                            {t.sessionRoleLabel}
-                          </p>
-                          <p className="text-xs sm:text-sm font-bold text-[#1E469B] dark:text-[#8CC5FF]">
-                            {verifiedStaff.role}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#3B5284] dark:text-[#B8D0FA]">
-                            {t.sessionModeLabel}
-                          </p>
-                          <p className="text-xs font-extrabold text-emerald-700 dark:text-emerald-300">
-                            {t.sessionModeValue}
-                          </p>
-                        </div>
-                      </div>
+                      {/* the security steps this sign-in went through (no secrets, email partly hidden) */}
+                      <ol className="p-4 rounded-2xl aics-card-tile text-left space-y-2.5" aria-label={isTl ? 'Mga security check' : 'Security checks'}>
+                        {([
+                          [isTl ? '6-digit na PIN' : '6-digit PIN', isTl ? 'Sinuri sa server. May lockout kapag maraming mali.' : 'Checked on the server. Locks after too many wrong tries.'],
+                          [isTl ? '6-character na code sa email' : '6-character email code', `${isTl ? 'Ipinadala sa' : 'Sent to'} ${maskEmail(verifiedStaff.email)}`],
+                          [isTl ? 'Secure na session' : 'Secure session', isTl ? 'Ang staff account lang ang makakabasa ng mga record.' : 'Only a staff account can read the records.'],
+                          [isTl ? 'Auto sign-out' : 'Auto sign-out', isTl ? 'Magsa-sign out kapag 15 minutong walang galaw.' : 'Signs out after 15 minutes with no activity.'],
+                          [isTl ? 'Naitala sa Audit Trail' : 'Recorded in the Audit Trail', isTl ? 'Hindi mababago ang talaan ng bawat ginawa.' : 'Every action is logged and cannot be edited.'],
+                        ] as const).map(([a, b], i) => (
+                          <li key={i} className="flex items-start gap-2.5">
+                            <span className="mt-0.5 w-5 h-5 rounded-full bg-emerald-500 text-white text-[11px] font-black flex items-center justify-center shrink-0" aria-hidden>✓</span>
+                            <span className="min-w-0">
+                              <span className="block text-[13px] font-bold text-[#0B1F4D] dark:text-white">{a}</span>
+                              <span className="block text-[12px] text-[#3B5284] dark:text-[#B8D0FA] truncate">{b}</span>
+                            </span>
+                          </li>
+                        ))}
+                      </ol>
 
                       <button
                         type="button"

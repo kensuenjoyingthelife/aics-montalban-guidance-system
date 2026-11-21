@@ -32,7 +32,9 @@ import {
   DisciplineCaseRecord,
 } from '../data/stage3MockData';
 import { Stage3CasesHub, type Stage3SubTab, type CasePrefill } from './Stage3CasesHub';
-import { updateConcern } from '../services/concernsDb';
+import { updateConcern, fetchConcerns } from '../services/concernsDb';
+import { Sparkline } from '../components/ui/Charts';
+import { useTheme } from '../context/ThemeContext';
 import { ParentsHub, type ParentsTab } from './ParentsHub';
 import ConcernsHub from './ConcernsHub';
 import { HelpAssistant } from '../components/help/HelpAssistant';
@@ -213,6 +215,19 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const [syncState, setSyncState] = useState<'loading' | 'ok' | 'offline' | 'unsaved'>('loading');
 
   const [badgeCounts, setBadgeCounts] = useState<{ pendingConcerns: number }>({ pendingConcerns: 0 });
+  const { theme } = useTheme();
+  // Dashboard tile: student reports sent per day, last 7 days (counts only)
+  const [reports7, setReports7] = useState<number[]>([]);
+  useEffect(() => {
+    let alive = true;
+    void fetchConcerns().then((list) => {
+      if (!alive || !list) return;
+      const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - (6 - i)); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
+      const real = list.filter((c) => !c.practice);
+      setReports7(days.map((d) => real.filter((c) => { const x = new Date(c.createdAt); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}` === d; }).length));
+    });
+    return () => { alive = false; };
+  }, []);
   // every save carries the signed-in staff email → Audit Trail shows who made the change
   useEffect(() => setAuditActor(staffEmail), [staffEmail]);
 
@@ -1983,6 +1998,31 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             {/* ================================================================
                 TAB 1: TODAY'S ACTION QUEUE (APPOINTMENTS + FOLLOW-UP CALLS)
                 ================================================================ */}
+            {activeTab === 'queue' && (
+              <button
+                type="button"
+                data-reports-tile
+                onClick={() => helpGo('concerns')}
+                title={isTl ? 'Buksan ang Concerns' : 'Open Concerns'}
+                className="w-full mb-5 panel-2026 px-5 py-3 flex items-center gap-4 text-left hover:ring-2 hover:ring-[#007AFF]/30 transition-shadow"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">
+                    {isTl ? 'Mga report ng estudyante' : 'Student reports'} ·{' '}
+                    <span className={badgeCounts.pendingConcerns > 0 ? 'text-[#C2410C] dark:text-[#FDBA74]' : ''}>
+                      {badgeCounts.pendingConcerns} {isTl ? 'naghihintay ng review' : 'waiting for review'}
+                    </span>
+                  </p>
+                  <p className="text-xs text-[#6E6E73] dark:text-[#A1A1A6]">
+                    {isTl ? `${reports7.reduce((s, n) => s + n, 0)} naipadala sa nakaraang 7 araw (website + app)` : `${reports7.reduce((s, n) => s + n, 0)} sent in the last 7 days (website + app)`}
+                  </p>
+                </div>
+                <div className="w-40 shrink-0">
+                  <Sparkline values={reports7.length ? reports7 : [0, 0]} color={theme === 'dark' ? '#0A84FF' : '#007AFF'} ariaLabel={isTl ? 'Report bawat araw, 7 araw' : 'Reports per day, last 7 days'} />
+                </div>
+                <span className="text-xs font-semibold text-[#007AFF] dark:text-[#0A84FF] shrink-0">{isTl ? 'Buksan ›' : 'Open ›'}</span>
+              </button>
+            )}
             {activeTab === 'queue' && (
               <section className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-stretch">
                 {/* LEFT 7 COLS: Today's Parent Appointments */}

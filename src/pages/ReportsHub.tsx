@@ -28,18 +28,23 @@ import {
 } from '../services/reportStats';
 import { fetchHandoverNotes, fetchHandoverCounts, addHandoverNote, HandoverNote } from '../services/handoverDb';
 import { todayISO } from '../services/scheduling';
+import { useTheme } from '../context/ThemeContext';
 import { fetchContactLogsFromDb, type ContactLogEntry } from '../services/supabaseClient';
 import { summarizeContacts } from '../services/contactSummary';
-import { LineChart, GroupedBars, Legend } from '../components/ui/Charts';
+import { LineChart, GroupedBars, Legend, Sparkline } from '../components/ui/Charts';
+import { TrendCard } from '../components/reports/TrendCard';
+import { fetchConcerns, type ConcernItem } from '../services/concernsDb';
 import { useAppConfig } from '../services/appConfig';
 import { useConfirmChange } from '../components/ui/ConfirmChange';
 import { printIncidentSlip, printMonthlyExecutivePdf, printDepEdCompliancePdf } from '../services/documentPrintEngine';
 import { Download, Printer, FileText, BarChart3, TrendingUp, Calendar, Award, ShieldCheck } from 'lucide-react';
 
-const C_NEW = '#FF3B30';
-const C_SOLVED = '#34C759';
-const C_ATT = '#007AFF';
-const C_MISS = '#FF9500';
+// Chart colors, validated for color-blind readers (blue/green, blue/orange) with separate dark-mode steps.
+// (Red vs green failed the color-blind check, so "New cases" is blue.)
+const PAL = {
+  light: { NEW: '#007AFF', SOLVED: '#34C759', ATT: '#007AFF', MISS: '#FF9500' },
+  dark: { NEW: '#0A84FF', SOLVED: '#28B04E', ATT: '#0A84FF', MISS: '#D4740A' },
+};
 
 type Tab = 'overview' | 'stats' | 'repeat' | 'monthly' | 'handover';
 interface Props {
@@ -111,9 +116,36 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
   // ---------- overview: up or down compared with the period before ----------
   const [unit, setUnit] = useState<'month' | 'week'>('month');
   const series = useMemo(() => periodSeries(cases, appointments, unit, unit === 'month' ? 6 : 8, new Date()), [cases, appointments, unit]);
+  const { theme } = useTheme();
+  const { NEW: C_NEW, SOLVED: C_SOLVED, ATT: C_ATT, MISS: C_MISS } = PAL[theme === 'dark' ? 'dark' : 'light'];
   const cur = series[series.length - 1];
   const prev = series[series.length - 2];
   const openNow = useMemo(() => cases.filter((c) => c.status !== 'Resolved').length, [cases]);
+  // animated trend: when cases came in vs when they were solved
+  const newDates = useMemo(() => cases.map((c) => c.incidentDate).filter(Boolean), [cases]);
+  const solvedDates = useMemo(() => cases.filter((c) => c.status === 'Resolved').map((c) => c.closedAt || c.decidedAt || '').filter(Boolean), [cases]);
+  // student reports from the website + phone app (counts only, no names)
+  const [concerns, setConcerns] = useState<ConcernItem[]>([]);
+  useEffect(() => {
+    let alive = true;
+    void fetchConcerns().then((l) => { if (alive && l) setConcerns(l.filter((c) => !c.practice)); });
+    return () => { alive = false; };
+  }, []);
+  const repStats = useMemo(() => {
+    const reviewed = concerns.filter((c) => c.status !== 'Pending');
+    const accepted = reviewed.filter((c) => c.status === 'Approved').length;
+    const hrs = reviewed.filter((c) => c.reviewedAt && c.createdAt).map((c) => (new Date(c.reviewedAt).getTime() - new Date(c.createdAt).getTime()) / 36e5).filter((h) => h >= 0);
+    const avgH = hrs.length ? hrs.reduce((s, h) => s + h, 0) / hrs.length : null;
+    return {
+      total: concerns.length,
+      waiting: concerns.length - reviewed.length,
+      acceptedPct: reviewed.length ? Math.round((accepted / reviewed.length) * 100) : null,
+      avgReview: avgH === null ? null : avgH < 24 ? `${Math.max(1, Math.round(avgH))} ${isTl ? 'oras' : avgH < 1.5 ? 'hour' : 'hours'}` : `${Math.round(avgH / 24 * 10) / 10} ${isTl ? 'araw' : 'days'}`,
+      openChats: concerns.filter((c) => c.chatStatus === 'Open').length,
+      sent: concerns.map((c) => c.createdAt),
+      done: reviewed.map((c) => c.reviewedAt).filter(Boolean),
+    };
+  }, [concerns, isTl]);
 
   // ---------- statistics ----------
   const [kind, setKind] = useState<PeriodKind>('month');
@@ -373,6 +405,13 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                   <p className={`text-xs font-extrabold mt-1 ${good === null ? 'text-[#6E6E73] dark:text-[#A1A1A6]' : good ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`} data-change={ch.dir}>
                     {arrowText(ch.dir, ch.diff, ch.pct, suf, unit, isTl)}
                   </p>
+                  <div className="mt-2 -mx-1">
+                    <Sparkline
+                      ariaLabel={`${title}: ${isTl ? 'galaw sa mga nakaraang' : 'trend over the last'} ${series.length} ${unit === 'week' ? (isTl ? 'linggo' : 'weeks') : isTl ? 'buwan' : 'months'}`}
+                      color={id === 'new' ? C_NEW : id === 'att' ? C_ATT : C_SOLVED}
+                      values={series.map((p) => (id === 'new' ? p.newCases : id === 'solved' ? p.solved : id === 'att' ? p.attendanceRate : p.avgDaysToClose))}
+                    />
+                  </div>
                 </div>
               );
             })}
@@ -386,19 +425,48 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
             {trendSentence(cur.newCases, prev?.newCases ?? null, cur.solved, unit, isTl)}
           </p>
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <section className={`${card} p-5 space-y-2`}>
-              <h2 className={h2}>{isTl ? 'Bagong kaso vs naayos' : 'New cases vs cases solved'}</h2>
-              <p className={sub}>{isTl ? 'Kapag mas mataas ang berde kaysa pula, naaayos ang mga kaso nang mas mabilis kaysa dumarating.' : 'When green is above red, cases are being solved faster than new ones come in.'}</p>
-              <LineChart
-                ariaLabel={isTl ? 'Bagong kaso at naayos na kaso' : 'New cases and solved cases'}
-                labels={series.map((p) => p.label)}
-                series={[
-                  { name: isTl ? 'Bagong kaso' : 'New cases', color: C_NEW, values: series.map((p) => p.newCases) },
-                  { name: isTl ? 'Naayos' : 'Solved', color: C_SOLVED, values: series.map((p) => p.solved), area: true },
-                ]}
-              />
-              <Legend items={[{ color: C_NEW, label: isTl ? 'Bagong kaso' : 'New cases' }, { color: C_SOLVED, label: isTl ? 'Naayos na kaso' : 'Cases solved' }]} />
-            </section>
+            <TrendCard
+              className="xl:col-span-2"
+              isTl={isTl}
+              title={isTl ? 'Galaw ng mga kaso' : 'Case trend'}
+              subtitle={isTl ? 'Bawat bar = bagong kaso. Ang makinis na linya = average, para makita kung pataas o pababa.' : 'Each bar = new cases. The smooth line = the average, so you can see if it is going up or down.'}
+              aDates={newDates}
+              bDates={solvedDates}
+              aName={isTl ? 'Bagong kaso' : 'New cases'}
+              bName={isTl ? 'Naayos' : 'Solved'}
+              aColor={C_NEW}
+              bColor={C_SOLVED}
+              words={{ aUp: isTl ? 'Tumaas ang bagong kaso' : 'New cases went UP', aDown: isTl ? 'Bumaba ang bagong kaso' : 'New cases went DOWN', aSame: isTl ? 'Pareho ang bagong kaso' : 'New cases stayed the same', b: isTl ? 'ang naayos sa parehong panahon' : 'solved in the same time' }}
+            />
+            <TrendCard
+              className="xl:col-span-2"
+              isTl={isTl}
+              sampleSeed={21}
+              title={isTl ? 'Mga report ng estudyante (website + app)' : 'Student reports (website + app)'}
+              subtitle={isTl ? 'Ilan ang nagpapadala ng report at gaano kabilis natin sinusuri. Bilang lang, walang pangalan.' : 'How many reports students send and how fast we review them. Counts only, no names.'}
+              aDates={repStats.sent}
+              bDates={repStats.done}
+              aName={isTl ? 'Naipadala' : 'Sent'}
+              bName={isTl ? 'Nasuri' : 'Reviewed'}
+              aColor={C_ATT}
+              bColor={C_SOLVED}
+              words={{ aUp: isTl ? 'Dumami ang report' : 'Reports went UP', aDown: isTl ? 'Kumonti ang report' : 'Reports went DOWN', aSame: isTl ? 'Pareho ang dami ng report' : 'Reports stayed the same', b: isTl ? 'ang nasuri sa parehong panahon' : 'reviewed in the same time' }}
+            >
+              <div className="grid grid-cols-2 xl:grid-cols-4 gap-3" data-report-stats>
+                {([
+                  [String(repStats.total), isTl ? 'naipadala lahat' : 'sent in total', isTl ? `${repStats.waiting} naghihintay ng review` : `${repStats.waiting} waiting for review`],
+                  [repStats.acceptedPct === null ? '—' : `${repStats.acceptedPct}%`, isTl ? 'tinanggap' : 'accepted', isTl ? 'sa mga nasuri na' : 'of reports reviewed'],
+                  [repStats.avgReview ?? '—', isTl ? 'bago masuri' : 'to review', isTl ? 'average' : 'on average'],
+                  [String(repStats.openChats), isTl ? 'bukas na chat' : 'open chats', isTl ? 'kasama ang estudyante' : 'with students'],
+                ] as const).map(([v, l, s]) => (
+                  <div key={l} className="rounded-xl bg-black/[0.03] dark:bg-white/[0.05] p-3">
+                    <p className="text-2xl font-extrabold text-[#1D1D1F] dark:text-white tabular-nums">{v}</p>
+                    <p className="text-xs font-semibold text-[#1D1D1F] dark:text-white">{l}</p>
+                    <p className={sub}>{s}</p>
+                  </div>
+                ))}
+              </div>
+            </TrendCard>
             <section className={`${card} p-5 space-y-2`}>
               <h2 className={h2}>{isTl ? 'Dumalo ba ang mga magulang?' : 'Did parents attend?'}</h2>
               <p className={sub}>{isTl ? 'Bilang ng dumalo at hindi dumalo sa conference.' : 'Conferences parents attended and did not attend.'}</p>

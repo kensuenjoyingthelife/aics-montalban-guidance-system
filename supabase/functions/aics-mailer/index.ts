@@ -14,72 +14,66 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // @ts-nocheck templates copied from server/gmailSmtpMailer.mjs
 function buildAicsOtpEmailTemplate({ code, recipientEmail, locale = 'en' }) {
   const isTl = locale === 'tl';
-  const subject = isTl
-    ? `[AICS Montalban Guidance] ${code} ang iyong 6-Character Sign-In Code`
-    : `[AICS Montalban Guidance] ${code} is your 6-Character Sign-In Code`;
-
+  // privacy: the code is NOT in the subject or the inbox preview (phones show those on the lock screen)
+  const subject = isTl ? 'AICS Guidance: ang iyong sign-in code' : 'AICS Guidance: your sign-in code';
+  const masked = String(recipientEmail || '').slice(0, 4) + '****';
+  const preview = isTl ? 'Buksan para makita ang 6-character code. Mag-e-expire sa loob ng 5 minuto.' : 'Open to see your 6-character code. It expires in 5 minutes.';
   const text = isTl
-    ? `AICS MONTALBAN GUIDANCE OFFICE SYSTEM\n\nAng iyong 6-character sign-in verification code ay: ${code}\n\nMae-expire ang code na ito sa loob ng 5 minuto. Huwag ibahagi ang code na ito kahit kanino.`
-    : `AICS MONTALBAN GUIDANCE OFFICE SYSTEM\n\nYour 6-character sign-in verification code is: ${code}\n\nThis code expires in 5 minutes. Never share this code with anyone.`;
-
-  const html = `
-<!DOCTYPE html>
-<html>
+    ? `AICS Montalban Guidance Office\n\nAng iyong sign-in code: ${code}\n\nPara sa ${masked}. Mag-e-expire sa loob ng 5 minuto at isang beses lang magagamit.\nHuwag ibigay ang code na ito kahit kanino, kahit sa staff.\n\nKung hindi ikaw ang nag-sign in, huwag pansinin ang email na ito.`
+    : `AICS Montalban Guidance Office\n\nYour sign-in code: ${code}\n\nFor ${masked}. It expires in 5 minutes and works once.\nNever share this code with anyone, not even staff.\n\nIf you did not try to sign in, ignore this email.`;
+  const chars = String(code).split('').map((ch) => `<td class="dg" style="width:44px;height:56px;border-radius:12px;background:#F2F2F7;text-align:center;vertical-align:middle;font:700 28px -apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,Arial,sans-serif;color:#1D1D1F;">${ch}</td><td style="width:8px;"></td>`).join('');
+  const html = `<!DOCTYPE html>
+<html lang="${isTl ? 'fil' : 'en'}">
 <head>
-  <meta charset="utf-8" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>${subject}</title>
+<style>
+  :root { color-scheme: light dark; supported-color-schemes: light dark; }
+  @media (prefers-color-scheme: dark) {
+    .bg { background:#000000 !important; }
+    .card { background:#1C1C1E !important; border-color:#38383A !important; }
+    .ink { color:#F5F5F7 !important; }
+    .soft { color:#A1A1A6 !important; }
+    .dg { background:#2C2C2E !important; color:#FFFFFF !important; }
+    .line { border-color:#38383A !important; }
+  }
+  [data-ogsc] .bg { background:#000000 !important; }
+  [data-ogsc] .card { background:#1C1C1E !important; }
+  [data-ogsc] .ink { color:#F5F5F7 !important; }
+  [data-ogsc] .soft { color:#A1A1A6 !important; }
+  [data-ogsc] .dg { background:#2C2C2E !important; color:#FFFFFF !important; }
+</style>
 </head>
-<body style="margin:0;padding:24px;background-color:#F4F7FC;font-family:'Segoe UI',Inter,Arial,sans-serif;color:#0B1F4D;">
-  <div style="max-width:520px;margin:0 auto;background:#FFFFFF;border-radius:20px;overflow:hidden;border:1px solid #CFD9F2;box-shadow:0 12px 32px rgba(11,31,77,0.10);">
-    <div style="background:linear-gradient(135deg,#0B1F4D 0%,#1E469B 60%,#2557BE 100%);padding:24px 28px;text-align:center;color:#FFFFFF;">
-      <div style="font-size:11px;font-weight:800;letter-spacing:2px;color:#7CB8F7;text-transform:uppercase;">
-        ASIAN INSTITUTE OF COMPUTER STUDIES · MONTALBAN
-      </div>
-      <h1 style="margin:8px 0 4px;font-size:20px;font-weight:800;color:#FFFFFF;">
-        Guidance Office Security Gate
-      </h1>
-      <p style="margin:0;font-size:12px;color:#E4ECFC;">
-        Montalban Town Center, E. Rodriguez Highway, Rodriguez, Rizal
-      </p>
-    </div>
-
-    <div style="padding:28px;">
-      <p style="margin:0 0 12px;font-size:14px;font-weight:600;color:#0B1F4D;">
-        ${isTl ? 'Kumusta Guidance Staff,' : 'Hello Guidance Staff,'}
-      </p>
-      <p style="margin:0 0 20px;font-size:13.5px;line-height:1.6;color:#3B5284;">
-        ${
-          isTl
-            ? `May humiling ng sign-in code para sa <strong>${recipientEmail}</strong> sa AICS Montalban Guidance Office Management System. Gamitin ang 6-character verification code sa ibaba:`
-            : `A sign-in verification code was requested for <strong>${recipientEmail}</strong> on the AICS Montalban Guidance Office Management System. Enter the 6-character code below:`
-        }
-      </p>
-
-      <div style="background:#F4F7FC;border:2px dashed #4E92DF;border-radius:16px;padding:20px;text-align:center;margin:0 0 20px;">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#3B5284;margin-bottom:8px;">
-          ${isTl ? '6-CHARACTER VERIFICATION CODE' : '6-CHARACTER VERIFICATION CODE'}
-        </div>
-        <div style="font-family:'Courier New',monospace;font-size:34px;font-weight:800;letter-spacing:10px;color:#1E469B;">
-          ${code}
-        </div>
-      </div>
-
-      <p style="margin:0 0 8px;font-size:12px;color:#687FA8;text-align:center;">
-        ⏱ ${
-          isTl
-            ? 'Valid sa loob ng <strong>5 minuto</strong> · Single-use code · Hanggang 5 subok lang'
-            : 'Valid for <strong>5 minutes</strong> · Single-use code · Maximum 5 attempts'
-        }
-      </p>
-    </div>
-
-    <div style="background:#F4F7FC;padding:14px 24px;border-top:1px solid #E4ECFC;text-align:center;font-size:11px;color:#687FA8;">
-      Official Guidance System of AICS Montalban · Est. 1996 · Data Privacy Act (RA 10173) Protected
-    </div>
-  </div>
+<body class="bg" style="margin:0;padding:0;background:#F2F2F7;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${preview}&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="bg" style="background:#F2F2F7;">
+<tr><td align="center" style="padding:32px 16px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="max-width:440px;background:#FFFFFF;border:1px solid #E5E5EA;border-radius:22px;">
+  <tr><td style="padding:32px 28px 8px;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,Arial,sans-serif;">
+    <div style="width:56px;height:56px;margin:0 auto;border-radius:16px;background:#007AFF;color:#FFFFFF;font:800 16px/56px -apple-system,Segoe UI,Arial,sans-serif;letter-spacing:.04em;">AICS</div>
+    <p class="soft" style="margin:18px 0 4px;font-size:13px;font-weight:600;letter-spacing:.02em;color:#6E6E73;">AICS MONTALBAN · GUIDANCE OFFICE</p>
+    <h1 class="ink" style="margin:0;font-size:24px;line-height:1.25;font-weight:700;color:#1D1D1F;">${isTl ? 'Ang iyong sign-in code' : 'Your sign-in code'}</h1>
+    <p class="soft" style="margin:10px 0 0;font-size:15px;line-height:1.45;color:#6E6E73;">${isTl ? `Para sa ${masked}. Ilagay ito sa Guidance desktop app.` : `For ${masked}. Type it into the Guidance desktop app.`}</p>
+  </td></tr>
+  <tr><td align="center" style="padding:22px 20px 6px;">
+    <table role="presentation" cellpadding="0" cellspacing="0"><tr>${chars}</tr></table>
+  </td></tr>
+  <tr><td style="padding:14px 28px 26px;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,Arial,sans-serif;">
+    <p class="soft" style="margin:0;font-size:14px;color:#6E6E73;">${isTl ? 'Mag-e-expire sa loob ng <b>5 minuto</b> · isang beses lang magagamit' : 'Expires in <b>5 minutes</b> · works once'}</p>
+  </td></tr>
+  <tr><td class="line" style="border-top:1px solid #E5E5EA;padding:18px 28px 26px;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,Arial,sans-serif;">
+    <p class="ink" style="margin:0 0 6px;font-size:14px;font-weight:600;color:#1D1D1F;">${isTl ? 'Huwag ibigay ang code na ito kahit kanino.' : 'Never share this code with anyone.'}</p>
+    <p class="soft" style="margin:0;font-size:13px;line-height:1.5;color:#6E6E73;">${isTl ? 'Hindi ito hihingin ng staff o ng school. Kung hindi ikaw ang nag-sign in, huwag pansinin ang email na ito.' : 'The school and staff will never ask for it. If you did not try to sign in, you can ignore this email.'}</p>
+  </td></tr>
+  </table>
+  <p class="soft" style="margin:16px 0 0;font:12px -apple-system,Segoe UI,Arial,sans-serif;color:#8E8E93;">Asian Institute of Computer Studies · Montalban · RA 10173</p>
+</td></tr>
+</table>
 </body>
-</html>
-  `.trim();
-
+</html>`;
   return { subject, text, html };
 }
 
