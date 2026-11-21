@@ -45,11 +45,22 @@ export function installNoInspect(): void {
       const k = e.key.toLowerCase();
       const ctrl = e.ctrlKey || e.metaKey;
 
-      // Blocked keys: F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U, Ctrl+S
+      // Blocked keys: F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U, Ctrl+S, PrintScreen
       const isF12 = e.key === 'F12' || k === 'f12';
       const isInspect = ctrl && e.shiftKey && (k === 'i' || k === 'j' || k === 'c');
       const isViewSource = ctrl && k === 'u';
       const isSavePage = ctrl && k === 's';
+      const isPrintScreen = e.key === 'PrintScreen' || k === 'printscreen';
+
+      if (isPrintScreen) {
+        // Trigger instant blackout shield & clear clipboard
+        triggerScreenshotShield();
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText('');
+          }
+        } catch {}
+      }
 
       if (isF12 || isInspect || isViewSource || isSavePage) {
         e.preventDefault();
@@ -59,7 +70,19 @@ export function installNoInspect(): void {
     { capture: true }
   );
 
-  // 3. Block Dragging of images, buttons, and logos to prevent unauthorized asset extraction
+  // 3. Print Screen Keyup & Window Blur Shield (Anti-Snipping Tool Protection)
+  window.addEventListener('keyup', (e) => {
+    if (e.key === 'PrintScreen' || e.key.toLowerCase() === 'printscreen') {
+      triggerScreenshotShield();
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText('');
+        }
+      } catch {}
+    }
+  });
+
+  // 4. Block Dragging of images, buttons, and logos to prevent unauthorized asset extraction
   window.addEventListener(
     'dragstart',
     (e) => {
@@ -70,4 +93,54 @@ export function installNoInspect(): void {
     },
     { capture: true }
   );
+}
+
+let shieldTimeout: number | null = null;
+
+/**
+ * Instantly blacks out / heavily blurs the confidential screen when a screenshot or print is attempted
+ */
+function triggerScreenshotShield(): void {
+  let shield = document.getElementById('aics-screenshot-shield');
+  if (!shield) {
+    shield = document.createElement('div');
+    shield.id = 'aics-screenshot-shield';
+    shield.style.position = 'fixed';
+    shield.style.inset = '0';
+    shield.style.zIndex = '9999999';
+    shield.style.backgroundColor = '#030816';
+    shield.style.display = 'flex';
+    shield.style.flexDirection = 'column';
+    shield.style.alignItems = 'center';
+    shield.style.justifyContent = 'center';
+    shield.style.color = '#ffffff';
+    shield.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+    shield.style.textAlign = 'center';
+    shield.style.padding = '24px';
+    shield.innerHTML = `
+      <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 28px; max-width: 440px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);">
+        <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+          <svg style="width: 28px; height: 28px; color: #f87171;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 800; margin: 0 0 8px 0; color: #ffffff; letter-spacing: -0.01em;">Confidential Privacy Shield</h3>
+        <p style="font-size: 13px; color: #94a3b8; line-height: 1.5; margin: 0 0 16px 0;">Screen capture and recording are restricted to protect student identity and confidential disclosures under RA 10173 & DepEd Child Protection Policy.</p>
+        <span style="font-size: 11px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(56,189,248,0.12); padding: 4px 12px; border-radius: 9999px; border: 1px solid rgba(56,189,248,0.25);">AICS SafeZone Protected</span>
+      </div>
+    `;
+    document.body.appendChild(shield);
+  }
+
+  shield.style.opacity = '1';
+  shield.style.pointerEvents = 'auto';
+
+  if (shieldTimeout) window.clearTimeout(shieldTimeout);
+  shieldTimeout = window.setTimeout(() => {
+    if (shield) {
+      shield.style.opacity = '0';
+      shield.style.pointerEvents = 'none';
+    }
+  }, 1800);
 }
