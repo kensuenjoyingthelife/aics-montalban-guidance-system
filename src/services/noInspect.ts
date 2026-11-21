@@ -82,7 +82,28 @@ export function installNoInspect(): void {
     }
   });
 
-  // 4. Block Dragging of images, buttons, and logos to prevent unauthorized asset extraction
+  // 4. App-Switcher / Background Blur Privacy Shield (GCash / Banking App Style)
+  // When user swipes up to view app cards or switches apps, instantly blur & mask content
+  const handleAppBlur = () => {
+    document.documentElement.classList.add('aics-app-switched');
+  };
+
+  const handleAppFocus = () => {
+    document.documentElement.classList.remove('aics-app-switched');
+  };
+
+  window.addEventListener('blur', handleAppBlur);
+  window.addEventListener('focus', handleAppFocus);
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      handleAppBlur();
+    } else {
+      handleAppFocus();
+    }
+  });
+
+  // 5. Block Dragging of images, buttons, and logos to prevent unauthorized asset extraction
   window.addEventListener(
     'dragstart',
     (e) => {

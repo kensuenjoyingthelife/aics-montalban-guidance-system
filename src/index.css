@@ -2706,6 +2706,33 @@ body.capacitor-mobile .wg-blob { display: none !important; }
   transition: opacity 200ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity;
 }
+
+/* GCash-style Privacy Shield when app is in floating window / app-switcher */
+html.aics-app-switched body {
+  filter: blur(28px) grayscale(90%) brightness(0.6) !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  transition: filter 120ms ease-out !important;
+}
+html.aics-app-switched::after {
+  content: "AICS SafeZone · Confidential Protected";
+  position: fixed;
+  inset: 0;
+  z-index: 99999999;
+  background: rgba(3, 8, 22, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #38bdf8;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
 /* ============================================================================
    PHONE / TABLET PORTAL (under 1024px + the APK): calm "native app" look. 2026-11-20
    Same content as the website, but flat: plain grouped background, white cards
