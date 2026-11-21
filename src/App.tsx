@@ -22,6 +22,7 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage').then((m) => ({ 
 const GuidanceChatHead = lazy(() => import('./components/GuidanceChatHead').then((m) => ({ default: m.GuidanceChatHead })));
 const StudentDashboard = lazy(() => import('./pages/StudentDashboard').then((m) => ({ default: m.StudentDashboard })));
 const StudentPinLockScreen = lazy(() => import('./components/student/StudentPinLockScreen').then((m) => ({ default: m.StudentPinLockScreen })));
+const MonitoringApp = lazy(() => import('./pages/MonitoringApp'));
 // while a part loads: the plain app background (no flash, no spinner jump)
 const PartLoading = () => <div className="min-h-screen w-full bg-[#05112B]" aria-busy="true" />;
 
@@ -55,7 +56,13 @@ export const App: React.FC = () => {
       '__TAURI__' in window ||
       new URLSearchParams(window.location.search).get('mode') === 'staff' ||
       window.location.hash.toLowerCase().includes('staff');
-    return staff;
+    if (!staff) return false;
+    // once per app run: a reload (Ctrl+R) goes straight in
+    try {
+      if (sessionStorage.getItem('aics_splash_seen') === '1') return false;
+      sessionStorage.setItem('aics_splash_seen', '1');
+    } catch { /* storage blocked: just show it */ }
+    return true;
   });
   // no right-click (except in text boxes) and no inspect shortcuts in real builds
   useEffect(() => installNoInspect(), []);
@@ -77,6 +84,15 @@ export const App: React.FC = () => {
     const hash = window.location.hash.toLowerCase();
     const queryMode = urlParams.get('mode');
     return isTauri || queryMode === 'staff' || hash.includes('staff');
+  }, []);
+
+  // Monitoring Mode check (?mode=monitor or #monitor)
+  const isMonitoringApp = useMemo<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const urlParams = new URLSearchParams(window.location.search);
+    const hash = window.location.hash.toLowerCase();
+    const queryMode = urlParams.get('mode');
+    return queryMode === 'monitor' || hash.includes('monitor') || queryMode === 'monitoring' || hash.includes('monitoring');
   }, []);
 
   // Staff Session (Guidance Desktop App only)
@@ -144,7 +160,15 @@ export const App: React.FC = () => {
 
             <Suspense fallback={<PartLoading />}>
             {/* ROUTING BY APPLICATION TARGET (STRICTLY SEPARATED) */}
-            {isStaffApp ? (
+            {isMonitoringApp ? (
+              /* ====================================================
+                 STANDALONE GUIDANCE MONITORING APP (khentandrei)
+                 ==================================================== */
+              <MonitoringApp onExit={() => {
+                window.location.search = '';
+                window.location.hash = '';
+              }} />
+            ) : isStaffApp ? (
               /* ====================================================
                  GUIDANCE OFFICE STAFF DESKTOP APP
                  ==================================================== */

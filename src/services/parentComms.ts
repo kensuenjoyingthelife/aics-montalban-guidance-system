@@ -24,10 +24,10 @@ export const startTime = (timeSlot: string) => timeSlot.split('–')[0].trim();
 
 const DAY_SHORT = ['Lin', 'Lun', 'Mar', 'Miy', 'Huw', 'Biy', 'Sab'];
 const MON_SHORT = ['Ene', 'Peb', 'Mar', 'Abr', 'May', 'Hun', 'Hul', 'Ago', 'Set', 'Okt', 'Nob', 'Dis'];
-/** "Biy Nob 14, 9:00 AM" — short so the whole SMS fits in 160 letters */
+/** "Biy, Nobyembre 14, 9:00 AM" — only the day is short (the month stays clear for parents) */
 export function whenShort(iso: string, timeSlot: string): string {
   const d = parseISO(iso);
-  return `${DAY_SHORT[d.getDay()]} ${MON_SHORT[d.getMonth()]} ${d.getDate()}, ${startTime(timeSlot).replace(/^0/, '')}`;
+  return `${DAY_SHORT[d.getDay()]}, ${MONTHS_TL[d.getMonth()]} ${d.getDate()}, ${startTime(timeSlot).replace(/^0/, '')}`;
 }
 
 /** Filipino SMS — date and time only (place = the Guidance Office). No offense, no case details. Aim: 1 SMS. */
@@ -87,10 +87,16 @@ export async function sendParentMessage(p: {
   caseCode?: string;
   appointmentCode?: string;
   scheduleText?: string;
+  /** false = do not open the "text from your own phone" pop-up (automatic reminders) */
+  phoneFallback?: boolean;
 }): Promise<SendResult> {
   const wantSms = p.channel !== 'gmail';
   const wantEmail = p.channel !== 'sms' && !!p.email;
   const result: SendResult = { anyDelivered: false, smsFailed: false, summaryEn: '', summaryTl: '' };
+  // a send the staff started: show the "Sending to parent…" screen right away, then the result
+  const showFlow = p.phoneFallback !== false && typeof window !== 'undefined';
+  const flowId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  if (showFlow) window.dispatchEvent(new CustomEvent(SMS_SEND_START_EVENT, { detail: { id: flowId } }));
 
   if (wantSms && !smsApiAvailable) {
     result.sms = { ok: false, code: 'not_configured', error: 'SMS is not set up yet.' };
@@ -160,5 +166,44 @@ export async function sendParentMessage(p: {
       deliveryStatus: result.email?.ok ? 'Sent' : 'Failed',
       error: result.email?.ok ? undefined : result.email?.error,
     });
+  // SMS did not go out (provider still waiting for telco approval, or down) and the number is fine:
+  // open the "text it from your own phone" helper (QR) — PhilSMS stays the main way.
+  if (showFlow) {
+    const detail: SmsFallbackDetail = {
+      ...base,
+      id: flowId,
+      phone: p.phone,
+      smsText: toSmsSafe(p.message),
+      smsOk: wantSms ? !!result.sms?.ok : null,
+      smsCode: result.sms?.code || '',
+      email: wantEmail ? p.email : '',
+      emailOk: wantEmail ? !!result.email?.ok : null,
+    };
+    window.dispatchEvent(new CustomEvent(SMS_FALLBACK_EVENT, { detail }));
+  }
   return result;
+}
+
+export const SMS_FALLBACK_EVENT = 'aics:sms-fallback';
+export const SMS_SEND_START_EVENT = 'aics:sms-send-start';
+export interface SmsFallbackDetail {
+  /** matches the "send started" event */
+  id: string;
+  /** null = SMS not used, true = PhilSMS accepted it, false = did not go out */
+  smsOk: boolean | null;
+  smsCode: string;
+  studentName: string;
+  gradeSection: string;
+  parentName: string;
+  message: string;
+  kind: MessageKind;
+  caseCode?: string;
+  appointmentCode?: string;
+  phone: string;
+  /** exactly the text the SMS would have had */
+  smsText: string;
+  /** '' = no email was sent */
+  email: string;
+  /** null = email not used, true/false = what Gmail said */
+  emailOk: boolean | null;
 }

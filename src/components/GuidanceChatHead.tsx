@@ -782,6 +782,7 @@ export const GuidanceChatHead: React.FC = () => {
 
       {/* Docked Messenger-Style Chat Head Bubble (Anchored cleanly at 4 corners: left, right, up, down) */}
       <div
+        data-chat-ball
         ref={ballRef}
         onClick={() => {
           if (!ballDragRef.current.hasMoved) {

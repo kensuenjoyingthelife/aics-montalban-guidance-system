@@ -1751,9 +1751,12 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       status: c.status,
     };
     const undoPatch = Object.fromEntries(Object.keys(db).filter((k) => k in back).map((k) => [k, back[k]]));
-    onTriggerToast(msg, async () => {
-      if (await updateCaseFlowInDb(c.caseCode, undoPatch)) setCases((prev) => prev.map((x) => (x.caseCode === c.caseCode ? c : x)));
-    });
+    // Due process steps: no "Saved · Next" pop-up (the panel itself moves to the next step).
+    // Only closing the case says so, because the case leaves this screen.
+    if (a.kind === 'close')
+      onTriggerToast(msg, async () => {
+        if (await updateCaseFlowInDb(c.caseCode, undoPatch)) setCases((prev) => prev.map((x) => (x.caseCode === c.caseCode ? c : x)));
+      });
   };
 
   const startCaseEdit = () => {

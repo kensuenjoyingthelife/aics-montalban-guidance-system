@@ -7,9 +7,9 @@ import { localISODate } from '../data/dashboardMockData';
 // These follow Settings › Office days & hours (configureSchedule). Defaults = the old fixed values.
 export let SLOT_MINUTES = 45;
 /** start times in minutes after midnight */
-export let SLOT_STARTS: number[] = [8 * 60, 8 * 60 + 45, 9 * 60 + 30, 10 * 60 + 15, 11 * 60, 13 * 60, 13 * 60 + 45, 14 * 60 + 30, 15 * 60 + 15];
+export let SLOT_STARTS: number[] = [6 * 60, 6 * 60 + 45, 7 * 60 + 30, 8 * 60 + 15, 9 * 60, 9 * 60 + 45, 10 * 60 + 30, 13 * 60, 13 * 60 + 45, 14 * 60 + 30, 15 * 60 + 15];
 export const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
-export let OFFICE_DAYS = ['Mon', 'Tue', 'Wed', 'Thu'];
+export let OFFICE_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 let CLOSED_DAYS = new Set<string>();
 
 const toMin = (hhmm: string, fallback: number) => {
@@ -137,20 +137,21 @@ export const byDateTime = (a: ParentAppointmentItem, b: ParentAppointmentItem) =
   a.date.localeCompare(b.date) || slotStart(a.timeSlot) - slotStart(b.timeSlot);
 
 const DAY_TL: Record<string, string> = { Sun: 'Linggo', Mon: 'Lunes', Tue: 'Martes', Wed: 'Miyerkules', Thu: 'Huwebes', Fri: 'Biyernes', Sat: 'Sabado' };
-/** "Mon-Thu 8AM-5PM" / "Lunes-Huwebes 8AM-5PM" from the office hours in Settings (never hard-coded) */
+/** "Mon – Fri · 6:00 AM – 4:00 PM" / "Lunes – Biyernes · 6:00 AM – 4:00 PM" from the office hours in Settings */
 export function officeHoursText(tl: boolean): string {
   const first = OFFICE_DAYS[0] ?? 'Mon';
-  const last = OFFICE_DAYS[OFFICE_DAYS.length - 1] ?? 'Thu';
+  const last = OFFICE_DAYS[OFFICE_DAYS.length - 1] ?? 'Fri';
   const d = (k: string) => (tl ? DAY_TL[k] ?? k : k);
   const h = (min: number) => {
     const hr = Math.floor(min / 60);
     const m = min % 60;
     const h12 = ((hr + 11) % 12) + 1;
-    return `${h12}${m ? ':' + String(m).padStart(2, '0') : ''}${hr < 12 ? 'AM' : 'PM'}`;
+    return `${h12}:${String(m).padStart(2, '0')} ${hr < 12 ? 'AM' : 'PM'}`;
   };
   const start = SLOT_STARTS[0] ?? 480;
   const end = (SLOT_STARTS[SLOT_STARTS.length - 1] ?? 960) + SLOT_MINUTES;
-  return `${d(first)}-${d(last)} ${h(start)}-${h(end)}`;
+  const daysFormatted = first === last ? d(first) : `${d(first)} – ${d(last)}`;
+  return `${daysFormatted} · ${h(start)} – ${h(end)}`;
 }
 
 /** Every slot of one day with why it can't be picked (for the time picker: taken slots stay visible, greyed) */

@@ -979,7 +979,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                       {m.parentName} <span className="font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">· {m.studentName}</span>
                     </p>
                     <p className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">
-                      {m.channel === 'gmail' ? ` Email · ${m.email}` : m.channel === 'sms' ? ` SMS · ${m.phone}` : `${m.channel} · ${m.phone} ${m.email}`}
+                      {m.channel === 'gmail' ? ` Email · ${m.email}` : m.channel === 'sms-phone' ? ` ${isTl ? 'Text mula sa sariling phone' : 'Text from own phone'} · ${m.phone}` : m.channel === 'sms' ? ` SMS · ${m.phone}` : `${m.channel} · ${m.phone} ${m.email}`}
                       {m.kind ? ` · ${m.kind === 'reminder' ? (isTl ? 'paalala' : 'reminder') : m.kind === 'reschedule' ? (isTl ? 'paglipat' : 'reschedule') : isTl ? 'abiso' : 'notice'}` : ''} · {prettyWhen(m.when)}
                     </p>
                     {!okSent && m.error && <p className="text-[11px] text-rose-600 dark:text-rose-400 mt-0.5">{m.error}</p>}

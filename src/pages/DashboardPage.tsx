@@ -38,6 +38,9 @@ import { useTheme } from '../context/ThemeContext';
 import { ParentsHub, type ParentsTab } from './ParentsHub';
 import ConcernsHub from './ConcernsHub';
 import { HelpAssistant } from '../components/help/HelpAssistant';
+import { SmsFallbackHost } from '../components/parents/SmsFallback';
+import { ScanningScene } from '../components/ui/ScanningScene';
+const SAVING_MS = 900;
 import type { HelpTarget } from '../services/helpKB';
 import { SortControl, SortKey, loadSort, saveSort, timeOf, addedLabel } from '../components/ui/SortControl';
 import ReferralQueue from './ReferralQueue';
@@ -384,6 +387,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   }, []);
 
   // Floating Undo Toast state
+  const [toastPhase, setToastPhase] = useState<'saving' | 'done'>('done');
+  const [lightToast, setLightToast] = useState<{ message: string; undoAction?: () => void } | null>(null);
   const [toastBanner, setToastBanner] = useState<{
     message: string;
     undoAction?: () => void;
@@ -445,19 +450,40 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   );
 
   // Helper to show a Centered Mini Confirmation Card with Animated Check + Check Sound
+  const [sendFlowActive, setSendFlowActive] = useState(false);
+  const sendFlowRef = React.useRef(false);
+  const deferredToast = React.useRef<[string, (() => void) | undefined, ToastNextAction | undefined] | null>(null);
   const triggerToast = (message: string, undoAction?: () => void, nextAction?: ToastNextAction) => {
-    const isWarning = message.trim().startsWith('⚠️');
-    if (isWarning) {
-      soundFX.playError();
-    } else {
-      soundFX.playSuccessCheck();
+    const isWarning = message.trim().startsWith('⚠');
+    const isFail = /not saved|hindi na-save|failed|error/i.test(message);
+    if (!isWarning && !isFail && !nextAction) {
+      // simple success: small notice at the bottom, closes by itself, Undo stays available
+      setLightToast({ message, undoAction });
+      window.setTimeout(() => setLightToast((cur) => (cur?.message === message ? null : cur)), undoAction ? 6000 : 3500);
+      return;
     }
+    // a send to a parent is on screen: show this pop-up after it closes (never two pop-ups at once)
+    if (sendFlowRef.current) { deferredToast.current = [message, undoAction, nextAction]; return; }
+    const loading = !isWarning && !isFail; // "Next" choices first show the short "Saving…" scene (like the login loading)
+    setToastPhase(loading ? 'saving' : 'done');
+    if (loading) window.setTimeout(() => { setToastPhase('done'); soundFX.playSuccessCheck(); }, SAVING_MS);
+    else soundFX.playError();
     setToastBanner({ message, undoAction, nextAction });
     // Stay longer when there is a next step to choose
     window.setTimeout(() => {
       setToastBanner((current) => (current?.message === message ? null : current));
-    }, nextAction ? 8000 : 2800);
+    }, (nextAction ? 8000 : 2800) + (loading ? SAVING_MS : 0));
   };
+
+  useEffect(() => {
+    sendFlowRef.current = sendFlowActive;
+    if (!sendFlowActive && deferredToast.current) {
+      const [m, undo, nx] = deferredToast.current;
+      deferredToast.current = null;
+      triggerToast(m, undo, nx);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sendFlowActive]);
 
   useEffect(() => {
     let lastWarn = 0;
@@ -635,6 +661,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         email: a.parentEmail,
         message: buildConferenceSms({ kind: 'reminder', parentName: a.parentName, studentName: a.studentName, date: a.date, timeSlot: a.timeSlot }),
         kind: 'reminder',
+        phoneFallback: false, // automatic: becomes a "call the parent" task, no pop-up
         parentName: a.parentName,
         studentName: a.studentName,
         gradeSection: a.gradeSection,
@@ -1504,7 +1531,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setToastBanner(null)}
+              onClick={() => toastPhase === 'done' && setToastBanner(null)}
               className="fixed inset-0 !m-0 z-[100] bg-[#06122B]/35 backdrop-blur-[3px] flex items-center justify-center p-4"
             >
               <motion.div
@@ -1515,6 +1542,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 onClick={(e) => e.stopPropagation()}
                 className="w-full max-w-sm rounded-2xl saas-card p-6 text-center shadow-2xl border border-[#E5E5EA] dark:border-[#243B6B] space-y-4"
               >
+                {toastPhase === 'saving' ? (
+                  <div role="status" aria-live="polite" className="space-y-3" data-saving>
+                    <ScanningScene className="w-full h-40" title={isTl ? 'Sine-save' : 'Saving'} />
+                    <p className="text-base font-extrabold text-[#1D1D1F] dark:text-white">{isTl ? 'Sine-save…' : 'Saving…'}</p>
+                    <div className="h-1.5 rounded-full bg-black/[0.06] dark:bg-white/10 overflow-hidden">
+                      <div className="h-full w-full rounded-full bg-gradient-to-r from-[#007AFF] to-[#4E92DF] origin-left toast-saving-bar" />
+                    </div>
+                  </div>
+                ) : (<>
                 {/* Animated Icon Badge (Red for Failures, Amber for Warnings, Emerald for Success) */}
                 <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
                   {(() => {
@@ -1593,11 +1629,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                       if (toastBanner.message.trim().startsWith('⚠️') || toastBanner.message.trim().startsWith('⚠')) {
                         return isTl ? 'Paalala sa System' : 'Attention Required';
                       }
-                      return isTl ? 'Matagumpay na Naisagawa!' : 'Action Confirmed!';
+                      return isTl ? 'Na-save' : 'Saved';
                     })()}
                   </h4>
                   <p className="text-xs sm:text-[13px] font-semibold text-[#6E6E73] dark:text-[#A1A1A6] leading-relaxed">
-                    {toastBanner.message.replace(/^(?:✓|✨|📥|⚠️|⚠)\s*/u, '')}
+                    {/* heading already says "Saved", so drop a leading "Saved:" / "Naitala:" from the text */}
+                    {toastBanner.message.replace(/^(?:✓|✨|📥|⚠️|⚠)\s*/u, '').replace(/^\s*(?:saved|na-save|naitala)\s*:\s*/i, '').replace(/^./, (c) => c.toUpperCase())}
                   </p>
                 </div>
 
@@ -1655,6 +1692,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                     {toastBanner.nextAction.hint}
                   </p>
                 )}
+                </>)}
               </motion.div>
             </motion.div>
           )}
@@ -3543,6 +3581,30 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           MODAL 6: NEW USER QUICK GUIDE MODAL (4-STEP WORKFLOW HELPER)
           ==================================================================== */}
       {helpOpen && <HelpAssistant isTl={isTl} onClose={() => setHelpOpen(false)} onGo={helpGo} />}
+      {lightToast && (
+        <div role="status" aria-live="polite" data-light-toast className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[110] max-w-[560px] w-[calc(100%-32px)] rounded-2xl bg-[#1D1D1F] dark:bg-[#F5F5F7] text-white dark:text-[#1D1D1F] shadow-2xl px-4 py-3 flex items-center gap-3 light-toast-in">
+          <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0" aria-hidden="true">
+            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+          </span>
+          <p className="text-[13px] font-medium flex-1 min-w-0">{lightToast.message.replace(/^(?:✓|✨|📥)s*/u, '').trim()}</p>
+          {lightToast.undoAction && (
+            <button type="button" onClick={() => { lightToast.undoAction?.(); setLightToast(null); }} className="text-[13px] font-semibold text-[#64B5FF] dark:text-[#007AFF] shrink-0 hover:underline">{isTl ? 'I-undo' : 'Undo'}</button>
+          )}
+          <button type="button" onClick={() => setLightToast(null)} aria-label={isTl ? 'Isara' : 'Close'} title={isTl ? 'Isara' : 'Close'} className="w-6 h-6 rounded-full text-white/60 dark:text-black/50 hover:bg-white/10 dark:hover:bg-black/10 shrink-0">×</button>
+        </div>
+      )}
+      {/* waits until the save message is closed, so two pop-ups never sit on top of each other */}
+      <SmsFallbackHost
+        onToast={(m) => triggerToast(m)}
+        onActiveChange={setSendFlowActive}
+        onTextedByPhone={(d) => {
+          const digits = (s: string) => s.replace(/D/g, '');
+          const match = (x: FollowUpTaskItem) => !x.resolved && x.category === 'Failed SMS' && digits(x.parentPhone) === digits(d.phone) && (!d.caseCode || x.caseId === d.caseCode);
+          const summary = isTl ? 'Na-text ng staff gamit ang sariling phone' : 'Texted by staff from own phone';
+          followUpTasks.filter(match).forEach((x) => void updateFollowUpTaskInDb(x.id, x.attemptsCount, summary, true));
+          setFollowUpTasks((prev) => prev.map((x) => (match(x) ? { ...x, resolved: true, lastContactSummaryEn: summary, lastContactSummaryTl: summary } : x)));
+        }}
+      />
       <AnimatePresence>
         {showQuickGuideModal && (
           <motion.div

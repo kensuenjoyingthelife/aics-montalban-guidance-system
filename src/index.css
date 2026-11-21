@@ -2827,3 +2827,19 @@ html.aics-app-switched body {
   /* Messenger-style conversation: exactly fills the space between the header and the tab bar */
   .m-chat-open .m-conv { height: calc(100dvh - 120px - env(safe-area-inset-bottom)); }
 }
+
+/* "Saving…" bar in the save message (transform only) */
+.toast-saving-bar { animation: toast-saving 0.9s cubic-bezier(.4,0,.2,1) both; }
+@keyframes toast-saving { from { transform: scaleX(0.05); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .toast-saving-bar { animation: none; } }
+
+/* small "Saved" notice at the bottom */
+.light-toast-in { animation: light-toast-in .22s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes light-toast-in { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@media (prefers-reduced-motion: reduce) { .light-toast-in { animation: none; } }
+/* chat bubble steps aside while a pop-up is open, so it never covers its buttons */
+body:has([aria-modal="true"], [class^="fixed inset-0"]) [data-chat-ball] { opacity: 0; pointer-events: none; transition: opacity .15s; }
+/* "Sending to parent…" bar: moves back and forth until the result is ready (transform only) */
+.sending-bar { animation: sending-bar 1.2s ease-in-out infinite; }
+@keyframes sending-bar { 0% { transform: translateX(-100%) scaleX(.4); } 100% { transform: translateX(100%) scaleX(.4); } }
+@media (prefers-reduced-motion: reduce) { .sending-bar { animation: none; } }

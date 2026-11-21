@@ -286,6 +286,15 @@ export async function loginStudentPortal(
     const account = r.account ?? {};
     const master = await verifyStudentInMasterlist(cleanNumber);
 
+    try {
+      // Record login ping for monitoring telemetry
+      const raw = localStorage.getItem('aics_monitoring_logins_history');
+      const list = raw ? JSON.parse(raw) : [];
+      list.unshift({ studentNumber: cleanNumber, timestamp: new Date().toISOString() });
+      if (list.length > 500) list.pop();
+      localStorage.setItem('aics_monitoring_logins_history', JSON.stringify(list));
+    } catch {}
+
     return {
       success: true,
       account: {

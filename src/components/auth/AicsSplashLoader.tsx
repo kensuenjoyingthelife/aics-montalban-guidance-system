@@ -34,6 +34,14 @@ export const AicsSplashLoader: React.FC<AicsSplashLoaderProps> = ({ visible, onC
     doneRef.current = onComplete;
   }, [onComplete]);
 
+  // Safety net: if the animation is ever paused (busy main thread after a reload, window not
+  // painted yet, WebView2 throttling), never leave the user stuck on the splash.
+  useEffect(() => {
+    if (!visible) return;
+    const id = window.setTimeout(() => doneRef.current(), 5000);
+    return () => window.clearTimeout(id);
+  }, [visible]);
+
   useLayoutEffect(() => {
     if (!visible || !rootRef.current) return;
 
