@@ -1429,7 +1429,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       </AnimatePresence>
 
       {/* Main Workspace Area (Clean Responsive Vertical Flow: Compact Spacing on Mobile) */}
-      <main className={`relative z-20 flex-1 w-full mx-auto px-4 pt-4 sm:px-6 space-y-5 pb-[calc(84px+env(safe-area-inset-bottom))] lg:pb-32 lg:pr-[148px] ${activeTab === 'home' ? 'lg:max-w-none lg:px-8 lg:pt-5 lg:pb-6' : activeTab === 'me' ? 'max-w-3xl lg:pb-10' : 'lg:max-w-none lg:px-8 lg:pt-5 lg:pb-10'}`}>
+      <main className={`relative z-20 flex-1 w-full mx-auto px-4 pt-4 sm:px-6 space-y-5 pb-[calc(84px+env(safe-area-inset-bottom))] lg:pb-32 lg:pr-[148px] ${activeTab === 'me' ? 'max-w-3xl lg:pb-10' : 'lg:max-w-none lg:px-8 lg:pt-5 lg:pb-6'}`}>
         {/* Navigation Tabs (Hidden on Mobile < 768px because everything is neatly in the Right Menu Drawer) */}
         {/* TAB 1: SUBMIT REPORT (Compact, Responsive Padding) */}
         {activeTab === 'home' && (() => {
