@@ -1151,13 +1151,13 @@ export const CaseFlowPanel: React.FC<{
                             </span>
                           </span>
                           <textarea
-                            rows={3}
+                            rows={5}
                             value={schedMessage}
                             onChange={(e) => {
                               setSchedMessage(e.target.value);
                               setSchedMsgEdited(true);
                             }}
-                            className={`w-full px-3 py-2.5 rounded-xl border bg-white dark:bg-[#1C1C1E] text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] leading-relaxed resize-y ${
+                            className={`w-full min-h-[125px] px-3.5 py-3 rounded-xl border bg-white dark:bg-[#1C1C1E] text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] leading-relaxed resize-y ${
                               sensitiveWords.length ? 'border-rose-500 ring-1 ring-rose-500' : 'border-[#E5E5EA] dark:border-white/10'
                             }`}
                           />
