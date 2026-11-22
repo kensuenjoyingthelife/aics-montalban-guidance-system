@@ -256,7 +256,7 @@ export async function loginStudentPortal(
   account?: StudentPortalUser;
 }> {
   try {
-    const cleanNumber = studentNumber.trim();
+    const cleanNumber = studentNumber.trim().replace(/[-\s]/g, ''); // "26-0217" works too (saved numbers have no dash)
     if (!cleanNumber || !plainPassword) {
       return { success: false, error: 'Please enter both Student ID and Password.' };
     }
