@@ -1687,13 +1687,13 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
         )}
 
         {activeTab === 'me' && (
-          <div className="w-full pt-2 lg-me">
-            <p className="px-1 text-[30px] sm:text-[34px] font-bold tracking-tight lg-ink flex items-center gap-2">Me{decor && <Parol color="blue" className="w-6 h-[38px] -mb-3 text-[#8E8E93]" />}</p>
-            <p className="px-1 pb-2 text-[15px] lg-ink-soft">{isTl ? 'Ang account mo at mga setting.' : 'Your account and settings.'}</p>
-            <div className="max-w-2xl">
+          <div className="w-full pt-2 lg-me flex flex-col items-center">
+            <div className="w-full max-w-2xl">
+              <p className="px-1 text-[30px] sm:text-[34px] font-bold tracking-tight lg-ink flex items-center gap-2">Me{decor && <Parol color="blue" className="w-6 h-[38px] -mb-3 text-[#8E8E93]" />}</p>
+              <p className="px-1 pb-3 text-[15px] lg-ink-soft">{isTl ? 'Ang account mo at mga setting.' : 'Your account and settings.'}</p>
               {settingsBody}
+              <p className="pt-6 text-[12px] text-center lg-ink-soft">{isTl ? 'Pribado at protektado (RA 10173)' : 'Private and protected (RA 10173)'}</p>
             </div>
-            <p className="pt-6 text-[12px] text-center lg-ink-soft">{isTl ? 'Pribado at protektado (RA 10173)' : 'Private and protected (RA 10173)'}</p>
           </div>
         )}
 
