@@ -1183,9 +1183,10 @@ body.low-tier-device [style*="animation: twinkleGlow"] {
   animation: none;
   mix-blend-mode: normal;
   position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   transform: none !important;
   will-change: clip-path;
 }
@@ -2601,7 +2602,7 @@ html.lite .login-bg { transition-duration: 0.01ms; }
 /* light/dark crossfade: snapshots fill the screen at their real size (no shrink or shift) */
 html.theme-xfade::view-transition-old(root),
 html.theme-xfade::view-transition-new(root) {
-  position: absolute; inset: 0; width: 100%; height: 100%; will-change: opacity;
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%; will-change: opacity;
 }
 
 @media (min-width: 1024px) {
