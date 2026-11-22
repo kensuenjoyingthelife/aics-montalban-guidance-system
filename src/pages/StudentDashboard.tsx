@@ -1429,7 +1429,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       </AnimatePresence>
 
       {/* Main Workspace Area (Clean Responsive Vertical Flow: Compact Spacing on Mobile) */}
-      <main className={`relative z-20 flex-1 w-full mx-auto px-4 pt-4 sm:px-6 space-y-5 pb-[calc(84px+env(safe-area-inset-bottom))] lg:pb-32 lg:pr-[148px] ${activeTab === 'me' ? 'max-w-3xl lg:pb-10' : 'lg:max-w-none lg:px-8 lg:pt-5 lg:pb-6'}`}>
+      <main className="relative z-20 flex-1 w-full mx-auto px-4 pt-4 sm:px-6 space-y-5 pb-[calc(84px+env(safe-area-inset-bottom))] lg:pb-32 lg:pr-[148px] lg:max-w-none lg:px-8 lg:pt-5 lg:pb-6">
         {/* Navigation Tabs (Hidden on Mobile < 768px because everything is neatly in the Right Menu Drawer) */}
         {/* TAB 1: SUBMIT REPORT (Compact, Responsive Padding) */}
         {activeTab === 'home' && (() => {
@@ -1687,10 +1687,12 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
         )}
 
         {activeTab === 'me' && (
-          <div className="max-w-2xl mx-auto pt-2 lg-me">
-            <p className="px-1 text-[30px] sm:text-[34px] font-bold tracking-tight lg-ink flex items-center gap-2">{isTl ? 'Ako' : 'Me'}{decor && <Parol color="blue" className="w-6 h-[38px] -mb-3 text-[#8E8E93]" />}</p>
+          <div className="w-full pt-2 lg-me">
+            <p className="px-1 text-[30px] sm:text-[34px] font-bold tracking-tight lg-ink flex items-center gap-2">Me{decor && <Parol color="blue" className="w-6 h-[38px] -mb-3 text-[#8E8E93]" />}</p>
             <p className="px-1 pb-2 text-[15px] lg-ink-soft">{isTl ? 'Ang account mo at mga setting.' : 'Your account and settings.'}</p>
-            {settingsBody}
+            <div className="max-w-2xl">
+              {settingsBody}
+            </div>
             <p className="pt-6 text-[12px] text-center lg-ink-soft">{isTl ? 'Pribado at protektado (RA 10173)' : 'Private and protected (RA 10173)'}</p>
           </div>
         )}
@@ -1980,7 +1982,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
             {/* title */}
             <div className={`items-end justify-between gap-3 px-1 ${mRepId ? 'hidden lg:flex' : 'flex'}`}>
               <div>
-                <p className="text-[30px] sm:text-[34px] font-bold tracking-tight lg-ink flex items-center gap-2">{isTl ? 'Mga Report Ko' : 'My Reports'}{decor && <Parol color="gold" className="w-6 h-[38px] -mb-3 text-[#8E8E93]" />}</p>
+                <p className="text-[30px] sm:text-[34px] font-bold tracking-tight lg-ink flex items-center gap-2">My Reports{decor && <Parol color="gold" className="w-6 h-[38px] -mb-3 text-[#8E8E93]" />}</p>
                 <p className="text-[15px] lg-ink-soft">{isTl ? 'Ang lagay ng bawat report mo.' : 'Where each of your reports stands.'}</p>
               </div>
               <button type="button" onClick={() => void fetchMyHistory()} title={isTl ? 'I-refresh' : 'Refresh'} aria-label={isTl ? 'I-refresh' : 'Refresh'} className="lg-capsule h-11 px-4 rounded-full hidden lg:flex items-center gap-2 lg-ink text-[14px] font-semibold active:scale-[0.97] transition-transform duration-150">
@@ -2412,13 +2414,13 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
       {/* Footer (Messenger-Style Clean: hidden on mobile phones so keyboard never pushes or squishes it) */}
       {/* website: standing rail on the right edge, tabs spread from top to bottom (uses the free side space) */}
-      <nav className="hidden lg:flex fixed right-8 top-[112px] bottom-6 z-40 w-[92px] flex-col items-center gap-4" aria-label={isTl ? 'Mga seksyon' : 'Sections'}>
+      <nav className="hidden lg:flex fixed right-8 top-[112px] bottom-6 z-40 w-[92px] flex-col items-center gap-4" aria-label="Sections">
         <div className="lg-capsule flex-1 w-full flex flex-col items-center justify-evenly py-3 rounded-[46px]">
           {([
             ['home', HomeIcon, 'Home'],
-            ['history', FolderArchive, isTl ? 'Mga Report' : 'Reports'],
+            ['history', FolderArchive, 'My Reports'],
             ['chat', MessageSquare, 'Chat'],
-            ['me', UserCircle2, isTl ? 'Ako' : 'Me'],
+            ['me', UserCircle2, 'Me'],
           ] as const).map(([k, Icon, label]) => {
             const on = activeTab === k;
             return (
@@ -2432,25 +2434,25 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
             );
           })}
         </div>
-        <button type="button" onClick={() => goTab('submit')} aria-label={isTl ? 'Mag-report' : 'Report a concern'} title={isTl ? 'Mag-report' : 'Report a concern'} className={`lg-capsule shrink-0 w-[84px] h-[84px] rounded-full flex items-center justify-center active:scale-[0.95] transition-transform duration-150 ${activeTab === 'submit' ? 'ring-2 ring-[#0A84FF]/60' : ''}`}>
+        <button type="button" onClick={() => goTab('submit')} aria-label="Report a concern" title="Report a concern" className={`lg-capsule shrink-0 w-[84px] h-[84px] rounded-full flex items-center justify-center active:scale-[0.95] transition-transform duration-150 ${activeTab === 'submit' ? 'ring-2 ring-[#0A84FF]/60' : ''}`}>
           <span className="w-[60px] h-[60px] rounded-full lg-plus flex items-center justify-center"><Plus className="w-7 h-7 text-white" strokeWidth={2.4} /></span>
         </button>
       </nav>
 
       {/* phones + tablets: a real app tab bar, fixed to the bottom, full width ("+ Report" in the middle) */}
-      <nav className="m-tabbar lg:hidden fixed bottom-0 inset-x-0 z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} aria-label={isTl ? 'Mga seksyon' : 'Sections'}>
+      <nav className="m-tabbar lg:hidden fixed bottom-0 inset-x-0 z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} aria-label="Sections">
         <div className="h-[58px] grid grid-cols-5 items-stretch max-w-xl mx-auto">
           {([
             ['home', HomeIcon, 'Home'],
-            ['history', FolderArchive, isTl ? 'Mga Report' : 'Reports'],
-            ['submit', Plus, isTl ? 'Mag-report' : 'Report'],
+            ['history', FolderArchive, 'My Reports'],
+            ['submit', Plus, 'Report'],
             ['chat', MessageSquare, 'Chat'],
-            ['me', UserCircle2, isTl ? 'Ako' : 'Me'],
+            ['me', UserCircle2, 'Me'],
           ] as const).map(([k, Icon, label]) => {
             const on = activeTab === k;
             if (k === 'submit')
               return (
-                <button key={k} type="button" onClick={() => goTab('submit')} aria-label={isTl ? 'Mag-report' : 'Report a concern'} className="flex flex-col items-center justify-center gap-0.5">
+                <button key={k} type="button" onClick={() => goTab('submit')} aria-label="Report a concern" className="flex flex-col items-center justify-center gap-0.5">
                   <span className={`w-10 h-10 rounded-full flex items-center justify-center bg-[#0A84FF] text-white ${on ? 'ring-4 ring-[#0A84FF]/20' : ''}`}><Plus className="w-[22px] h-[22px]" strokeWidth={2.6} /></span>
                 </button>
               );
