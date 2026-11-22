@@ -19,6 +19,7 @@ import { soundFX } from '../services/soundEngine';
 import { isCapacitorNativeApp } from '../services/devicePerformance';
 import { SkyThemePill, useTheme } from '../context/ThemeContext';
 import { LocaleSwitchPill, useLanguage } from '../context/LanguageContext';
+import { CloudflareTurnstile } from '../components/auth/CloudflareTurnstile';
 import { ChristmasLights, HollySprig } from '../components/student/ChristmasDecor';
 import { christmasOn } from '../config/seasonalTheme';
 import { CelestialBackground } from '../components/auth/CelestialBackground';
@@ -173,6 +174,12 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   // Rate Limiting Cooldown Seconds
   const [loginCooldownSeconds, setLoginCooldownSeconds] = useState(0);
   const [forgotCooldownSeconds, setForgotCooldownSeconds] = useState(0);
+
+  // Cloudflare Turnstile Token State
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileKey, setTurnstileKey] = useState(0); // bump = fresh Cloudflare box (each token works once)
+  const [turnstileBroken, setTurnstileBroken] = useState(false);
+  const CLOUDFLARE_SITE_KEY = '0x4AAAAAAGAqyhAW68d155yA';
 
   // PWA & Mobile App Install Prompt State
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -631,14 +638,38 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       return;
     }
 
+    // 3. Cloudflare: must pass "Verify you are human", then the SERVER checks the token (siteverify)
+    if (!turnstileToken) {
+      setLoginErrorTitle(isTl ? 'Isang hakbang pa' : 'One more step');
+      setLoginErrorField(null);
+      setLoginTriesLeft(null);
+      setLoginError(
+        turnstileBroken
+          ? isTl ? 'Hindi gumana ang security check. I-refresh ang page, tapos subukan ulit.' : 'The security check did not load. Refresh the page, then try again.'
+          : isTl ? 'Hintayin munang matapos ang security check sa ilalim ng Sign In (green check), tapos Sign In ulit.' : 'Wait for the security check under the Sign In button to finish (green check), then Sign In again.'
+      );
+      return;
+    }
+
     setLoginLoading(true);
     setLoginError(null);
     setLoginErrorTitle(null);
     setLoginErrorField(null);
     setLoginTriesLeft(null);
 
-    const res = await loginStudentPortal(loginStudentNumber, loginPassword);
+    const res = await loginStudentPortal(loginStudentNumber, loginPassword, turnstileToken);
     setLoginLoading(false);
+    // a token works only once: always show a fresh box for the next try
+    setTurnstileToken(null);
+    setTurnstileKey((k) => k + 1);
+    if (res.code === 'not_human') {
+      // not a wrong password: do not count it against the 5 tries
+      setLoginErrorTitle(isTl ? 'Hindi pumasa sa security check' : 'Security check did not pass');
+      setLoginErrorField(null);
+      setLoginTriesLeft(null);
+      setLoginError(isTl ? 'Hintayin ulit ang green check sa security check, tapos Sign In.' : 'Wait for the green check in the security check again, then Sign In.');
+      return;
+    }
 
     if (!res.success || !res.account) {
       // Record failed attempt in Rate Limiter
@@ -1142,6 +1173,20 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     </>
                   )}
                 </button>
+
+                {/* Cloudflare Turnstile Human & Bot Shield (Positioned below Sign In button) */}
+                <div className="flex justify-center">
+                  <CloudflareTurnstile
+                    key={turnstileKey}
+                    siteKey={CLOUDFLARE_SITE_KEY}
+                    onVerify={(token) => {
+                      setTurnstileToken(token);
+                      soundFX.playToggleSwitch(true);
+                    }}
+                    onExpire={() => setTurnstileToken(null)}
+                    onError={() => { setTurnstileToken(null); setTurnstileBroken(true); }}
+                  />
+                </div>
               </form>
 
               <div className="pt-3 border-t border-white/10 dark:border-white/10 flex flex-row items-center justify-between gap-3 text-sm">

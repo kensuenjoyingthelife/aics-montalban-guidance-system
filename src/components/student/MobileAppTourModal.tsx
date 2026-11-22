@@ -15,11 +15,15 @@ import {
 } from 'lucide-react';
 import { officeHoursText } from '../../services/scheduling';
 
+type TourPoint = { label: [string, string]; text: [string, string] };
+
 type Step = {
   icon: React.ElementType;
-  tone: string; // gradient class from index.css (nav-c-*)
-  title: [string, string]; // [Taglish, English]
-  body: [string, string];
+  tone: string;
+  badge: [string, string];
+  title: [string, string];
+  tagline: [string, string];
+  points: TourPoint[];
   phone: [string, string];
   web: [string, string];
   tip: [string, string];
@@ -29,74 +33,92 @@ const steps = (hours: string): Step[] => [
   {
     icon: HomeIcon,
     tone: 'nav-c-home',
-    title: ['Home & Dashboard', 'Home & Dashboard'],
-    body: [
-      'Ang sentro ng iyong student portal. Agad mong makikita ang Philippine Standard Time, ang status ng iyong huling report, mga schedule ng Guidance Office, at aktibong chat.',
-      'Your student portal command center. See Philippine Standard Time, latest report progress, Guidance Office schedule, and active counseling chats at a glance.',
+    badge: ['Overview', 'Overview'],
+    title: ['Home & Real-Time Overview', 'Home & Real-Time Overview'],
+    tagline: ['Ang pangunahing dashboard para sa status at schedules.', 'Your primary dashboard for status and office schedules.'],
+    points: [
+      { label: ['Live Clock', 'Live Clock'], text: ['Philippine Standard Time at petsa para sa opisyal na guidance logs.', 'Synchronized Philippine Standard Time for official guidance records.'] },
+      { label: ['Office Hours', 'Office Hours'], text: ['Makikita kung bukas ngayon ang Guidance Office at kung kailan susunod na magbubukas.', 'Live status showing if the Guidance Office is open or when it next opens.'] },
+      { label: ['Active Feed', 'Active Feed'], text: ['Quick preview ng huling isinumiteng report at aktibong counseling chat.', 'Quick preview of your most recent report status and ongoing chat.'] },
     ],
-    phone: ['Gamitin ang navigation menu sa ibaba para lumipat ng section.', 'Use the bottom navigation bar to switch sections.'],
-    web: ['Gamitin ang navigation rail sa kanang bahagi ng screen.', 'Use the right-hand navigation rail to switch sections.'],
-    tip: ['I-tap o i-click ang anumang information tile para sa karagdagang detalye.', 'Tap or click any information tile for quick access.'],
+    phone: ['Pindutin ang Home sa bottom navigation bar.', 'Tap Home in the bottom navigation bar.'],
+    web: ['I-click ang Home icon sa navigation rail sa kanan.', 'Click the Home icon on the right-hand navigation rail.'],
+    tip: ['I-tap ang alinmang information card para sa mabilisang access.', 'Click any information card for instant navigation.'],
   },
   {
     icon: Plus,
     tone: 'nav-c-home',
+    badge: ['Reporting', 'Reporting'],
     title: ['Submit a Concern Report', 'Submit a Concern Report'],
-    body: [
-      'I-click o i-tap ang (+) button para magsumite ng concern sa 3 simpleng hakbang: (1) Piliin ang uri ng insidente, (2) Ibigay ang detalye o pangalan ng sangkot (opsyonal), at (3) Isalaysay ang buong pangyayari kalakip ang ebidensya o litrato.',
-      'Tap the (+) button to report an issue in 3 straightforward steps: (1) Select the concern category, (2) Specify the individuals involved (optional), and (3) Provide incident details and attach supporting evidence.',
+    tagline: ['Ligtas at kumpidensyal na pag-uulat sa 3 simpleng hakbang.', 'Safe and confidential 3-step incident reporting.'],
+    points: [
+      { label: ['Step 1: Kategorya', 'Step 1: Category'], text: ['Pumili mula sa mga listahan tulad ng bullying, harassment, o academic issues.', 'Select from verified categories such as bullying, harassment, or conflicts.'] },
+      { label: ['Step 2: Mga Sangkot', 'Step 2: People Involved'], text: ['Ibigay ang pangalan o detalye ng mga sangkot (opsyonal kung hindi sigurado).', 'Identify the involved individuals (optional if identity is unknown).'] },
+      { label: ['Step 3: Salaysay', 'Step 3: Incident Details'], text: ['Isalaysay ang buong nangyari at maglakip ng litrato o ebidensya.', 'Narrate the incident and attach photos or supporting evidence.'] },
     ],
-    phone: ['Pindutin ang (+) button sa gitna ng bottom menu.', 'Tap the (+) button at the center of the bottom navigation.'],
-    web: ['I-click ang malaking (+) button sa kanang navigation rail.', 'Click the (+) button in the right-hand desktop navigation rail.'],
-    tip: ['Maaari kang mag-file para sa iyong sarili o bilang saksi para sa kaklase.', 'You can file a report for yourself or as a witness for a peer.'],
+    phone: ['Pindutin ang (+) button sa gitna ng bottom menu.', 'Tap the (+) button at the center of the bottom menu.'],
+    web: ['I-click ang (+) action button sa kanang navigation rail.', 'Click the (+) action button in the right navigation rail.'],
+    tip: ['Maaaring mag-ulat para sa sarili o bilang saksi para sa kapwa estudyante.', 'You can report for yourself or as a bystander for a classmate.'],
   },
   {
     icon: FolderArchive,
     tone: 'nav-c-history',
+    badge: ['Tracking', 'Tracking'],
     title: ['Track My Reports', 'Track My Reports'],
-    body: [
-      'Subaybayan ang real-time status ng iyong mga isinumite: Amber para sa Under Review, Green para sa Accepted/Action Taken, at Red kapag Declined na may kaakibat na paliwanag.',
-      'Monitor real-time progress for your submitted cases: Amber for Under Review, Green for Accepted/Action Taken, and Red for Declined with counselor remarks.',
+    tagline: ['Real-time status tracking at opisyal na action remarks.', 'Real-time progress monitoring and official guidance remarks.'],
+    points: [
+      { label: ['Amber: Under Review', 'Amber: Under Review'], text: ['Kasalukuyang sinusuri at bina-validate ng Guidance Office.', 'Your submission is being reviewed and validated by the counselor.'] },
+      { label: ['Green: Action Taken', 'Green: Action Taken'], text: ['Tinanggap ang ulat at isinasagawa na ang tamang due process.', 'Report accepted; appropriate guidance due process is active.'] },
+      { label: ['Red: Case Resolved/Declined', 'Red: Case Resolved/Declined'], text: ['Nalutas o hindi tinanggap kalakip ang paliwanag mula sa guidance.', 'Report resolved or declined with official explanation notes.'] },
     ],
-    phone: ['Buksan ang My Reports tab sa ibaba.', 'Access the My Reports tab from the bottom bar.'],
+    phone: ['I-tap ang My Reports tab sa ilalim na menu.', 'Tap My Reports in the bottom navigation menu.'],
     web: ['I-click ang My Reports sa kanang navigation rail.', 'Click My Reports in the right navigation rail.'],
-    tip: ['Gamitin ang filter chips sa itaas para mabilis na masala ang reports.', 'Use top filter chips to quickly sort between review statuses.'],
+    tip: ['Gamitin ang filter buttons sa itaas para salain ang reports ayon sa status.', 'Use top filter buttons to quickly sort by status.']
   },
   {
     icon: MessageSquare,
     tone: 'nav-c-chat',
+    badge: ['Messaging', 'Messaging'],
     title: ['Confidential Guidance Chat', 'Confidential Guidance Chat'],
-    body: [
-      `Kapag tinanggap ang iyong report, magbubukas ang Guidance Office ng ligtas at encrypted na one-on-one chat. Aktibong sumasagot ang mga counselor sa opisyal na oras ng opisina (${hours}).`,
-      `Once your report is accepted, the Guidance Office activates a secure, encrypted one-on-one messaging session. Counselors actively reply during office hours (${hours}).`,
+    tagline: ['One-on-one encrypted counseling kasama ang Guidance Office.', 'Direct one-on-one encrypted counseling with counselors.'],
+    points: [
+      { label: ['Direct Counselors', 'Direct Counselors'], text: ['Tanging ang Guidance Office lamang ang makakabasa ng inyong chat.', 'Only the authorized Guidance Office staff can read this conversation.'] },
+      { label: ['Office Hours', 'Office Hours'], text: [`Aktibong sumasagot sa opisyal na schedule: ${hours}.`, `Active counseling response during official schedule: ${hours}.`] },
+      { label: ['Audit Security', 'Audit Security'], text: ['Protektado ng RA 10173 at hindi ibubunyag sa inireklamong partido.', 'Protected under RA 10173; never revealed to reported parties.'] },
     ],
-    phone: ['I-tap ang Chat icon sa navigation bar. May indicator kapag may bagong reply.', 'Tap Chat in the navigation bar. Unread indicators notify you of replies.'],
-    web: ['I-click ang Chat sa kanang navigation rail para makita ang split-view messaging.', 'Click Chat in the right rail to open the split-view messaging interface.'],
-    tip: ['Protektado ng end-to-end audit logging ang inyong pag-uusap alinsunod sa RA 10173.', 'All communications are strictly protected under RA 10173 data privacy laws.'],
+    phone: ['Buksan ang Chat tab sa ibaba. May red dot indicator kapag may bagong reply.', 'Open Chat at the bottom. A red dot alerts you to unread replies.'],
+    web: ['I-click ang Chat sa kanang navigation rail para sa two-column view.', 'Click Chat in the right rail to access full two-column messaging.'],
+    tip: ['Ligtas kang makakapagtanong o makakapagbigay ng karagdagang detalye dito.', 'You can freely ask questions or provide additional case details here.'],
   },
   {
     icon: ShieldCheck,
     tone: 'nav-c-me',
+    badge: ['Security', 'Security'],
     title: ['Safety & Quick Exit Protection', 'Safety & Quick Exit Protection'],
-    body: [
-      'Kung may biglang lumapit habang gamit mo ang portal, pindutin agad ang Quick Exit o i-press ang [Esc] sa keyboard para mag-sign out agad at ma-redirect sa Google search nang walang bakas.',
-      'If someone approaches while you view sensitive information, click Quick Exit or press [Esc] to instantly terminate your session and redirect to Google.',
+    tagline: ['Agarang proteksyon kapag may sumilip o lumapit sa iyo.', 'Instant protection when someone approaches your screen.'],
+    points: [
+      { label: ['Quick Exit [Esc]', 'Quick Exit [Esc]'], text: ['1-click instant sign out at redirection sa Google upang walang makasilip.', 'One-click immediate logout and redirect to Google search.'] },
+      { label: ['Floating Mascot', 'Floating Mascot'], text: ['Movable quick exit button sa mobile na maaaring i-drag kahit saan sa screen.', 'Movable mobile bubble button you can position anywhere on screen.'] },
+      { label: ['15-Min Auto Timeout', '15-Min Auto Timeout'], text: ['Kusang magsa-sign out kapag 15 minutong walang ginagawa para sa kaligtasan.', 'Automatic security lockout after 15 minutes of inactivity.'] },
     ],
-    phone: ['Pindutin ang pulang Quick Exit sa header o i-tap ang lumulutang na safety mascot.', 'Tap the red Quick Exit in the top bar or tap the floating safety mascot.'],
-    web: ['I-click ang pulang Quick Exit sa kanang itaas, o pindutin ang [Esc] sa keyboard.', 'Click the red Quick Exit at the top right, or press [Esc] on your keyboard.'],
-    tip: ['Kusang magla-lock out ang session kapag 15 minutong walang aktibidad sa screen.', 'Automatic security timeout signs you out after 15 minutes of inactivity.'],
+    phone: ['Pindutin ang pulang Quick Exit sa itaas o ang lumulutang na safety mascot.', 'Tap the red Quick Exit at the top or drag the floating safety mascot.'],
+    web: ['I-click ang Quick Exit button sa itaas o pindutin ang [Esc] sa keyboard.', 'Click the top Quick Exit button or press [Esc] on your keyboard.'],
+    tip: ['Ligtas ang iyong data: walang makakasilip ng iyong account pag-alis mo.', 'Your session leaves zero accessible browser trace after exiting.'],
   },
   {
     icon: UserCircle2,
     tone: 'nav-c-me',
-    title: ['Me (Account & System Settings)', 'Me (Account & System Settings)'],
-    body: [
-      'I-customize ang iyong karanasan: magpalit sa pagitan ng Dark Mode at Light Mode, magpalit ng wika (English/Taglish), i-install ang PWA App sa iyong device, o ligtas na mag-sign out.',
-      'Customize your experience: toggle Dark/Light appearance, switch between English and Taglish, install the application locally, or securely sign out.',
+    badge: ['Preferences', 'Preferences'],
+    title: ['Me (Account & Settings)', 'Me (Account & Settings)'],
+    tagline: ['I-customize ang iyong portal experience at account settings.', 'Customize your portal preferences and account security.'],
+    points: [
+      { label: ['Dark / Light Mode', 'Dark / Light Mode'], text: ['Pumili sa pagitan ng Midnight Aurora Dark Mode at Crisp Light Mode.', 'Toggle between Midnight Aurora Dark Mode and Crisp Light Mode.'] },
+      { label: ['Language Switch', 'Language Switch'], text: ['Mabilisang magpalit sa pagitan ng English at Taglish language.', 'Seamlessly switch between English and Taglish interface text.'] },
+      { label: ['PWA App Install', 'PWA App Install'], text: ['I-install ang portal bilang standalone app sa iyong phone o computer.', 'Install the portal as a dedicated app on your phone or PC.'] },
     ],
-    phone: ['Pindutin ang Me tab sa dulo ng bottom menu.', 'Tap the Me tab on the right end of the bottom menu.'],
-    web: ['I-click ang Me icon sa pinakababang bahagi ng kanang navigation rail.', 'Click the Me icon at the bottom of the right-hand navigation rail.'],
-    tip: ['Ligtas at kumpidensyal ang lahat ng iyong setting at impormasyon.', 'All personal preferences and credentials remain strictly confidential.'],
+    phone: ['Pindutin ang Me tab sa kanang dulo ng bottom menu.', 'Tap the Me tab on the right end of the bottom menu.'],
+    web: ['I-click ang Me icon sa navigation rail sa kanan.', 'Click the Me icon on the right-hand desktop navigation rail.'],
+    tip: ['Dito mo rin mabubuksan ulit ang gabay na ito anumang oras.', 'You can re-open this guide anytime from this settings view.'],
   },
 ];
 
@@ -141,31 +163,65 @@ export const MobileAppTourModal: React.FC<MobileAppTourModalProps> = ({ isOpen, 
         </div>
 
         {/* content */}
-        <div className="px-6 pt-6 pb-2">
-          <span className={`w-16 h-16 rounded-[22px] ${s.tone} text-white flex items-center justify-center shadow-lg`}>
-            <Icon className="w-8 h-8" strokeWidth={2.2} />
-          </span>
-          <h2 className="mt-5 text-[28px] leading-tight font-bold tracking-tight">{s.title[L]}</h2>
-          <p className="mt-3 text-[16px] leading-relaxed text-[#3A3A3C] dark:text-[#D1D1D6]">{s.body[L]}</p>
+        <div className="px-6 pt-5 pb-2 space-y-4">
+          <div className="flex items-center gap-3">
+            <span className={`w-14 h-14 rounded-2xl ${s.tone} text-white flex items-center justify-center shadow-lg shrink-0`}>
+              <Icon className="w-7 h-7" strokeWidth={2.2} />
+            </span>
+            <div className="min-w-0">
+              <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide uppercase bg-[#0A84FF]/10 text-[#0A84FF] dark:bg-white/10 dark:text-sky-300 mb-1">
+                {s.badge[L]}
+              </span>
+              <h2 className="text-[22px] leading-tight font-bold tracking-tight text-[#1D1D1F] dark:text-white truncate">
+                {s.title[L]}
+              </h2>
+            </div>
+          </div>
 
-          <div className="mt-5 rounded-[22px] bg-black/[0.04] dark:bg-white/[0.06] divide-y divide-black/[0.06] dark:divide-white/[0.08]">
-            {([
-              [Smartphone, L === 0 ? 'Sa phone (app)' : 'On the phone (app)', s.phone[L]],
-              [Monitor, L === 0 ? 'Sa website' : 'On the website', s.web[L]],
-            ] as const).map(([Ic, label, text]) => (
-              <div key={label} className="flex items-start gap-3 p-4">
-                <span className="w-9 h-9 rounded-full bg-white dark:bg-white/10 flex items-center justify-center shrink-0 shadow-sm"><Ic className="w-5 h-5 text-[#0A84FF]" /></span>
-                <span>
-                  <span className="block text-[14px] font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">{label}</span>
-                  <span className="block text-[15px] leading-snug">{text}</span>
+          <p className="text-[14px] leading-snug text-[#6E6E73] dark:text-[#A1A1A6]">
+            {s.tagline[L]}
+          </p>
+
+          {/* Structured Points Grid */}
+          <div className="rounded-2xl border border-black/[0.08] dark:border-white/[0.1] bg-black/[0.02] dark:bg-white/[0.03] divide-y divide-black/[0.06] dark:divide-white/[0.08] overflow-hidden">
+            {s.points.map((pt, idx) => (
+              <div key={idx} className="p-3.5 flex items-start gap-3">
+                <span className="w-5 h-5 rounded-full bg-[#0A84FF]/15 text-[#0A84FF] dark:bg-sky-400/20 dark:text-sky-300 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  {idx + 1}
                 </span>
+                <div className="min-w-0 text-left">
+                  <p className="text-[13px] font-bold text-[#1D1D1F] dark:text-white leading-tight">
+                    {pt.label[L]}
+                  </p>
+                  <p className="text-[13px] text-[#48484A] dark:text-[#C7C7CC] leading-relaxed mt-0.5">
+                    {pt.text[L]}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
 
-          <p className="mt-4 flex items-start gap-2.5 text-[15px] font-medium text-[#248A3D] dark:text-[#30D158]">
-            <Lightbulb className="w-5 h-5 mt-0.5 shrink-0" />
-            {s.tip[L]}
+          {/* Device Location Chips */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
+            <div className="p-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.04] dark:border-white/[0.08] flex items-center gap-2.5">
+              <Smartphone className="w-4 h-4 text-[#0A84FF] shrink-0" />
+              <div className="min-w-0 text-xs">
+                <span className="font-semibold block text-[#8E8E93] dark:text-[#98989D] uppercase text-[10px]">Mobile Phone</span>
+                <span className="truncate block font-medium">{s.phone[L]}</span>
+              </div>
+            </div>
+            <div className="p-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.04] dark:border-white/[0.08] flex items-center gap-2.5">
+              <Monitor className="w-4 h-4 text-[#0A84FF] shrink-0" />
+              <div className="min-w-0 text-xs">
+                <span className="font-semibold block text-[#8E8E93] dark:text-[#98989D] uppercase text-[10px]">Computer Website</span>
+                <span className="truncate block font-medium">{s.web[L]}</span>
+              </div>
+            </div>
+          </div>
+
+          <p className="flex items-center gap-2 text-[13px] font-semibold text-[#248A3D] dark:text-[#30D158] bg-[#30D158]/10 rounded-xl px-3 py-2">
+            <Lightbulb className="w-4 h-4 shrink-0" />
+            <span>{s.tip[L]}</span>
           </p>
         </div>
 
