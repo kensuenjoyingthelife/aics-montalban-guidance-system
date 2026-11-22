@@ -14,16 +14,14 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // @ts-nocheck templates copied from server/gmailSmtpMailer.mjs
 function buildAicsOtpEmailTemplate({ code, recipientEmail, locale = 'en' }) {
   const isTl = locale === 'tl';
-  // privacy: the code is NOT in the subject or the inbox preview (phones show those on the lock screen)
-  const subject = isTl ? 'AICS Guidance: ang iyong sign-in code' : 'AICS Guidance: your sign-in code';
+  const subject = 'AICS Guidance: Your Sign-in Verification Code';
+  const cleanCode = String(code || '').trim().toUpperCase();
   const masked = String(recipientEmail || '').slice(0, 4) + '****';
-  const preview = isTl ? 'Buksan para makita ang 6-character code. Mag-e-expire sa loob ng 5 minuto.' : 'Open to see your 6-character code. It expires in 5 minutes.';
-  const text = isTl
-    ? `AICS Montalban Guidance Office\n\nAng iyong sign-in code: ${code}\n\nPara sa ${masked}. Mag-e-expire sa loob ng 5 minuto at isang beses lang magagamit.\nHuwag ibigay ang code na ito kahit kanino, kahit sa staff.\n\nKung hindi ikaw ang nag-sign in, huwag pansinin ang email na ito.`
-    : `AICS Montalban Guidance Office\n\nYour sign-in code: ${code}\n\nFor ${masked}. It expires in 5 minutes and works once.\nNever share this code with anyone, not even staff.\n\nIf you did not try to sign in, ignore this email.`;
-  const chars = String(code).split('').map((ch) => `<td class="dg" style="width:44px;height:56px;border-radius:12px;background:#F2F2F7;text-align:center;vertical-align:middle;font:700 28px -apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,Arial,sans-serif;color:#1D1D1F;">${ch}</td><td style="width:8px;"></td>`).join('');
+  const preview = `Your verification code is ${cleanCode}. Valid for 5 minutes.`;
+  const text = `AICS Montalban Guidance & Counseling Office\n\nYour Sign-in Code: ${cleanCode}\n\nAccount: ${masked}\nValid for 5 minutes (Single use).\n\nNever share this code with anyone. Guidance staff will never ask for your verification code.\nIf you did not request this code, you can safely ignore this email.`;
+
   const html = `<!DOCTYPE html>
-<html lang="${isTl ? 'fil' : 'en'}">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -32,44 +30,94 @@ function buildAicsOtpEmailTemplate({ code, recipientEmail, locale = 'en' }) {
 <title>${subject}</title>
 <style>
   :root { color-scheme: light dark; supported-color-schemes: light dark; }
+  body, table, td, p, a, li, blockquote { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
   @media (prefers-color-scheme: dark) {
-    .bg { background:#000000 !important; }
-    .card { background:#1C1C1E !important; border-color:#38383A !important; }
-    .ink { color:#F5F5F7 !important; }
-    .soft { color:#A1A1A6 !important; }
-    .dg { background:#2C2C2E !important; color:#FFFFFF !important; }
-    .line { border-color:#38383A !important; }
+    .body-bg { background-color: #0B111E !important; }
+    .card-surface { background-color: #141E33 !important; border-color: rgba(255,255,255,0.12) !important; box-shadow: 0 16px 40px rgba(0,0,0,0.6) !important; }
+    .text-main { color: #FFFFFF !important; }
+    .text-muted { color: #94A3B8 !important; }
+    .code-box { background-color: #060B14 !important; border-color: #1E293B !important; color: #38BDF8 !important; }
+    .divider { border-color: rgba(255,255,255,0.08) !important; }
   }
-  [data-ogsc] .bg { background:#000000 !important; }
-  [data-ogsc] .card { background:#1C1C1E !important; }
-  [data-ogsc] .ink { color:#F5F5F7 !important; }
-  [data-ogsc] .soft { color:#A1A1A6 !important; }
-  [data-ogsc] .dg { background:#2C2C2E !important; color:#FFFFFF !important; }
 </style>
 </head>
-<body class="bg" style="margin:0;padding:0;background:#F2F2F7;">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${preview}&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="bg" style="background:#F2F2F7;">
-<tr><td align="center" style="padding:32px 16px;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="max-width:440px;background:#FFFFFF;border:1px solid #E5E5EA;border-radius:22px;">
-  <tr><td style="padding:32px 28px 8px;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,Arial,sans-serif;">
-    <div style="width:56px;height:56px;margin:0 auto;border-radius:16px;background:#007AFF;color:#FFFFFF;font:800 16px/56px -apple-system,Segoe UI,Arial,sans-serif;letter-spacing:.04em;">AICS</div>
-    <p class="soft" style="margin:18px 0 4px;font-size:13px;font-weight:600;letter-spacing:.02em;color:#6E6E73;">AICS MONTALBAN · GUIDANCE OFFICE</p>
-    <h1 class="ink" style="margin:0;font-size:24px;line-height:1.25;font-weight:700;color:#1D1D1F;">${isTl ? 'Ang iyong sign-in code' : 'Your sign-in code'}</h1>
-    <p class="soft" style="margin:10px 0 0;font-size:15px;line-height:1.45;color:#6E6E73;">${isTl ? `Para sa ${masked}. Ilagay ito sa Guidance desktop app.` : `For ${masked}. Type it into the Guidance desktop app.`}</p>
-  </td></tr>
-  <tr><td align="center" style="padding:22px 20px 6px;">
-    <table role="presentation" cellpadding="0" cellspacing="0"><tr>${chars}</tr></table>
-  </td></tr>
-  <tr><td style="padding:14px 28px 26px;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,Arial,sans-serif;">
-    <p class="soft" style="margin:0;font-size:14px;color:#6E6E73;">${isTl ? 'Mag-e-expire sa loob ng <b>5 minuto</b> · isang beses lang magagamit' : 'Expires in <b>5 minutes</b> · works once'}</p>
-  </td></tr>
-  <tr><td class="line" style="border-top:1px solid #E5E5EA;padding:18px 28px 26px;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,Arial,sans-serif;">
-    <p class="ink" style="margin:0 0 6px;font-size:14px;font-weight:600;color:#1D1D1F;">${isTl ? 'Huwag ibigay ang code na ito kahit kanino.' : 'Never share this code with anyone.'}</p>
-    <p class="soft" style="margin:0;font-size:13px;line-height:1.5;color:#6E6E73;">${isTl ? 'Hindi ito hihingin ng staff o ng school. Kung hindi ikaw ang nag-sign in, huwag pansinin ang email na ito.' : 'The school and staff will never ask for it. If you did not try to sign in, you can ignore this email.'}</p>
-  </td></tr>
+<body class="body-bg" style="margin:0;padding:36px 12px;background-color:#F1F5F9;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${preview}&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td align="center">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="card-surface" style="max-width:440px;background-color:#FFFFFF;border:1px solid #E2E8F0;border-radius:24px;overflow:hidden;box-shadow:0 12px 36px rgba(15,23,42,0.08);">
+    <!-- Brand Seal Header -->
+    <tr>
+      <td align="center" style="padding:36px 32px 12px 32px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td align="center" style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#0052CC 0%,#0B1F4D 100%);color:#FFFFFF;font:800 18px/64px -apple-system,sans-serif;letter-spacing:1.5px;box-shadow:0 6px 18px rgba(0,82,204,0.35);border:2px solid #FFFFFF;">
+              AICS
+            </td>
+          </tr>
+        </table>
+        <p style="margin:16px 0 4px 0;font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#0284C7;">
+          AICS MONTALBAN · GUIDANCE OFFICE
+        </p>
+        <h1 class="text-main" style="margin:0;font-size:24px;font-weight:800;color:#0F172A;letter-spacing:-0.02em;line-height:1.2;">
+          Your Sign-in Code
+        </h1>
+        <p class="text-muted" style="margin:8px 0 0 0;font-size:14px;color:#64748B;line-height:1.5;">
+          For <strong style="color:#0F172A;">${masked}</strong>. Type or copy this code into the Guidance desktop app to sign in.
+        </p>
+      </td>
+    </tr>
+
+    <!-- One-Piece Copyable & Selectable Code Box (Double-click or 1-tap select) -->
+    <tr>
+      <td align="center" style="padding:14px 28px;">
+        <div class="code-box" style="user-select:all;-webkit-user-select:all;background-color:#F8FAFC;border:2px dashed #CBD5E1;border-radius:18px;padding:16px 20px;text-align:center;cursor:pointer;">
+          <span style="font-family:'SF Mono','JetBrains Mono','Courier New',monospace;font-size:32px;font-weight:800;letter-spacing:0.32em;color:#0369A1;display:inline-block;padding-left:0.32em;">
+            ${cleanCode}
+          </span>
+        </div>
+        <p style="margin:8px 0 0 0;font-size:12px;color:#64748B;font-weight:600;">
+          💡 Tip: Double-click or tap to select and copy all 6 characters
+        </p>
+      </td>
+    </tr>
+
+    <!-- Time Validity Badge -->
+    <tr>
+      <td align="center" style="padding:4px 32px 20px 32px;">
+        <span style="display:inline-block;padding:6px 14px;background-color:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;border-radius:9999px;font-size:12px;font-weight:700;">
+          Expires in 5 minutes · Single-use code
+        </span>
+      </td>
+    </tr>
+
+    <!-- Security Advisory -->
+    <tr>
+      <td class="divider" style="border-top:1px solid #F1F5F9;padding:22px 32px 30px 32px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td valign="top" style="width:20px;padding-right:12px;font-size:16px;">
+              🛡️
+            </td>
+            <td>
+              <p class="text-main" style="margin:0 0 4px 0;font-size:13px;font-weight:700;color:#0F172A;">
+                Security Guarantee &amp; Confidentiality
+              </p>
+              <p class="text-muted" style="margin:0;font-size:12.5px;line-height:1.55;color:#64748B;">
+                Never share this verification code with anyone. AICS administrators will never ask for your authentication credentials. If you did not initiate this sign-in attempt, please ignore this email.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
   </table>
-  <p class="soft" style="margin:16px 0 0;font:12px -apple-system,Segoe UI,Arial,sans-serif;color:#8E8E93;">Asian Institute of Computer Studies · Montalban · RA 10173</p>
+
+  <!-- Official Footer -->
+  <p class="text-muted" style="margin:20px 0 0 0;font-size:12px;color:#64748B;font-weight:500;">
+    Asian Institute of Computer Studies · Montalban Campus<br />
+    Official Guidance System · Data Privacy Act of 2012 (RA 10173) Protected
+  </p>
 </td></tr>
 </table>
 </body>
@@ -86,61 +134,146 @@ function buildAicsParentNoticeEmailTemplate({
   locale = 'en',
 }) {
   const isTl = locale === 'tl';
-  const subject = isTl
-    ? `[AICS Montalban Guidance] Imbitasyon sa Parent Conference para kay ${studentName}`
-    : `[AICS Montalban Guidance] Parent Conference Notice for ${studentName}`;
+  const cleanParent = parentName && parentName.trim() ? parentName.trim() : 'Parent / Guardian';
+  const subject = `[AICS Montalban Guidance] Official Parent-Guidance Conference Notice — ${studentName}`;
 
-  const text = `${customMessage}\n\n---\nAICS Montalban Guidance & Counseling Office\nMontalban Town Center, E. Rodriguez Highway, Rodriguez, Rizal\nData Privacy Act (RA 10173) Compliant Notice`;
+  const text = `ASIAN INSTITUTE OF COMPUTER STUDIES (AICS) - MONTALBAN
+Guidance & Counseling Office · Student Discipline & Restorative Tracking
 
-  const html = `
-<!DOCTYPE html>
-<html>
+OFFICIAL PARENT-GUIDANCE CONFERENCE NOTICE
+
+Dear ${cleanParent},
+
+${customMessage}
+
+STUDENT DETAILS:
+- Student: ${studentName} (${gradeSection})
+- Schedule & Venue: ${scheduleText || 'AICS Montalban Guidance Office, 2nd Floor'}
+
+CONFIDENTIALITY NOTICE:
+In compliance with Republic Act No. 10173 (Data Privacy Act of 2012) and DepEd Child Protection Policy, specific case details are strictly discussed in person inside the Guidance Office.
+
+Official Guidance System of AICS Montalban · Est. 1996 · RA 10173 Protected`;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>${subject}</title>
+<style>
+  :root { color-scheme: light dark; supported-color-schemes: light dark; }
+  body, table, td, p, a, li, blockquote { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+  @media (prefers-color-scheme: dark) {
+    .body-bg { background-color: #0A0F1D !important; }
+    .card-surface { background-color: #121A2E !important; border-color: rgba(255,255,255,0.12) !important; box-shadow: 0 20px 48px rgba(0,0,0,0.6) !important; }
+    .text-main { color: #FFFFFF !important; }
+    .text-muted { color: #94A3B8 !important; }
+    .detail-card { background-color: #0B1120 !important; border-color: #1E293B !important; }
+    .message-box { background-color: #0F172A !important; border-left-color: #38BDF8 !important; color: #F1F5F9 !important; }
+    .footer-bg { background-color: #0B1120 !important; border-color: #1E293B !important; }
+  }
+</style>
 </head>
-<body style="margin:0;padding:24px;background-color:#F4F7FC;font-family:'Segoe UI',Inter,Arial,sans-serif;color:#0B1F4D;">
-  <div style="max-width:560px;margin:0 auto;background:#FFFFFF;border-radius:20px;overflow:hidden;border:1px solid #CFD9F2;box-shadow:0 12px 32px rgba(11,31,77,0.10);">
-    <div style="background:linear-gradient(135deg,#0B1F4D 0%,#1E469B 60%,#2557BE 100%);padding:24px 28px;text-align:center;color:#FFFFFF;">
-      <div style="font-size:11px;font-weight:800;letter-spacing:2px;color:#7CB8F7;text-transform:uppercase;">
-        ASIAN INSTITUTE OF COMPUTER STUDIES · MONTALBAN
-      </div>
-      <h1 style="margin:8px 0 4px;font-size:20px;font-weight:800;color:#FFFFFF;">
-        ${isTl ? 'Abiso sa Parent-Guidance Conference' : 'Official Parent-Guidance Conference Notice'}
-      </h1>
-      <p style="margin:0;font-size:12px;color:#E4ECFC;">
-        Guidance &amp; Counseling Office · Montalban Campus
-      </p>
-    </div>
+<body class="body-bg" style="margin:0;padding:36px 12px;background-color:#F1F5F9;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td align="center">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="card-surface" style="max-width:560px;background-color:#FFFFFF;border:1px solid #E2E8F0;border-radius:24px;overflow:hidden;box-shadow:0 16px 40px rgba(11,31,77,0.08);">
+    
+    <!-- Institutional Navy Executive Header -->
+    <tr>
+      <td style="background:linear-gradient(135deg,#071530 0%,#0B1F4D 55%,#17387A 100%);padding:36px 36px 28px 36px;text-align:center;color:#FFFFFF;">
+        <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td align="center" style="width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#0284C7 0%,#0052CC 100%);color:#FFFFFF;font:800 16px/58px -apple-system,sans-serif;letter-spacing:1px;box-shadow:0 6px 20px rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.85);">
+              AICS
+            </td>
+          </tr>
+        </table>
+        <div style="margin:16px 0 6px 0;font-size:11px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:#7DD3FC;">
+          ASIAN INSTITUTE OF COMPUTER STUDIES · MONTALBAN
+        </div>
+        <h1 style="margin:0;font-size:22px;font-weight:800;color:#FFFFFF;letter-spacing:-0.02em;line-height:1.25;">
+          Official Parent-Guidance Conference Notice
+        </h1>
+        <p style="margin:6px 0 0 0;font-size:12.5px;color:#BAE6FD;font-weight:500;">
+          Guidance &amp; Counseling Office · Senior High School Discipline Department
+        </p>
+      </td>
+    </tr>
 
-    <div style="padding:28px;">
-      <p style="margin:0 0 12px;font-size:14px;font-weight:700;color:#0B1F4D;">
-        ${isTl ? `Mahal na ${parentName || 'Magulang / Guardian'},` : `Dear ${parentName || 'Parent / Guardian'},`}
-      </p>
-      <div style="background:#F4F7FC;border-left:4px solid #1E469B;border-radius:12px;padding:16px;margin:0 0 18px;font-size:13.5px;line-height:1.65;color:#0B1F4D;white-space:pre-line;">
-        ${customMessage}
-      </div>
+    <!-- Body Content -->
+    <tr>
+      <td style="padding:32px 36px;">
+        <p class="text-main" style="margin:0 0 16px 0;font-size:15px;font-weight:700;color:#0F172A;">
+          Dear ${cleanParent},
+        </p>
 
-      <div style="background:#EEF4FF;border:1px solid #CFD9F2;border-radius:14px;padding:14px 16px;margin:0 0 18px;font-size:12.5px;color:#1E469B;">
-        <div><strong>${isTl ? 'Pangalan ng Estudyante:' : 'Student Name:'}</strong> ${studentName} (${gradeSection})</div>
-        <div style="margin-top:4px;"><strong>${isTl ? 'Iskedyul at Lugar:' : 'Schedule & Venue:'}</strong> ${scheduleText || 'AICS Montalban Guidance Office'}</div>
-      </div>
+        <!-- Official Guidance Statement Box -->
+        <div class="message-box" style="background-color:#F8FAFC;border-left:4px solid #0284C7;border-radius:14px;padding:18px 20px;margin:0 0 24px 0;font-size:14px;line-height:1.65;color:#1E293B;white-space:pre-line;">
+          ${customMessage}
+        </div>
 
-      <p style="margin:0;font-size:11.5px;color:#687FA8;line-height:1.5;">
-        🔒 ${
-          isTl
-            ? 'Alinsunod sa Data Privacy Act of 2012 (RA 10173), ang partikular na detalye ng usapin ay tatalakayin nang pribado sa loob ng Guidance Office.'
-            : 'In compliance with the Data Privacy Act of 2012 (RA 10173), specific case details are discussed strictly in person at the Guidance Office.'
-        }
-      </p>
-    </div>
+        <!-- 2026 Linear-style Structured Metadata Bento Card -->
+        <div class="detail-card" style="background-color:#F0F7FF;border:1px solid #BAE6FD;border-radius:18px;padding:20px;margin:0 0 22px 0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td style="padding-bottom:12px;">
+                <span style="font-size:10.5px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#0369A1;display:block;">
+                  STUDENT NAME &amp; STRAND
+                </span>
+                <span class="text-main" style="font-size:14.5px;font-weight:800;color:#0F172A;display:block;margin-top:2px;">
+                  ${studentName} <span style="font-weight:600;color:#0284C7;">(${gradeSection})</span>
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td style="border-top:1px solid rgba(2,132,199,0.18);padding-top:12px;">
+                <span style="font-size:10.5px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#0369A1;display:block;">
+                  SCHEDULE &amp; VENUE
+                </span>
+                <span class="text-main" style="font-size:14.5px;font-weight:800;color:#0F172A;display:block;margin-top:2px;">
+                  ${scheduleText || 'AICS Montalban Guidance Office'}
+                </span>
+              </td>
+            </tr>
+          </table>
+        </div>
 
-    <div style="background:#F4F7FC;padding:14px 24px;border-top:1px solid #E4ECFC;text-align:center;font-size:11px;color:#687FA8;">
-      Official Guidance System of AICS Montalban · Est. 1996 · Data Privacy Act (RA 10173) Protected
-    </div>
-  </div>
+        <!-- Confidentiality Safeguard -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td valign="top" style="width:20px;padding-right:10px;font-size:15px;">
+              🔒
+            </td>
+            <td>
+              <p class="text-muted" style="margin:0;font-size:12px;line-height:1.55;color:#64748B;">
+                <strong>Confidential Notice:</strong> Pursuant to Republic Act No. 10173 (Data Privacy Act of 2012) and the DepEd Child Protection Policy, specific allegations and case merits are handled confidentially and discussed solely in person at the Guidance Office.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Institutional Footer -->
+    <tr>
+      <td class="footer-bg" style="background-color:#F8FAFC;padding:18px 36px;border-top:1px solid #E2E8F0;text-align:center;">
+        <p style="margin:0;font-size:11.5px;font-weight:600;color:#64748B;">
+          Asian Institute of Computer Studies · Montalban Campus
+        </p>
+        <p style="margin:4px 0 0 0;font-size:11px;color:#94A3B8;">
+          Est. 1996 · Official Guidance &amp; Discipline Management System · Protected under RA 10173
+        </p>
+      </td>
+    </tr>
+  </table>
+</td></tr>
+</table>
 </body>
-</html>
-  `.trim();
+</html>`;
 
   return { subject, text, html };
 }
