@@ -125,11 +125,11 @@ export const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
   }, [siteKey, theme]);
 
   return (
-    <div className={`w-full my-2 flex items-center justify-center ${className}`}>
-      {/* 100% Full-Width Cloudflare Turnstile Box matching Input Fields */}
+    <div className={`w-full my-1.5 flex items-center justify-center ${className}`}>
+      {/* Seamless Cloudflare Turnstile Box without borders or container background */}
       <div 
         ref={containerRef} 
-        className="w-full flex items-center justify-center overflow-hidden rounded-2xl border border-slate-200/60 dark:border-white/10 shadow-sm bg-white/40 dark:bg-black/20"
+        className="w-full flex items-center justify-center overflow-hidden border-0 shadow-none bg-transparent"
         style={{ minHeight: '65px' }}
       />
     </div>

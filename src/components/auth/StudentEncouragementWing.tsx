@@ -450,9 +450,6 @@ export const StudentPairInteractiveWing: React.FC<{ className?: string }> = ({ c
               <span className="text-[10px] font-mono font-black tracking-widest uppercase text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
                 {current.tag}
               </span>
-              <span className="text-[11px] font-bold text-sky-300">
-                {current.speaker}
-              </span>
             </div>
 
             <p className="text-sm sm:text-base font-medium text-slate-100 leading-snug">
