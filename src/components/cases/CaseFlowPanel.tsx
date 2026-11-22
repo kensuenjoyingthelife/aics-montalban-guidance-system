@@ -303,13 +303,13 @@ export const CaseFlowPanel: React.FC<{
     const dd = parseISO(d);
     const loc = lang === 'english' ? 'en-US' : 'fil-PH';
     const time = slotLabel(s).split('–')[0].trim().replace(/^0/, '');
-    const first = c.studentName.split(/s+/)[0] || c.studentName;
+    const first = c.studentName.split(/\s+/)[0] || c.studentName;
     if (style === 'short') {
       // fits one SMS
       const shortDay = isNaN(dd.getTime()) ? d : new Intl.DateTimeFormat(loc, { month: 'short', day: 'numeric' }).format(dd);
       return lang === 'english'
-        ? `AICS Guidance: Parent conference for ${first} on ${shortDay}, ${time}, Guidance Office. Thank you.`
-        : `AICS Guidance: Parent Conference para kay ${first} sa ${shortDay}, ${time}, Guidance Office. Salamat po.`;
+        ? `AICS Guidance: Parent conference for ${c.studentName} on ${shortDay}, ${time}, Guidance Office. Thank you.`
+        : `AICS Guidance: Parent Conference para kay ${c.studentName} sa ${shortDay}, ${time}, Guidance Office. Salamat po.`;
     }
     // SMS is read later by the parent: always the real date, never "Tomorrow"/"Bukas"
     const longDay = isNaN(dd.getTime()) ? d : new Intl.DateTimeFormat(loc, { weekday: 'long', month: 'long', day: 'numeric' }).format(dd);

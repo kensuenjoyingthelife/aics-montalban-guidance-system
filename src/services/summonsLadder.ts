@@ -63,7 +63,7 @@ export function summonsMessage(o: { level: SummonsLevel; n: number; isLast: bool
       if (level === 'high') return `${head} This is the ${ordEn} summons for ${name}. Your attendance is required on ${when} at the Guidance Office. If this time does not work, please call the office today for another time. Thank you.`;
       return `${head} URGENT, ${ordEn} summons: Your attendance is strongly needed for ${name} on ${when} at the Guidance Office. Please call the office today to confirm. Thank you.`;
     }
-    const tail = level === 'normal' ? '' : ` A letter will also be sent home with ${first}.`;
+    const tail = level === 'normal' ? '' : ` A letter will also be sent home with ${name}.`;
     return `${head} FINAL NOTICE (${ordEn} summons) for ${name}: please come on ${when} at the Guidance Office. If no parent or guardian attends, the school will continue the process without you, following the Student Handbook.${tail} Thank you.`;
   }
   const head = 'AICS Guidance: Magandang araw po.';
@@ -77,7 +77,7 @@ export function summonsMessage(o: { level: SummonsLevel; n: number; isLast: bool
     if (level === 'high') return `${head} Ito na po ang ${ordinal(n, true)} patawag para kay ${name}. Kailangan po ang inyong pagdalo sa ${when}, sa Guidance Office. Kung hindi po pwede ang oras, tumawag po ngayong araw para sa ibang oras. Salamat po.`;
     return `${head} AGARAN, ${ordinal(n, true)} patawag: Kailangang-kailangan po ang inyong pagdalo para kay ${name} sa ${when}, sa Guidance Office. Pakitawagan po ang opisina ngayong araw. Salamat po.`;
   }
-  const tail = level === 'normal' ? '' : ` Magpapadala rin po kami ng sulat sa pamamagitan ni ${first}.`;
+  const tail = level === 'normal' ? '' : ` Magpapadala rin po kami ng sulat sa pamamagitan ni ${name}.`;
   return `${head} HULING PAALALA po (${ordinal(n, true)} patawag) para kay ${name}: pumunta po sa ${when}, sa Guidance Office. Kung walang magulang o guardian na dadalo, itutuloy po ng paaralan ang proseso nang wala kayo, ayon sa Student Handbook.${tail} Salamat po.`;
 }
 
