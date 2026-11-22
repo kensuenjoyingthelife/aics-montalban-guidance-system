@@ -4,6 +4,7 @@ import { useSyncExternalStore } from 'react';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, DB_WRITE_FAILED, DB_WRITE_OK, actorHeader } from './supabaseClient';
 import { OFFENSE_HANDBOOK_RULES, type OffenseHandbookRule, type HandbookClassification } from '../data/stage3MockData';
 import { configureSchedule } from './scheduling';
+import { setAntiScreenshotActive } from './noInspect';
 
 export interface OfficeHours {
   days: string[]; // Mon..Sun keys
@@ -23,6 +24,7 @@ export interface SecuritySettings {
   autoSignOutMinutes: number;
   pinMaxTries: number;
   pinLockMinutes: number;
+  antiScreenshot?: boolean;
 }
 export interface SmsTemplates {
   notice: string;
@@ -130,7 +132,7 @@ export const DEFAULTS: AppConfig = {
   loaded: false,
   officeHours: { days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], start: '06:00', end: '16:00', lunchStart: '11:45', lunchEnd: '13:00', slotMinutes: 45 },
   caseRules: { escalateAfterMinors: 2, overdueDays: 14, pendingSanctionDays: 3, maxNoShows: 3 },
-  security: { autoSignOutMinutes: 15, pinMaxTries: 5, pinLockMinutes: 5 },
+  security: { autoSignOutMinutes: 15, pinMaxTries: 5, pinLockMinutes: 5, antiScreenshot: false },
   smsTemplates: {
     notice: 'AICS Guidance: Magandang araw po. Inaanyayahan po kayo sa Parent Conference para kay {student} sa {when}. Bukas po ang guidance office Lunes-Biyernes 6AM-4PM. Salamat po.',
     reminder: 'AICS Guidance: Paalala po, sa {when} ang Parent Conference para kay {student} sa Guidance Room. Salamat po.',
@@ -267,11 +269,13 @@ export async function loadAppConfig(): Promise<boolean> {
   ]);
   const kv = new Map((rows ?? []).map((r) => [r.key, r.value as Record<string, unknown>]));
   const merge = <T,>(def: T, v: unknown): T => (v && typeof v === 'object' && !Array.isArray(v) ? { ...def, ...(v as object) } : def);
+  const resolvedSec = merge(DEFAULTS.security, kv.get('security'));
+  setAntiScreenshotActive(Boolean(resolvedSec.antiScreenshot));
   set({
     loaded: !!rows,
     officeHours: merge(DEFAULTS.officeHours, kv.get('office_hours')),
     caseRules: merge(DEFAULTS.caseRules, kv.get('case_rules')),
-    security: merge(DEFAULTS.security, kv.get('security')),
+    security: resolvedSec,
     smsTemplates: merge(DEFAULTS.smsTemplates, kv.get('sms_templates')),
     retention: merge(DEFAULTS.retention, kv.get('retention')),
     counselorDays: Array.isArray(kv.get('counselor_days')) ? (kv.get('counselor_days') as unknown as string[]) : DEFAULTS.counselorDays,
@@ -315,6 +319,9 @@ export async function saveConfig(
     campus: 'campus',
   };
   if (key === 'seasonal_theme') return true; // not part of AppConfig; seasonalTheme.ts keeps it
+  if (key === 'security' && value && typeof value === 'object' && 'antiScreenshot' in value) {
+    setAntiScreenshotActive(Boolean((value as SecuritySettings).antiScreenshot));
+  }
   set({ [map[key]]: value } as Partial<AppConfig>);
   return true;
 }

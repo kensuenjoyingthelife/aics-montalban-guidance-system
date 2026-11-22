@@ -20,7 +20,24 @@ const isTextBox = (el: EventTarget | null) => {
   return !!t.closest('input, textarea, [contenteditable="true"]');
 };
 
+let antiScreenshotActive = false;
 let installed = false;
+
+export function setAntiScreenshotActive(active: boolean): void {
+  antiScreenshotActive = active;
+  if (!active) {
+    hideFloatingPrivacyOverlay();
+    const shield = document.getElementById('aics-screenshot-shield');
+    if (shield) {
+      shield.style.opacity = '0';
+      shield.style.pointerEvents = 'none';
+    }
+  }
+}
+
+export function isAntiScreenshotActive(): boolean {
+  return antiScreenshotActive;
+}
 
 export function installNoInspect(): void {
   if (installed || typeof window === 'undefined') return;
@@ -53,13 +70,15 @@ export function installNoInspect(): void {
       const isPrintScreen = e.key === 'PrintScreen' || k === 'printscreen';
 
       if (isPrintScreen) {
-        // Trigger instant blackout shield & clear clipboard
-        triggerScreenshotShield();
-        try {
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText('');
-          }
-        } catch {}
+        if (antiScreenshotActive) {
+          // Trigger instant blackout shield & clear clipboard when active
+          triggerScreenshotShield();
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText('');
+            }
+          } catch {}
+        }
       }
 
       if (isF12 || isInspect || isViewSource || isSavePage) {
@@ -72,6 +91,7 @@ export function installNoInspect(): void {
 
   // 3. Print Screen Keyup & Window Blur Shield (Anti-Snipping Tool Protection)
   window.addEventListener('keyup', (e) => {
+    if (!antiScreenshotActive) return;
     if (e.key === 'PrintScreen' || e.key.toLowerCase() === 'printscreen') {
       triggerScreenshotShield();
       try {
@@ -83,16 +103,15 @@ export function installNoInspect(): void {
   });
 
   // 4. App-Switcher & Multi-Window Floating Privacy Shield (GCash / Banking App Style)
-  // Triggers when app is minimized, tab hidden, or window leaves active viewport
   let hideTimer: number | null = null;
 
   const triggerShield = () => {
+    if (!antiScreenshotActive) return;
     if (hideTimer) window.clearTimeout(hideTimer);
     showFloatingPrivacyOverlay();
   };
 
   const removeShield = () => {
-    // Graceful unmask on return
     hideTimer = window.setTimeout(() => {
       hideFloatingPrivacyOverlay();
     }, 50);
@@ -109,9 +128,8 @@ export function installNoInspect(): void {
   window.addEventListener('pagehide', triggerShield);
   window.addEventListener('pageshow', removeShield);
 
-  // When user swipes up to recent apps on Android / iOS, window fires blur
-  // To avoid scroll interruption, we only trigger if window is truly blurred while document active element isn't an input
   window.addEventListener('blur', () => {
+    if (!antiScreenshotActive) return;
     const isEditing = document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
     if (!isEditing) {
       triggerShield();

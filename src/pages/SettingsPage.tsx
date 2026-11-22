@@ -1483,6 +1483,7 @@ const SecuritySection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
         { label: isTl ? 'Auto sign-out kapag walang galaw' : 'Auto sign-out when idle', before: `${cfg.security.autoSignOutMinutes} min`, after: `${sec.autoSignOutMinutes} min` },
         { label: isTl ? 'Maling PIN bago ma-lock' : 'Wrong PINs before lock', before: String(cfg.security.pinMaxTries), after: String(sec.pinMaxTries) },
         { label: isTl ? 'Tagal ng lock' : 'Lock time', before: `${cfg.security.pinLockMinutes} min`, after: `${sec.pinLockMinutes} min` },
+        { label: isTl ? 'Anti-screenshot at app privacy shield' : 'Anti-screenshot & app privacy shield', before: cfg.security.antiScreenshot ? (isTl ? 'Naka-ON' : 'ON') : (isTl ? 'Naka-OFF' : 'OFF'), after: sec.antiScreenshot ? (isTl ? 'Naka-ON' : 'ON') : (isTl ? 'Naka-OFF' : 'OFF') },
       ],
       confirmLabel: isTl ? 'Oo, i-save' : 'Yes, save',
     });
@@ -1590,7 +1591,7 @@ const SecuritySection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
         </div>
       </section>
       <section className={`${card} p-5 space-y-3`} data-section="security">
-        <h2 className={h2}>{isTl ? 'Sign-out at lockout' : 'Sign-out & lockout'}</h2>
+        <h2 className={h2}>{isTl ? 'Sign-out, lockout at screen privacy' : 'Sign-out, lockout & screen privacy'}</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <label>
             <span className={label}>{isTl ? 'Auto sign-out kapag walang galaw (minuto)' : 'Auto sign-out when idle (minutes)'}</span>
@@ -1605,6 +1606,36 @@ const SecuritySection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
             <input type="number" min={1} max={60} data-sec="lock" value={sec.pinLockMinutes} onChange={(e) => setSec({ ...sec, pinLockMinutes: Number(e.target.value) })} className={input} />
           </label>
         </div>
+
+        {/* Anti-Screenshot & Screen Privacy Switch */}
+        <div className="pt-2 border-t border-slate-200/60 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-0.5">
+            <p className="text-sm font-bold text-[#1D1D1F] dark:text-white">
+              {isTl ? 'Anti-Screenshot & Confidential Privacy Shield' : 'Anti-Screenshot & Confidential Privacy Shield'}
+            </p>
+            <p className="text-xs text-[#8E8E93] dark:text-slate-400 max-w-xl">
+              {isTl
+                ? 'Kapag Naka-ON: Awtomatikong bina-blackout/blur ang screen tuwing magpi-PrintScreen, snipping tool, o mag-a-Alt+Tab sa ibang window para sa Data Privacy Act (RA 10173). Kapag Naka-OFF: Pwedeng mag-screenshot at screen share para sa presentation o evaluation testing.'
+                : 'When ON: Automatically blacks out/blurs screen during PrintScreen, snipping tools, or app-switching under Data Privacy Act (RA 10173). When OFF: Allows clean screenshots and screen sharing for research evaluations and presentations.'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSec({ ...sec, antiScreenshot: !sec.antiScreenshot })}
+            className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0B1F4D] dark:focus-visible:ring-sky-400 ${
+              sec.antiScreenshot ? 'bg-sky-600 dark:bg-sky-500' : 'bg-slate-300 dark:bg-slate-700'
+            }`}
+            role="switch"
+            aria-checked={Boolean(sec.antiScreenshot)}
+          >
+            <span
+              className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                sec.antiScreenshot ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
+
         {secBad && <p className={errText}> {secBad}</p>}
         <div className="flex justify-end">
           <button type="button" data-action="save-security" disabled={!secChanged || !!secBad} onClick={() => void saveSec()} className={primary}>
