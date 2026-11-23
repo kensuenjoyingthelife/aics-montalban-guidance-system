@@ -1243,7 +1243,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 {/* Direct Android APK Download Button (Mobile Only: hidden on desktop website) */}
                 <a
                   href="/aics-kalang-ba.apk"
-                  download="AICS_Kalang_Ba.apk"
+                  download="AICS_Report_Concern.apk"
                   onClick={() => soundFX.playToggleSwitch(true)}
                   className="btn-press w-full p-3 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-teal-600/20 to-emerald-500/15 hover:from-emerald-500/25 hover:to-teal-600/30 border border-emerald-400/35 dark:border-emerald-400/25 flex items-center justify-between gap-3 text-left transition-all duration-200 cursor-pointer shadow-sm group"
                 >
