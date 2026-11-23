@@ -1466,7 +1466,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         onLockTerminal={onLockTerminal}
         staffEmail={staffEmail}
         openCasesCount={cases.filter((c) => c.status !== 'Resolved').length}
-        todayAppointmentsCount={todayAppointments.filter((a) => a.status === 'Scheduled').length}
+        // Parents badge = everything to do there: conferences still to hold today + cases that need a new date + parents to call
+        todayAppointmentsCount={
+          todayAppointments.filter((a) => a.status === 'Scheduled').length +
+          cases.filter((c) => c.status === 'Pending Reschedule').length +
+          pendingTaskCount
+        }
         pendingConcernsCount={badgeCounts.pendingConcerns}
         referralsWaitingCount={referralsWaiting}
       />
@@ -2213,7 +2218,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                 }}
                                 className="btn-press px-3.5 py-1.5 rounded-lg bg-[#007AFF] hover:bg-[#0062CC] text-white text-xs font-semibold whitespace-nowrap"
                               >
-                                {isTl ? 'Mag-schedule ulit sa Step 4' : 'Reschedule in Due Process (Step 4)'}
+                                {isTl ? 'Pumili ng bagong araw' : 'Pick a new date'}
                               </button>
                               <button
                                 type="button"

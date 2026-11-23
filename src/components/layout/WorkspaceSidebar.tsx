@@ -60,7 +60,18 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
     soundFX.playKeyClick();
   };
 
-  const getBadgeStyle = (count: number) => {
+  // every number says what it counts (UX rule 4)
+  const badgeHint = (key: string | undefined, n: number) =>
+    key === 'cases' ? (isTl ? `${n} bukas na kaso` : `${n} open cases`)
+    : key === 'parents' ? (isTl ? `${n} gagawin: conference ngayon, kailangan ng bagong araw, tatawagang magulang` : `${n} to do: conferences today, need a new date, parents to call`)
+    : key === 'concerns' ? (isTl ? `${n} report na naghihintay` : `${n} reports waiting`)
+    : key === 'referrals' ? (isTl ? `${n} naghihintay sa counselor` : `${n} waiting for the counselor`)
+    : String(n);
+  const getBadgeStyle = (count: number, active = false) => {
+    // on the selected (blue) row the badge turns white so the number never disappears
+    if (active) {
+      return `bg-white ${count >= 5 ? 'text-[#FF3B30]' : count >= 3 ? 'text-[#C93400]' : 'text-[#007AFF]'} font-bold`;
+    }
     if (count >= 5) {
       return 'bg-[#FF3B30] text-white';
     }
@@ -211,8 +222,10 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
 
                   {!collapsed && badgeVal !== undefined && badgeVal > 0 && (
                     <span
+                      title={badgeHint(item.badgeKey, badgeVal)}
+                      aria-label={badgeHint(item.badgeKey, badgeVal)}
                       className={`ml-2 px-2 py-0.5 rounded-md text-xs font-semibold shrink-0 transition-colors ${getBadgeStyle(
-                        badgeVal
+                        badgeVal, isActive
                       )}`}
                     >
                       {badgeVal}
@@ -276,8 +289,10 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
 
                   {!collapsed && badgeVal !== undefined && badgeVal > 0 && (
                     <span
+                      title={badgeHint(item.badgeKey, badgeVal)}
+                      aria-label={badgeHint(item.badgeKey, badgeVal)}
                       className={`ml-2 px-2 py-0.5 rounded-full text-[11px] font-black shrink-0 transition-colors ${getBadgeStyle(
-                        badgeVal
+                        badgeVal, isActive
                       )}`}
                     >
                       {badgeVal}

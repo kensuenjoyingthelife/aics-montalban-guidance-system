@@ -409,7 +409,8 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-[92px] shrink-0">
             <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white font-mono">{a.timeSlot.split('–')[0].trim()}</p>
-            <p className="text-[10.5px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? '45 minuto' : '45 min'}</p>
+            {/* a missed conference shows WHEN it was missed; a coming one shows how long it takes */}
+            <p className="text-[10.5px] text-[#6E6E73] dark:text-[#A1A1A6]">{a.status === 'Did Not Attend' ? dayTitle(a.date) : isTl ? '45 minuto' : '45 min'}</p>
           </div>
           <div className="min-w-0">
             <p className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">
@@ -471,10 +472,6 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
         )}
         {showActions && a.status === 'Did Not Attend' && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2.5 py-1 rounded-lg border border-rose-200 dark:border-rose-800 inline-flex items-center gap-1">
-              <AlertTriangle className="w-3.5 h-3.5" />
-              {isTl ? 'Kailangang i-reschedule' : 'Needs reschedule'}
-            </span>
             <button
               type="button"
               onClick={() => {
@@ -487,7 +484,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
               className={`${btn} bg-[#007AFF] hover:bg-[#0062CC] text-white active:scale-[0.97] transition-transform inline-flex items-center gap-1.5 shadow-sm`}
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              {isTl ? 'Ilipat ang Petsa (Reschedule sa Step 4)' : 'Reschedule in Due Process (Step 4)'}
+              {isTl ? 'Pumili ng bagong araw' : 'Pick a new date'}
             </button>
             <button
               type="button"
@@ -707,9 +704,6 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
                           {isTl ? 'Kailangang Ilipat / Reschedule' : 'Needs Reschedule'} · {unresolvedNoShows.length}
                         </span>
                       </div>
-                      <span className="text-[11px] font-semibold text-rose-700 dark:text-rose-400">
-                        {isTl ? 'Hindi nakadalo ang magulang' : 'Parent did not attend previous schedule'}
-                      </span>
                     </div>
                     <div className="space-y-2">
                       {unresolvedNoShows.map((a) => confRow(a))}
