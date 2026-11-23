@@ -171,17 +171,29 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
     };
   }, [cfg.officeHours]);
 
+  // a closed (Resolved) or deleted case has nothing left to do here
+  const isOpenCase = (code: string) => {
+    const c = caseByCode.get(code);
+    return !!c && c.status !== 'Resolved';
+  };
   // Active appointments: scheduled upcoming PLUS appointments marked "Did Not Attend" that have not been rescheduled yet!
-  const unresolvedNoShows = useMemo(
-    () => appointments.filter((a) => a.status === 'Did Not Attend' && !appointments.some((sub) => sub.rescheduledFrom === a.id)),
-    [appointments]
-  );
+  // (open cases only; one "did not attend" row per case, the latest)
+  const unresolvedNoShows = useMemo(() => {
+    const latest = new Map<string, ParentAppointmentItem>();
+    appointments
+      .filter((a) => a.status === 'Did Not Attend' && isOpenCase(a.caseId) && !appointments.some((sub) => sub.rescheduledFrom === a.id))
+      .sort(byDateTime)
+      .forEach((a) => latest.set(a.caseId, a));
+    return [...latest.values()];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appointments, caseByCode]);
   const upcoming = useMemo(
     () => [
       ...unresolvedNoShows,
-      ...appointments.filter((a) => a.status === 'Scheduled' && a.date >= today),
+      ...appointments.filter((a) => a.status === 'Scheduled' && a.date >= today && isOpenCase(a.caseId)),
     ].sort(byDateTime),
-    [appointments, today, unresolvedNoShows]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [appointments, today, unresolvedNoShows, caseByCode]
   );
   const nextAptByCase = useMemo(() => {
     const m = new Map<string, ParentAppointmentItem>();
@@ -209,18 +221,20 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
   const openTasks = useMemo(
     () =>
       followUps
-        .filter((t) => !t.resolved)
+        .filter((t) => !t.resolved && (!t.caseId || isOpenCase(t.caseId)))
         .sort((a, b) => {
           if (taskSort === 'name') return a.parentName.localeCompare(b.parentName);
           if (taskSort === 'attention') return (noShowsByCase.get(b.caseId) ?? 0) - (noShowsByCase.get(a.caseId) ?? 0) || b.attemptsCount - a.attemptsCount;
           const d = timeOf(b.createdAt) - timeOf(a.createdAt);
           return taskSort === 'oldest' ? -d : d;
         }),
-    [followUps, noShowsByCase, taskSort]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [followUps, noShowsByCase, taskSort, caseByCode]
   );
   const remindersDue = useMemo(
-    () => appointments.filter((a) => a.status === 'Scheduled' && a.date === tomorrow && !a.reminderSentAt),
-    [appointments, tomorrow]
+    () => appointments.filter((a) => a.status === 'Scheduled' && a.date === tomorrow && !a.reminderSentAt && isOpenCase(a.caseId)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [appointments, tomorrow, caseByCode]
   );
   const pastConfs = useMemo(
     () => appointments.filter((a) => a.date < today || (a.status !== 'Scheduled' && a.date === today)).sort((a, b) => -byDateTime(a, b)),

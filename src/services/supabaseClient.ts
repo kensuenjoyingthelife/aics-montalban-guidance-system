@@ -957,7 +957,20 @@ export async function updateCaseFlowInDb(caseCode: string, patch: Record<string,
       `${SUPABASE_URL}/rest/v1/discipline_cases?case_code=eq.${encodeURIComponent(caseCode)}`,
       { method: 'PATCH', headers: getHeaders(), body: JSON.stringify(patch) }
     );
-    return reportWrite(res, 'updateCaseFlowInDb');
+    const ok = reportWrite(res, 'updateCaseFlowInDb');
+    // A closed case has nothing left to call about: close its open "Parents to call" tasks too
+    if (ok && patch.status === 'Resolved') {
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/follow_up_tasks?case_code=eq.${encodeURIComponent(caseCode)}&resolved=eq.false`, {
+          method: 'PATCH',
+          headers: getHeaders(),
+          body: JSON.stringify({ resolved: true, last_contact_summary_en: 'Case closed', last_contact_summary_tl: 'Sarado na ang kaso' }),
+        });
+      } catch {
+        /* the Dashboard also hides tasks of closed cases, so nothing wrong shows if this fails */
+      }
+    }
+    return ok;
   } catch {
     return reportWrite(null, 'updateCaseFlowInDb');
   }

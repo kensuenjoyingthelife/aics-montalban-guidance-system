@@ -545,14 +545,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       }),
     [appointments, cases.length, validCaseCodes, validCaseStudentNames]
   );
+  // cases that are still open (a closed case must not show in "Conferences today" or "Parents to call")
+  const openCaseCodes = useMemo(
+    () => new Set(cases.filter((c) => c.status !== 'Resolved').map((c) => c.caseCode.trim().toLowerCase())),
+    [cases]
+  );
   const activeFollowUpsList = useMemo(
     () =>
       followUpTasks.filter((t) => {
         if (cases.length === 0) return false;
-        if (t.caseId) return validCaseCodes.has(t.caseId.trim().toLowerCase());
+        if (t.caseId) {
+          const code = t.caseId.trim().toLowerCase();
+          // done tasks stay in "Done"; a still-open task of a closed case is hidden (nothing left to call about)
+          return validCaseCodes.has(code) && (t.resolved || openCaseCodes.has(code));
+        }
         return validCaseStudentNames.has(t.studentName.trim().toLowerCase());
       }),
-    [followUpTasks, cases.length, validCaseCodes, validCaseStudentNames]
+    [followUpTasks, cases.length, validCaseCodes, validCaseStudentNames, openCaseCodes]
   );
 
   // The Dashboard shows TODAY's conferences only (other days live on the Parents page)
@@ -561,9 +570,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     () => (referralRows ? buildQueue(cases, activeAppointments, referralRows).filter((q) => q.status === 'Waiting').length : 0),
     [cases, activeAppointments, referralRows]
   );
-  const todayAppointments = useMemo(
-    () => activeAppointments.filter((a) => a.date === todayStr && a.status !== 'Rescheduled'),
-    [activeAppointments, todayStr]
+  const todayAppointments = useMemo(() => {
+    // today only, open cases only, and one row per case + time slot (the latest one wins, no repeats)
+    const seen = new Map<string, (typeof activeAppointments)[number]>();
+    for (const a of activeAppointments) {
+      if (a.date !== todayStr || a.status === 'Rescheduled') continue;
+      if (a.caseId && !openCaseCodes.has(a.caseId.trim().toLowerCase())) continue;
+      seen.set(`${(a.caseId || a.studentName).toLowerCase()}|${a.timeSlot}`, a);
+    }
+    return [...seen.values()];
+  }, [activeAppointments, todayStr, openCaseCodes]
   );
 
   // Is an SMS service connected? (never pretend a text was sent)
