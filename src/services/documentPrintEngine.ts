@@ -48,6 +48,12 @@ export interface MonthlyPdfOptions {
   didNotAttend?: number;
   closed?: number;
   overdueRows?: Array<{ code: string; student: string; offense: string; since: string; days: number }>;
+  /** page 1 for school heads: plain-language rows with a status color + what needs attention */
+  glance?: { rows: Array<{ tone: 'good' | 'watch' | 'action' | 'info'; topic: string; text: string }>; attention: string[] };
+  repeatRows?: Array<{ student: string; grade: string; offense: string; times: number; last: string }>;
+  followUp?: { tasks: number; done: number; attempts: number; open: number };
+  concerns?: { total: number; urgent: number; approved: number; rejected: number; waiting: number; avgHours: number | null } | null;
+  closedWithin14?: number;
 }
 
 export interface DepEdComplianceReportOptions {
@@ -195,6 +201,25 @@ function officialDocument(p: DocParts): string {
   .kpi strong { display: block; font-size: 17pt; font-weight: 800; color: #0B1F4D; line-height: 1.2; margin-top: 2px; }
   .kpi strong.bad { color: #B91C1C; }
   .kpi small { font-size: 7.8pt; color: #475569; }
+
+  /* at a glance (school heads) */
+  .glance { border: 1px solid #CBD5E1; border-radius: 4px; }
+  .g { display: grid; grid-template-columns: 112px 150px 1fr; align-items: center; border-top: 1px solid #E2E8F0; }
+  .g:first-child { border-top: 0; }
+  .g > * { padding: 8px 10px; }
+  .g .st { font-size: 7.5pt; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+  .g .st i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .g.good .st { color: #166534; } .g.good .st i { background: #16A34A; }
+  .g.watch .st { color: #92400E; } .g.watch .st i { background: #F59E0B; }
+  .g.action .st { color: #B91C1C; } .g.action .st i { background: #DC2626; }
+  .g.info .st { color: #1E469B; } .g.info .st i { background: #93C5FD; }
+  .g b { font-size: 9pt; color: #0B1F4D; }
+  .g span { font-size: 10pt; color: #0F172A; }
+  .attn { border-left: 4px solid #DC2626; background: #FFF7F7; padding: 8px 12px 8px 26px; margin: 0; border-radius: 0 4px 4px 0; }
+  .attn li { margin: 3px 0; font-size: 10pt; }
+  .attn.ok { border-left-color: #16A34A; background: #F3FBF5; list-style: none; padding-left: 12px; }
+  .legend { font-size: 7.8pt; color: #64748B; margin-top: 5px; }
+  .pagebreak { break-before: page; }
 
   /* tables */
   table { width: 100%; border-collapse: collapse; font-size: 8.8pt; }
@@ -352,14 +377,63 @@ export function printMonthlyExecutivePdf(opts: MonthlyPdfOptions): boolean {
           .map((o) => `<tr><td class="mono">${esc(o.code)}</td><td>${esc(o.student)}</td><td>${esc(o.offense)}</td><td>${esc(o.since)}</td><td class="num"><strong>${o.days}</strong></td></tr>`)
           .join('')}</tbody></table>`
       : `<p class="note">No overdue cases this month.</p>`;
-  const body = `
+  const STATUS: Record<string, string> = { good: 'Good', watch: 'Watch', action: 'Needs action', info: 'For info' };
+  const glance = opts.glance
+    ? `
+  <h2>At a glance</h2>
+  <section class="glance">${opts.glance.rows
+    .map((g) => `<div class="g ${g.tone}"><div class="st"><i></i>${STATUS[g.tone]}</div><b>${esc(g.topic)}</b><span>${esc(g.text)}</span></div>`)
+    .join('')}</section>
+  <p class="legend">Green = good · Yellow = keep an eye on it · Red = needs action · Blue = for information</p>
+
+  <h2>What needs your attention</h2>
+  ${
+    opts.glance.attention.length
+      ? `<ol class="attn">${opts.glance.attention.map((a) => `<li>${esc(a)}</li>`).join('')}</ol>`
+      : `<ul class="attn ok"><li>Nothing needs action this month. All cases, parents and student reports are on track.</li></ul>`
+  }
+  <p class="note">Details for the Guidance Office are on the next page.</p>
+  <div class="pagebreak"></div>`
+    : '';
+  const fu = opts.followUp;
+  const cc = opts.concerns;
+  const extra = `
+  ${
+    opts.repeatRows
+      ? `<h2>5. Repeat offenders</h2>${
+          opts.repeatRows.length
+            ? `<table><thead><tr><th>Student</th><th>Grade &amp; section</th><th>Offense repeated</th><th class="num">Times</th><th>Last case</th></tr></thead><tbody>${opts.repeatRows
+                .map((r) => `<tr><td><strong>${esc(r.student)}</strong></td><td class="nw">${esc(r.grade)}</td><td>${esc(r.offense)}</td><td class="num"><strong>${r.times}</strong></td><td class="nw">${esc(r.last)}</td></tr>`)
+                .join('')}</tbody></table>`
+            : '<p class="note">No student repeated an offense after a sanction this month.</p>'
+        }`
+      : ''
+  }
+  ${
+    fu || cc
+      ? `<h2>6. Parent follow-up &amp; student reports</h2><div class="two">
+    ${fu ? `<table><thead><tr><th>Parent follow-up (calls)</th><th class="num">Count</th></tr></thead><tbody>
+      <tr><td>Call tasks made this month</td><td class="num">${fu.tasks}</td></tr>
+      <tr><td>Finished</td><td class="num">${fu.done}</td></tr>
+      <tr><td>Call attempts recorded</td><td class="num">${fu.attempts}</td></tr>
+      <tr><td><strong>Parents still to call (today)</strong></td><td class="num"><strong>${fu.open}</strong></td></tr></tbody></table>` : '<div></div>'}
+    ${cc ? `<table><thead><tr><th>Student reports (website + app)</th><th class="num">Count</th></tr></thead><tbody>
+      <tr><td>Received</td><td class="num">${cc.total}</td></tr>
+      <tr><td>Urgent</td><td class="num">${cc.urgent}</td></tr>
+      <tr><td>Accepted / Declined</td><td class="num">${cc.approved} / ${cc.rejected}</td></tr>
+      <tr><td>Still waiting for review</td><td class="num">${cc.waiting}</td></tr>
+      <tr><td><strong>Average time to review</strong></td><td class="num"><strong>${cc.avgHours === null ? '—' : cc.avgHours < 24 ? cc.avgHours + ' hrs' : Math.round((cc.avgHours / 24) * 10) / 10 + ' days'}</strong></td></tr></tbody></table>` : '<div></div>'}
+  </div>`
+      : ''
+  }`;
+  const body = `${glance}
   <h2>1. Summary</h2>
   <p class="lead">${summary}</p>
   <div class="kpis" style="--n:4">
     <div class="kpi"><b>New cases</b><strong>${opts.newCases}</strong><small>recorded this month</small></div>
     <div class="kpi"><b>Parent attendance</b><strong>${opts.attendanceRate === null ? '—' : opts.attendanceRate + '%'}</strong><small>${opts.attended} of ${opts.conferencesHeld} conferences</small></div>
     <div class="kpi"><b>Overdue cases</b><strong class="${opts.overdueCount > 0 ? 'bad' : ''}">${opts.overdueCount}</strong><small>open past the day limit</small></div>
-    <div class="kpi"><b>Average time to close</b><strong>${opts.avgDaysToClose === null ? '—' : opts.avgDaysToClose + ' days'}</strong><small>${opts.closed !== undefined ? `${opts.closed} case${opts.closed === 1 ? '' : 's'} closed` : 'from incident to close'}</small></div>
+    <div class="kpi"><b>Average time to close</b><strong>${opts.avgDaysToClose === null ? '—' : opts.avgDaysToClose + ' days'}</strong><small>${opts.closed !== undefined ? `${opts.closed} closed${opts.closedWithin14 !== undefined && opts.closed ? ` · ${Math.round((opts.closedWithin14 / opts.closed) * 100)}% within 2 weeks` : ''}` : 'from incident to close'}</small></div>
   </div>
 
   <h2>2. Offenses</h2>
@@ -380,11 +454,12 @@ export function printMonthlyExecutivePdf(opts: MonthlyPdfOptions): boolean {
   </div>
 
   <h2>4. Overdue cases</h2>
-  ${overdueTable}`;
+  ${overdueTable}
+  ${extra}`;
   return triggerPrintIframe(
     officialDocument({
       docTitle: 'Monthly Discipline & Parent Conference Report',
-      docSubtitle: 'Summary of cases, parent conferences and follow-up for the month',
+      docSubtitle: 'Page 1: at a glance for school heads · Next pages: details for the Guidance Office',
       reference: ref,
       meta: [
         ['Reference no.', ref],

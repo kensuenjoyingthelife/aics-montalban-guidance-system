@@ -36,7 +36,8 @@ import { TrendCard } from '../components/reports/TrendCard';
 import { fetchConcerns, type ConcernItem } from '../services/concernsDb';
 import { useAppConfig } from '../services/appConfig';
 import { useConfirmChange } from '../components/ui/ConfirmChange';
-import { printIncidentSlip, printMonthlyExecutivePdf, printDepEdCompliancePdf, printSimpleTablePdf } from '../services/documentPrintEngine';
+import { buildMonthlyExtras, buildGlance } from '../services/reportGlance';
+import { printIncidentSlip, printMonthlyExecutivePdf, printDepEdCompliancePdf } from '../services/documentPrintEngine';
 import { Download, Printer, FileText, BarChart3, TrendingUp, Calendar, Award, ShieldCheck } from 'lucide-react';
 
 // Chart colors, validated for color-blind readers (blue/green, blue/orange) with separate dark-mode steps.
@@ -199,6 +200,13 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
     return new Intl.DateTimeFormat(isTl ? 'fil-PH' : 'en-US', { month: 'long', year: 'numeric' }).format(new Date(y, m - 1, 1));
   }, [month, isTl]);
 
+  // "At a glance" for school heads (same numbers on screen and on page 1 of the Monthly PDF)
+  const extras = useMemo(
+    () => buildMonthlyExtras(cases, appointments, followUps, concerns, month, today, OVERDUE),
+    [cases, appointments, followUps, concerns, month, today, OVERDUE]
+  );
+  const glance = useMemo(() => buildGlance(extras), [extras]);
+
   const reportRows = (): string[][] => [
     ['Item', 'Value'],
     ['Month', monthName],
@@ -230,16 +238,6 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     onTriggerToast(isTl ? ' Na-download ang monthly report (CSV). Mabubuksan ito sa Excel.' : ' Monthly report downloaded (CSV). It opens in Excel.');
   };
-  const printReport = () => {
-    // same official layout as every other report (letterhead, page numbers, signatures)
-    const ok = printSimpleTablePdf({
-      title: isTl ? 'Buwanang Ulat · Talaan' : 'Monthly Report · Data Table',
-      period: monthName,
-      rows: reportRows().slice(1).map(([k, v]) => [k, v] as [string, string]),
-    });
-    if (!ok) onTriggerToast(isTl ? ' Hindi mabuksan ang print. Gamitin muna ang "I-download (Excel)".' : ' Could not open print. Use "Download (Excel)" for now.');
-  };
-
   // ---------- handover ----------
   const [hq, setHq] = useState('');
   const [hLimit, setHLimit] = useState(50);
@@ -345,6 +343,51 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
           ))}
         </div>
       </div>
+
+      {/* ================= AT A GLANCE (for school heads: plain words, a status color, what needs attention) ================= */}
+      <section data-glance className={`${card} p-5 space-y-4`}>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className={h2}>{isTl ? `Sa isang tingin · ${monthName}` : `At a glance · ${monthName}`}</h2>
+          <p className={sub}>{isTl ? 'Palitan ang buwan sa tab na "Monthly report".' : 'Change the month in the "Monthly report" tab.'}</p>
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-4">
+          <ul className="divide-y divide-black/[0.06] dark:divide-white/[0.08] rounded-xl border border-black/[0.08] dark:border-white/[0.1]">
+            {glance.rows.map((g) => {
+              const tone = {
+                good: ['bg-[#16A34A]', 'text-[#166534] dark:text-[#4ADE80]', isTl ? 'Maayos' : 'Good'],
+                watch: ['bg-[#F59E0B]', 'text-[#92400E] dark:text-[#FBBF24]', isTl ? 'Bantayan' : 'Watch'],
+                action: ['bg-[#DC2626]', 'text-[#B91C1C] dark:text-[#F87171]', isTl ? 'Kailangang aksyunan' : 'Needs action'],
+                info: ['bg-[#93C5FD]', 'text-[#1E469B] dark:text-[#93C5FD]', isTl ? 'Para malaman' : 'For info'],
+              }[g.tone];
+              return (
+                <li key={g.key} data-glance-row={g.key} className="grid grid-cols-[120px_1fr] gap-3 px-4 py-3 items-start">
+                  <span className={`inline-flex items-center gap-2 text-[12px] font-bold ${tone[1]}`}>
+                    <i className={`w-2.5 h-2.5 rounded-full shrink-0 ${tone[0]}`} aria-hidden />
+                    {tone[2]}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[13px] font-bold text-[#1D1D1F] dark:text-white">{isTl ? g.topicTl : g.topicEn}</span>
+                    <span className="block text-[14px] text-[#3A3A3C] dark:text-[#D1D1D6]">{isTl ? g.tl : g.en}</span>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          <div className={`rounded-xl p-4 border-l-4 ${glance.attentionEn.length ? 'border-[#DC2626] bg-[#FFF7F7] dark:bg-[#3A1D1D]' : 'border-[#16A34A] bg-[#F3FBF5] dark:bg-[#132A1A]'}`}>
+            <p className="text-[13px] font-extrabold text-[#1D1D1F] dark:text-white mb-2">{isTl ? 'Kailangang tutukan' : 'What needs attention'}</p>
+            {glance.attentionEn.length ? (
+              <ol className="list-decimal pl-5 space-y-1.5 text-[14px] text-[#1D1D1F] dark:text-white">
+                {(isTl ? glance.attentionTl : glance.attentionEn).map((a) => (
+                  <li key={a}>{a}</li>
+                ))}
+              </ol>
+            ) : (
+              <p className="text-[14px] text-[#166534] dark:text-[#4ADE80]">{isTl ? 'Walang kailangang aksyunan ngayong buwan.' : 'Nothing needs action this month.'}</p>
+            )}
+            <p className={`${sub} mt-3`}>{isTl ? 'Ito rin ang page 1 ng Monthly Report (PDF).' : 'This is also page 1 of the Monthly Report (PDF).'}</p>
+          </div>
+        </div>
+      </section>
 
       {/* ================= OVERVIEW ================= */}
       {tab === 'overview' && cur && (
@@ -705,7 +748,15 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                     staffName: config.signatories?.guidanceAssociate,
                     byType: report.byType,
                     didNotAttend: report.didNotAttend,
-                    closed: report.closed,
+                    closed: extras.closedThisMonth,
+                    closedWithin14: extras.closedWithin14,
+                    glance: {
+                      rows: glance.rows.map((g) => ({ tone: g.tone, topic: isTl ? g.topicTl : g.topicEn, text: isTl ? g.tl : g.en })),
+                      attention: isTl ? glance.attentionTl : glance.attentionEn,
+                    },
+                    repeatRows: extras.repeatRows.map((r) => ({ student: r.studentName, grade: r.gradeSection, offense: isTl ? r.offenseTl || r.offense : r.offense, times: r.times, last: r.lastDate })),
+                    followUp: extras.followUp,
+                    concerns: extras.concerns,
                     overdueRows: report.overdue.map((c) => ({
                       code: c.caseCode,
                       student: c.studentName,
@@ -796,25 +847,6 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 <span>{isTl ? 'Quarterly Report (PDF)' : 'Quarterly Report (PDF)'}</span>
-              </button>
-              <button
-                type="button"
-                data-action="print-report"
-                onClick={async () => {
-                  const ok = await confirm({
-                    title: isTl ? 'I-print ang Talaan ng Report?' : 'Print Report Table?',
-                    description: isTl ? 'Bubuksan ang printable summary table ng buwanang talaan.' : 'Open quick print summary for the monthly report table.',
-                    rows: [{ label: isTl ? 'Buwan' : 'Month', after: monthName }],
-                    confirmLabel: isTl ? 'I-print' : 'Print',
-                    tone: 'primary',
-                  });
-                  if (!ok) return;
-                  printReport();
-                }}
-                className={`${btn} px-4 py-2 saas-card-subtle active:scale-[0.97] inline-flex items-center gap-1.5`}
-              >
-                <Printer className="w-3.5 h-3.5" />
-                {isTl ? 'Quick Table Print' : 'Quick Table Print'}
               </button>
               <button
                 type="button"
