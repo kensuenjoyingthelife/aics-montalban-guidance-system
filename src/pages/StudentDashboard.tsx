@@ -49,7 +49,6 @@ import {
   BadgeCheck,
   Volume2,
   PhoneOff,
-  MoreHorizontal,
 } from 'lucide-react';
 import { WavyBackground } from '../components/auth/WavyBackground';
 import { SoundTogglePill, soundFX } from '../services/soundEngine';
@@ -115,7 +114,6 @@ const CONCERN_GROUPS = [
       { v: 'Classroom Disruption', en: 'Noise in class', tl: 'Ingay sa klase', icon: Volume2 },
       { v: 'Littering on Campus', en: 'Littering', tl: 'Pagkakalat', icon: Trash2 },
       { v: 'Unauthorized Device Use', en: 'Phone use in class', tl: 'Cellphone sa klase', icon: PhoneOff },
-      { v: 'Other Disciplinary Infraction', en: 'Something else', tl: 'Iba pa', icon: MoreHorizontal },
     ],
   },
 ] as const;
@@ -1796,7 +1794,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                 {formStep === 1 ? (isTl ? 'Anong klaseng concern?' : 'What kind of concern?') : formStep === 2 ? (isTl ? 'Sino ang inirereklamo?' : 'Who is it about?') : isTl ? 'Ano ang nangyari?' : 'What happened?'}
               </h2>
               <p className="mt-1 text-[16px] lg-ink-soft">
-                {formStep === 1 ? (isTl ? 'Piliin ang pinakamalapit. Okay lang kung hindi sigurado, piliin ang "Iba pa".' : 'Pick the closest one. Not sure? Choose "Something else".') : formStep === 2 ? (isTl ? 'Kahit hindi mo alam ang pangalan, pwede pa rin.' : 'It is okay if you do not know their name.') : isTl ? 'Ikuwento nang tapat. Ang Guidance lang ang makakabasa.' : 'Tell it honestly. Only Guidance will read it.'}
+                {formStep === 1 ? (isTl ? 'Piliin ang pinakamalapit sa nangyari.' : 'Pick the one closest to what happened.') : formStep === 2 ? (isTl ? 'Kahit hindi mo alam ang pangalan, pwede pa rin.' : 'It is okay if you do not know their name.') : isTl ? 'Ikuwento nang tapat. Ang Guidance lang ang makakabasa.' : 'Tell it honestly. Only Guidance will read it.'}
               </p>
               <div className="mt-4 grid grid-cols-3 gap-2">
                 {[1, 2, 3].map((s) => <span key={s} className={`h-1.5 rounded-full ${formStep >= s ? 'nav-c-home' : 'lg-line'}`} />)}

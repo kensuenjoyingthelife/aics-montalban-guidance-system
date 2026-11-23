@@ -137,7 +137,15 @@ export const App: React.FC = () => {
     try {
       const saved = localStorage.getItem('student_portal_user');
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        // Android app without a quick PIN (Create Account no longer asks for one): on reopen the student
+        // signs in again with ID + password + email OTP instead of being stuck on a PIN screen.
+        if (isCapacitorNativeApp() && !parsed?.quickPin) {
+          localStorage.removeItem('student_portal_user');
+          localStorage.removeItem('student_pin_locked');
+          return null;
+        }
+        return parsed;
       }
     } catch {}
     return null;

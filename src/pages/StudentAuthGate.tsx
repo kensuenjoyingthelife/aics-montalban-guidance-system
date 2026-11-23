@@ -435,15 +435,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     return { type: 'correct', label: 'Matched ✓' };
   }, [regConfirmPassword, regPassword]);
 
-  // 9. Quick Unlock PIN (4 to 6 digits, easy for students)
-  const quickPinStatus = useMemo(() => {
-    if (!isMobileDevice) return { type: 'correct', label: 'Web Mode (Not Required)' };
-    const cleaned = regQuickPin.trim();
-    if (!cleaned) return { type: 'not_input', label: 'Not Input' };
-    if (!/^\d{4,6}$/.test(cleaned)) return { type: 'wrong', label: 'Must be 4 digits' };
-    return { type: 'correct', label: 'PIN Set ✓' };
-  }, [regQuickPin, isMobileDevice]);
-
   // Check if form is ready to submit (Student ID card is no longer required as face selfie is captured)
   const isRegisterFormValid =
     lastNameStatus.type === 'correct' &&
@@ -453,8 +444,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     studentNumberStatus.type === 'correct' &&
     personalPhotoStatus.type === 'correct' &&
     passwordStatus.type === 'correct' &&
-    confirmPasswordStatus.type === 'correct' &&
-    quickPinStatus.type === 'correct';
+    confirmPasswordStatus.type === 'correct';
 
   // Badge render helper
   const renderBadge = (status: { type: string; label: string }) => {
@@ -540,7 +530,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       if (personalPhotoStatus.type !== 'correct') missingFields.push(isTl ? 'Live Photo Selfie / Face Verification' : 'Live Face Selfie / Photo Verification');
       if (passwordStatus.type !== 'correct') missingFields.push(isTl ? 'Password (6+ karakter, may 1+ numero, malaking titik at simbolo)' : 'Password (6+ chars with number, uppercase & symbol)');
       if (confirmPasswordStatus.type !== 'correct') missingFields.push(isTl ? 'Confirm Password (dapat tugma sa nilagay mong password)' : 'Confirm Password (must match your password)');
-      if (isMobileDevice && quickPinStatus.type !== 'correct') missingFields.push(isTl ? '4-Digit PIN para sa mabilisang login ng mobile app' : '4-Digit Quick Unlock PIN (Mobile App)');
 
       const msg = isTl
         ? 'May mga kulang o maling impormasyon pa sa iyong form. Pakisuyong kumpletuhin ang mga ito:'
@@ -569,7 +558,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         email: regEmail,
         studentNumber: idForDb(regStudentNumber),
         password: regPassword,
-        quickPin: regQuickPin.trim(),
+        // no quick-unlock PIN anymore (user, 2026-11-23): students sign in with ID, password and email OTP
         gradeSection: `Grade ${regGradeLevel} · ${regStrand}`,
         studentIdFile,
         personalPhotoFile,
@@ -1690,37 +1679,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     </div>
                   </div>
 
-                  {/* 4-Digit PIN for Quick Mobile App Unlock (Visible strictly on Mobile App / Mobile Devices) */}
-                  {isMobileDevice && (
-                    <div className="pt-3 border-t border-slate-200 dark:border-white/10 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold register-label flex items-center gap-1.5">
-                          <Lock className="w-4 h-4 text-emerald-500 shrink-0" />
-                          <span>ENTER 4-DIGIT PIN (MOBILE APP QUICK UNLOCK)</span>
-                        </label>
-                        {renderBadge(quickPinStatus)}
-                      </div>
-                      <div className="relative w-full max-w-xs">
-                        <input
-                          type="password"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          maxLength={4}
-                          required={isMobileDevice}
-                          placeholder="•••• (4 digits)"
-                          value={regQuickPin}
-                          onChange={(e) => {
-                            const val = e.target.value.replace(/\D/g, '').slice(0, 4);
-                            setRegQuickPin(val);
-                          }}
-                          className="w-full px-4 py-3 rounded-xl cosmic-input text-base font-mono font-bold tracking-[0.35em] text-center focus:outline-none"
-                        />
-                      </div>
-                      <p className="text-[11px] font-bold text-sky-700 dark:text-sky-300">
-                        {isTl ? 'Gagamitin upang ma-unlock agad ang app nang hindi kailangang mag-login ulit.' : 'Used for quick app unlock without re-entering your full password.'}
-                      </p>
-                    </div>
-                  )}
                 </div>
 
                 {/* Bottom Inline Status Notification (High Contrast & Visible in Light/Dark Mode) */}
