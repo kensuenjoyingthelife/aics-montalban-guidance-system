@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { isCapacitorNativeApp } from '../../services/devicePerformance';
 
 interface LiveCameraCaptureModalProps {
   isOpen: boolean;
@@ -46,6 +47,7 @@ export const LiveCameraCaptureModal: React.FC<LiveCameraCaptureModalProps> = ({
     }
   };
 
+  const isApp = isCapacitorNativeApp();
   const startCamera = async (facing: 'user' | 'environment') => {
     setIsStarting(true);
     setCameraError(null);
@@ -103,8 +105,8 @@ export const LiveCameraCaptureModal: React.FC<LiveCameraCaptureModalProps> = ({
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         setCameraError(
           isTl
-            ? 'Hindi pinayagan ang camera permission. Pakisuyong i-allow ang Camera sa browser settings.'
-            : 'Camera permission denied. Please allow camera access in your browser settings.'
+            ? (isApp ? 'Naka-block ang camera. Para buksan: Settings › Apps › AICS › Permissions › Camera › Allow. Tapos subukan ulit.' : 'Naka-block ang camera sa site na ito. Para buksan: pindutin ang lock icon sa tabi ng address › Camera › Allow, tapos i-reload. Sa Android, tingnan din: Settings › Apps › Chrome › Permissions › Camera.')
+            : (isApp ? 'The camera is blocked. To turn it on: Settings › Apps › AICS › Permissions › Camera › Allow. Then try again.' : 'The camera is blocked for this site. To turn it on: tap the lock icon next to the address › Camera › Allow, then reload. On Android, also check: Settings › Apps › Chrome › Permissions › Camera.')
         );
       } else {
         setCameraError(
