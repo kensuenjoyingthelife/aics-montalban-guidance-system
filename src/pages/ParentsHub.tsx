@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { isStaleReminderTask } from '../services/followUpRules';
 import { DateField } from '../components/ui/DateField';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
@@ -230,7 +231,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
       followUps
         .filter((t) => !t.resolved && (!t.caseId || isOpenCase(t.caseId)))
         // "reminder did not go out" only matters while a conference is still coming
-        .filter((t) => t.category !== 'Failed SMS' || !t.caseId || appointments.some((a) => a.caseId === t.caseId && a.status === 'Scheduled' && a.date >= today))
+        .filter((t) => !isStaleReminderTask(t, appointments, today))
         .sort((a, b) => {
           if (taskSort === 'name') return a.parentName.localeCompare(b.parentName);
           if (taskSort === 'attention') return (noShowsByCase.get(b.caseId) ?? 0) - (noShowsByCase.get(a.caseId) ?? 0) || b.attemptsCount - a.attemptsCount;
