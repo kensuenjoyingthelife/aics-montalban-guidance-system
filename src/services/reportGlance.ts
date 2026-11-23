@@ -101,35 +101,29 @@ export function buildGlance(x: MonthlyExtras): { rows: GlanceRow[]; attentionEn:
   const attEn: string[] = [];
   const attTl: string[] = [];
 
+  const top = r.byType[0];
   rows.push({
     key: 'cases',
     tone: r.newCases > x.prev.newCases ? 'watch' : 'info',
     topicEn: 'New cases',
     topicTl: 'Bagong kaso',
-    en: `${r.newCases} new discipline case${r.newCases === 1 ? '' : 's'} this month (${change(r.newCases, x.prev.newCases, false)}).`,
-    tl: `${r.newCases} bagong kaso ngayong buwan (${change(r.newCases, x.prev.newCases, true)}).`,
+    en: `${r.newCases} new discipline case${r.newCases === 1 ? '' : 's'} this month (${change(r.newCases, x.prev.newCases, false)}).${top ? ` Most common: ${top.label} (${top.count}).` : ''}`,
+    tl: `${r.newCases} bagong kaso ngayong buwan (${change(r.newCases, x.prev.newCases, true)}).${top ? ` Pinakamadalas: ${top.label} (${top.count}).` : ''}`,
   });
 
-  const top = r.byType[0];
-  if (top) {
-    rows.push({
-      key: 'top',
-      tone: 'info',
-      topicEn: 'Most common offense',
-      topicTl: 'Pinakamadalas na offense',
-      en: `${top.label}: ${top.count} case${top.count === 1 ? '' : 's'} (${top.pct}% of all).`,
-      tl: `${top.label}: ${top.count} kaso (${top.pct}% ng lahat).`,
-    });
-  }
-
   const od = r.overdue.length;
+  const closedPct = x.closedThisMonth > 0 ? Math.round((x.closedWithin14 / x.closedThisMonth) * 100) : null;
+  const closedTone: GlanceTone = closedPct === null ? 'info' : closedPct >= 80 ? 'good' : closedPct >= 50 ? 'watch' : 'action';
+  const closedEn = closedPct === null ? '' : ` ${x.closedWithin14} of ${x.closedThisMonth} closed case${x.closedThisMonth === 1 ? ' was' : 's were'} finished within 2 weeks (${closedPct}%).`;
+  const closedTl = closedPct === null ? '' : ` ${x.closedWithin14} sa ${x.closedThisMonth} naisarang kaso ang natapos sa loob ng 2 linggo (${closedPct}%).`;
   rows.push({
-    key: 'overdue',
-    tone: od > 0 ? 'action' : 'good',
-    topicEn: 'Cases taking too long',
-    topicTl: 'Kasong natatagalan',
-    en: od > 0 ? `${od} open case${od === 1 ? ' is' : 's are'} past ${x.overdueDays} days and need${od === 1 ? 's' : ''} follow-up.` : `No case is past ${x.overdueDays} days. All are on time.`,
-    tl: od > 0 ? `${od} bukas na kaso ang lampas na sa ${x.overdueDays} araw at kailangang tutukan.` : `Walang kasong lampas sa ${x.overdueDays} araw. Lahat ay nasa oras.`,
+    key: 'speed',
+    // the worse of "overdue" and "closed on time" decides the color
+    tone: od > 0 ? 'action' : closedTone === 'info' ? 'good' : closedTone,
+    topicEn: 'Case speed',
+    topicTl: 'Bilis ng kaso',
+    en: (od > 0 ? `${od} open case${od === 1 ? ' is' : 's are'} past ${x.overdueDays} days and need${od === 1 ? 's' : ''} follow-up.` : `No open case is past ${x.overdueDays} days.`) + closedEn,
+    tl: (od > 0 ? `${od} bukas na kaso ang lampas na sa ${x.overdueDays} araw at kailangang tutukan.` : `Walang bukas na kasong lampas sa ${x.overdueDays} araw.`) + closedTl,
   });
   if (od > 0) {
     attEn.push(`Follow up the ${od} overdue case${od === 1 ? '' : 's'} (list in section 4).`);
@@ -152,18 +146,6 @@ export function buildGlance(x: MonthlyExtras): { rows: GlanceRow[]; attentionEn:
     }
   } else {
     rows.push({ key: 'parents', tone: 'info', topicEn: 'Parents who came', topicTl: 'Magulang na dumalo', en: 'No parent conference was held this month.', tl: 'Walang parent conference ngayong buwan.' });
-  }
-
-  if (x.closedThisMonth > 0) {
-    const pct = Math.round((x.closedWithin14 / x.closedThisMonth) * 100);
-    rows.push({
-      key: 'speed',
-      tone: pct >= 80 ? 'good' : pct >= 50 ? 'watch' : 'action',
-      topicEn: 'Cases closed on time',
-      topicTl: 'Kasong naisara sa oras',
-      en: `${x.closedWithin14} of ${x.closedThisMonth} closed case${x.closedThisMonth === 1 ? ' was' : 's were'} finished within 2 weeks (${pct}%)${r.avgDaysToClose !== null ? `, ${r.avgDaysToClose} days on average` : ''}.`,
-      tl: `${x.closedWithin14} sa ${x.closedThisMonth} naisarang kaso ang natapos sa loob ng 2 linggo (${pct}%)${r.avgDaysToClose !== null ? `, ${r.avgDaysToClose} araw sa average` : ''}.`,
-    });
   }
 
   const rp = x.repeatRows.length;
@@ -201,5 +183,8 @@ export function buildGlance(x: MonthlyExtras): { rows: GlanceRow[]; attentionEn:
     attTl.push(`${x.followUp.open} magulang ang kailangan pang tawagan ng Guidance Office.`);
   }
 
+  // what needs attention comes first: red, then yellow, then green, then blue
+  const ORDER: Record<GlanceTone, number> = { action: 0, watch: 1, good: 2, info: 3 };
+  rows.sort((a, b) => ORDER[a.tone] - ORDER[b.tone]);
   return { rows, attentionEn: attEn, attentionTl: attTl };
 }

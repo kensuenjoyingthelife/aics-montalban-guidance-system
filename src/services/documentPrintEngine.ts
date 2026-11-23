@@ -204,10 +204,10 @@ function officialDocument(p: DocParts): string {
 
   /* at a glance (school heads) */
   .glance { border: 1px solid #CBD5E1; border-radius: 4px; }
-  .g { display: grid; grid-template-columns: 112px 150px 1fr; align-items: center; border-top: 1px solid #E2E8F0; }
+  .g { display: grid; grid-template-columns: 124px 140px 1fr; align-items: center; border-top: 1px solid #E2E8F0; }
   .g:first-child { border-top: 0; }
   .g > * { padding: 8px 10px; }
-  .g .st { font-size: 7.5pt; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+  .g .st { white-space: nowrap; font-size: 7.5pt; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
   .g .st i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
   .g.good .st { color: #166534; } .g.good .st i { background: #16A34A; }
   .g.watch .st { color: #92400E; } .g.watch .st i { background: #F59E0B; }
