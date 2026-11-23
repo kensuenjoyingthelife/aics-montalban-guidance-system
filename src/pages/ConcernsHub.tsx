@@ -581,6 +581,7 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
                 isTl={isTl}
                 match={matchOf(selected) && !nameMismatch(selected) ? matchOf(selected) : undefined}
                 numberFound={!!(selected.studentNumber && studentByNo.get(selected.studentNumber))}
+                byNumber={selected.studentNumber ? studentByNo.get(selected.studentNumber) : undefined}
                 account={selected.accountId != null ? accountById.get(selected.accountId) : undefined}
                 when={when}
                 statusPill={statusPill(selected)}
@@ -851,6 +852,8 @@ const ConcernDetail: React.FC<{
   match?: StudentRecord;
   /** the student no. exists in the masterlist (even if the name differs) */
   numberFound: boolean;
+  /** the masterlist student who owns this student no. (even when the name differs) */
+  byNumber?: StudentRecord;
   account?: PortalAccount;
   when: (s: string) => string;
   statusPill: React.ReactNode;
@@ -862,10 +865,11 @@ const ConcernDetail: React.FC<{
   onOpenChat: () => void;
   onOpenCase?: (code: string) => void;
   onCreateCase?: () => void;
-}> = ({ c, isTl, match, numberFound, account, when, statusPill, matchPill, busy, onApprove, onReject, onDeactivate, onOpenChat, onOpenCase, onCreateCase }) => {
+}> = ({ c, isTl, match, numberFound, byNumber, account, when, statusPill, matchPill, busy, onApprove, onReject, onDeactivate, onOpenChat, onOpenCase, onCreateCase }) => {
   const none = isTl ? 'Hindi sinagot' : 'Not answered';
   const [photoOpen, setPhotoOpen] = useState(false);
   const [photoFailed, setPhotoFailed] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   useEffect(() => setPhotoFailed(false), [account?.photoUrl]);
   // keyboard: A = approve, R = reject (only while waiting, never while typing in a box)
   useEffect(() => {
@@ -1008,107 +1012,141 @@ const ConcernDetail: React.FC<{
             </div>
 
             <div className="flex-1 min-h-0 overflow-y-auto clean-scroll px-6 py-5 space-y-5 bg-[#F5F5F7] dark:bg-[#1C1C1E]">
-              {/* Is this account real? */}
-              <div className={`rounded-2xl border p-4 ${allOk ? 'bg-emerald-50/70 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-900/50' : 'bg-amber-50/80 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/50'}`} data-concern-student>
-                <div className="flex items-center gap-3">
-                  <StudentGenderAvatar fullName={reporterNameOf(c)} size="md" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[14px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7] truncate">
-                      {reporterNameOf(c)} <span className="font-normal text-[#6E6E73] dark:text-[#A1A1A6]">#{c.studentNumber || '—'}</span>
-                    </p>
-                    <p className="text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">
-                      {forFriend ? (isTl ? `Nag-report para sa kaibigan: ${c.studentName}` : `Reported for a friend: ${c.studentName}`) : isTl ? 'Ang nag-report' : 'The student who reported'}
-                    </p>
-                  </div>
-                  {allOk ? (
-                    <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-emerald-700 dark:text-emerald-300"><BadgeCheck className="w-4 h-4" aria-hidden />{isTl ? 'Totoong account' : 'Looks real'}</span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-amber-800 dark:text-amber-200"><AlertTriangle className="w-4 h-4" aria-hidden />{isTl ? 'I-check muna' : 'Check first'}</span>
-                  )}
-                </div>
-                <ul className="mt-3 grid sm:grid-cols-3 gap-2">
-                  {checks.map((x) => (
-                    <li key={x.en} className="flex items-start gap-1.5 text-[12px] text-[#1D1D1F] dark:text-[#E5E5EA]">
-                      {x.ok ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden /> : <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" aria-hidden />}
-                      {isTl ? x.tl : x.en}
-                    </li>
-                  ))}
-                </ul>
-                {!allOk && (
-                  <p className="mt-2.5 text-[12px] text-amber-900 dark:text-amber-200">
-                    {isTl
-                      ? 'Baka hiram o pekeng account ito. Kausapin muna ang estudyante bago i-approve.'
-                      : 'This may be a borrowed or fake account. Talk to the student before approving.'}
-                  </p>
-                )}
+              {/* WHO SENT THIS: photo + name once + only what does not match + folded account details */}
+              {(() => {
+                const shownName = account?.fullName || reporterNameOf(c);
+                const norm = (x: string) => x.replace(/[^a-z]/gi, '').toLowerCase();
+                const owner = match ?? byNumber;
+                const nameDiffers = !!byNumber && !match && norm(shownName) !== norm(byNumber.fullName);
+                const problems: { en: string; tl: string; acc?: string; list?: string }[] = [];
+                if (!numberFound) problems.push({ en: 'Student no. is not in the masterlist', tl: 'Wala sa masterlist ang student no.', acc: `#${account?.studentNumber || c.studentNumber || '—'}` });
+                if (nameDiffers) problems.push({ en: 'Name does not match the masterlist', tl: 'Hindi tugma ang pangalan sa masterlist', acc: shownName, list: byNumber?.fullName });
+                if (!account?.email) problems.push({ en: 'No email on the account', tl: 'Walang email ang account' });
+                const ok = problems.length === 0;
+                return (
+                  <section
+                    data-concern-student
+                    className={`rounded-2xl border p-5 ${ok ? 'bg-emerald-50/70 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-900/50' : 'bg-amber-50/80 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/50'}`}
+                  >
+                    <p className="text-[12px] font-semibold uppercase tracking-wide text-[#6E6E73] dark:text-[#A1A1A6] mb-3">{isTl ? 'Sino ang nag-report' : 'Who sent this report'}</p>
+                    <div className="flex items-start gap-4">
+                      {/* photo first: the face is the quickest check */}
+                      {account?.photoUrl && !photoFailed ? (
+                        <button type="button" data-account-photo onClick={() => setPhotoOpen(true)} title={isTl ? 'Pindutin para lumaki' : 'Click to enlarge'} className="shrink-0 w-[112px] h-[112px] rounded-2xl overflow-hidden border border-black/10 dark:border-white/15 bg-black/5 focus:outline-none focus:ring-2 focus:ring-[#007AFF]">
+                          <img src={account.photoUrl} alt={isTl ? `Litrato ni ${shownName}` : `Photo of ${shownName}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={() => setPhotoFailed(true)} />
+                        </button>
+                      ) : (
+                        <div className="shrink-0 w-[112px] h-[112px] rounded-2xl border border-dashed border-black/15 dark:border-white/20 flex flex-col items-center justify-center gap-1 text-center text-[11px] leading-tight text-[#6E6E73] dark:text-[#A1A1A6] px-2">
+                          <Camera className="w-5 h-5" aria-hidden />
+                          {photoFailed ? (isTl ? 'Hindi ma-load ang litrato' : 'Photo could not load') : isTl ? 'Walang litrato' : 'No photo'}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-[18px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7] leading-tight break-words">{shownName}</p>
+                            <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6] mt-0.5">
+                              #{account?.studentNumber || c.studentNumber || '—'} · {owner?.gradeSection || c.gradeSection || '—'}
+                            </p>
+                            {forFriend && (
+                              <p className="text-[13px] text-[#1D1D1F] dark:text-[#F5F5F7] mt-1">
+                                {isTl ? 'Report para sa kaibigan: ' : 'Reported for a friend: '}
+                                <b>{c.studentName}</b>
+                              </p>
+                            )}
+                          </div>
+                          {ok ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-[12px] font-semibold text-emerald-800 dark:text-emerald-200">
+                              <BadgeCheck className="w-4 h-4" aria-hidden />
+                              {isTl ? 'Tugma sa masterlist' : 'Matches the masterlist'}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/40 text-[12px] font-semibold text-amber-900 dark:text-amber-200">
+                              <AlertTriangle className="w-4 h-4" aria-hidden />
+                              {isTl ? 'I-check muna' : 'Check first'}
+                            </span>
+                          )}
+                        </div>
 
-                {/* the account behind the report: face photo + account vs masterlist (shown before AND after the decision) */}
-                <div data-account-info className="mt-4 pt-4 border-t border-black/[0.08] dark:border-white/[0.1] grid grid-cols-1 sm:grid-cols-[150px_1fr] gap-4">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6E6E73] dark:text-[#A1A1A6] mb-1.5">{isTl ? 'Live photo sa sign-up' : 'Live photo at sign-up'}</p>
-                    {account?.photoUrl && !photoFailed ? (
-                      <button type="button" onClick={() => setPhotoOpen(true)} title={isTl ? 'Pindutin para lumaki' : 'Click to enlarge'} className="block w-[150px] h-[150px] rounded-xl overflow-hidden border border-black/10 dark:border-white/15 bg-black/5">
-                        <img src={account.photoUrl} alt={isTl ? `Litrato ni ${account.fullName}` : `Photo of ${account.fullName}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={() => setPhotoFailed(true)} />
-                      </button>
-                    ) : (
-                      <div className="w-[150px] h-[150px] rounded-xl border border-dashed border-black/15 dark:border-white/20 flex items-center justify-center text-center text-[12px] text-[#6E6E73] dark:text-[#A1A1A6] px-3">
-                        {photoFailed
-                          ? isTl ? 'Hindi ma-load ang litrato. Tingnan sa Guidance Office ang estudyante.' : 'The photo could not be loaded. Check the student in person.'
-                          : isTl ? 'Walang litrato ang account' : 'No photo on this account'}
+                        {/* only what does NOT match, side by side */}
+                        {problems.length > 0 && (
+                          <ul className="mt-3 space-y-2">
+                            {problems.map((pb) => (
+                              <li key={pb.en} className="rounded-xl bg-white/70 dark:bg-black/20 border border-amber-200 dark:border-amber-900/50 px-3 py-2">
+                                <p className="flex items-center gap-1.5 text-[13px] font-semibold text-amber-900 dark:text-amber-200">
+                                  <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden />
+                                  {isTl ? pb.tl : pb.en}
+                                </p>
+                                {(pb.acc || pb.list) && (
+                                  <div className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[13px]">
+                                    {pb.acc && (
+                                      <>
+                                        <span className="text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Nasa account:' : 'On the account:'}</span>
+                                        <span className="font-semibold text-[#1D1D1F] dark:text-white break-words">{pb.acc}</span>
+                                      </>
+                                    )}
+                                    {pb.list && (
+                                      <>
+                                        <span className="text-[#6E6E73] dark:text-[#A1A1A6]">{`Masterlist #${byNumber?.studentNumber ?? ''}:`}</span>
+                                        <span className="font-semibold text-[#1D1D1F] dark:text-white break-words">{pb.list}</span>
+                                      </>
+                                    )}
+                                  </div>
+                                )}
+                              </li>
+                            ))}
+                            <li className="text-[13px] text-amber-900 dark:text-amber-200 px-1">
+                              {isTl ? '→ Kausapin muna ang estudyante at ikumpara ang mukha sa litrato bago i-approve.' : '→ Talk to the student and compare their face with the photo before approving.'}
+                            </li>
+                          </ul>
+                        )}
+
+                        {/* account details, folded */}
+                        <button type="button" data-account-more onClick={() => setMoreOpen((v) => !v)} aria-expanded={moreOpen} className="mt-3 inline-flex items-center gap-1 text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF]">
+                          {moreOpen ? '▾' : '▸'} {isTl ? 'Detalye ng account' : 'Account details'}
+                          {!moreOpen && account && (
+                            <span className="text-[#6E6E73] dark:text-[#A1A1A6] font-normal">
+                              {' · '}
+                              {account.status === 'Deactivated' ? (isTl ? 'Naka-block' : 'Blocked') : isTl ? 'Aktibo' : 'Active'}
+                            </span>
+                          )}
+                        </button>
+                        {moreOpen && (
+                          <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-[13px]">
+                            {(
+                              [
+                                ['Email', account?.email || '—'],
+                                ['Mobile', account?.contactNumber || '—'],
+                                [isTl ? 'Ginawa ang account' : 'Account made', account?.createdAt ? new Date(account.createdAt).toLocaleString(isTl ? 'fil-PH' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—'],
+                                ['Status', account ? (account.status === 'Deactivated' ? `${isTl ? 'Naka-block' : 'Blocked'}${account.deactivatedReason ? ` · ${account.deactivatedReason}` : ''}` : isTl ? 'Aktibo' : 'Active') : '—'],
+                                ...(owner ? [[isTl ? 'Magulang (masterlist)' : 'Parent (masterlist)', [owner.parentName, owner.parentPhone].filter(Boolean).join(' · ') || '—']] : []),
+                              ] as Array<[string, string]>
+                            ).map(([k, v]) => (
+                              <React.Fragment key={k}>
+                                <dt className="text-[#6E6E73] dark:text-[#A1A1A6]">{k}</dt>
+                                <dd className="text-[#1D1D1F] dark:text-[#F5F5F7] break-words">{v}</dd>
+                              </React.Fragment>
+                            ))}
+                          </dl>
+                        )}
+                      </div>
+                    </div>
+                    {photoOpen && account?.photoUrl && (
+                      <div role="dialog" aria-modal="true" aria-label={isTl ? 'Litrato' : 'Photo'} className="fixed inset-0 z-[95] bg-black/70 flex items-center justify-center p-6" onMouseDown={() => setPhotoOpen(false)}>
+                        <figure className="max-w-[min(90vw,560px)] text-center" onMouseDown={(e) => e.stopPropagation()}>
+                          <img src={account.photoUrl} alt="" className="max-h-[75vh] w-auto mx-auto rounded-2xl shadow-2xl" referrerPolicy="no-referrer" />
+                          <figcaption className="mt-3 text-[14px] text-white">
+                            {shownName} · #{account.studentNumber}
+                          </figcaption>
+                          <button type="button" onClick={() => setPhotoOpen(false)} className="mt-3 h-10 px-5 rounded-full bg-white text-[#1D1D1F] text-[14px] font-semibold">
+                            {isTl ? 'Isara' : 'Close'}
+                          </button>
+                        </figure>
                       </div>
                     )}
-                    <p className="mt-1.5 text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Ikumpara sa mukha ng estudyante.' : "Compare with the student's face."}</p>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6E6E73] dark:text-[#A1A1A6] mb-1.5">{isTl ? 'Account vs masterlist' : 'Account vs masterlist'}</p>
-                    <table className="w-full text-[13px]">
-                      <thead>
-                        <tr className="text-left text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">
-                          <th className="font-medium py-1 pr-2 w-[110px]"></th>
-                          <th className="font-medium py-1 pr-2">{isTl ? 'Nasa account' : 'On the account'}</th>
-                          <th className="font-medium py-1">{isTl ? 'Nasa masterlist' : 'In the masterlist'}</th>
-                        </tr>
-                      </thead>
-                      <tbody className="align-top text-[#1D1D1F] dark:text-[#F5F5F7]">
-                        {(
-                          [
-                            [isTl ? 'Pangalan' : 'Name', account?.fullName || reporterNameOf(c), match?.fullName || '—'],
-                            ['Student no.', account?.studentNumber || c.studentNumber || '—', match?.studentNumber || '—'],
-                            [isTl ? 'Grade at section' : 'Grade & section', c.gradeSection || '—', match?.gradeSection || '—'],
-                            ['Email', account?.email || '—', ''],
-                            [isTl ? 'Mobile' : 'Mobile', account?.contactNumber || '—', ''],
-                            [isTl ? 'Ginawa ang account' : 'Account made', account?.createdAt ? new Date(account.createdAt).toLocaleString(isTl ? 'fil-PH' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—', ''],
-                            [isTl ? 'Status' : 'Status', account ? (account.status === 'Deactivated' ? (isTl ? 'Naka-block' : 'Blocked') : isTl ? 'Aktibo' : 'Active') : '—', ''],
-                          ] as Array<[string, string, string]>
-                        ).map(([k, a, m]) => {
-                          const differ = !!m && m !== '—' && a !== '—' && a.replace(/[^a-z0-9]/gi, '').toLowerCase() !== m.replace(/[^a-z0-9]/gi, '').toLowerCase();
-                          return (
-                            <tr key={k} className="border-t border-black/[0.06] dark:border-white/[0.08]">
-                              <td className="py-1.5 pr-2 text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{k}</td>
-                              <td className={`py-1.5 pr-2 break-words ${differ ? 'font-semibold text-amber-800 dark:text-amber-300' : ''}`}>{a}</td>
-                              <td className="py-1.5 break-words">{m}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                    <p className="mt-1.5 text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Kulay dilaw = hindi tugma sa masterlist.' : 'Yellow = does not match the masterlist.'}</p>
-                  </div>
-                </div>
-                {photoOpen && account?.photoUrl && (
-                  <div role="dialog" aria-modal="true" aria-label={isTl ? 'Litrato' : 'Photo'} className="fixed inset-0 z-[95] bg-black/70 flex items-center justify-center p-6" onMouseDown={() => setPhotoOpen(false)}>
-                    <figure className="max-w-[min(90vw,560px)] text-center" onMouseDown={(e) => e.stopPropagation()}>
-                      <img src={account.photoUrl} alt="" className="max-h-[75vh] w-auto mx-auto rounded-2xl shadow-2xl" referrerPolicy="no-referrer" />
-                      <figcaption className="mt-3 text-[14px] text-white">
-                        {account.fullName} · #{account.studentNumber}
-                      </figcaption>
-                      <button type="button" onClick={() => setPhotoOpen(false)} className="mt-3 h-10 px-5 rounded-full bg-white text-[#1D1D1F] text-[14px] font-semibold">
-                        {isTl ? 'Isara' : 'Close'}
-                      </button>
-                    </figure>
-                  </div>
-                )}
-              </div>
+                  </section>
+                );
+              })()}
 
               {/* the story is the hero */}
               <div className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 p-5">
