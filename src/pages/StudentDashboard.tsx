@@ -1170,7 +1170,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                     if (e.target.checked) {
                       const granted = await notificationService.requestPermission();
                       setNotificationsEnabled(granted);
-                      if (granted) void notificationService.sendDiscreetNotification('AICS Kalang Ba', isTl ? 'Bukas na ang notifications para sa iyong mga report.' : 'Notifications are on for your reports.');
+                      if (granted) void notificationService.sendDiscreetNotification('AICS Report Concern', isTl ? 'Bukas na ang notifications para sa iyong mga report.' : 'Notifications are on for your reports.');
                     } else {
                       notificationService.setEnabled(false);
                       setNotificationsEnabled(false);

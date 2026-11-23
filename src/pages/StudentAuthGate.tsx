@@ -210,8 +210,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     } else {
       alert(
         isTl
-          ? 'Para i-install ang AICS Kalang Ba sa iyong cellphone: Pindutin ang tatlong tuldok (⋮) sa browser at piliin ang "Install app" o "Add to Home screen"!'
-          : 'To install AICS Kalang Ba on your phone: Tap the browser menu (⋮) and select "Install app" or "Add to Home screen"!'
+          ? 'Para i-install ang AICS Report Concern sa iyong cellphone: Pindutin ang tatlong tuldok (⋮) sa browser at piliin ang "Install app" o "Add to Home screen"!'
+          : 'To install AICS Report Concern on your phone: Tap the browser menu (⋮) and select "Install app" or "Add to Home screen"!'
       );
     }
   };

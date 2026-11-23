@@ -1,7 +1,7 @@
 {
-  "name": "AICS Kalang Ba",
-  "short_name": "Kalang Ba",
-  "description": "AICS Kalang Ba - Official Safe & Confidential Student Concern, Bullying and Guidance Support Portal of Asian Institute of Computer Studies",
+  "name": "AICS Report Concern",
+  "short_name": "AICS Report",
+  "description": "AICS Report Concern - Official Safe & Confidential Student Concern, Bullying and Guidance Support Portal of Asian Institute of Computer Studies",
   "id": "/",
   "start_url": "/",
   "scope": "/",
