@@ -550,10 +550,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     () => new Set(cases.filter((c) => c.status !== 'Resolved').map((c) => c.caseCode.trim().toLowerCase())),
     [cases]
   );
+  // cases that still have a conference coming (today or later)
+  const casesWithUpcomingConf = useMemo(() => {
+    const today = todayISO();
+    return new Set(appointments.filter((a) => a.status === 'Scheduled' && a.date >= today && a.caseId).map((a) => a.caseId.trim().toLowerCase()));
+  }, [appointments]);
   const activeFollowUpsList = useMemo(
     () =>
       followUpTasks.filter((t) => {
         if (cases.length === 0) return false;
+        // "reminder did not go out" only matters while the conference is still coming;
+        // after it happened (attended / did not attend) the next step lives on the conference itself
+        if (!t.resolved && t.category === 'Failed SMS' && t.caseId && !casesWithUpcomingConf.has(t.caseId.trim().toLowerCase())) return false;
         if (t.caseId) {
           const code = t.caseId.trim().toLowerCase();
           // done tasks stay in "Done"; a still-open task of a closed case is hidden (nothing left to call about)
@@ -561,7 +569,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         }
         return validCaseStudentNames.has(t.studentName.trim().toLowerCase());
       }),
-    [followUpTasks, cases.length, validCaseCodes, validCaseStudentNames, openCaseCodes]
+    [followUpTasks, cases.length, validCaseCodes, validCaseStudentNames, openCaseCodes, casesWithUpcomingConf]
   );
 
   // The Dashboard shows TODAY's conferences only (other days live on the Parents page)

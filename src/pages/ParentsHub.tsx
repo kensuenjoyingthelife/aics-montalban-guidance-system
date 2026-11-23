@@ -222,6 +222,8 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
     () =>
       followUps
         .filter((t) => !t.resolved && (!t.caseId || isOpenCase(t.caseId)))
+        // "reminder did not go out" only matters while a conference is still coming
+        .filter((t) => t.category !== 'Failed SMS' || !t.caseId || appointments.some((a) => a.caseId === t.caseId && a.status === 'Scheduled' && a.date >= today))
         .sort((a, b) => {
           if (taskSort === 'name') return a.parentName.localeCompare(b.parentName);
           if (taskSort === 'attention') return (noShowsByCase.get(b.caseId) ?? 0) - (noShowsByCase.get(a.caseId) ?? 0) || b.attemptsCount - a.attemptsCount;
@@ -229,7 +231,7 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
           return taskSort === 'oldest' ? -d : d;
         }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [followUps, noShowsByCase, taskSort, caseByCode]
+    [followUps, noShowsByCase, taskSort, caseByCode, appointments, today]
   );
   const remindersDue = useMemo(
     () => appointments.filter((a) => a.status === 'Scheduled' && a.date === tomorrow && !a.reminderSentAt && isOpenCase(a.caseId)),

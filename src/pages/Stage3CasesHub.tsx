@@ -90,6 +90,8 @@ export interface CasePrefill {
   policyCode?: string;
   /** staff-only: the student who was affected (from the concern) */
   affectedStudentNumber?: string;
+  /** staff-only: who sent the report (shown on screen, never saved in the printed narrative) */
+  reporter?: { name: string; gradeSection: string; studentNumber: string; forFriend?: string };
 }
 
 interface Stage3CasesHubProps {
@@ -2820,6 +2822,33 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                 </div>
               </div>
 
+              {/* Who sent the student report (staff only: never printed, never in SMS) */}
+              {prefill?.reporter?.name && (
+                <div data-reporter-card className="rounded-xl border border-[#007AFF]/30 bg-[#007AFF]/[0.06] dark:bg-[#0A84FF]/[0.12] p-4 flex items-start gap-3">
+                  <span className="w-10 h-10 rounded-full bg-[#007AFF] text-white flex items-center justify-center text-sm font-bold shrink-0">
+                    {prefill.reporter.name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12px] font-bold uppercase tracking-wide text-[#007AFF] dark:text-[#409CFF]">
+                      {isTl ? 'Nag-report (staff lang ang nakakakita)' : 'Reported by (staff only)'}
+                    </p>
+                    <p className="text-[16px] font-bold text-[#1D1D1F] dark:text-white mt-0.5">{prefill.reporter.name}</p>
+                    <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">
+                      {[prefill.reporter.gradeSection, prefill.reporter.studentNumber ? `#${prefill.reporter.studentNumber}` : '', prefill.concernCode].filter(Boolean).join(' · ')}
+                    </p>
+                    {prefill.reporter.forFriend && (
+                      <p className="text-[13px] text-[#1D1D1F] dark:text-white mt-1">
+                        {isTl ? 'Report para sa kaibigan: ' : 'Reported for a friend: '}
+                        <span className="font-semibold">{prefill.reporter.forFriend}</span>
+                      </p>
+                    )}
+                    <p className="text-[12px] text-[#6E6E73] dark:text-[#A1A1A6] mt-1">
+                      {isTl ? 'Hindi ito naka-print at hindi kasama sa SMS o sa kopya ng magulang.' : 'Not printed, and never in the SMS or the parent copy.'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Incident Narrative / Notes */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
@@ -2833,7 +2862,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                   </span>
                 </div>
                 <textarea
-                  rows={5}
+                  data-incident-notes
+                  rows={Math.min(24, Math.max(8, incidentNotes.split('\n').length + Math.ceil(incidentNotes.length / 90)))}
                   value={incidentNotes}
                   onChange={(e) => setIncidentNotes(e.target.value)}
                   placeholder={
@@ -2841,7 +2871,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
                       ? 'Ilagay ang buong detalye ng insidente, paunang aksyon ng guidance, o impormasyon mula sa ulat...'
                       : 'Enter complete summary of the incident, initial guidance action taken, or notes from student report...'
                   }
-                  className="w-full p-3.5 rounded-xl border border-[#D1D1D6] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] text-xs font-medium text-[#1D1D1F] dark:text-white leading-relaxed focus:outline-none focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF]/30 min-h-[110px] resize-y"
+                  className="w-full p-4 rounded-xl border border-[#D1D1D6] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] text-[14px] font-medium text-[#1D1D1F] dark:text-white leading-relaxed whitespace-pre-wrap focus:outline-none focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF]/30 min-h-[200px] resize-y"
                 />
               </div>
 

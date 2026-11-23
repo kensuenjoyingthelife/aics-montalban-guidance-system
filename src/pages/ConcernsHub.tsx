@@ -638,6 +638,9 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
                         } else if (reportTypeLower.includes('tardiness') || reportTypeLower.includes('late')) {
                           matchedPolicyCode = 'MIN-01';
                         }
+                        // new reports save the exact handbook offense name (Settings → Offenses): use that offense
+                        const exactOffense = getAppConfig().offenses.find((o) => o.active && o.titleEn.trim().toLowerCase() === (selected.type || '').trim().toLowerCase());
+                        if (exactOffense) matchedPolicyCode = exactOffense.policyCode;
 
                         onCreateCase({
                           concernId: selected.id,
@@ -646,7 +649,27 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
                           witnesses: selected.witnesses || '',
                           // the reporter stays confidential: only the concern code goes on the case
                           reportedBy: `Student report (confidential) · ${selected.code}`,
-                          notes: `[FROM STUDENT CONCERN REPORT ${selected.code}]\nWhen: ${selected.when || 'Not specified'}\nWhere: ${selected.where || 'Not specified'}\nWitnesses: ${selected.witnesses || 'None'}\nNarrative:\n${selected.whatHappened || ''}`.slice(0, 2000),
+                          // clean, easy-to-read narrative (no [TAGS], no photo links, no reporter name: this text can be printed)
+                          notes: (() => {
+                            const p = parseIncidentData(selected.whatHappened, selected.who);
+                            const involved = p.respondentName && !/unknown|hindi/i.test(p.respondentName) ? p.respondentName : '';
+                            return [
+                              'What happened:',
+                              p.cleanNarrative.trim(),
+                              '',
+                              `When: ${selected.when || 'Not specified'}`,
+                              `Where: ${selected.where || 'Not specified'}`,
+                              `Witnesses: ${selected.witnesses || 'None'}`,
+                              ...(involved || p.respondentDetails ? [`Person involved: ${[involved, p.respondentDetails].filter(Boolean).join(' · ')}`] : []),
+                              '',
+                              `From student report ${selected.code}`,
+                            ].join('\n').slice(0, 2000);
+                          })(),
+                          reporter: (() => {
+                            const p = parseIncidentData(selected.whatHappened, selected.who);
+                            const friend = /REPORT FOR FRIEND[^:]*:\s*(.+)/i.exec(p.reporterType)?.[1]?.trim();
+                            return { name: selected.studentName, gradeSection: selected.gradeSection, studentNumber: selected.studentNumber, forFriend: friend };
+                          })(),
                           search: firstName,
                           policyCode: matchedPolicyCode,
                           // affected student: the friend in a "report for a friend", otherwise the reporter
