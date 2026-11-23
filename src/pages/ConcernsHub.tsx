@@ -864,6 +864,9 @@ const ConcernDetail: React.FC<{
   onCreateCase?: () => void;
 }> = ({ c, isTl, match, numberFound, account, when, statusPill, matchPill, busy, onApprove, onReject, onDeactivate, onOpenChat, onOpenCase, onCreateCase }) => {
   const none = isTl ? 'Hindi sinagot' : 'Not answered';
+  const [photoOpen, setPhotoOpen] = useState(false);
+  const [photoFailed, setPhotoFailed] = useState(false);
+  useEffect(() => setPhotoFailed(false), [account?.photoUrl]);
   // keyboard: A = approve, R = reject (only while waiting, never while typing in a box)
   useEffect(() => {
     if (c.status !== 'Pending') return;
@@ -1037,6 +1040,73 @@ const ConcernDetail: React.FC<{
                       ? 'Baka hiram o pekeng account ito. Kausapin muna ang estudyante bago i-approve.'
                       : 'This may be a borrowed or fake account. Talk to the student before approving.'}
                   </p>
+                )}
+
+                {/* the account behind the report: face photo + account vs masterlist (shown before AND after the decision) */}
+                <div data-account-info className="mt-4 pt-4 border-t border-black/[0.08] dark:border-white/[0.1] grid grid-cols-1 sm:grid-cols-[150px_1fr] gap-4">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6E6E73] dark:text-[#A1A1A6] mb-1.5">{isTl ? 'Live photo sa sign-up' : 'Live photo at sign-up'}</p>
+                    {account?.photoUrl && !photoFailed ? (
+                      <button type="button" onClick={() => setPhotoOpen(true)} title={isTl ? 'Pindutin para lumaki' : 'Click to enlarge'} className="block w-[150px] h-[150px] rounded-xl overflow-hidden border border-black/10 dark:border-white/15 bg-black/5">
+                        <img src={account.photoUrl} alt={isTl ? `Litrato ni ${account.fullName}` : `Photo of ${account.fullName}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={() => setPhotoFailed(true)} />
+                      </button>
+                    ) : (
+                      <div className="w-[150px] h-[150px] rounded-xl border border-dashed border-black/15 dark:border-white/20 flex items-center justify-center text-center text-[12px] text-[#6E6E73] dark:text-[#A1A1A6] px-3">
+                        {photoFailed
+                          ? isTl ? 'Hindi ma-load ang litrato. Tingnan sa Guidance Office ang estudyante.' : 'The photo could not be loaded. Check the student in person.'
+                          : isTl ? 'Walang litrato ang account' : 'No photo on this account'}
+                      </div>
+                    )}
+                    <p className="mt-1.5 text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Ikumpara sa mukha ng estudyante.' : "Compare with the student's face."}</p>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6E6E73] dark:text-[#A1A1A6] mb-1.5">{isTl ? 'Account vs masterlist' : 'Account vs masterlist'}</p>
+                    <table className="w-full text-[13px]">
+                      <thead>
+                        <tr className="text-left text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">
+                          <th className="font-medium py-1 pr-2 w-[110px]"></th>
+                          <th className="font-medium py-1 pr-2">{isTl ? 'Nasa account' : 'On the account'}</th>
+                          <th className="font-medium py-1">{isTl ? 'Nasa masterlist' : 'In the masterlist'}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="align-top text-[#1D1D1F] dark:text-[#F5F5F7]">
+                        {(
+                          [
+                            [isTl ? 'Pangalan' : 'Name', account?.fullName || reporterNameOf(c), match?.fullName || '—'],
+                            ['Student no.', account?.studentNumber || c.studentNumber || '—', match?.studentNumber || '—'],
+                            [isTl ? 'Grade at section' : 'Grade & section', c.gradeSection || '—', match?.gradeSection || '—'],
+                            ['Email', account?.email || '—', ''],
+                            [isTl ? 'Mobile' : 'Mobile', account?.contactNumber || '—', ''],
+                            [isTl ? 'Ginawa ang account' : 'Account made', account?.createdAt ? new Date(account.createdAt).toLocaleString(isTl ? 'fil-PH' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—', ''],
+                            [isTl ? 'Status' : 'Status', account ? (account.status === 'Deactivated' ? (isTl ? 'Naka-block' : 'Blocked') : isTl ? 'Aktibo' : 'Active') : '—', ''],
+                          ] as Array<[string, string, string]>
+                        ).map(([k, a, m]) => {
+                          const differ = !!m && m !== '—' && a !== '—' && a.replace(/[^a-z0-9]/gi, '').toLowerCase() !== m.replace(/[^a-z0-9]/gi, '').toLowerCase();
+                          return (
+                            <tr key={k} className="border-t border-black/[0.06] dark:border-white/[0.08]">
+                              <td className="py-1.5 pr-2 text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{k}</td>
+                              <td className={`py-1.5 pr-2 break-words ${differ ? 'font-semibold text-amber-800 dark:text-amber-300' : ''}`}>{a}</td>
+                              <td className="py-1.5 break-words">{m}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    <p className="mt-1.5 text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Kulay dilaw = hindi tugma sa masterlist.' : 'Yellow = does not match the masterlist.'}</p>
+                  </div>
+                </div>
+                {photoOpen && account?.photoUrl && (
+                  <div role="dialog" aria-modal="true" aria-label={isTl ? 'Litrato' : 'Photo'} className="fixed inset-0 z-[95] bg-black/70 flex items-center justify-center p-6" onMouseDown={() => setPhotoOpen(false)}>
+                    <figure className="max-w-[min(90vw,560px)] text-center" onMouseDown={(e) => e.stopPropagation()}>
+                      <img src={account.photoUrl} alt="" className="max-h-[75vh] w-auto mx-auto rounded-2xl shadow-2xl" referrerPolicy="no-referrer" />
+                      <figcaption className="mt-3 text-[14px] text-white">
+                        {account.fullName} · #{account.studentNumber}
+                      </figcaption>
+                      <button type="button" onClick={() => setPhotoOpen(false)} className="mt-3 h-10 px-5 rounded-full bg-white text-[#1D1D1F] text-[14px] font-semibold">
+                        {isTl ? 'Isara' : 'Close'}
+                      </button>
+                    </figure>
+                  </div>
                 )}
               </div>
 
