@@ -90,6 +90,10 @@ export interface OffenseRow extends OffenseHandbookRule {
   id: number;
   active: boolean;
   sortOrder: number;
+  /** shown as a report type in the student portal (with the simple word below, never the level) */
+  portalShow?: boolean;
+  portalWordEn?: string;
+  portalWordTl?: string;
 }
 
 export interface CampusConfig {
@@ -255,6 +259,9 @@ const toOffense = (r: Record<string, unknown>): OffenseRow => {
     sanction3rdTl: s(r.sanction_3rd_tl) || s(r.sanction_3rd),
     active: r.is_active !== false,
     sortOrder: Number(r.sort_order ?? 0),
+    portalShow: r.portal_show === true,
+    portalWordEn: s(r.portal_word_en),
+    portalWordTl: s(r.portal_word_tl) || s(r.portal_word_en),
   };
 };
 

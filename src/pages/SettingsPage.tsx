@@ -983,6 +983,11 @@ const OffensesSection: React.FC<{ isTl: boolean; toast: Props['onTriggerToast'] 
                   {isTl ? o.titleTl : o.titleEn} <span className={sub}>· {o.policyCode}</span>
                 </p>
                 <p className={`${sub} mt-1`}>1st: {isTl ? o.sanction1stTl : o.sanction1stEn}</p>
+                <p className={`${sub} mt-0.5`} data-portal-word={o.policyCode}>
+                  {o.portalShow && o.portalWordEn
+                    ? isTl ? `Makikita ng students bilang: "${o.portalWordTl || o.portalWordEn}"` : `Students see: "${o.portalWordEn}"`
+                    : isTl ? 'Hindi makikita ng students' : 'Hidden from students'}
+                </p>
               </div>
               <div className="flex gap-1">
                 <button type="button" onClick={() => setEdit(o)} className={ghost}>
@@ -1034,11 +1039,15 @@ const OffenseWindow: React.FC<{ isTl: boolean; offense: OffenseRow | null; onClo
     s2Tl: offense?.sanction2ndTl ?? '',
     s3En: offense?.sanction3rdEn ?? '',
     s3Tl: offense?.sanction3rdTl ?? '',
+    wordEn: offense?.portalWordEn ?? '',
+    wordTl: offense?.portalWordTl ?? '',
   });
+  // student portal: show this offense as a report type (simple word only, never the level)
+  const [portalShow, setPortalShow] = useState<boolean>(offense?.portalShow ?? false);
   const [busy, setBusy] = useState(false);
   const dupName = cfg.offenses.some((o) => o.id !== offense?.id && o.titleEn.trim().toLowerCase() === f.titleEn.trim().toLowerCase());
   const bad =
-    f.titleEn.trim().length < 3 ? (isTl ? 'Ilagay ang pangalan ng offense (English).' : 'Enter the offense name (English).') : dupName ? (isTl ? 'May offense na na ganito ang pangalan.' : 'An offense with this name already exists.') : f.s1En.trim().length < 3 ? (isTl ? 'Ilagay ang sanction sa unang beses.' : 'Enter the 1st-time sanction.') : '';
+    f.titleEn.trim().length < 3 ? (isTl ? 'Ilagay ang pangalan ng offense (English).' : 'Enter the offense name (English).') : dupName ? (isTl ? 'May offense na na ganito ang pangalan.' : 'An offense with this name already exists.') : f.s1En.trim().length < 3 ? (isTl ? 'Ilagay ang sanction sa unang beses.' : 'Enter the 1st-time sanction.') : portalShow && f.wordEn.trim().length < 2 ? (isTl ? 'Ilagay ang salitang makikita ng students (English), o i-off ang "Ipakita sa student portal".' : 'Enter the word students will see (English), or turn off "Show in student portal".') : '';
   const nextCode = () => {
     const prefix = { Minor: 'MIN', 'Less Serious': 'LSR', Serious: 'SER', Grave: 'GRV' }[f.classification];
     const used = new Set(cfg.offenses.map((o) => o.policyCode));
@@ -1061,6 +1070,9 @@ const OffenseWindow: React.FC<{ isTl: boolean; offense: OffenseRow | null; onClo
       sanction_2nd_tl: t(f.s2Tl, t(f.s2En, f.s1En)),
       sanction_3rd: t(f.s3En, t(f.s2En, f.s1En)),
       sanction_3rd_tl: t(f.s3Tl, t(f.s3En, t(f.s2En, f.s1En))),
+      portal_show: portalShow,
+      portal_word_en: f.wordEn.trim() || null,
+      portal_word_tl: f.wordTl.trim() || f.wordEn.trim() || null,
     };
     if (offense) {
       const ok = await confirmChange({
@@ -1069,6 +1081,11 @@ const OffenseWindow: React.FC<{ isTl: boolean; offense: OffenseRow | null; onClo
           { label: isTl ? 'Pangalan' : 'Name', before: offense.titleEn, after: body.title_en },
           { label: isTl ? 'Antas' : 'Level', before: offense.classification, after: body.classification },
           { label: '1st', before: offense.sanction1stEn, after: body.sanction_1st },
+          {
+            label: isTl ? 'Sa student portal' : 'In student portal',
+            before: offense.portalShow && offense.portalWordEn ? `"${offense.portalWordEn}"` : isTl ? 'Nakatago' : 'Hidden',
+            after: portalShow && body.portal_word_en ? `"${body.portal_word_en}"` : isTl ? 'Nakatago' : 'Hidden',
+          },
         ],
         note: isTl ? 'Para sa mga bagong kaso. Hindi binabago ang mga naitala na.' : 'For new cases. Saved cases do not change.',
         confirmLabel: isTl ? 'Oo, i-save' : 'Yes, save',
@@ -1132,6 +1149,19 @@ const OffenseWindow: React.FC<{ isTl: boolean; offense: OffenseRow | null; onClo
         {field('s3Tl', isTl ? 'Sanction sa 3rd (Tagalog)' : '3rd time (Tagalog)')}
       </div>
       <p className={sub}>{isTl ? 'Kapag walang Tagalog, ang English ang gagamitin. Kapag walang 2nd/3rd, ang nauna ang gagamitin.' : 'Empty Tagalog uses the English. Empty 2nd/3rd uses the one before.'}</p>
+      <div className="rounded-xl p-3 saas-card-subtle space-y-2" data-portal-settings>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" data-action="portal-show" checked={portalShow} onChange={(e) => setPortalShow(e.target.checked)} className="w-5 h-5 accent-[#007AFF]" />
+          <span className="text-sm font-extrabold text-[#1D1D1F] dark:text-white">{isTl ? 'Ipakita sa student portal' : 'Show in student portal'}</span>
+        </label>
+        <p className={sub}>{isTl ? 'Mapipili ito ng students kapag nagre-report. Ang simpleng salita lang ang makikita nila, hindi ang antas o ang sanction.' : 'Students can pick it when they report. They only see the simple word, never the level or the sanction.'}</p>
+        {portalShow && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {field('wordEn', isTl ? 'Salitang makikita ng students (English) *' : 'Word students see (English) *', 'e.g. Always late')}
+            {field('wordTl', isTl ? 'Salitang makikita ng students (Tagalog)' : 'Word students see (Tagalog)', 'hal. Laging late')}
+          </div>
+        )}
+      </div>
       {bad && <p className={errText}>{bad}</p>}
     </Modal>
   );

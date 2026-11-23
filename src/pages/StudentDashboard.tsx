@@ -117,6 +117,26 @@ const CONCERN_GROUPS = [
     ],
   },
 ] as const;
+type ReportTypeItem = { v: string; en: string; tl: string; icon: typeof Hand };
+/** picks a fitting icon for a handbook offense name */
+const iconForReportType = (title: string): typeof Hand => {
+  const t = title.toLowerCase();
+  if (/cyber|online|social media/.test(t)) return Smartphone;
+  if (/bully|fight|assault/.test(t)) return Hand;
+  if (/vap|smok|cigarette/.test(t)) return Wind;
+  if (/extort|blackmail|threat|money/.test(t)) return Coins;
+  if (/weapon|blade|contraband/.test(t)) return Scissors;
+  if (/vandal|property|damage/.test(t)) return Hammer;
+  if (/cutting|truan|absence/.test(t)) return DoorOpen;
+  if (/forg|tamper|record|signature/.test(t)) return PenLine;
+  if (/tard|late/.test(t)) return AlarmClock;
+  if (/uniform|dress|haircut/.test(t)) return Shirt;
+  if (/\bid\b|school id/.test(t)) return BadgeCheck;
+  if (/disrupt|noise|disrespect/.test(t)) return Volume2;
+  if (/litter|waste/.test(t)) return Trash2;
+  if (/phone|gadget|device/.test(t)) return PhoneOff;
+  return FileEdit;
+};
 const fieldCls = 'w-full h-14 px-4 rounded-2xl cosmic-input text-[16px] font-medium focus:outline-none';
 const primaryBtn = 'btn-press h-14 px-7 rounded-full sd-primary text-white text-[16px] font-semibold inline-flex items-center justify-center gap-2 shadow-lg shadow-blue-900/25';
 const backBtn = 'btn-press h-14 px-6 rounded-full lg-chip lg-ink text-[16px] font-semibold inline-flex items-center gap-1.5';
@@ -330,7 +350,16 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
 
   // office hours come from the office's Settings (never a hard-coded schedule)
-  useAppConfig();
+  const appCfg = useAppConfig();
+  // Report types = handbook offenses the office marked "Show in student portal" (Settings → Offenses & rules),
+  // shown with the simple student word only (never the level). Falls back to the built-in list if none load.
+  const reportTypes = React.useMemo<ReportTypeItem[]>(() => {
+    const fromSettings = appCfg.offenses
+      .filter((o) => o.active && o.portalShow && o.portalWordEn)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((o) => ({ v: o.titleEn, en: o.portalWordEn as string, tl: o.portalWordTl || (o.portalWordEn as string), icon: iconForReportType(o.titleEn) }));
+    return fromSettings.length ? fromSettings : (CONCERN_GROUPS[0].items as readonly ReportTypeItem[]).slice();
+  }, [appCfg.offenses]);
   useEffect(() => {
     void loadAppConfig();
   }, []);
@@ -358,7 +387,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   }, []);
 
   // Submit Concern Form State
-  const [reportType, setReportType] = useState<string>('Vaping / Smoking Infraction');
+  // no type is picked until the student taps one
+  const [reportType, setReportType] = useState<string>('');
   // Reporting Role: 'self' (Mag-report sa sarili) vs 'peer' (I-report ang nangyari sa kaibigan/kaklase)
   const [reportingRole, setReportingRole] = useState<'self' | 'peer'>('self');
   const [friendName, setFriendName] = useState<string>('');
@@ -969,7 +999,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
         title: isTl ? 'Ipadala ang report?' : 'Send this report?',
         description: isTl ? 'Tingnan muna kung tama. Pindutin ang Bumalik para mag-edit.' : 'Check that it is right. Tap Go back to edit.',
         rows: [
-          { label: isTl ? 'Uri' : 'Type', after: reportType },
+          { label: isTl ? 'Uri' : 'Type', after: (() => { const t = reportTypes.find((x) => x.v === reportType); return t ? (isTl ? t.tl : t.en) : reportType; })() },
           { label: isTl ? 'Para kay' : 'For', after: reportingRole === 'peer' ? friendName || (isTl ? 'Kaibigan / kaklase' : 'A friend / classmate') : isTl ? 'Sarili ko' : 'Myself' },
           { label: isTl ? 'Tungkol kay' : 'About', after: knowsSuspect === 'yes' && suspectName ? suspectName : isTl ? 'Hindi kilala' : 'Not known' },
           ...(happenedWhen ? [{ label: isTl ? 'Kailan' : 'When', after: happenedWhen }] : []),
@@ -1820,7 +1850,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
                   <div>
                     <p className="mb-3 text-[15px] font-bold lg-ink-soft">{isTl ? 'Pumili ng uri ng insidente' : 'Select incident type'}</p>
                     <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
-                      {CONCERN_GROUPS[0].items.map((c) => {
+                      {reportTypes.map((c) => {
                         const on = reportType === c.v;
                         const Ic = c.icon;
                         return (
@@ -1865,6 +1895,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
                   <div className="sd-actionbar flex justify-end">
                     <button type="button" onClick={() => {
+                      if (!reportTypes.some((t) => t.v === reportType)) { soundFX.playError(); setSubmitError(isTl ? 'Pumili muna ng uri ng insidente sa itaas.' : 'Pick the incident type above first.'); return; }
                       if (reportingRole === 'peer' && !friendName.trim()) { soundFX.playError(); setSubmitError(isTl ? 'Ilagay ang pangalan ng kaibigan mo para makapagpatuloy.' : "Type your friend's name to continue."); return; }
                       setSubmitError(null); soundFX.playToggleSwitch(true); setFormStep(2);
                     }} className={primaryBtn}>
