@@ -12,6 +12,12 @@ import { StudentAuthGate } from './pages/StudentAuthGate';
 import { StudentPortalUser } from './services/studentAuthService';
 import { applyAdaptivePerformanceClass, isCapacitorNativeApp } from './services/devicePerformance';
 import { InactivityShield } from './components/security/InactivityShield';
+import { MotionConfig, MotionGlobalConfig } from 'framer-motion';
+
+/** Phone / tablet / Android app: no Framer Motion animation at all (user, 2026-11-23: no lag on low-end phones). */
+const isPhoneView = () =>
+  typeof window !== 'undefined' &&
+  (window.innerWidth < 1024 || document.body.classList.contains('capacitor-mobile') || isCapacitorNativeApp());
 import { recordSecurityAudit } from './services/securityEngine';
 import { applyTextSize } from './services/textSize';
 import { christmasOn, loadChristmasMode, useChristmasMode } from './config/seasonalTheme';
@@ -85,6 +91,15 @@ export const App: React.FC = () => {
     const queryMode = urlParams.get('mode');
     return isTauri || queryMode === 'staff' || hash.includes('staff');
   }, []);
+
+  // Student portal on phone / tablet / Android app: every Framer Motion animation finishes instantly
+  // (also the ones with their own spring settings). The desktop staff app is never affected.
+  useEffect(() => {
+    const sync = () => { MotionGlobalConfig.skipAnimations = !isStaffApp && isPhoneView(); };
+    sync();
+    window.addEventListener('resize', sync);
+    return () => window.removeEventListener('resize', sync);
+  }, [isStaffApp]);
 
   // Monitoring Mode check (?mode=monitor or #monitor)
   const isMonitoringApp = useMemo<boolean>(() => {
@@ -218,6 +233,7 @@ export const App: React.FC = () => {
                       setActiveStudentSession(null);
                     }}
                   >
+                    <MotionConfig reducedMotion={isPhoneView() ? 'always' : 'user'} transition={isPhoneView() ? { duration: 0 } : undefined}>
                     <StudentDashboard
                       user={activeStudentSession}
                       onSignOut={() => {
@@ -228,6 +244,7 @@ export const App: React.FC = () => {
                         setActiveStudentSession(null);
                       }}
                     />
+                    </MotionConfig>
                   </InactivityShield>
                 )
               ) : (

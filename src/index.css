@@ -2761,8 +2761,8 @@ html.aics-app-switched body {
   .sd-header .xmas-lights { display: none !important; }
 
   /* the tab bar: #242526 Charcoal in dark mode */
-  .m-tabbar { background: rgba(249, 249, 249, 0.96); border-top: 0.5px solid rgba(0, 0, 0, 0.16); }
-  html.dark .m-tabbar { background: rgba(36, 37, 38, 0.96); border-top-color: rgba(255, 255, 255, 0.12); }
+  .m-tabbar { background: #F9F9F9; border-top: 0.5px solid rgba(0, 0, 0, 0.16); }
+  html.dark .m-tabbar { background: #242526; border-top-color: rgba(255, 255, 255, 0.12); }
   .m-tabbar button { -webkit-tap-highlight-color: transparent; }
   .m-tabbar button:active { opacity: 0.6; }
 }
@@ -2848,3 +2848,34 @@ body:has([aria-modal="true"], [class^="fixed inset-0"]) [data-chat-ball] { opaci
 .sending-bar { animation: sending-bar 1.2s ease-in-out infinite; }
 @keyframes sending-bar { 0% { transform: translateX(-100%) scaleX(.4); } 100% { transform: translateX(100%) scaleX(.4); } }
 @media (prefers-reduced-motion: reduce) { .sending-bar { animation: none; } }
+
+/* =========================================================================
+   STUDENT PORTAL — PHONE / TABLET / ANDROID APP: NO MOTION, NO HEAVY EFFECTS
+   (user, 2026-11-23: still laggy on low-end phones → zero animation, zero
+   transition, zero blur everywhere under 1024px and inside the APK.
+   Desktop website (1024px+) is not touched.)
+   Must stay LAST in this file so it wins over every earlier rule.
+   ========================================================================= */
+@media (max-width: 1023px) {
+  html:root, html:root body, html:root body *, html:root body *::before, html:root body *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  html { scroll-behavior: auto !important; }
+}
+html:root body.capacitor-mobile, html:root body.capacitor-mobile *, html:root body.capacitor-mobile *::before, html:root body.capacitor-mobile *::after {
+  animation-duration: 0.001ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+  transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  scroll-behavior: auto !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}

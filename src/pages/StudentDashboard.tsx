@@ -340,9 +340,14 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   // the app zooms the page (Font Size setting); measure the real screen height in CSS pixels so the
   // home cards end exactly where the right rail ends
   useEffect(() => {
+    // Write only when the value really changes: writing the same value still fires the
+    // MutationObserver below (it watches "style"), which made an endless loop that froze the portal.
     const set = () => {
       const z = parseFloat(getComputedStyle(document.documentElement).zoom || "1") || 1;
-      document.documentElement.style.setProperty("--sd-vh", window.innerHeight / z + "px");
+      const next = window.innerHeight / z + "px";
+      if (document.documentElement.style.getPropertyValue("--sd-vh") !== next) {
+        document.documentElement.style.setProperty("--sd-vh", next);
+      }
     };
     set();
     window.addEventListener("resize", set);
@@ -494,10 +499,18 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
     return !hasSeen && isMobileDevice;
   });
 
-  // Reset timer on any active user interaction
+  // Reset timer on any active user interaction.
+  // Speed (low-end phones): the last activity time lives in a ref, so scrolling/tapping does NOT
+  // re-render the whole portal; state only changes during the last 60 seconds (the warning).
+  const lastActivityRef = useRef<number>(Date.now());
+  const idleWarningRef = useRef<boolean>(false);
   const resetInactivityTimer = () => {
-    setSecondsRemaining(15 * 60);
-    if (showIdleWarning) setShowIdleWarning(false);
+    lastActivityRef.current = Date.now();
+    if (idleWarningRef.current) {
+      idleWarningRef.current = false;
+      setShowIdleWarning(false);
+      setSecondsRemaining(15 * 60);
+    }
   };
 
   useEffect(() => {
@@ -520,27 +533,31 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
 
     activityEvents.forEach((ev) => window.addEventListener(ev, handleActivity, { passive: true }));
 
+    const IDLE_LIMIT = 15 * 60;
     const timer = setInterval(() => {
-      setSecondsRemaining((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          soundFX.playBackspace();
-          onSignOut();
-          return 0;
-        }
-        // Show silent discrete banner when only 60 seconds left
-        if (prev <= 60 && !showIdleWarning) {
+      const left = IDLE_LIMIT - Math.floor((Date.now() - lastActivityRef.current) / 1000);
+      if (left <= 0) {
+        clearInterval(timer);
+        soundFX.playBackspace();
+        onSignOut();
+        return;
+      }
+      // Show the quiet warning only in the last 60 seconds (only then does state change each second)
+      if (left <= 60) {
+        if (!idleWarningRef.current) {
+          idleWarningRef.current = true;
           setShowIdleWarning(true);
         }
-        return prev - 1;
-      });
+        setSecondsRemaining(left);
+      }
     }, 1000);
 
     return () => {
       clearInterval(timer);
       activityEvents.forEach((ev) => window.removeEventListener(ev, handleActivity));
     };
-  }, [showIdleWarning, onSignOut]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onSignOut]);
 
   // Auto-scroll to bottom of chat
   // scroll only the message list (never the whole page), like Instagram: newest message at the bottom
@@ -1116,7 +1133,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
     window.addEventListener(DECOR_EVENT, on);
     return () => window.removeEventListener(DECOR_EVENT, on);
   }, []);
-  const decor = christmasOn() && decorWanted;
+  // phone / tablet / Android app: no Christmas lights at all (keeps low-end phones light)
+  const phoneView = typeof window !== 'undefined' && (window.innerWidth < 1024 || document.body.classList.contains('capacitor-mobile'));
+  const decor = christmasOn() && decorWanted && !phoneView;
 
   const settingsBody = (
     <>
