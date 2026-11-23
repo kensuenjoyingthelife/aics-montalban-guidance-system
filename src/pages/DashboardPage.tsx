@@ -1460,7 +1460,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           ==================================================================== */}
       <WorkspaceSidebar
         activeCategoryId={activeCategory.id}
-        onSelectCategory={(item) => setActiveCategory(item)}
+        onSelectCategory={(item) => {
+          // a sidebar click always opens the page itself: forget one-time jumps
+          // (e.g. "Pick a new date" opened a case; that case must not open again on the next visit)
+          setCasesInitialOpenCaseCode(null);
+          setCasesInitialFlag(null);
+          setParentsScheduleCase(null);
+          setActiveCategory(item);
+        }}
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
         onLockTerminal={onLockTerminal}
