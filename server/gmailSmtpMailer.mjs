@@ -162,11 +162,11 @@ export function sendGmailSmtp({ to, subject, html, text }) {
 
 export function buildAicsOtpEmailTemplate({ code, recipientEmail, locale = 'en' }) {
   const isTl = locale === 'tl';
-  const subject = 'AICS Guidance: Your Sign-in Verification Code';
+  const subject = 'AICS Guidance: Verification Code ' + String(code || '').trim().toUpperCase();
   const cleanCode = String(code || '').trim().toUpperCase();
   const masked = String(recipientEmail || '').slice(0, 4) + '****';
-  const preview = `Your verification code is ${cleanCode}. Valid for 5 minutes.`;
-  const text = `AICS Montalban Guidance & Counseling Office\n\nYour Sign-in Code: ${cleanCode}\n\nAccount: ${masked}\nValid for 5 minutes (Single use).\n\nNever share this code with anyone. Guidance staff will never ask for your verification code.\nIf you did not request this code, you can safely ignore this email.`;
+  const preview = `Your single-use sign-in code is ${cleanCode}. Valid for 5 minutes.`;
+  const text = `ASIAN INSTITUTE OF COMPUTER STUDIES — MONTALBAN\nGuidance & Counseling Department\n\nYour Verification Code: ${cleanCode}\nAccount: ${masked}\nValid for 5 minutes (single-use token).\n\nDo not share this code. Guidance administrators will never ask for your authentication code.\nIf you did not initiate this request, you can safely disregard this email.\n\nData Privacy Act of 2012 (RA 10173) Protected`;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -180,92 +180,130 @@ export function buildAicsOtpEmailTemplate({ code, recipientEmail, locale = 'en' 
   :root { color-scheme: light dark; supported-color-schemes: light dark; }
   body, table, td, p, a, li, blockquote { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
   @media (prefers-color-scheme: dark) {
-    .body-bg { background-color: #0B111E !important; }
-    .card-surface { background-color: #141E33 !important; border-color: rgba(255,255,255,0.12) !important; box-shadow: 0 16px 40px rgba(0,0,0,0.6) !important; }
-    .text-main { color: #FFFFFF !important; }
-    .text-muted { color: #94A3B8 !important; }
-    .code-box { background-color: #060B14 !important; border-color: #1E293B !important; color: #38BDF8 !important; }
+    .body-bg { background-color: #070D18 !important; }
+    .card-surface { background-color: #0F172A !important; border-color: rgba(255,255,255,0.12) !important; box-shadow: 0 20px 48px rgba(0,0,0,0.7) !important; }
+    .text-title { color: #FFFFFF !important; }
+    .text-sub { color: #94A3B8 !important; }
+    .code-surface { background-color: #050B14 !important; border-color: #1E293B !important; }
+    .code-digits { color: #38BDF8 !important; }
+    .badge-bg { background-color: rgba(14,165,233,0.12) !important; border-color: rgba(14,165,233,0.3) !important; color: #38BDF8 !important; }
+    .meta-card { background-color: #09101F !important; border-color: rgba(255,255,255,0.08) !important; }
     .divider { border-color: rgba(255,255,255,0.08) !important; }
   }
 </style>
 </head>
-<body class="body-bg" style="margin:0;padding:36px 12px;background-color:#F1F5F9;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+<body class="body-bg" style="margin:0;padding:40px 16px;background-color:#F4F6F9;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${preview}&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td align="center">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="card-surface" style="max-width:440px;background-color:#FFFFFF;border:1px solid #E2E8F0;border-radius:24px;overflow:hidden;box-shadow:0 12px 36px rgba(15,23,42,0.08);">
-    <!-- Brand Seal Header -->
+  
+  <!-- Outer Card Frame -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="card-surface" style="max-width:460px;background-color:#FFFFFF;border:1px solid #E2E8F0;border-radius:24px;overflow:hidden;box-shadow:0 14px 40px rgba(15,23,42,0.08);">
+    
+    <!-- Top Accent Bar (AICS Institutional Blue & Cyan Gradient) -->
     <tr>
-      <td align="center" style="padding:36px 32px 12px 32px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <td style="height:5px;background:linear-gradient(90deg,#0284C7 0%,#2563EB 50%,#0F172A 100%);"></td>
+    </tr>
+
+    <!-- Institutional Brand & Header -->
+    <tr>
+      <td style="padding:32px 32px 16px 32px;text-align:center;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto 16px auto;">
           <tr>
-            <td align="center" style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#0052CC 0%,#0B1F4D 100%);color:#FFFFFF;font:800 18px/64px -apple-system,sans-serif;letter-spacing:1.5px;box-shadow:0 6px 18px rgba(0,82,204,0.35);border:2px solid #FFFFFF;">
-              AICS
+            <td align="center" style="width:48px;height:48px;border-radius:14px;background:#0F172A;border:1px solid rgba(255,255,255,0.15);box-shadow:0 6px 16px rgba(15,23,42,0.18);">
+              <!-- Crisp High-Density Emblem Text -->
+              <span style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-weight:900;font-size:14px;letter-spacing:1px;color:#38BDF8;">AICS</span>
             </td>
           </tr>
         </table>
-        <p style="margin:16px 0 4px 0;font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#0284C7;">
-          AICS MONTALBAN · GUIDANCE OFFICE
-        </p>
-        <h1 class="text-main" style="margin:0;font-size:24px;font-weight:800;color:#0F172A;letter-spacing:-0.02em;line-height:1.2;">
-          Your Sign-in Code
+        
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto 8px auto;">
+          <tr>
+            <td style="padding:3px 10px;background-color:#F1F5F9;border-radius:6px;font-size:10.5px;font-weight:700;letter-spacing:0.08em;color:#475569;text-transform:uppercase;">
+              Guidance Office Authentication
+            </td>
+          </tr>
+        </table>
+
+        <h1 class="text-title" style="margin:0 0 6px 0;font-size:23px;font-weight:800;color:#0F172A;letter-spacing:-0.03em;line-height:1.2;">
+          Your Verification Code
         </h1>
-        <p class="text-muted" style="margin:8px 0 0 0;font-size:14px;color:#64748B;line-height:1.5;">
-          For <strong style="color:#0F172A;">${masked}</strong>. Type or copy this code into the Guidance desktop app to sign in.
+        <p class="text-sub" style="margin:0;font-size:13.5px;color:#64748B;line-height:1.5;">
+          Sign-in requested for <strong style="color:#0F172A;font-weight:600;">${masked}</strong>
         </p>
       </td>
     </tr>
 
-    <!-- One-Piece Copyable & Selectable Code Box (Double-click or 1-tap select) -->
+    <!-- 2026 Bento Code Surface (Copy-Paste Ready & Clean) -->
     <tr>
-      <td align="center" style="padding:14px 28px;">
-        <div class="code-box" style="user-select:all;-webkit-user-select:all;background-color:#F8FAFC;border:2px dashed #CBD5E1;border-radius:18px;padding:16px 20px;text-align:center;cursor:pointer;">
-          <span style="font-family:'SF Mono','JetBrains Mono','Courier New',monospace;font-size:32px;font-weight:800;letter-spacing:0.32em;color:#0369A1;display:inline-block;padding-left:0.32em;">
+      <td style="padding:10px 32px 20px 32px;">
+        <div class="code-surface" style="background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:18px;padding:22px 16px;text-align:center;box-shadow:inset 0 2px 4px rgba(15,23,42,0.02);">
+          <div class="code-digits" style="font-family:'SF Mono','JetBrains Mono','Courier New',monospace;font-size:36px;font-weight:800;letter-spacing:0.28em;color:#0F172A;line-height:1;user-select:all;-webkit-user-select:all;padding-left:0.28em;">
             ${cleanCode}
-          </span>
+          </div>
         </div>
-        <p style="margin:8px 0 0 0;font-size:12px;color:#64748B;font-weight:600;">
-          💡 Tip: Double-click or tap to select and copy all 6 characters
-        </p>
-      </td>
-    </tr>
 
-    <!-- Time Validity Badge -->
-    <tr>
-      <td align="center" style="padding:4px 32px 20px 32px;">
-        <span style="display:inline-block;padding:6px 14px;background-color:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;border-radius:9999px;font-size:12px;font-weight:700;">
-          Expires in 5 minutes · Single-use code
-        </span>
-      </td>
-    </tr>
-
-    <!-- Security Advisory -->
-    <tr>
-      <td class="divider" style="border-top:1px solid #F1F5F9;padding:22px 32px 30px 32px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <!-- Single-Click / Tap Helper Microcopy (Clean Vector-Style Tag, Zero Emoji) -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:10px;">
           <tr>
-            <td valign="top" style="width:20px;padding-right:12px;font-size:16px;">
-              🛡️
+            <td align="center">
+              <span style="font-size:11.5px;font-weight:600;color:#64748B;">
+                Double-click or tap to select and copy all 6 characters
+              </span>
             </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Token Meta Tag (Single-use & Validity) -->
+    <tr>
+      <td align="center" style="padding:0 32px 24px 32px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
+          <tr>
+            <td class="badge-bg" style="padding:6px 14px;background-color:#F0FDF4;border:1px solid #BBF7D0;border-radius:9999px;font-size:11.5px;font-weight:700;color:#15803D;">
+              Valid for 5 minutes · Single-use token
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Security Advisory & Safeguard Bento Box -->
+    <tr>
+      <td class="divider" style="border-top:1px solid #F1F5F9;padding:20px 32px 26px 32px;background-color:#FAFAFB;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="meta-card" style="background-color:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;padding:14px 16px;">
+          <tr>
             <td>
-              <p class="text-main" style="margin:0 0 4px 0;font-size:13px;font-weight:700;color:#0F172A;">
-                Security Guarantee &amp; Confidentiality
-              </p>
-              <p class="text-muted" style="margin:0;font-size:12.5px;line-height:1.55;color:#64748B;">
-                Never share this verification code with anyone. AICS administrators will never ask for your authentication credentials. If you did not initiate this sign-in attempt, please ignore this email.
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:4px;">
+                <tr>
+                  <td style="font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#0F172A;">
+                    Security Notice
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0;font-size:12px;line-height:1.55;color:#64748B;">
+                Never share this code with anyone. AICS Guidance staff and administrators will never ask for your verification code. If you did not make this request, you can safely disregard this message.
               </p>
             </td>
           </tr>
         </table>
+      </td>
+    </tr>
+
+  </table>
+
+  <!-- Official DepEd / AICS Institutional Footer -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:460px;margin-top:20px;text-align:center;">
+    <tr>
+      <td style="font-size:11.5px;line-height:1.6;color:#94A3B8;font-weight:500;">
+        Asian Institute of Computer Studies · Montalban Campus<br />
+        Guidance Office Automated Dispatch System<br />
+        Protected under RA 10173 (Data Privacy Act of 2012)
       </td>
     </tr>
   </table>
 
-  <!-- Official Footer -->
-  <p class="text-muted" style="margin:20px 0 0 0;font-size:12px;color:#64748B;font-weight:500;">
-    Asian Institute of Computer Studies · Montalban Campus<br />
-    Official Guidance System · Data Privacy Act of 2012 (RA 10173) Protected
-  </p>
 </td></tr>
 </table>
 </body>
