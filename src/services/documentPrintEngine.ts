@@ -133,6 +133,8 @@ interface DocParts {
   body: string;
   signatories?: Signatory[];
   landscape?: boolean;
+  /** put the signature block where the body has <!--SIGNATURES--> (e.g. on page 1 of the Monthly Report) */
+  signaturesInBody?: boolean;
 }
 
 const signatoriesFromSettings = (preparedName?: string): Signatory[] => {
@@ -156,9 +158,15 @@ function officialDocument(p: DocParts): string {
   pendingPrintNote = '';
   const c = getAppConfig().campus;
   const school = c.schoolName || 'ASIAN INSTITUTE OF COMPUTER STUDIES';
-  const footerLeft = cssText(`AICS Guidance Office · ${p.reference}`);
-  const footerCenter = cssText('Confidential · R.A. 10173');
+  const footerLeft = cssText(p.reference);
+  const footerCenter = cssText('AICS Guidance Office · Confidential');
   const signs = p.signatories ?? [];
+  const signHtml = signs.length
+    ? `<section class="signs">${signs
+        .map((s) => `<div class="sign"><small>${esc(s.role)}:</small><div class="line"><strong>${esc(s.name)}</strong><em>${esc(s.title)}</em></div></div>`)
+        .join('')}</section>`
+    : '';
+  const body = p.signaturesInBody ? p.body.replace('<!--SIGNATURES-->', signHtml) : p.body;
   return `<!doctype html>
 <html>
 <head>
@@ -169,9 +177,9 @@ function officialDocument(p: DocParts): string {
     size: A4 ${p.landscape ? 'landscape' : 'portrait'};
     margin: 14mm 15mm 17mm 15mm;
     @top-left { content: ""; } @top-center { content: ""; } @top-right { content: ""; }
-    @bottom-left { content: "${footerLeft}"; font: 7.5pt Arial, sans-serif; color: #64748B; }
-    @bottom-center { content: "${footerCenter}"; font: 7.5pt Arial, sans-serif; color: #64748B; }
-    @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 7.5pt Arial, sans-serif; color: #64748B; }
+    @bottom-left { content: "${footerLeft}"; font-family: Arial, sans-serif; font-size: 7.5pt; line-height: 1; color: #64748B; white-space: nowrap; vertical-align: middle; }
+    @bottom-center { content: "${footerCenter}"; font-family: Arial, sans-serif; font-size: 7.5pt; line-height: 1; color: #64748B; white-space: nowrap; vertical-align: middle; }
+    @bottom-right { content: "Page " counter(page) " of " counter(pages); font-family: Arial, sans-serif; font-size: 7.5pt; line-height: 1; color: #64748B; white-space: nowrap; vertical-align: middle; }
   }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { margin: 0; padding: 0; background: #fff; }
@@ -281,15 +289,9 @@ function officialDocument(p: DocParts): string {
   ${p.docSubtitle ? `<p class="subtitle">${esc(p.docSubtitle)}</p>` : '<div style="height:8px"></div>'}
   <div class="meta">${p.meta.map(([k, v]) => `<div><b>${esc(k)}</b><span>${esc(v)}</span></div>`).join('')}</div>
 
-  ${p.body}
+  ${body}
 
-  ${
-    signs.length
-      ? `<section class="signs">${signs
-          .map((s) => `<div class="sign"><small>${esc(s.role)}:</small><div class="line"><strong>${esc(s.name)}</strong><em>${esc(s.title)}</em></div></div>`)
-          .join('')}</section>`
-      : ''
-  }
+  ${p.signaturesInBody ? '' : signHtml}
 </body>
 </html>`;
 }
@@ -400,7 +402,8 @@ export function printMonthlyExecutivePdf(opts: MonthlyPdfOptions): boolean {
       ? `<ol class="attn">${opts.glance.attention.map((a) => `<li>${esc(a)}</li>`).join('')}</ol>`
       : `<ul class="attn ok"><li>Nothing needs action this month. All cases, parents and student reports are on track.</li></ul>`
   }
-  <p class="note">Details for the Guidance Office are on the next page.</p>
+  <!--SIGNATURES-->
+  <p class="note" style="margin-top:14px">Details for the Guidance Office are on the next pages.</p>
   <div class="pagebreak"></div>`
     : '';
   const fu = opts.followUp;
@@ -477,6 +480,8 @@ export function printMonthlyExecutivePdf(opts: MonthlyPdfOptions): boolean {
       ],
       body,
       signatories: signatoriesFromSettings(opts.staffName),
+      // with the heads' summary, they sign page 1; without it, the signatures stay at the end
+      signaturesInBody: !!opts.glance,
     }),
     `Monthly-Report-${opts.monthName}`
   );
