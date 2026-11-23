@@ -111,6 +111,18 @@ const toMsg = (r: Record<string, unknown>): ConcernMessage => ({
 });
 
 /** Every concern, fetched 1000 at a time (the server returns at most 1000 per request). */
+/** the student report this case was made from (Concerns → "+ Record a case"), or null */
+export async function fetchConcernForCase(caseCode: string): Promise<ConcernItem | null> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/student_concerns?select=*&linked_case_code=eq.${encodeURIComponent(caseCode)}&order=id.desc&limit=1`, { headers: headers() });
+    if (!res.ok) return null;
+    const rows = (await res.json()) as Record<string, unknown>[];
+    return rows[0] ? toConcern(rows[0]) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchConcerns(): Promise<ConcernItem[] | null> {
   const BATCH = 1000;
   const out: ConcernItem[] = [];

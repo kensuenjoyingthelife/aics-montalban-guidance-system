@@ -17,6 +17,7 @@ import { findSensitiveWords, type Channel } from '../../services/parentComms';
 import { DateField } from '../ui/DateField';
 import { ParentContactGate, phoneProblem, parentEmailMarkedNone, markParentEmailNone, isEmail } from './ParentContactGate';
 import { buildFolderHtml, buildBatchCallSlipsHtml, printHtml, type FormKind } from '../../services/printForms';
+import { StatementsPanel } from './StatementsPanel';
 import { summonsLevel, summonsAttempt, summonsLabel, summonsMessage, maxSummons } from '../../services/summonsLadder';
 import { smsInfo } from '../../services/smsText';
 import { useAppConfig, getAppConfig } from '../../services/appConfig';
@@ -584,8 +585,15 @@ export const CaseFlowPanel: React.FC<{
 
           {next === 'Student Called' && (
             <div className="space-y-4">
+              {/* due process: hear the reporter and witnesses BEFORE calling the reported student */}
+              <div data-step1-statements className="rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 p-4 space-y-2">
+                <p className="text-[14px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">
+                  {isTl ? 'Una: ang panig ng nag-ulat at mga saksi' : 'First: the reporter’s and witnesses’ side'}
+                </p>
+                <StatementsPanel caseCode={c.caseCode} incidentCode={c.incidentCode} isTl={isTl} onPrintBlank={onOpenPrint ? () => onOpenPrint('witnessStatement') : undefined} />
+              </div>
               <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">
-                {isTl ? 'Mag-print ng call slip para sa adviser, o tawagin ang estudyante nang direkta.' : 'Print a call slip for the adviser, or call the student in directly.'}
+                {isTl ? 'Pagkatapos: mag-print ng call slip para sa adviser, o tawagin ang estudyante nang direkta.' : 'Then: print a call slip for the adviser, or call the student in directly.'}
               </p>
               <ConfidentialHint isTl={isTl} />
               <div className="sticky bottom-0 z-10 -mx-1 glass-bar rounded-2xl px-3 py-3 flex flex-wrap items-center justify-between gap-2">

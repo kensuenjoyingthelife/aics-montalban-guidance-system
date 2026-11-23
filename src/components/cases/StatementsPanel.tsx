@@ -4,6 +4,16 @@
 import React, { useEffect, useState } from 'react';
 import { Lock, Plus, Printer } from 'lucide-react';
 import { fetchCaseStatements, insertCaseStatement, type CaseStatement } from '../../services/supabaseClient';
+import { fetchConcernForCase, type ConcernItem } from '../../services/concernsDb';
+
+/** the report text without the app's [TAGS] and photo links */
+const cleanReport = (t: string) =>
+  (t || '')
+    .replace(/\[EVIDENCE_PHOTO_\d+\]:\s*\S+/gi, '')
+    .replace(/\[(SALAYSAY|WHAT HAPPENED)[^\]]*\]:?/gi, '')
+    .replace(/\[[^\]]*\]/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 
 const ROLES: { k: CaseStatement['role']; en: string; tl: string }[] = [
   { k: 'reporter', en: 'Reported it', tl: 'Nag-ulat' },
@@ -27,6 +37,15 @@ export const StatementsPanel: React.FC<{
   const [err, setErr] = useState('');
 
   const load = async () => setList(await fetchCaseStatements(caseCode, incidentCode));
+  // a case made from a student report: that report IS the reporter's statement (no need to type it again)
+  const [report, setReport] = useState<ConcernItem | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void fetchConcernForCase(caseCode).then((r) => alive && setReport(r));
+    return () => {
+      alive = false;
+    };
+  }, [caseCode]);
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -65,13 +84,33 @@ export const StatementsPanel: React.FC<{
           : 'Office only. Never shown to the reported student or other parents. Cannot be changed once saved.'}
       </p>
 
+      {report && (
+        <div data-reporter-from-report className="rounded-xl border border-[#007AFF]/25 bg-[#007AFF]/[0.05] dark:bg-[#0A84FF]/10 p-3 space-y-1.5">
+          <p className="flex flex-wrap items-center gap-x-2 text-[12px] font-semibold text-[#007AFF] dark:text-[#409CFF]">
+            <Lock className="w-3.5 h-3.5" aria-hidden />
+            {isTl ? 'Salaysay ng nag-ulat · mula sa student report' : "Reporter's statement · from the student report"} {report.code}
+          </p>
+          <p className="text-[14px] font-semibold text-[#1D1D1F] dark:text-white">
+            {report.studentName} <span className="font-normal text-[#6E6E73] dark:text-[#A1A1A6]">· {report.gradeSection} · {new Date(report.createdAt).toLocaleDateString(isTl ? 'fil-PH' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+          </p>
+          <p className="text-[14px] text-[#1D1D1F] dark:text-[#F5F5F7] whitespace-pre-wrap leading-relaxed">{cleanReport(report.whatHappened) || '—'}</p>
+          {(report.when || report.where || report.witnesses) && (
+            <p className="text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">
+              {[report.when && `${isTl ? 'Kailan' : 'When'}: ${report.when}`, report.where && `${isTl ? 'Saan' : 'Where'}: ${report.where}`, report.witnesses && `${isTl ? 'Saksi' : 'Witnesses'}: ${report.witnesses}`].filter(Boolean).join(' · ')}
+            </p>
+          )}
+        </div>
+      )}
+
       {list === 'loading' ? (
         <p className="text-[13px] text-[#8E8E93]">{isTl ? 'Kinukuha…' : 'Loading…'}</p>
       ) : list === null ? (
         <p className="text-[13px] text-rose-700 dark:text-rose-300">{isTl ? 'Hindi makuha ang mga salaysay. I-check ang internet.' : 'Could not load statements. Check the internet.'}</p>
       ) : list.length === 0 && !adding ? (
         <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">
-          {isTl ? 'Wala pang salaysay. Kunin muna ang panig ng nag-ulat bago ipatawag ang inireklamo.' : 'No statements yet. Take the reporter’s side first, before calling the reported student.'}
+          {report
+            ? isTl ? 'Nasa report na ang salaysay ng nag-ulat. Idagdag ang ibang saksi kung mayroon (hindi sapilitan).' : "The reporter's side is in the report above. Add other witnesses if there are any (optional)."
+            : isTl ? 'Wala pang salaysay. Kunin muna ang panig ng nag-ulat at mga saksi bago ipatawag ang inireklamo (hindi sapilitan).' : 'No statements yet. Take the reporter’s and witnesses’ side first, before calling the reported student (optional).'}
         </p>
       ) : (
         <ul className="space-y-2">
