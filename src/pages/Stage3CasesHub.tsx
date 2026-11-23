@@ -1,3 +1,4 @@
+import { nameMatchScore } from '../services/nameMatch';
 import { decisionNoticeMessage } from '../services/summonsLadder';
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { UserPlus, Printer, Layers, Upload, X, Image as ImageIcon, Trash2, Check, Search, Info, Plus, Undo2, SlidersHorizontal, MoreHorizontal, FolderOpen, AlertTriangle, CalendarDays, Download, ChevronRight, Pencil, MessageSquare, ShieldCheck } from 'lucide-react';
@@ -193,8 +194,13 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     }
     if (prefill.search) {
       setStudentPickerQuery(prefill.search);
-      const q = prefill.search.toLowerCase().trim();
-      const directMatch = students.find((s) => s.fullName.toLowerCase().includes(q) || q.includes(s.fullName.toLowerCase()));
+      // auto-pick only when ONE student clearly fits the name the reporter wrote (smart match)
+      const ranked = students
+        .filter((s) => s.enrolled !== false)
+        .map((s) => ({ s, sc: nameMatchScore(s.fullName, prefill.search) }))
+        .filter((x) => x.sc > 0)
+        .sort((a, b) => b.sc - a.sc);
+      const directMatch = ranked.length && (ranked.length === 1 || ranked[0].sc > ranked[1].sc) ? ranked[0].s : undefined;
       if (directMatch) {
         setSelectedStudentNumbers([directMatch.studentNumber]);
       }
@@ -565,15 +571,20 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     if (subTab !== 'add-report') return [] as StudentRecord[]; // only sort when the New case form is open
     const q = studentPickerQuery.trim().toLowerCase();
     const enrolledOnly = students.filter((x) => x.enrolled !== false); // graduated / left cannot get a new case
-    const list = !q
-      ? enrolledOnly
-      : enrolledOnly.filter(
-          (s) =>
-            s.fullName.toLowerCase().includes(q) ||
-            s.studentNumber.toLowerCase().includes(q) ||
-            s.gradeSection.toLowerCase().includes(q)
-        );
-    return sortStudents(list, pickerSort);
+    if (!q) return sortStudents(enrolledOnly, pickerSort);
+    // smart match: any word order, middle initial ignored, one wrong letter forgiven, last name first
+    const scored = new Map<string, number>();
+    for (const s of enrolledOnly) {
+      const sc = Math.max(
+        nameMatchScore(s.fullName, q),
+        s.studentNumber.toLowerCase().includes(q.replace(/^#/, '')) ? 10 : 0,
+        s.gradeSection.toLowerCase().includes(q) ? 1 : 0
+      );
+      if (sc > 0) scored.set(s.studentNumber, sc);
+    }
+    const list = sortStudents(enrolledOnly.filter((s) => scored.has(s.studentNumber)), pickerSort);
+    // best match on top; the chosen sort (Newest / Oldest / A–Z / Urgent) breaks ties
+    return list.sort((a, b) => scored.get(b.studentNumber)! - scored.get(a.studentNumber)!);
   }, [students, studentPickerQuery, pickerSort, subTab]);
 
   // Golden Rule 9: never draw 1,000 rows at once
@@ -2273,7 +2284,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               const t = e.target as HTMLElement;
               if (e.key === 'Enter' && t.tagName === 'INPUT') e.preventDefault();
             }}
-            className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch"
+            className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start"
           >
             {prefill && (
               <div className="xl:col-span-12 rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-900 dark:text-amber-100" data-case-prefill={prefill.concernCode}>
@@ -2312,7 +2323,8 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
               </div>
             )}
             {/* LEFT 5 COLS: Student Selector (Supports 1 or Multiple Students) */}
-            <div className="xl:col-span-5 ring-card p-6 flex flex-col gap-4">
+            {/* each step scrolls on its own (scrolling Step 1 never moves Step 2, and the other way around) */}
+            <div data-step-scroll="1" className="xl:col-span-5 ring-card p-6 flex flex-col gap-4 xl:sticky xl:top-2 xl:h-[calc(100dvh/var(--app-zoom,1)-120px)] xl:overflow-y-auto overscroll-contain clean-scroll">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">
@@ -2448,7 +2460,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
             </div>
 
             {/* RIGHT 7 COLS: Offense Details, Auto-Classification & Early Intervention Alert */}
-            <div className="xl:col-span-7 ring-card p-6 space-y-5 flex flex-col">
+            <div data-step-scroll="2" className="xl:col-span-7 ring-card p-6 space-y-5 flex flex-col xl:sticky xl:top-2 xl:h-[calc(100dvh/var(--app-zoom,1)-120px)] xl:overflow-y-auto overscroll-contain clean-scroll">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h2 className="text-base font-extrabold text-[#1D1D1F] dark:text-white">
