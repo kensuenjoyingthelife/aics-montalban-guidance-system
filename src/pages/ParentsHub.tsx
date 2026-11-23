@@ -181,7 +181,14 @@ export const ParentsHub: React.FC<ParentsHubProps> = ({
   const unresolvedNoShows = useMemo(() => {
     const latest = new Map<string, ParentAppointmentItem>();
     appointments
-      .filter((a) => a.status === 'Did Not Attend' && isOpenCase(a.caseId) && !appointments.some((sub) => sub.rescheduledFrom === a.id))
+      .filter(
+        (a) =>
+          a.status === 'Did Not Attend' &&
+          isOpenCase(a.caseId) &&
+          !appointments.some((sub) => sub.rescheduledFrom === a.id) &&
+          // a new date was already picked (e.g. from Due Process step 4): the no-show is handled
+          !appointments.some((sub) => sub.caseId === a.caseId && sub.status === 'Scheduled' && sub.date >= a.date && sub.id !== a.id)
+      )
       .sort(byDateTime)
       .forEach((a) => latest.set(a.caseId, a));
     return [...latest.values()];

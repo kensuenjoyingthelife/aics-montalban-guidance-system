@@ -10,6 +10,7 @@ import { isOfficeDay, todayISO, addDays } from '../../services/scheduling';
 import { getAppConfig, saveConfig } from '../../services/appConfig';
 import { fetchContactLogsForCase, type ContactLogEntry } from '../../services/supabaseClient';
 import { contactLine } from '../../services/contactSummary';
+import { usePrintInfo, recordPrint, reprintNote, printedBadgeText, staffNameFor } from '../../services/printLog';
 
 const DESC: Record<FormKind, [string, string]> = {
   callSlip: ['Pass for the student to go to the Guidance Office', 'Pase para pumunta ang estudyante sa Guidance Office'],
@@ -119,16 +120,38 @@ export const PrintFormsWindow: React.FC<{
 
   const [activeTab, setActiveTab] = useState<'preview' | 'options'>('preview');
 
+  // print log: each form of this case has its own "Printed" mark; a reprint says so on the paper
+  const formKey = (k: FormKind) => `form:${c.caseCode}:${k}`;
+  const printed = usePrintInfo((Object.keys(FORM_TITLES) as FormKind[]).map(formKey));
+  const info = printed(formKey(kind));
+  const [confirmMode, setConfirmMode] = useState<'print' | 'download'>('print');
+  /** a small "REPRINT · 2nd copy" tag in the top-right corner of a reprinted form */
+  const withReprintMark = (html: string) => {
+    const note = reprintNote(info);
+    if (!note) return html;
+    const tag = `<div style="position:fixed;top:6mm;right:8mm;z-index:9999;font:700 8pt Arial,sans-serif;letter-spacing:1px;color:#92400E;border:1px solid #FCD34D;background:#FFFBEB;padding:3px 8px;border-radius:3px">${note}</div>`;
+    return /<body[^>]*>/i.test(html) ? html.replace(/<body[^>]*>/i, (m) => m + tag) : tag + html;
+  };
+
   const executePrint = () => {
     setShowConfirmPrint(false);
-    if (printHtml(previewHtml)) onPrinted(kind);
-    else onFailed();
+    const html = withReprintMark(previewHtml);
+    if (confirmMode === 'download') {
+      const filename = `${c.caseCode}_${FORM_TITLES[kind][0].replace(/\s+/g, '_')}`;
+      void downloadFormDocument(html, filename);
+      void recordPrint(formKey(kind), 'form', `${FORM_TITLES[kind][0]} ${c.caseCode}`);
+      onPrinted(kind);
+      return;
+    }
+    if (printHtml(html)) {
+      void recordPrint(formKey(kind), 'form', `${FORM_TITLES[kind][0]} ${c.caseCode}`);
+      onPrinted(kind);
+    } else onFailed();
   };
 
   const downloadDirectFile = () => {
-    const filename = `${c.caseCode}_${FORM_TITLES[kind][0].replace(/\s+/g, '_')}`;
-    void downloadFormDocument(previewHtml, filename);
-    onPrinted(kind);
+    setConfirmMode('download');
+    setShowConfirmPrint(true);
   };
   const fmt = (iso: string) => new Intl.DateTimeFormat(isTl ? 'fil-PH' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date(iso + 'T00:00:00'));
 
@@ -213,6 +236,11 @@ export const PrintFormsWindow: React.FC<{
                     <span className="flex items-center gap-1.5 text-[14px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">
                       <FileText className="w-4 h-4 text-[#007AFF] dark:text-[#409CFF] shrink-0" />
                       <span>{FORM_TITLES[k][isTl ? 1 : 0]}</span>
+                      {printed(formKey(k)).count > 0 && (
+                        <span data-printed-badge={k} className="ml-auto shrink-0 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#E8F5E9] text-[#166534] dark:bg-[#14301C] dark:text-[#4ADE80]">
+                          ✓ {printedBadgeText(printed(formKey(k)), isTl)}
+                        </span>
+                      )}
                     </span>
                     <span className="block text-[12px] text-[#6E6E73] dark:text-[#A1A1A6] mt-0.5">{DESC[k][isTl ? 1 : 0]}</span>
                   </button>
@@ -328,13 +356,24 @@ export const PrintFormsWindow: React.FC<{
               </div>
               <div className="text-center space-y-1">
                 <h4 className="text-[17px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">
-                  {isTl ? 'I-print na?' : 'Print now?'}
+                  {info.count
+                    ? isTl ? 'Na-print na ito. Ulitin?' : 'Already printed. Do it again?'
+                    : confirmMode === 'download'
+                    ? isTl ? 'I-download ang PDF?' : 'Download the PDF?'
+                    : isTl ? 'I-print na?' : 'Print now?'}
                 </h4>
                 <p className="text-[13px] text-[#6E6E73] dark:text-[#A1A1A6]">
                   {isTl
-                    ? `Ipi-print ang "${FORM_TITLES[kind][1]}" para kay ${c.studentName}. Siguraduhing tama ang impormasyon sa preview bago magpatuloy.`
-                    : `Printing "${FORM_TITLES[kind][0]}" for ${c.studentName}. Ensure all previewed information is accurate.`}
+                    ? `"${FORM_TITLES[kind][1]}" para kay ${c.studentName}. Siguraduhing tama ang impormasyon sa preview.`
+                    : `"${FORM_TITLES[kind][0]}" for ${c.studentName}. Check that the preview is correct.`}
                 </p>
+                {info.count > 0 && info.last && (
+                  <p data-reprint-warning className="text-[13px] font-semibold text-[#92400E] dark:text-[#FBBF24] bg-[#FFFBEB] dark:bg-[#3A2A0A] rounded-xl px-3 py-2">
+                    {isTl
+                      ? `Huling na-print: ${new Date(info.last.at).toLocaleString('fil-PH')} ni ${staffNameFor(info.last.by)} (${info.count}×). May "REPRINT" na nakasulat sa bagong kopya.`
+                      : `Last printed ${new Date(info.last.at).toLocaleString('en-US')} by ${staffNameFor(info.last.by)} (${info.count}×). The new copy will say "REPRINT".`}
+                  </p>
+                )}
               </div>
 
               <div className="flex items-center gap-2 pt-2">
@@ -350,8 +389,14 @@ export const PrintFormsWindow: React.FC<{
                   onClick={executePrint}
                   className="btn-lit flex-1 h-10 text-[13px] font-semibold flex items-center justify-center gap-1.5"
                 >
-                  <Printer className="w-4 h-4" />
-                  <span>{isTl ? 'Oo, i-print' : 'Yes, print'}</span>
+                  {confirmMode === 'download' ? <Download className="w-4 h-4" /> : <Printer className="w-4 h-4" />}
+                  <span>
+                    {info.count
+                      ? isTl ? 'Oo, ulitin' : 'Yes, again'
+                      : confirmMode === 'download'
+                      ? isTl ? 'Oo, i-download' : 'Yes, download'
+                      : isTl ? 'Oo, i-print' : 'Yes, print'}
+                  </span>
                 </button>
               </div>
             </div>
@@ -383,7 +428,10 @@ export const PrintFormsWindow: React.FC<{
               type="button"
               data-action="print-form"
               disabled={!!bad}
-              onClick={() => setShowConfirmPrint(true)}
+              onClick={() => {
+                setConfirmMode('print');
+                setShowConfirmPrint(true);
+              }}
               className="btn-lit h-10 px-5 text-[13px] font-semibold disabled:opacity-50 inline-flex items-center gap-1.5"
             >
               <Printer className="w-4 h-4" />

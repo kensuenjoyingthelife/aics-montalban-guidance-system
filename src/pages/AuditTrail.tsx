@@ -7,7 +7,9 @@ import { soundFX } from '../services/soundEngine';
 import { AuditEntry, fetchAuditPage, TABLE_WORDS, changedFields, fieldWord, showValue, whoOf, keyWord } from '../services/auditDb';
 import { todayISO, addDays } from '../services/scheduling';
 import { Legend } from '../components/ui/Charts';
-import { printAuditTrailPdf } from '../services/documentPrintEngine';
+import { printAuditTrailPdf, setNextPrintNote } from '../services/documentPrintEngine';
+import { usePrintInfo, confirmPrint, recordPrint, reprintNote, printedBadgeText } from '../services/printLog';
+import { useConfirmChange } from '../components/ui/ConfirmChange';
 import { Printer, Download, Filter, RefreshCw, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 
 const PAGE_SIZE = 50;
@@ -71,8 +73,25 @@ const AuditTrail: React.FC = () => {
   const last = Math.min(total, (page + 1) * pageSize);
   const filtered = !!table || !!term || from !== addDays(todayISO(), -30) || to !== todayISO();
 
-  const handleDownloadPdf = () => {
+  // print log: same date range + filter = same document ("Printed" badge, warning before a reprint)
+  const confirm = useConfirmChange();
+  const auditKey = `audit:${from}_${to}_${table || 'all'}_${term || ''}`;
+  const printed = usePrintInfo([auditKey]);
+  const auditBadge = printedBadgeText(printed(auditKey), isTl);
+  const handleDownloadPdf = async () => {
     if (!rows || rows.length === 0) return;
+    const ok = await confirmPrint(confirm, {
+      docKey: auditKey,
+      titleEn: 'Audit Trail Log',
+      titleTl: 'Audit Trail Log',
+      tl: isTl,
+      rows: [
+        { label: isTl ? 'Petsa' : 'Dates', after: `${from} – ${to}` },
+        { label: isTl ? 'Bilang ng tala' : 'Records', after: String(rows.length) },
+      ],
+    });
+    if (!ok) return;
+    setNextPrintNote(reprintNote(printed(auditKey)));
     soundFX.playStepUnlock();
     const formattedRows = rows.map((e) => {
       const a = ACTION[e.action] ?? ACTION.update;
@@ -113,6 +132,7 @@ const AuditTrail: React.FC = () => {
       dateRange: `${from} to ${to}`,
       staffName: 'Guidance Staff',
     });
+    void recordPrint(auditKey, 'audit', `Audit Trail ${from} to ${to}`);
   };
 
   return (
@@ -134,12 +154,17 @@ const AuditTrail: React.FC = () => {
           <button
             type="button"
             disabled={!rows || rows.length === 0}
-            onClick={handleDownloadPdf}
+            onClick={() => void handleDownloadPdf()}
             className={`${btn} bg-[#007AFF] hover:bg-[#0062CC] text-white active:scale-[0.97] transition-[transform,background-color] inline-flex items-center gap-1.5 shadow-xs disabled:opacity-50`}
           >
             <Download className="w-3.5 h-3.5" />
-            {isTl ? 'I-download ang PDF (Audit Log)' : 'Export Audit Trail (PDF)'}
+            {isTl ? 'Audit Trail · I-download / I-print (PDF)' : 'Audit Trail · Download / Print (PDF)'}
           </button>
+          {auditBadge && (
+            <span data-printed-badge="audit" className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-semibold bg-[#E8F5E9] text-[#166534] dark:bg-[#14301C] dark:text-[#4ADE80]">
+              ✓ {auditBadge}
+            </span>
+          )}
           <span className="cdm-badge-ready">
             {isTl ? 'Opisyal na tala' : 'Immutable log'}
           </span>

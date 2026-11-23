@@ -28,6 +28,8 @@ export function setAuditActor(email: string) {
 }
 /** header that the database audit trigger reads (empty when nobody is signed in) */
 export const actorHeader = (): Record<string, string> => (currentActor ? { 'x-aics-actor': currentActor } : {});
+/** the signed-in staff email (empty when nobody is signed in) */
+export const getAuditActor = () => currentActor;
 
 function getHeaders(preferReturn = false): HeadersInit {
   const headers: Record<string, string> = {

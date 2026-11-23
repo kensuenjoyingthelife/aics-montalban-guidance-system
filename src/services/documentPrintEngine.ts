@@ -144,8 +144,16 @@ const signatoriesFromSettings = (preparedName?: string): Signatory[] => {
   ];
 };
 
+// "REPRINT · 2nd copy" for the next document only (set by the print log right before printing)
+let pendingPrintNote = '';
+export const setNextPrintNote = (note: string) => {
+  pendingPrintNote = note;
+};
+
 /** The one official AICS page: letterhead, title block, body, signatures, page footer */
 function officialDocument(p: DocParts): string {
+  const printNote = pendingPrintNote;
+  pendingPrintNote = '';
   const c = getAppConfig().campus;
   const school = c.schoolName || 'ASIAN INSTITUTE OF COMPUTER STUDIES';
   const footerLeft = cssText(`AICS Guidance Office · ${p.reference}`);
@@ -265,7 +273,7 @@ function officialDocument(p: DocParts): string {
       <div class="lh-office">${esc(c.campusName || 'Montalban Campus')} · Guidance Office</div>
       <div class="lh-contact">${esc([c.campusAddress, c.contactNumber, c.officialEmail].filter(Boolean).join('  ·  '))}</div>
     </div>
-    <div class="lh-tag">CONFIDENTIAL</div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><div class="lh-tag">CONFIDENTIAL</div>${printNote ? `<div class="lh-tag" style="color:#92400E;border-color:#FCD34D;background:#FFFBEB">${esc(printNote)}</div>` : ''}</div>
   </header>
   <div class="rule"></div>
 

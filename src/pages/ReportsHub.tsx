@@ -37,7 +37,8 @@ import { fetchConcerns, type ConcernItem } from '../services/concernsDb';
 import { useAppConfig } from '../services/appConfig';
 import { useConfirmChange } from '../components/ui/ConfirmChange';
 import { buildMonthlyExtras, buildGlance } from '../services/reportGlance';
-import { printIncidentSlip, printMonthlyExecutivePdf, printDepEdCompliancePdf } from '../services/documentPrintEngine';
+import { printIncidentSlip, printMonthlyExecutivePdf, printDepEdCompliancePdf, setNextPrintNote } from '../services/documentPrintEngine';
+import { usePrintInfo, confirmPrint, recordPrint, reprintNote, printedBadgeText, loadPrints } from '../services/printLog';
 import { Download, Printer, FileText, BarChart3, TrendingUp, Calendar, Award, ShieldCheck } from 'lucide-react';
 
 // Chart colors, validated for color-blind readers (blue/green, blue/orange) with separate dark-mode steps.
@@ -207,6 +208,24 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
   );
   const glance = useMemo(() => buildGlance(extras), [extras]);
 
+  // print log: "Printed" badges + a clear question before any reprint
+  const curQuarterLabel = (() => {
+    const y = new Date().getFullYear();
+    const q = Math.floor(new Date().getMonth() / 3) + 1;
+    return `${['Q1 (Jan - Mar)', 'Q2 (Apr - Jun)', 'Q3 (Jul - Sep)', 'Q4 (Oct - Dec)'][q - 1]} ${y}`;
+  })();
+  const monthlyKey = `monthly:${month}`;
+  const quarterlyKey = `quarterly:${curQuarterLabel}`;
+  const printed = usePrintInfo([monthlyKey, quarterlyKey]);
+  const badge = (key: string) => {
+    const t = printedBadgeText(printed(key), isTl);
+    return t ? (
+      <span data-printed-badge={key} title={isTl ? 'Na-print na. Puwedeng i-print ulit (magtatanong muna).' : 'Already printed. You can print again (it asks first).'} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-semibold bg-[#E8F5E9] text-[#166534] dark:bg-[#14301C] dark:text-[#4ADE80]">
+        ✓ {t}
+      </span>
+    ) : null;
+  };
+
   const reportRows = (): string[][] => [
     ['Item', 'Value'],
     ['Month', monthName],
@@ -276,6 +295,9 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
     () => (sel ? appointments.filter((a) => a.caseId === sel.caseCode).sort((a, b) => (a.date || '').localeCompare(b.date || '')) : []),
     [sel, appointments]
   );
+  useEffect(() => {
+    if (sel) void loadPrints([`slip:${sel.caseCode}`]);
+  }, [sel]);
   const caseTasks = useMemo(() => (sel ? followUps.filter((t) => t.caseId === sel.caseCode && !t.resolved) : []), [sel, followUps]);
   const saveNote = async () => {
     if (!sel) return;
@@ -719,20 +741,18 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                 type="button"
                 data-action="print-executive-pdf"
                 onClick={async () => {
-                  const ok = await confirm({
-                    title: isTl ? 'I-download ang Buwanang Ulat (PDF)?' : 'Download Monthly Executive Report (PDF)?',
-                    description: isTl
-                      ? `I-eexport ang kumpletong ulat para sa ${monthName} kasama ang mga tsart at istatistika.`
-                      : `Export and download the executive monthly summary for ${monthName} with graphs and metrics.`,
+                  const ok = await confirmPrint(confirm, {
+                    docKey: monthlyKey,
+                    titleEn: `Monthly Report (${monthName})`,
+                    titleTl: `Buwanang Ulat (${monthName})`,
+                    tl: isTl,
                     rows: [
-                      { label: isTl ? 'Buwan' : 'Month', after: monthName },
-                      { label: isTl ? 'Bagong Kaso' : 'New Cases', after: String(report.newCases) },
-                      { label: isTl ? 'Attendance Rate' : 'Attendance Rate', after: report.attendanceRate !== null ? `${report.attendanceRate}%` : 'N/A' },
+                      { label: isTl ? 'Bagong kaso' : 'New cases', after: String(report.newCases) },
+                      { label: isTl ? 'Dumalong magulang' : 'Parent attendance', after: report.attendanceRate !== null ? `${report.attendanceRate}%` : '—' },
                     ],
-                    confirmLabel: isTl ? 'I-download Na' : 'Download Now',
-                    tone: 'primary',
                   });
                   if (!ok) return;
+                  setNextPrintNote(reprintNote(printed(monthlyKey)));
 
                   soundFX.playStepUnlock();
                   printMonthlyExecutivePdf({
@@ -765,12 +785,14 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                       days: Math.max(0, Math.floor((Date.now() - new Date(c.incidentDate.slice(0, 10) + 'T00:00:00').getTime()) / 86400000)),
                     })),
                   });
+                  void recordPrint(monthlyKey, 'monthly', `Monthly Report ${monthName}`);
                 }}
                 className={`${btn} px-4 py-2 bg-[#007AFF] hover:bg-[#0062CC] text-white active:scale-[0.97] transition-all inline-flex items-center gap-1.5 shadow-sm`}
               >
                 <Download className="w-3.5 h-3.5" />
-                {isTl ? 'I-download ang PDF (Kasama ang Graphs)' : 'Download PDF (with Graphs)'}
+                {isTl ? 'Monthly Report · I-download / I-print (PDF)' : 'Monthly Report · Download / Print (PDF)'}
               </button>
+              {badge(monthlyKey)}
               <button
                 type="button"
                 data-action="print-deped-compliance"
@@ -791,20 +813,18 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                     return d >= qStart && d < qEnd && !/^withdrawn/i.test(c.decision ?? '');
                   });
 
-                  const ok = await confirm({
-                    title: isTl ? 'I-generate ang Quarterly Report (PDF)?' : 'Generate the Quarterly Report (PDF)?',
-                    description: isTl
-                      ? `Buod ng mga kaso ngayong quarter, mula sa tunay na records.`
-                      : `A summary of this quarter's cases, from the real records.`,
+                  const ok = await confirmPrint(confirm, {
+                    docKey: `quarterly:${qLabel}`,
+                    titleEn: `Quarterly Report (${qLabel})`,
+                    titleTl: `Quarterly Report (${qLabel})`,
+                    tl: isTl,
                     rows: [
-                      { label: isTl ? 'Quarter' : 'Quarter', after: qLabel },
-                      { label: isTl ? 'School Year' : 'School Year', after: sYear },
+                      { label: 'School Year', after: sYear },
                       { label: isTl ? 'Mga kaso ngayong quarter' : 'Cases this quarter', after: String(qCases.length) },
                     ],
-                    confirmLabel: isTl ? 'I-export ang report' : 'Export report',
-                    tone: 'success',
                   });
                   if (!ok) return;
+                  setNextPrintNote(reprintNote(printed(`quarterly:${qLabel}`)));
 
                   soundFX.playStepUnlock();
 
@@ -841,13 +861,15 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                     counselorName: config.signatories?.guidanceCounselor || 'Registered Guidance Counselor (RGC)',
                     principalName: config.signatories?.principal || 'School Principal',
                   });
+                  void recordPrint(`quarterly:${qLabel}`, 'quarterly', `Quarterly Report ${qLabel}`);
                 }}
                 className={`${btn} px-4 py-2 border border-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 active:scale-[0.97] transition-all inline-flex items-center gap-1.5 shadow-sm`}
                 title={isTl ? 'Buod ng mga kaso ngayong quarter' : 'Summary of this quarter\'s cases'}
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>{isTl ? 'Quarterly Report (PDF)' : 'Quarterly Report (PDF)'}</span>
+                <span>{isTl ? 'Quarterly Report · I-download / I-print (PDF)' : 'Quarterly Report · Download / Print (PDF)'}</span>
               </button>
+              {badge(quarterlyKey)}
               <button
                 type="button"
                 data-action="csv-report"
@@ -990,20 +1012,15 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                     <button
                       type="button"
                       onClick={async () => {
-                        const ok = await confirm({
-                          title: isTl ? 'I-print ang Incident Slip (PDF)?' : 'Print Incident Slip (PDF)?',
-                          description: isTl
-                            ? `Bubuksan ang opisyal na AICS Guidance Incident Slip para kay ${sel.studentName} (${sel.caseCode}).`
-                            : `Open printable official AICS Guidance Incident Slip for ${sel.studentName} (${sel.caseCode}).`,
-                          rows: [
-                            { label: isTl ? 'Kaso' : 'Case Code', after: sel.caseCode },
-                            { label: isTl ? 'Estudyante' : 'Student', after: sel.studentName },
-                            { label: isTl ? 'Offense' : 'Offense', after: sel.offenseTitleEn },
-                          ],
-                          confirmLabel: isTl ? 'I-print Na' : 'Print Now',
-                          tone: 'primary',
+                        const ok = await confirmPrint(confirm, {
+                          docKey: `slip:${sel.caseCode}`,
+                          titleEn: `Incident Slip (${sel.caseCode})`,
+                          titleTl: `Incident Slip (${sel.caseCode})`,
+                          tl: isTl,
+                          rows: [{ label: isTl ? 'Estudyante' : 'Student', after: sel.studentName }],
                         });
                         if (!ok) return;
+                        setNextPrintNote(reprintNote(printed(`slip:${sel.caseCode}`)));
 
                         soundFX.playStepUnlock();
                         printIncidentSlip({
@@ -1018,12 +1035,14 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                           penaltyAction: sel.sanction || (sel.status === 'Resolved' ? 'Resolved / Completed' : 'Under Guidance Evaluation'),
                           guidanceStaffName: 'Guidance Staff',
                         });
+                        void recordPrint(`slip:${sel.caseCode}`, 'slip', `Incident Slip ${sel.caseCode}`);
                       }}
                       className={`${btn} bg-[#007AFF] hover:bg-[#0062CC] text-white active:scale-[0.97] transition-all inline-flex items-center gap-1.5 shadow-sm`}
                     >
                       <Printer className="w-3.5 h-3.5" />
-                      {isTl ? 'I-print ang Incident Slip (PDF)' : 'Print Incident Slip (PDF)'}
+                      {isTl ? 'Incident Slip · I-download / I-print (PDF)' : 'Incident Slip · Download / Print (PDF)'}
                     </button>
+                    {badge(`slip:${sel.caseCode}`)}
                     {onOpenCase && (
                       <button type="button" onClick={() => onOpenCase(sel.caseCode)} className={`${btn} saas-card-subtle active:scale-[0.97]`}>
                         {isTl ? 'Buksan sa Mga Kaso' : 'Open in Cases'}
