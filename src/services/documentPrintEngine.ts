@@ -1,6 +1,9 @@
-// Dedicated Document & PDF Export Engine with official AICS institutional formatting
-// Features: Circular AICS Logo, Data Privacy Act compliance header, clean typography, signature block
+// Official AICS document engine: ONE professional layout for every printed / PDF report.
+// - A4, full width, real page numbers ("Page 1 of 2") in the page margin, no browser URL/date header
+// - Letterhead and signatories come from Settings (campus + signatories), never hard-coded
+// - Signature block never splits across pages; tables repeat their header on every page
 import { AICS_LOGO_BASE64 } from './aicsLogoBase64';
+import { getAppConfig } from './appConfig';
 
 export interface IncidentSlipData {
   caseCode: string;
@@ -40,498 +43,11 @@ export interface MonthlyPdfOptions {
   byLevel: Array<{ label: string; count: number; pct: number }>;
   noShowReasons: Array<{ label: string; count: number; pct: number }>;
   staffName?: string;
-}
-
-const triggerPrintIframe = (html: string, title: string): boolean => {
-  const frame = document.createElement('iframe');
-  frame.setAttribute('aria-hidden', 'true');
-  frame.style.cssText = 'position:fixed;width:0;height:0;border:0;right:0;bottom:0;opacity:0;pointer-events:none';
-  document.body.appendChild(frame);
-  const doc = frame.contentDocument;
-  if (!doc || !frame.contentWindow) {
-    frame.remove();
-    return false;
-  }
-  doc.open();
-  doc.write(html);
-  doc.close();
-  setTimeout(() => {
-    frame.contentWindow?.focus();
-    frame.contentWindow?.print();
-    setTimeout(() => frame.remove(), 2500);
-  }, 250);
-  return true;
-};
-
-const esc = (s: string) => String(s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] || c);
-
-/**
- * 1. Single Incident Slip (Exact match of physical form uploaded by user)
- */
-export function printIncidentSlip(data: IncidentSlipData): boolean {
-  const staff = data.guidanceStaffName || 'Guidance Associate';
-  const html = `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>AICS Guidance Incident Report - ${esc(data.caseCode)}</title>
-  <style>
-    @page { size: portrait; margin: 20mm 20mm 20mm 20mm; }
-    * { box-sizing: border-box; }
-    body {
-      font-family: 'Times New Roman', Times, serif, Arial;
-      color: #0F172A;
-      margin: 0;
-      padding: 24px;
-      line-height: 1.5;
-      background: #fff;
-    }
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      margin-bottom: 24px;
-      text-align: center;
-    }
-    .logo {
-      width: 68px;
-      height: 68px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 1.5px solid #1E469B;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    .inst-name {
-      font-size: 20px;
-      font-weight: bold;
-      color: #0B1F4D;
-      letter-spacing: 0.5px;
-      margin: 0;
-      text-transform: uppercase;
-    }
-    .dept-name {
-      font-size: 14px;
-      font-style: italic;
-      color: #334155;
-      margin-top: 2px;
-    }
-    .sub-banner {
-      font-size: 11px;
-      letter-spacing: 1px;
-      color: #64748B;
-      text-transform: uppercase;
-      margin-top: 2px;
-    }
-    .divider {
-      border-bottom: 2px solid #0B1F4D;
-      margin: 12px 0 24px 0;
-    }
-    .doc-title {
-      text-align: center;
-      font-size: 16px;
-      font-weight: bold;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: #0B1F4D;
-      margin-bottom: 24px;
-      text-decoration: underline;
-    }
-    .field-list {
-      margin: 0 auto;
-      max-width: 650px;
-      font-size: 13.5px;
-    }
-    .field-row {
-      display: flex;
-      margin-bottom: 16px;
-      align-items: baseline;
-    }
-    .field-bullet {
-      font-size: 16px;
-      margin-right: 8px;
-      color: #0B1F4D;
-    }
-    .field-label {
-      font-weight: bold;
-      color: #0F172A;
-      width: 230px;
-      flex-shrink: 0;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .field-colon {
-      margin-right: 12px;
-      font-weight: bold;
-    }
-    .field-value {
-      flex: 1;
-      border-bottom: 1px dotted #94A3B8;
-      padding-bottom: 2px;
-      color: #0B1F4D;
-      font-weight: 500;
-    }
-    .details-box {
-      border: 1px solid #CBD5E1;
-      padding: 10px 14px;
-      border-radius: 4px;
-      background: #F8FAFC;
-      margin-top: 4px;
-      min-height: 50px;
-      font-style: italic;
-    }
-    .sign-section {
-      margin-top: 60px;
-      display: flex;
-      justify-content: flex-end;
-    }
-    .sign-box {
-      text-align: center;
-      width: 240px;
-    }
-    .sign-line {
-      border-bottom: 1.5px solid #0B1F4D;
-      margin-bottom: 6px;
-      height: 35px;
-    }
-    .sign-name {
-      font-weight: bold;
-      font-size: 14px;
-      color: #0B1F4D;
-    }
-    .sign-title {
-      font-size: 12px;
-      color: #475569;
-      font-style: italic;
-    }
-    .footer-note {
-      margin-top: 40px;
-      border-top: 1px solid #E2E8F0;
-      padding-top: 8px;
-      font-size: 10px;
-      color: #64748B;
-      display: flex;
-      justify-content: space-between;
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <img src="${AICS_LOGO_BASE64}" class="logo" alt="AICS Seal" />
-    <div>
-      <h1 class="inst-name">Asian Institute of Computer Studies</h1>
-      <div class="dept-name">Guidance Department · Montalban Campus</div>
-      <div class="sub-banner">Official Student Disciplinary & Incident Record</div>
-    </div>
-  </div>
-
-  <div class="divider"></div>
-  <div class="doc-title">INCIDENT RECORD SLIP</div>
-
-  <div class="field-list">
-    <div class="field-row">
-      <span class="field-bullet">•</span>
-      <span class="field-label">DATE OF INCIDENT</span>
-      <span class="field-colon">:</span>
-      <span class="field-value">${esc(data.incidentDate)}</span>
-    </div>
-
-    <div class="field-row">
-      <span class="field-bullet">•</span>
-      <span class="field-label">NAME OF STUDENT</span>
-      <span class="field-colon">:</span>
-      <span class="field-value">${esc(data.studentName)} ${data.studentNumber ? `<span style="font-size:12px;color:#64748B;">(${esc(data.studentNumber)})</span>` : ''}</span>
-    </div>
-
-    <div class="field-row">
-      <span class="field-bullet">•</span>
-      <span class="field-label">SECTION</span>
-      <span class="field-colon">:</span>
-      <span class="field-value">${esc(data.gradeSection)}</span>
-    </div>
-
-    <div class="field-row">
-      <span class="field-bullet">•</span>
-      <span class="field-label">TYPE OF OFFENSE</span>
-      <span class="field-colon">:</span>
-      <span class="field-value">${esc(data.offenseType)}</span>
-    </div>
-
-    <div class="field-row">
-      <span class="field-bullet">•</span>
-      <span class="field-label">OFFENSE COMMITTED</span>
-      <span class="field-colon">:</span>
-      <span class="field-value" style="font-weight:bold;">${esc(data.offenseCommitted)}</span>
-    </div>
-
-    <div class="field-row" style="align-items:flex-start;">
-      <span class="field-bullet">•</span>
-      <span class="field-label">DETAILS</span>
-      <span class="field-colon">:</span>
-      <div class="field-value details-box">${esc(data.details || 'No additional narrative provided.')}</div>
-    </div>
-
-    <div class="field-row">
-      <span class="field-bullet">•</span>
-      <span class="field-label">PENALTY / RESULTING ACTION</span>
-      <span class="field-colon">:</span>
-      <span class="field-value" style="color:#0B1F4D;font-weight:bold;">${esc(data.penaltyAction || 'Conference Scheduled / Under Evaluation')}</span>
-    </div>
-  </div>
-
-  <div class="sign-section">
-    <div class="sign-box">
-      <div class="sign-line"></div>
-      <div class="sign-name">${esc(staff)}</div>
-      <div class="sign-title">Guidance Associate</div>
-    </div>
-  </div>
-
-  <div class="footer-note">
-    <span>Case Reference: <strong>${esc(data.caseCode)}</strong></span>
-    <span>CONFIDENTIAL · R.A. 10173 Data Privacy Act Compliant</span>
-    <span>Printed: ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-  </div>
-</body>
-</html>`;
-  return triggerPrintIframe(html, `Incident-Slip-${data.caseCode}`);
-}
-
-/**
- * 2. Official Audit Trail PDF
- */
-export function printAuditTrailPdf(opts: AuditPdfOptions): boolean {
-  const staff = opts.staffName || 'Guidance Associate';
-  const tableRows = opts.rows
-    .map(
-      (r, idx) => `
-    <tr class="${idx % 2 === 0 ? 'even' : 'odd'}">
-      <td style="white-space:nowrap;font-family:monospace;font-size:11px;">${esc(r.date)}</td>
-      <td style="font-weight:bold;color:#0B1F4D;">${esc(r.actor)}</td>
-      <td><span class="badge ${r.action.toLowerCase()}">${esc(r.action)}</span></td>
-      <td style="font-weight:600;">${esc(r.table)}</td>
-      <td>${esc(r.description)}</td>
-      <td style="font-size:11px;color:#334155;">${esc(r.detail)}</td>
-    </tr>`
-    )
-    .join('');
-
-  const html = `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>AICS Guidance Audit Trail Log</title>
-  <style>
-    @page { size: landscape; margin: 12mm 15mm 15mm 15mm; }
-    * { box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; color: #0F172A; margin: 0; padding: 10px; font-size: 12px; }
-    .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #1E469B; padding-bottom: 8px; margin-bottom: 12px; }
-    .header-left { display: flex; align-items: center; gap: 12px; }
-    .logo { width: 52px; height: 52px; border-radius: 50%; border: 1.5px solid #1E469B; object-fit: cover; }
-    .inst-title { font-size: 16px; font-weight: bold; color: #0B1F4D; margin: 0; text-transform: uppercase; }
-    .sub-title { font-size: 12px; color: #475569; margin: 2px 0 0 0; }
-    .meta-box { text-align: right; font-size: 11px; color: #475569; }
-    .filter-summary { background: #F1F5F9; border-left: 3px solid #1E469B; padding: 6px 12px; font-size: 11px; margin-bottom: 12px; border-radius: 0 4px 4px 0; display: flex; justify-content: space-between; }
-    table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 11px; }
-    th { background: #0B1F4D; color: #fff; text-align: left; padding: 7px 8px; font-weight: bold; border: 1px solid #0B1F4D; font-size: 11px; }
-    td { padding: 6px 8px; border: 1px solid #CBD5E1; vertical-align: top; }
-    tr.even { background: #F8FAFC; }
-    tr.odd { background: #FFFFFF; }
-    .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-    .badge.insert { background: #DCFCE7; color: #166534; }
-    .badge.update { background: #E0F2FE; color: #075985; }
-    .badge.delete { background: #FFE4E6; color: #9F1239; }
-    .footer { margin-top: 20px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 10px; color: #64748B; border-top: 1px solid #CBD5E1; padding-top: 8px; }
-    .sign-box { text-align: center; width: 200px; }
-    .sign-line { border-bottom: 1px solid #0B1F4D; height: 25px; margin-bottom: 4px; }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div class="header-left">
-      <img src="${AICS_LOGO_BASE64}" class="logo" alt="AICS Seal" />
-      <div>
-        <h1 class="inst-title">Asian Institute of Computer Studies</h1>
-        <p class="sub-title">Montalban Campus · Guidance Office Forensic Audit Trail</p>
-      </div>
-    </div>
-    <div class="meta-box">
-      <div><strong>Security Hash:</strong> AICS-AUD-${Date.now().toString(36).toUpperCase()}</div>
-      <div><strong>Date Range:</strong> ${esc(opts.dateRange)}</div>
-      <div><strong>Generated:</strong> ${new Date().toLocaleString('en-US')}</div>
-    </div>
-  </div>
-
-  <div class="filter-summary">
-    <span>Filter: <strong>${esc(opts.filterSummary)}</strong></span>
-    <span>Total Records Exported: <strong>${opts.rows.length}</strong></span>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th style="width:130px;">Timestamp</th>
-        <th style="width:120px;">Staff / Actor</th>
-        <th style="width:70px;">Action</th>
-        <th style="width:110px;">Module / Table</th>
-        <th style="width:200px;">Target Description</th>
-        <th>Field Modifications (Before → After)</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${tableRows || '<tr><td colspan="6" style="text-align:center;padding:20px;">No audit records found matching this criteria.</td></tr>'}
-    </tbody>
-  </table>
-
-  <div class="footer">
-    <div>
-      <p style="margin:0 0 2px 0;"><strong>CONFIDENTIAL FORENSIC LOG</strong> · Compliant with Republic Act No. 10173 (Data Privacy Act of 2012)</p>
-      <p style="margin:0;">This document is an immutable system record generated from the AICS Guidance Core Database.</p>
-    </div>
-    <div class="sign-box">
-      <div class="sign-line"></div>
-      <div style="font-weight:bold;color:#0B1F4D;">${esc(staff)}</div>
-      <div style="font-size:10px;color:#64748B;">Certified Correct · Guidance Associate</div>
-    </div>
-  </div>
-</body>
-</html>`;
-  return triggerPrintIframe(html, 'Audit-Trail-Log');
-}
-
-/**
- * 3. Full Monthly Report PDF with Embedded Visual Graphs & Signatures
- */
-export function printMonthlyExecutivePdf(opts: MonthlyPdfOptions): boolean {
-  const staff = opts.staffName || 'Guidance Associate';
-  const levelBars = opts.byLevel
-    .map(
-      (b) => `
-    <div style="margin-bottom:8px;">
-      <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:bold;margin-bottom:2px;">
-        <span>${esc(b.label)}</span>
-        <span>${b.count} (${b.pct}%)</span>
-      </div>
-      <div style="height:10px;background:#E2E8F0;border-radius:5px;overflow:hidden;">
-        <div style="height:100%;width:${b.pct}%;background:#1E469B;border-radius:5px;"></div>
-      </div>
-    </div>`
-    )
-    .join('');
-
-  const reasonBars = opts.noShowReasons
-    .map(
-      (r) => `
-    <div style="margin-bottom:8px;">
-      <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:bold;margin-bottom:2px;">
-        <span>${esc(r.label)}</span>
-        <span>${r.count} (${r.pct}%)</span>
-      </div>
-      <div style="height:10px;background:#FEE2E2;border-radius:5px;overflow:hidden;">
-        <div style="height:100%;width:${r.pct}%;background:#DC2626;border-radius:5px;"></div>
-      </div>
-    </div>`
-    )
-    .join('');
-
-  const html = `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>AICS Guidance Monthly Executive Report - ${esc(opts.monthName)}</title>
-  <style>
-    @page { size: portrait; margin: 15mm 18mm 18mm 18mm; }
-    * { box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; color: #0F172A; margin: 0; padding: 12px; font-size: 12px; line-height: 1.4; }
-    .header { display: flex; align-items: center; justify-content: center; gap: 14px; text-align: center; border-bottom: 2px solid #1E469B; padding-bottom: 12px; margin-bottom: 16px; }
-    .logo { width: 62px; height: 62px; border-radius: 50%; border: 1.5px solid #1E469B; object-fit: cover; }
-    .inst-title { font-size: 18px; font-weight: bold; color: #0B1F4D; margin: 0; text-transform: uppercase; }
-    .sub-title { font-size: 13px; color: #334155; margin: 2px 0 0; }
-    .doc-badge { display: inline-block; background: #EEF2F6; color: #1E469B; font-weight: bold; padding: 4px 12px; border-radius: 12px; font-size: 11px; margin-top: 4px; }
-    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-    .kpi-card { border: 1.5px solid #CBD5E1; border-radius: 8px; padding: 10px; text-align: center; background: #F8FAFC; }
-    .kpi-title { font-size: 10.5px; font-weight: bold; color: #64748B; text-transform: uppercase; }
-    .kpi-value { font-size: 22px; font-weight: 900; color: #0B1F4D; margin: 4px 0 2px; }
-    .kpi-sub { font-size: 10px; color: #475569; }
-    .section-title { font-size: 13px; font-weight: bold; color: #0B1F4D; border-bottom: 1.5px solid #CBD5E1; padding-bottom: 4px; margin: 18px 0 10px; text-transform: uppercase; }
-    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-    .chart-box { border: 1px solid #CBD5E1; border-radius: 8px; padding: 12px; background: #fff; }
-    .sign-row { display: flex; justify-content: space-between; margin-top: 40px; padding-top: 20px; }
-    .sign-box { text-align: center; width: 220px; }
-    .sign-line { border-bottom: 1.5px solid #0B1F4D; height: 35px; margin-bottom: 4px; }
-    .footer { margin-top: 30px; border-top: 1px solid #E2E8F0; padding-top: 8px; font-size: 10px; color: #64748B; display: flex; justify-content: space-between; }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <img src="${AICS_LOGO_BASE64}" class="logo" alt="AICS Seal" />
-    <div>
-      <h1 class="inst-title">Asian Institute of Computer Studies</h1>
-      <p class="sub-title">Montalban Campus · Guidance & Counseling Department</p>
-      <span class="doc-badge">MONTHLY DISCIPLINE & PARENT CONFERENCE EXECUTIVE REPORT</span>
-    </div>
-  </div>
-
-  <div style="margin-bottom:14px;display:flex;justify-content:space-between;font-size:11.5px;color:#334155;">
-    <span>Reporting Period: <strong>${esc(opts.monthName)}</strong></span>
-    <span>Date Prepared: <strong>${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</strong></span>
-  </div>
-
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="kpi-title">New Incidents</div>
-      <div class="kpi-value">${opts.newCases}</div>
-      <div class="kpi-sub">Reported in ${esc(opts.monthName)}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-title">Parent Attendance</div>
-      <div class="kpi-value">${opts.attendanceRate === null ? '—' : opts.attendanceRate + '%'}</div>
-      <div class="kpi-sub">${opts.attended} of ${opts.conferencesHeld} held</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-title">Overdue Cases</div>
-      <div class="kpi-value" style="color:${opts.overdueCount > 0 ? '#DC2626' : '#0B1F4D'};">${opts.overdueCount}</div>
-      <div class="kpi-sub">Awaiting resolution</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-title">Avg Resolution</div>
-      <div class="kpi-value">${opts.avgDaysToClose === null ? '—' : opts.avgDaysToClose + 'd'}</div>
-      <div class="kpi-sub">Days from incident to close</div>
-    </div>
-  </div>
-
-  <div class="charts-grid">
-    <div class="chart-box">
-      <div style="font-weight:bold;color:#0B1F4D;font-size:12px;margin-bottom:10px;">Offenses Breakdown by Severity</div>
-      ${levelBars || '<p style="color:#64748B;font-style:italic;">No incident records for this month.</p>'}
-    </div>
-    <div class="chart-box">
-      <div style="font-weight:bold;color:#0B1F4D;font-size:12px;margin-bottom:10px;">Parent Absence Reasons</div>
-      ${reasonBars || '<p style="color:#64748B;font-style:italic;">100% attendance or no missed meetings.</p>'}
-    </div>
-  </div>
-
-  <div class="sign-row">
-    <div class="sign-box">
-      <div class="sign-line"></div>
-      <div style="font-weight:bold;color:#0B1F4D;">${esc(staff)}</div>
-      <div style="font-size:11px;color:#475569;">Guidance Associate</div>
-    </div>
-    <div class="sign-box">
-      <div class="sign-line"></div>
-      <div style="font-weight:bold;color:#0B1F4D;">School Principal / Director</div>
-      <div style="font-size:11px;color:#475569;">Asian Institute of Computer Studies</div>
-    </div>
-  </div>
-
-  <div class="footer">
-    <span>Report Ref: AICS-REP-${Date.now().toString(36).toUpperCase()}</span>
-    <span>CONFIDENTIAL INSTITUTIONAL REPORT · FOR INTERNAL ACADEMIC USE ONLY</span>
-    <span>Page 1 of 1</span>
-  </div>
-</body>
-</html>`;
-  return triggerPrintIframe(html, `Monthly-Report-${opts.monthName}`);
+  /** optional extra detail (shown when given) */
+  byType?: Array<{ label: string; count: number; pct: number }>;
+  didNotAttend?: number;
+  closed?: number;
+  overdueRows?: Array<{ code: string; student: string; offense: string; since: string; days: number }>;
 }
 
 export interface DepEdComplianceReportOptions {
@@ -559,145 +75,403 @@ export interface DepEdComplianceReportOptions {
   principalName?: string;
 }
 
-export function printDepEdCompliancePdf(opts: DepEdComplianceReportOptions): boolean {
-  const staff = opts.guidanceStaffName || 'Maurice Enriquez';
-  const counselor = opts.counselorName || 'Registered Guidance Counselor (RGC)';
-  const principal = opts.principalName || 'School Principal';
-  const now = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+export interface SimpleTablePdfOptions {
+  title: string;
+  period: string;
+  rows: Array<[string, string]>;
+}
 
-  const rowsHtml = opts.cases.slice(0, 30).map((c) => `
-    <tr>
-      <td style="font-family:monospace;font-weight:bold;color:#1E469B;">${esc(c.code)}</td>
-      <td>${esc(c.date)}</td>
-      <td style="font-weight:600;">${esc(c.studentName)}</td>
-      <td>${esc(c.gradeSection)}</td>
-      <td>${esc(c.offenseTitle)}</td>
-      <td><span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;background:#F1F5F9;color:#0F172A;">${esc(c.level)}</span></td>
-      <td style="font-weight:bold;color:${c.status === 'Closed' ? '#059669' : '#D97706'};">${esc(c.status)}</td>
-    </tr>
-  `).join('');
+// ------------------------------------------------------------------ shared kit
 
-  const html = `<!DOCTYPE html>
+const triggerPrintIframe = (html: string, _title: string): boolean => {
+  const frame = document.createElement('iframe');
+  frame.setAttribute('aria-hidden', 'true');
+  frame.style.cssText = 'position:fixed;width:0;height:0;border:0;right:0;bottom:0;opacity:0;pointer-events:none';
+  document.body.appendChild(frame);
+  const doc = frame.contentDocument;
+  if (!doc || !frame.contentWindow) {
+    frame.remove();
+    return false;
+  }
+  doc.open();
+  doc.write(html);
+  doc.close();
+  setTimeout(() => {
+    frame.contentWindow?.focus();
+    frame.contentWindow?.print();
+    setTimeout(() => frame.remove(), 2500);
+  }, 300);
+  return true;
+};
+
+const esc = (s: unknown) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] || c);
+/** text for a CSS `content: "..."` value */
+const cssText = (s: string) => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, ' ');
+const longDate = (d = new Date()) => d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+const refNo = (prefix: string) => {
+  const d = new Date();
+  const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`; // local date, not UTC
+  return `${prefix}-${ymd}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
+};
+
+interface Signatory {
+  role: string; // Prepared by / Noted by / Approved by
+  name: string;
+  title: string;
+}
+interface DocParts {
+  docTitle: string;
+  docSubtitle?: string;
+  reference: string;
+  meta: Array<[string, string]>;
+  body: string;
+  signatories?: Signatory[];
+  landscape?: boolean;
+}
+
+const signatoriesFromSettings = (preparedName?: string): Signatory[] => {
+  const s = getAppConfig().signatories;
+  return [
+    { role: 'Prepared by', name: preparedName && !/^guidance (staff|associate)$/i.test(preparedName) ? preparedName : s.guidanceAssociate, title: s.guidanceAssociateTitle || 'Guidance Associate' },
+    { role: 'Noted by', name: s.guidanceCounselor, title: s.guidanceCounselorTitle || 'Guidance Counselor' },
+    { role: 'Approved by', name: s.principal, title: s.principalTitle || 'School Principal' },
+  ];
+};
+
+/** The one official AICS page: letterhead, title block, body, signatures, page footer */
+function officialDocument(p: DocParts): string {
+  const c = getAppConfig().campus;
+  const school = c.schoolName || 'ASIAN INSTITUTE OF COMPUTER STUDIES';
+  const footerLeft = cssText(`AICS Guidance Office · ${p.reference}`);
+  const footerCenter = cssText('Confidential · R.A. 10173');
+  const signs = p.signatories ?? [];
+  return `<!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>DepEd Child Protection Compliance Report - ${esc(opts.quarter)}</title>
-  <style>
-    @page { size: portrait; margin: 10mm 12mm 10mm 12mm; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #0B1F4D; margin: 0; padding: 0; font-size: 11px; line-height: 1.4; }
-    .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0B1F4D; padding-bottom: 8px; margin-bottom: 12px; }
-    .header-logo { width: 54px; height: 54px; object-fit: cover; border-radius: 50%; }
-    .header-center { text-align: center; flex: 1; margin: 0 10px; }
-    .deped-tag { font-size: 10px; font-weight: 800; color: #1E469B; text-transform: uppercase; letter-spacing: 0.5px; }
-    .school-title { font-size: 14px; font-weight: 900; letter-spacing: 0.2px; }
-    .school-sub { font-size: 10px; color: #475569; }
-    .badge { font-size: 8px; font-weight: bold; background: #EEF2F6; padding: 3px 8px; border-radius: 4px; border: 1px solid #CBD5E1; }
-    .title-banner { background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-    .title-banner h2 { margin: 0; font-size: 12px; font-weight: 800; color: #0B1F4D; }
-    .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
-    .kpi-card { border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 10px; background: #FFFFFF; }
-    .kpi-val { font-size: 16px; font-weight: 900; color: #1E469B; }
-    .kpi-lbl { font-size: 9.5px; font-weight: bold; color: #475569; text-transform: uppercase; }
-    table { width: 100%; border-collapse: collapse; font-size: 9.5px; margin-bottom: 14px; }
-    th { background: #0B1F4D; color: #FFFFFF; text-align: left; padding: 5px 6px; font-weight: 800; font-size: 9px; text-transform: uppercase; }
-    td { padding: 4px 6px; border-bottom: 1px solid #E2E8F0; }
-    tr:nth-child(even) td { background: #F8FAFC; }
-    .sign-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 18px; page-break-inside: avoid; }
-    .sign-box { text-align: center; }
-    .sign-line { border-bottom: 1px solid #0B1F4D; height: 32px; margin-bottom: 4px; }
-    .legal-note { font-size: 8.5px; color: #64748B; font-style: italic; margin-top: 10px; border-top: 1px solid #E2E8F0; padding-top: 4px; }
-  </style>
+<meta charset="utf-8">
+<title>${esc(p.docTitle)} · ${esc(p.reference)}</title>
+<style>
+  @page {
+    size: A4 ${p.landscape ? 'landscape' : 'portrait'};
+    margin: 14mm 15mm 17mm 15mm;
+    @top-left { content: ""; } @top-center { content: ""; } @top-right { content: ""; }
+    @bottom-left { content: "${footerLeft}"; font: 7.5pt Arial, sans-serif; color: #64748B; }
+    @bottom-center { content: "${footerCenter}"; font: 7.5pt Arial, sans-serif; color: #64748B; }
+    @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 7.5pt Arial, sans-serif; color: #64748B; }
+  }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin: 0; padding: 0; background: #fff; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 9.5pt; line-height: 1.45; color: #0F172A; }
+
+  /* letterhead */
+  .lh { display: flex; align-items: center; gap: 12px; padding-bottom: 8px; }
+  .lh img { width: 58px; height: 58px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+  .lh-text { flex: 1; min-width: 0; }
+  .lh-school { font-size: 14pt; font-weight: 800; letter-spacing: 0.4px; color: #0B1F4D; text-transform: uppercase; line-height: 1.15; }
+  .lh-office { font-size: 9.5pt; font-weight: 700; color: #1E469B; margin-top: 2px; }
+  .lh-contact { font-size: 7.8pt; color: #475569; margin-top: 2px; }
+  .lh-tag { font-size: 7.5pt; font-weight: 800; letter-spacing: 1px; color: #9F1239; border: 1px solid #FDA4AF; background: #FFF1F2; padding: 3px 8px; border-radius: 3px; white-space: nowrap; }
+  .rule { height: 3px; background: #0B1F4D; border-bottom: 1px solid #C9A227; margin-bottom: 12px; }
+
+  /* title block */
+  .title { font-size: 13pt; font-weight: 800; color: #0B1F4D; letter-spacing: 0.3px; text-transform: uppercase; margin: 0; }
+  .subtitle { font-size: 9pt; color: #475569; margin: 2px 0 8px; }
+  .meta { display: grid; grid-template-columns: repeat(${Math.max(1, Math.min(4, p.meta.length))}, 1fr); border: 1px solid #CBD5E1; border-radius: 4px; margin-bottom: 14px; }
+  .meta div { padding: 6px 10px; border-left: 1px solid #E2E8F0; }
+  .meta div:first-child { border-left: 0; }
+  .meta b { display: block; font-size: 7pt; letter-spacing: 0.8px; text-transform: uppercase; color: #64748B; font-weight: 700; }
+  .meta span { font-size: 9.5pt; font-weight: 700; color: #0B1F4D; }
+
+  /* sections */
+  h2 { font-size: 10pt; font-weight: 800; color: #0B1F4D; text-transform: uppercase; letter-spacing: 0.6px; margin: 14px 0 6px; padding-bottom: 3px; border-bottom: 1px solid #CBD5E1; break-after: avoid; }
+  p.note { font-size: 8.5pt; color: #475569; margin: 4px 0 0; }
+  p.lead { margin: 0 0 6px; }
+
+  /* KPI strip */
+  .kpis { display: grid; grid-template-columns: repeat(var(--n, 4), 1fr); border: 1px solid #CBD5E1; border-radius: 4px; break-inside: avoid; }
+  .kpi { padding: 8px 10px; border-left: 1px solid #E2E8F0; }
+  .kpi:first-child { border-left: 0; }
+  .kpi b { display: block; font-size: 7pt; letter-spacing: 0.8px; text-transform: uppercase; color: #64748B; }
+  .kpi strong { display: block; font-size: 17pt; font-weight: 800; color: #0B1F4D; line-height: 1.2; margin-top: 2px; }
+  .kpi strong.bad { color: #B91C1C; }
+  .kpi small { font-size: 7.8pt; color: #475569; }
+
+  /* tables */
+  table { width: 100%; border-collapse: collapse; font-size: 8.8pt; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; }
+  th { background: #EEF2F8; color: #0B1F4D; text-align: left; font-size: 7.5pt; letter-spacing: 0.6px; text-transform: uppercase; padding: 5px 7px; border-bottom: 1.5px solid #0B1F4D; }
+  td { padding: 5px 7px; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
+  tbody tr:nth-child(even) td { background: #FAFBFD; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  td.nw { white-space: nowrap; }
+  td.mono { font-family: Consolas, monospace; font-size: 8pt; white-space: nowrap; }
+  td.empty { text-align: center; color: #64748B; font-style: italic; padding: 10px; }
+  .bar { height: 6px; background: #E2E8F0; border-radius: 3px; overflow: hidden; min-width: 80px; }
+  .bar i { display: block; height: 100%; background: #1E469B; }
+  .bar.red i { background: #B91C1C; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .pill { white-space: nowrap; display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 7.5pt; font-weight: 700; background: #F1F5F9; color: #0F172A; }
+  .pill.ok { background: #DCFCE7; color: #166534; }
+  .pill.wait { background: #FEF3C7; color: #92400E; }
+  .pill.ins { background: #DCFCE7; color: #166534; } .pill.upd { background: #E0F2FE; color: #075985; } .pill.del { background: #FFE4E6; color: #9F1239; }
+
+  /* label : value form (incident slip) */
+  .fields { border: 1px solid #CBD5E1; border-radius: 4px; }
+  .field { display: grid; grid-template-columns: 170px 1fr; border-top: 1px solid #E2E8F0; }
+  .field:first-child { border-top: 0; }
+  .field b { background: #F8FAFC; padding: 7px 10px; font-size: 7.8pt; letter-spacing: 0.6px; text-transform: uppercase; color: #334155; border-right: 1px solid #E2E8F0; }
+  .field span { padding: 7px 10px; font-size: 10pt; color: #0B1F4D; white-space: pre-wrap; }
+  .field.big span { min-height: 90px; }
+
+  /* signatures */
+  .signs { display: grid; grid-template-columns: repeat(${Math.max(1, signs.length)}, 1fr); gap: 22px; margin-top: 22px; break-inside: avoid; }
+  .sign small { display: block; font-size: 7.8pt; color: #64748B; margin-bottom: 26px; }
+  .sign .line { border-top: 1px solid #0B1F4D; padding-top: 4px; }
+  .sign strong { display: block; font-size: 9.5pt; color: #0B1F4D; }
+  .sign em { display: block; font-style: normal; font-size: 8pt; color: #475569; }
+</style>
 </head>
 <body>
-  <div class="header">
-    <img src="${AICS_LOGO_BASE64}" class="header-logo" alt="AICS Seal" />
-    <div class="header-center">
-      <div class="deped-tag">Republic of the Philippines · Department of Education</div>
-      <div class="school-title">ASIAN INSTITUTE OF COMPUTER STUDIES (AICS)</div>
-      <div class="school-sub">Rodriguez, Rizal Campus · Child Protection Committee &amp; Guidance Office</div>
-      <div style="font-weight: 800; font-size: 11px; margin-top: 2px;">DEPED ORDER NO. 40, S. 2012 COMPLIANCE REPORT</div>
+  <header class="lh">
+    <img src="${AICS_LOGO_BASE64}" alt="AICS seal" />
+    <div class="lh-text">
+      <div class="lh-school">${esc(school)}</div>
+      <div class="lh-office">${esc(c.campusName || 'Montalban Campus')} · Guidance Office</div>
+      <div class="lh-contact">${esc([c.campusAddress, c.contactNumber, c.officialEmail].filter(Boolean).join('  ·  '))}</div>
     </div>
-    <div class="badge">QUARTERLY<br>REPORT</div>
-  </div>
+    <div class="lh-tag">CONFIDENTIAL</div>
+  </header>
+  <div class="rule"></div>
 
-  <div class="title-banner">
-    <div>
-      <h2>Quarterly Child Protection &amp; Anti-Bullying Incident Record</h2>
-      <div style="font-size: 9.5px; color: #475569;">Covering: ${esc(opts.quarter)} · ${esc(opts.schoolYear)}</div>
-    </div>
-    <div style="text-align: right; font-size: 9.5px;">
-      <div><strong>Date Generated:</strong> ${esc(now)}</div>
-      <div><strong>Confidentiality:</strong> DepEd Protected (DO 40)</div>
-    </div>
-  </div>
+  <h1 class="title">${esc(p.docTitle)}</h1>
+  ${p.docSubtitle ? `<p class="subtitle">${esc(p.docSubtitle)}</p>` : '<div style="height:8px"></div>'}
+  <div class="meta">${p.meta.map(([k, v]) => `<div><b>${esc(k)}</b><span>${esc(v)}</span></div>`).join('')}</div>
 
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="kpi-lbl">Total Incidents Recorded</div>
-      <div class="kpi-val">${opts.childProtectionMetrics.totalIncidents}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-lbl">Bullying &amp; Harassment</div>
-      <div class="kpi-val">${opts.childProtectionMetrics.bullyingCases}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-lbl">Anti-Substance &amp; Vaping</div>
-      <div class="kpi-val">${opts.childProtectionMetrics.substanceCases}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-lbl">Interventions Provided</div>
-      <div class="kpi-val">${opts.childProtectionMetrics.interventionsProvided}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-lbl">Student reports (confidential)</div>
-      <div class="kpi-val">${opts.childProtectionMetrics.whistleblowerReportsReceived}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-lbl">Due Process Resolution Rate</div>
-      <div class="kpi-val">${opts.childProtectionMetrics.totalIncidents > 0 ? Math.round((opts.childProtectionMetrics.interventionsProvided / opts.childProtectionMetrics.totalIncidents) * 100) + '%' : '—'}</div>
-    </div>
-  </div>
+  ${p.body}
 
-  <table>
-    <thead>
-      <tr>
-        <th>Case Code</th>
-        <th>Date</th>
-        <th>Student Name</th>
-        <th>Grade &amp; Section</th>
-        <th>Offense / Classification</th>
-        <th>Handbook Level</th>
-        <th>Due Process Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${rowsHtml || '<tr><td colspan="7" style="text-align:center;padding:12px;color:#64748B;">No incident records filed during this period.</td></tr>'}
-    </tbody>
-  </table>
-
-  <div class="legal-note">
-    <strong>Note:</strong> This summary is generated from the Guidance Office records for the quarter shown. Numbers come only from cases logged in the system; cases withdrawn as filed in error are not counted.
-  </div>
-
-  <div class="sign-row">
-    <div class="sign-box">
-      <div class="sign-line"></div>
-      <div style="font-weight:bold;">${esc(staff)}</div>
-      <div style="font-size:9.5px;color:#475569;">Guidance Associate &amp; Intake Officer</div>
-    </div>
-    <div class="sign-box">
-      <div class="sign-line"></div>
-      <div style="font-weight:bold;">${esc(counselor)}</div>
-      <div style="font-size:9.5px;color:#475569;">Registered Guidance Counselor (RGC)</div>
-    </div>
-    <div class="sign-box">
-      <div class="sign-line"></div>
-      <div style="font-weight:bold;">${esc(principal)}</div>
-      <div style="font-size:9.5px;color:#475569;">School Principal / CPC Chairperson</div>
-    </div>
-  </div>
+  ${
+    signs.length
+      ? `<section class="signs">${signs
+          .map((s) => `<div class="sign"><small>${esc(s.role)}:</small><div class="line"><strong>${esc(s.name)}</strong><em>${esc(s.title)}</em></div></div>`)
+          .join('')}</section>`
+      : ''
+  }
 </body>
 </html>`;
+}
 
-  return triggerPrintIframe(html, `DepEd-DO40-Compliance-Report-${opts.quarter}`);
+const barRow = (label: string, count: number, pct: number, red = false) =>
+  `<tr><td>${esc(label)}</td><td class="num">${count}</td><td class="num">${pct}%</td><td><div class="bar${red ? ' red' : ''}"><i style="width:${Math.max(0, Math.min(100, pct))}%"></i></div></td></tr>`;
+const countTable = (rows: Array<{ label: string; count: number; pct: number }>, firstHead: string, empty: string, red = false) =>
+  `<table><thead><tr><th>${esc(firstHead)}</th><th class="num">Count</th><th class="num">Share</th><th style="width:32%">&nbsp;</th></tr></thead><tbody>${
+    rows.length ? rows.map((r) => barRow(r.label, r.count, r.pct, red)).join('') : `<tr><td colspan="4" class="empty">${esc(empty)}</td></tr>`
+  }</tbody></table>`;
+
+// ------------------------------------------------------------------ 1. Incident record slip
+
+export function printIncidentSlip(data: IncidentSlipData): boolean {
+  const s = getAppConfig().signatories;
+  const body = `
+  <section class="fields">
+    <div class="field"><b>Date of incident</b><span>${esc(data.incidentDate)}</span></div>
+    <div class="field"><b>Student</b><span>${esc(data.studentName)}${data.studentNumber ? `  ·  #${esc(data.studentNumber)}` : ''}</span></div>
+    <div class="field"><b>Grade &amp; section</b><span>${esc(data.gradeSection)}</span></div>
+    <div class="field"><b>Offense level</b><span>${esc(data.offenseType)}</span></div>
+    <div class="field"><b>Offense committed</b><span><strong>${esc(data.offenseCommitted)}</strong></span></div>
+    <div class="field big"><b>Details</b><span>${esc(data.details || 'No additional narrative provided.')}</span></div>
+    <div class="field"><b>Sanction / action</b><span><strong>${esc(data.penaltyAction || 'Under evaluation')}</strong></span></div>
+  </section>`;
+  return triggerPrintIframe(
+    officialDocument({
+      docTitle: 'Incident Record Slip',
+      docSubtitle: 'Official record of a student discipline incident',
+      reference: data.caseCode,
+      meta: [
+        ['Case reference', data.caseCode],
+        ['Date of incident', data.incidentDate],
+        ['Date printed', longDate()],
+      ],
+      body,
+      signatories: [
+        { role: 'Prepared by', name: data.guidanceStaffName && !/^guidance (staff|associate)$/i.test(data.guidanceStaffName) ? data.guidanceStaffName : s.guidanceAssociate, title: s.guidanceAssociateTitle || 'Guidance Associate' },
+        { role: 'Noted by', name: s.guidanceCounselor, title: s.guidanceCounselorTitle || 'Guidance Counselor' },
+      ],
+    }),
+    `Incident-Slip-${data.caseCode}`
+  );
+}
+
+// ------------------------------------------------------------------ 2. Audit trail
+
+export function printAuditTrailPdf(opts: AuditPdfOptions): boolean {
+  const ref = refNo('AUD');
+  const pillFor = (a: string) => (/insert|add|create/i.test(a) ? 'ins' : /delete|remove/i.test(a) ? 'del' : 'upd');
+  const rows = opts.rows
+    .map(
+      (r) => `<tr><td class="mono">${esc(r.date)}</td><td><strong>${esc(r.actor)}</strong></td><td><span class="pill ${pillFor(r.action)}">${esc(r.action)}</span></td><td>${esc(r.table)}</td><td>${esc(r.description)}</td><td style="font-size:8pt;color:#334155">${esc(r.detail)}</td></tr>`
+    )
+    .join('');
+  const body = `
+  <table>
+    <thead><tr><th style="width:118px">Date &amp; time</th><th style="width:120px">Staff</th><th style="width:70px">Action</th><th style="width:110px">Record</th><th style="width:190px">Description</th><th>Changes (before → after)</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="6" class="empty">No audit records match this filter.</td></tr>'}</tbody>
+  </table>
+  <p class="note">This log is read-only: audit entries can be added but never edited or deleted.</p>`;
+  return triggerPrintIframe(
+    officialDocument({
+      docTitle: 'Audit Trail Log',
+      docSubtitle: 'Every change made in the Guidance Office system',
+      reference: ref,
+      landscape: true,
+      meta: [
+        ['Reference no.', ref],
+        ['Date range', opts.dateRange],
+        ['Filter', opts.filterSummary],
+        ['Records', String(opts.rows.length)],
+      ],
+      body,
+      signatories: [signatoriesFromSettings(opts.staffName)[0], signatoriesFromSettings()[1]].map((x, i) => (i === 0 ? { ...x, role: 'Certified correct by' } : x)),
+    }),
+    'Audit-Trail-Log'
+  );
+}
+
+// ------------------------------------------------------------------ 3. Monthly report
+
+export function printMonthlyExecutivePdf(opts: MonthlyPdfOptions): boolean {
+  const ref = refNo('MR');
+  const didNot = opts.didNotAttend ?? Math.max(0, opts.conferencesHeld - opts.attended);
+  const att = opts.attendanceRate === null ? 'no conferences were held' : `${opts.attendanceRate}% of parents attended (${opts.attended} of ${opts.conferencesHeld})`;
+  const summary = `In ${esc(opts.monthName)}, the Guidance Office recorded <strong>${opts.newCases}</strong> new case${opts.newCases === 1 ? '' : 's'}. In parent conferences, ${esc(att)}. ${
+    opts.overdueCount > 0 ? `<strong>${opts.overdueCount}</strong> case${opts.overdueCount === 1 ? ' is' : 's are'} overdue and need${opts.overdueCount === 1 ? 's' : ''} action.` : 'No case is overdue.'
+  }`;
+  const overdueTable =
+    opts.overdueRows && opts.overdueRows.length
+      ? `<table><thead><tr><th style="width:110px">Case</th><th>Student</th><th>Offense</th><th style="width:90px">Since</th><th class="num" style="width:70px">Days open</th></tr></thead><tbody>${opts.overdueRows
+          .map((o) => `<tr><td class="mono">${esc(o.code)}</td><td>${esc(o.student)}</td><td>${esc(o.offense)}</td><td>${esc(o.since)}</td><td class="num"><strong>${o.days}</strong></td></tr>`)
+          .join('')}</tbody></table>`
+      : `<p class="note">No overdue cases this month.</p>`;
+  const body = `
+  <h2>1. Summary</h2>
+  <p class="lead">${summary}</p>
+  <div class="kpis" style="--n:4">
+    <div class="kpi"><b>New cases</b><strong>${opts.newCases}</strong><small>recorded this month</small></div>
+    <div class="kpi"><b>Parent attendance</b><strong>${opts.attendanceRate === null ? '—' : opts.attendanceRate + '%'}</strong><small>${opts.attended} of ${opts.conferencesHeld} conferences</small></div>
+    <div class="kpi"><b>Overdue cases</b><strong class="${opts.overdueCount > 0 ? 'bad' : ''}">${opts.overdueCount}</strong><small>open past the day limit</small></div>
+    <div class="kpi"><b>Average time to close</b><strong>${opts.avgDaysToClose === null ? '—' : opts.avgDaysToClose + ' days'}</strong><small>${opts.closed !== undefined ? `${opts.closed} case${opts.closed === 1 ? '' : 's'} closed` : 'from incident to close'}</small></div>
+  </div>
+
+  <h2>2. Offenses</h2>
+  <div class="${opts.byType && opts.byType.length ? 'two' : ''}">
+    <div>${countTable(opts.byLevel, 'By level', 'No cases this month.')}</div>
+    ${opts.byType && opts.byType.length ? `<div>${countTable(opts.byType, 'By type', 'No cases this month.')}</div>` : ''}
+  </div>
+
+  <h2>3. Parent conferences</h2>
+  <div class="two">
+    <table><thead><tr><th>Conferences</th><th class="num">Count</th></tr></thead><tbody>
+      <tr><td>Held</td><td class="num">${opts.conferencesHeld}</td></tr>
+      <tr><td>Attended</td><td class="num">${opts.attended}</td></tr>
+      <tr><td>Did not attend</td><td class="num">${didNot}</td></tr>
+      <tr><td><strong>Attendance rate</strong></td><td class="num"><strong>${opts.attendanceRate === null ? '—' : opts.attendanceRate + '%'}</strong></td></tr>
+    </tbody></table>
+    <div>${countTable(opts.noShowReasons, 'Reasons for not attending', 'Every parent attended, or no conference was missed.', true)}</div>
+  </div>
+
+  <h2>4. Overdue cases</h2>
+  ${overdueTable}`;
+  return triggerPrintIframe(
+    officialDocument({
+      docTitle: 'Monthly Discipline & Parent Conference Report',
+      docSubtitle: 'Summary of cases, parent conferences and follow-up for the month',
+      reference: ref,
+      meta: [
+        ['Reference no.', ref],
+        ['Reporting period', opts.monthName],
+        ['School year', getAppConfig().campus.schoolYear || '—'],
+        ['Date prepared', longDate()],
+      ],
+      body,
+      signatories: signatoriesFromSettings(opts.staffName),
+    }),
+    `Monthly-Report-${opts.monthName}`
+  );
+}
+
+// ------------------------------------------------------------------ 4. Quarterly child protection report
+
+export function printDepEdCompliancePdf(opts: DepEdComplianceReportOptions): boolean {
+  const ref = refNo('QR');
+  const m = opts.childProtectionMetrics;
+  const rate = m.totalIncidents > 0 ? Math.round((m.interventionsProvided / m.totalIncidents) * 100) + '%' : '—';
+  const rows = opts.cases
+    .map(
+      (c) =>
+        `<tr><td class="mono">${esc(c.code)}</td><td class="nw">${esc(c.date)}</td><td><strong>${esc(c.studentName)}</strong></td><td class="nw">${esc(c.gradeSection)}</td><td>${esc(c.offenseTitle)}</td><td><span class="pill">${esc(c.level)}</span></td><td><span class="pill ${/resolved|closed/i.test(c.status) ? 'ok' : 'wait'}">${esc(c.status)}</span></td></tr>`
+    )
+    .join('');
+  const sig = getAppConfig().signatories;
+  const body = `
+  <h2>1. Summary</h2>
+  <div class="kpis" style="--n:3">
+    <div class="kpi"><b>Total incidents</b><strong>${m.totalIncidents}</strong><small>recorded this quarter</small></div>
+    <div class="kpi"><b>Bullying &amp; harassment</b><strong>${m.bullyingCases}</strong><small>incl. cyberbullying</small></div>
+    <div class="kpi"><b>Vaping &amp; substances</b><strong>${m.substanceCases}</strong><small>cases</small></div>
+  </div>
+  <div class="kpis" style="--n:3;margin-top:6px">
+    <div class="kpi"><b>Cases closed</b><strong>${m.interventionsProvided}</strong><small>due process completed</small></div>
+    <div class="kpi"><b>From student reports</b><strong>${m.whistleblowerReportsReceived}</strong><small>confidential reports</small></div>
+    <div class="kpi"><b>Resolution rate</b><strong>${rate}</strong><small>closed ÷ total</small></div>
+  </div>
+
+  <h2>2. Cases this quarter</h2>
+  <table>
+    <thead><tr><th>Case</th><th>Date</th><th>Student</th><th>Grade &amp; section</th><th>Offense</th><th>Level</th><th>Status</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="7" class="empty">No cases were recorded this quarter.</td></tr>'}</tbody>
+  </table>
+  <p class="note">Numbers come only from cases recorded in the system. Cases withdrawn as filed in error are not counted.</p>`;
+  return triggerPrintIframe(
+    officialDocument({
+      docTitle: 'Quarterly Child Protection & Anti-Bullying Report',
+      docSubtitle: 'In line with DepEd Order No. 40, s. 2012 (Child Protection Policy)',
+      reference: ref,
+      meta: [
+        ['Reference no.', ref],
+        ['Quarter', opts.quarter],
+        ['School year', opts.schoolYear],
+        ['Date prepared', longDate()],
+      ],
+      body,
+      signatories: [
+        { role: 'Prepared by', name: opts.guidanceStaffName || sig.guidanceAssociate, title: sig.guidanceAssociateTitle || 'Guidance Associate' },
+        { role: 'Noted by', name: opts.counselorName || sig.guidanceCounselor, title: sig.guidanceCounselorTitle || 'Guidance Counselor' },
+        { role: 'Approved by', name: opts.principalName || sig.principal, title: 'School Principal / CPC Chairperson' },
+      ],
+    }),
+    `Quarterly-Report-${opts.quarter}`
+  );
+}
+
+// ------------------------------------------------------------------ 5. Simple two-column table (Reports → Quick table print)
+
+export function printSimpleTablePdf(opts: SimpleTablePdfOptions): boolean {
+  const ref = refNo('TBL');
+  const body = `<table><thead><tr><th style="width:55%">Item</th><th>Value</th></tr></thead><tbody>${opts.rows
+    .map(([k, v]) => `<tr><td>${esc(k)}</td><td><strong>${esc(v)}</strong></td></tr>`)
+    .join('')}</tbody></table>`;
+  return triggerPrintIframe(
+    officialDocument({
+      docTitle: opts.title,
+      reference: ref,
+      meta: [
+        ['Reference no.', ref],
+        ['Period', opts.period],
+        ['Date prepared', longDate()],
+      ],
+      body,
+      signatories: signatoriesFromSettings().slice(0, 2),
+    }),
+    opts.title
+  );
 }

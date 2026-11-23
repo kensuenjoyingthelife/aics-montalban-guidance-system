@@ -36,7 +36,7 @@ import { TrendCard } from '../components/reports/TrendCard';
 import { fetchConcerns, type ConcernItem } from '../services/concernsDb';
 import { useAppConfig } from '../services/appConfig';
 import { useConfirmChange } from '../components/ui/ConfirmChange';
-import { printIncidentSlip, printMonthlyExecutivePdf, printDepEdCompliancePdf } from '../services/documentPrintEngine';
+import { printIncidentSlip, printMonthlyExecutivePdf, printDepEdCompliancePdf, printSimpleTablePdf } from '../services/documentPrintEngine';
 import { Download, Printer, FileText, BarChart3, TrendingUp, Calendar, Award, ShieldCheck } from 'lucide-react';
 
 // Chart colors, validated for color-blind readers (blue/green, blue/orange) with separate dark-mode steps.
@@ -231,34 +231,13 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
     onTriggerToast(isTl ? ' Na-download ang monthly report (CSV). Mabubuksan ito sa Excel.' : ' Monthly report downloaded (CSV). It opens in Excel.');
   };
   const printReport = () => {
-    // a hidden page made only of the report, so the sidebar and buttons are never printed (works in Tauri too)
-    const rows = reportRows()
-      .slice(1)
-      .map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`)
-      .join('');
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Monthly Report ${esc(month)}</title>
-      <style>body{font-family:Arial,sans-serif;margin:32px;color:#0B1F4D}h1{font-size:18px;margin:0}p{margin:4px 0 16px;font-size:12px;color:#4A608A}
-      table{width:100%;border-collapse:collapse;font-size:12px}td{border:1px solid #CBD5E1;padding:6px 8px;vertical-align:top}td:first-child{width:45%;font-weight:bold}</style></head>
-      <body><h1>AICS Montalban — Guidance Office Monthly Report</h1><p>${esc(monthName)} · printed ${esc(new Date().toLocaleString('en-US'))}</p>
-      <table>${rows}</table></body></html>`;
-    const frame = document.createElement('iframe');
-    frame.setAttribute('aria-hidden', 'true');
-    frame.style.cssText = 'position:fixed;width:0;height:0;border:0;right:0;bottom:0';
-    document.body.appendChild(frame);
-    const doc = frame.contentDocument;
-    if (!doc || !frame.contentWindow) {
-      frame.remove();
-      onTriggerToast(isTl ? ' Hindi mabuksan ang print. Gamitin muna ang "I-download (Excel)".' : ' Could not open print. Use "Download (Excel)" for now.');
-      return;
-    }
-    doc.open();
-    doc.write(html);
-    doc.close();
-    setTimeout(() => {
-      frame.contentWindow?.focus();
-      frame.contentWindow?.print();
-      setTimeout(() => frame.remove(), 1500);
-    }, 200);
+    // same official layout as every other report (letterhead, page numbers, signatures)
+    const ok = printSimpleTablePdf({
+      title: isTl ? 'Buwanang Ulat · Talaan' : 'Monthly Report · Data Table',
+      period: monthName,
+      rows: reportRows().slice(1).map(([k, v]) => [k, v] as [string, string]),
+    });
+    if (!ok) onTriggerToast(isTl ? ' Hindi mabuksan ang print. Gamitin muna ang "I-download (Excel)".' : ' Could not open print. Use "Download (Excel)" for now.');
   };
 
   // ---------- handover ----------
@@ -723,7 +702,17 @@ const ReportsHub: React.FC<Props> = ({ cases, appointments, followUps, staffEmai
                     avgDaysToClose: report.avgDaysToClose,
                     byLevel: report.byLevel,
                     noShowReasons: report.noShowReasons,
-                    staffName: config.signatories?.guidanceAssociate || 'Maurice Enriquez',
+                    staffName: config.signatories?.guidanceAssociate,
+                    byType: report.byType,
+                    didNotAttend: report.didNotAttend,
+                    closed: report.closed,
+                    overdueRows: report.overdue.map((c) => ({
+                      code: c.caseCode,
+                      student: c.studentName,
+                      offense: c.offenseTitleEn,
+                      since: c.incidentDate.slice(0, 10),
+                      days: Math.max(0, Math.floor((Date.now() - new Date(c.incidentDate.slice(0, 10) + 'T00:00:00').getTime()) / 86400000)),
+                    })),
                   });
                 }}
                 className={`${btn} px-4 py-2 bg-[#007AFF] hover:bg-[#0062CC] text-white active:scale-[0.97] transition-all inline-flex items-center gap-1.5 shadow-sm`}
