@@ -635,9 +635,19 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         !a.reminderSentAt &&
         !remindersTried.current.has(a.id)
     );
-    if (!due.length) return;
+    // same-day backup: the conference is TODAY but no reminder went out (e.g. nobody opened the app yesterday)
+    const sameDay = appointments.filter(
+      (a) =>
+        a.status === 'Scheduled' &&
+        !closedCases.has(a.caseId) &&
+        a.date === todayStr &&
+        !a.reminderSentAt &&
+        !a.noticeReceived &&
+        !remindersTried.current.has(`today:${a.id}`)
+    );
+    if (!due.length && !sameDay.length) return;
 
-    const callInstead = (a: ParentAppointmentItem, why: 'not-set-up' | 'failed') => {
+    const callInstead = (a: ParentAppointmentItem, why: 'not-set-up' | 'failed' | 'today') => {
       if (followUpTasks.some((t) => !t.resolved && t.caseId === a.caseId && t.category === 'Failed SMS')) return;
       const task: FollowUpTaskItem = {
         id: uid('FUP'),
@@ -649,10 +659,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         parentPhone: a.parentPhone,
         parentEmail: a.parentEmail,
         category: 'Failed SMS',
-        reasonEn: why === 'not-set-up' ? 'Reminder not sent (SMS not set up)' : 'Reminder SMS did not go out',
-        reasonTl: why === 'not-set-up' ? 'Hindi naipadala ang paalala (wala pang SMS)' : 'Hindi naipadala ang paalalang SMS',
-        diagnosticNoteEn: `Call to remind about ${a.date} ${a.timeSlot}.`,
-        diagnosticNoteTl: `Tawagan para ipaalala ang ${a.date} ${a.timeSlot}.`,
+        reasonEn: why === 'today' ? 'Call now: conference today, no reminder sent' : why === 'not-set-up' ? 'Reminder not sent (SMS not set up)' : 'Reminder SMS did not go out',
+        reasonTl: why === 'today' ? 'Tawagan ngayon: conference ngayong araw, walang paalala' : why === 'not-set-up' ? 'Hindi naipadala ang paalala (wala pang SMS)' : 'Hindi naipadala ang paalalang SMS',
+        diagnosticNoteEn: why === 'today' ? `Conference today at ${a.timeSlot}. Call to remind the parent.` : `Call to remind about ${a.date} ${a.timeSlot}.`,
+        diagnosticNoteTl: why === 'today' ? `Conference ngayong araw, ${a.timeSlot}. Tawagan para ipaalala.` : `Tawagan para ipaalala ang ${a.date} ${a.timeSlot}.`,
         attemptsCount: 0,
         lastContactSummaryEn: 'Not contacted yet',
         lastContactSummaryTl: 'Hindi pa natatawagan',
@@ -662,6 +672,19 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       setFollowUpTasks((prev) => [task, ...prev]);
       void insertFollowUpTaskInDb(task);
     };
+
+    if (sameDay.length) {
+      sameDay.forEach((a) => {
+        rememberTried(`today:${a.id}`);
+        callInstead(a, 'today');
+      });
+      triggerToast(
+        isTl
+          ? `⚠️ ${sameDay.length} conference ngayong araw ang walang naipadalang paalala. Tawagan ang magulang (nasa "Tatawagang magulang").`
+          : `⚠️ ${sameDay.length} conference(s) today had no reminder. Call the parent (see "Parents to call").`
+      );
+    }
+    if (!due.length) return;
 
     // SMS not connected: say so plainly and turn each reminder into a call task
     if (smsReady === false) {
