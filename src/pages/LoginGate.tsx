@@ -820,9 +820,15 @@ export const LoginGate: React.FC<LoginGateProps> = ({
                           </p>
                           <p className="text-xs sm:text-sm font-extrabold text-[#0B1F4D] dark:text-white truncate">
                             {maskEmail(activeOtp.email)} ·{' '}
-                            <span className="font-mono text-[#1E469B] dark:text-[#7CB8F7]">
-                              {formatTimeRemaining(otpSecondsLeft)}
-                            </span>
+                            {otpSecondsLeft <= 0 ? (
+                              <span className="font-bold text-rose-600 dark:text-rose-400">
+                                {locale === 'tl' ? 'Nag-expire na (0:00)' : 'Expired (0:00)'}
+                              </span>
+                            ) : (
+                              <span className="font-mono text-[#1E469B] dark:text-[#7CB8F7]">
+                                {formatTimeRemaining(otpSecondsLeft)}
+                              </span>
+                            )}
                           </p>
                         </div>
 
@@ -842,29 +848,59 @@ export const LoginGate: React.FC<LoginGateProps> = ({
                               type="text"
                               maxLength={6}
                               value={ch}
+                              disabled={otpSecondsLeft <= 0 || isSendingEmail}
                               onChange={(e) => handleOtpInput(idx, e.target.value)}
                               onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                              className="h-14 w-full rounded-2xl text-center font-mono text-xl font-extrabold uppercase bg-white dark:bg-[#162C5C] border-2 border-[#B8CCF0] dark:border-[#355CA8] text-[#0B1F4D] dark:text-white focus:outline-none focus:border-[#1E469B] dark:focus:border-[#7CB8F7] shadow-sm"
+                              className={`h-14 w-full rounded-2xl text-center font-mono text-xl font-extrabold uppercase transition-all duration-150 shadow-sm ${
+                                otpSecondsLeft <= 0
+                                  ? 'bg-slate-100 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-400 cursor-not-allowed opacity-60'
+                                  : 'bg-white dark:bg-[#162C5C] border-2 border-[#B8CCF0] dark:border-[#355CA8] text-[#0B1F4D] dark:text-white focus:outline-none focus:border-[#1E469B] dark:focus:border-[#7CB8F7]'
+                              }`}
                             />
                           ))}
                         </div>
 
-                        {otpError && (
+                        {otpSecondsLeft <= 0 ? (
+                          <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 text-center">
+                            <p className="text-xs font-bold text-rose-600 dark:text-rose-300">
+                              {locale === 'tl'
+                                ? 'Nag-expire na ang verification code. Pindutin ang "Magpadala ng Bagong Code" sa ibaba.'
+                                : 'This verification code has expired. Request a new code below to continue.'}
+                            </p>
+                          </div>
+                        ) : otpError ? (
                           <p className="text-center text-xs font-extrabold text-rose-600 dark:text-rose-300">
                             {otpError}
                           </p>
-                        )}
+                        ) : null}
                       </div>
 
                       <div className="space-y-3">
-                        <button
-                          type="button"
-                          disabled={otpChars.join('').length < 6}
-                          onClick={() => handleVerifyOtp(otpChars.join(''))}
-                          className="btn-press w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white font-extrabold text-sm sm:text-base shadow-lg disabled:opacity-40"
-                        >
-                          {t.verifyOtpBtn}
-                        </button>
+                        {otpSecondsLeft <= 0 ? (
+                          <button
+                            type="button"
+                            disabled={isSendingEmail}
+                            onClick={() => handleSendOtp()}
+                            className="btn-press w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-extrabold text-sm sm:text-base shadow-lg transition-all"
+                          >
+                            {isSendingEmail
+                              ? locale === 'tl'
+                                ? 'Ipinapadala ang bagong code…'
+                                : 'Sending new code…'
+                              : locale === 'tl'
+                              ? 'Magpadala ng Bagong Code'
+                              : 'Request New Code'}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={otpChars.join('').length < 6}
+                            onClick={() => handleVerifyOtp(otpChars.join(''))}
+                            className="btn-press w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#1E469B] to-[#2557BE] text-white font-extrabold text-sm sm:text-base shadow-lg disabled:opacity-40"
+                          >
+                            {t.verifyOtpBtn}
+                          </button>
+                        )}
 
                         <div className="text-center">
                           <button
