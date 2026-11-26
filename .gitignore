@@ -9,3 +9,4 @@ dist
 
 # Tauri build output
 src-tauri/target
+backups/
