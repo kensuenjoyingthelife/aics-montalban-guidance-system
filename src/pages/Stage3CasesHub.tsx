@@ -87,7 +87,7 @@ export interface CasePrefill {
   reportedBy: string;
   /** names the student wrote under "Who was involved" (put in the student search) */
   search: string;
-  /** Suggested or matched offense policy code from student report (e.g. 'MAJ-01' for Bullying) */
+  /** Suggested or matched offense policy code from student report (a handbook code, e.g. 'SO-02' for Bullying) */
   policyCode?: string;
   /** staff-only: the student who was affected (from the concern) */
   affectedStudentNumber?: string;
@@ -171,7 +171,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
 
   const [selectedStudentNumbers, setSelectedStudentNumbers] = useState<string[]>(initialPrefilledStudentNos);
   const [studentPickerQuery, setStudentPickerQuery] = useState<string>(prefill?.search ?? '');
-  const [selectedPolicyCode, setSelectedPolicyCode] = useState<string>(prefill?.policyCode ?? 'MIN-01');
+  const [selectedPolicyCode, setSelectedPolicyCode] = useState<string>(prefill?.policyCode ?? '');
   // Group incident: a different offense per student (empty = same as the main offense)
   const [policyOverride, setPolicyOverride] = useState<Record<string, string>>({});
   const [incidentDate, setIncidentDate] = useState<string>(() => new Date().toLocaleDateString('en-CA'));
@@ -396,6 +396,10 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
     () => HANDBOOK.find((r) => r.policyCode === selectedPolicyCode) || HANDBOOK[0],
     [selectedPolicyCode, HANDBOOK]
   );
+  // the chosen offense must be one of the ACTIVE handbook offenses (old/removed codes fall back to the first one)
+  useEffect(() => {
+    if (HANDBOOK.length && !HANDBOOK.some((r) => r.policyCode === selectedPolicyCode)) setSelectedPolicyCode(HANDBOOK[0].policyCode);
+  }, [HANDBOOK, selectedPolicyCode]);
 
   const policyFor = (stu: StudentRecord): OffenseHandbookRule =>
     HANDBOOK.find(

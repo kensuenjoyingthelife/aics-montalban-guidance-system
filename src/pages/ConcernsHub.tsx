@@ -607,41 +607,35 @@ const ConcernsHub: React.FC<ConcernsHubProps> = ({ students, cases, onTriggerToa
                         }
                         const firstName = rawName.split(/,|;|\band\b|\bat\b|\(|\n/i)[0].trim().slice(0, 50);
 
-                        // Match student report type to official handbook policyCode
+                        // Match the report type to an ACTIVE handbook offense (Settings → Offenses & rules):
+                        // 1) the exact handbook name the portal saved, 2) a keyword match for older reports, 3) none (staff picks)
                         const reportTypeLower = (selected.type || '').toLowerCase();
-                        let matchedPolicyCode = 'MIN-01'; // fallback
-                        if (reportTypeLower.includes('cyberbullying') || reportTypeLower.includes('social media')) {
-                          matchedPolicyCode = 'MAJ-02';
-                        } else if (reportTypeLower.includes('bullying') || reportTypeLower.includes('away') || reportTypeLower.includes('fighting') || reportTypeLower.includes('pananakit')) {
-                          matchedPolicyCode = 'MAJ-01';
-                        } else if (reportTypeLower.includes('vape') || reportTypeLower.includes('vaping') || reportTypeLower.includes('smoking') || reportTypeLower.includes('sigarilyo')) {
-                          matchedPolicyCode = 'MAJ-03';
-                        } else if (reportTypeLower.includes('extortion') || reportTypeLower.includes('hingi') || reportTypeLower.includes('pera') || reportTypeLower.includes('blackmail')) {
-                          matchedPolicyCode = 'MAJ-04';
-                        } else if (reportTypeLower.includes('weapon') || reportTypeLower.includes('matalim') || reportTypeLower.includes('contraband')) {
-                          matchedPolicyCode = 'MAJ-05';
-                        } else if (reportTypeLower.includes('vandalism') || reportTypeLower.includes('sira')) {
-                          matchedPolicyCode = 'MAJ-06';
-                        } else if (reportTypeLower.includes('cutting') || reportTypeLower.includes('truancy') || reportTypeLower.includes('takas')) {
-                          matchedPolicyCode = 'LSR-01';
-                        } else if (reportTypeLower.includes('forgery') || reportTypeLower.includes('pemeke') || reportTypeLower.includes('records')) {
-                          matchedPolicyCode = 'GRV-01';
-                        } else if (reportTypeLower.includes('uniform') || reportTypeLower.includes('dress code') || reportTypeLower.includes('haircut') || reportTypeLower.includes('gupit')) {
-                          matchedPolicyCode = 'MIN-02';
-                        } else if (reportTypeLower.includes('id') || reportTypeLower.includes('school id')) {
-                          matchedPolicyCode = 'MIN-03';
-                        } else if (reportTypeLower.includes('disruption') || reportTypeLower.includes('ingay') || reportTypeLower.includes('kakulitan')) {
-                          matchedPolicyCode = 'MIN-04';
-                        } else if (reportTypeLower.includes('littering') || reportTypeLower.includes('kalat')) {
-                          matchedPolicyCode = 'MIN-05';
-                        } else if (reportTypeLower.includes('phone') || reportTypeLower.includes('cellphone') || reportTypeLower.includes('gadget')) {
-                          matchedPolicyCode = 'MIN-06';
-                        } else if (reportTypeLower.includes('tardiness') || reportTypeLower.includes('late')) {
-                          matchedPolicyCode = 'MIN-01';
-                        }
-                        // new reports save the exact handbook offense name (Settings → Offenses): use that offense
-                        const exactOffense = getAppConfig().offenses.find((o) => o.active && o.titleEn.trim().toLowerCase() === (selected.type || '').trim().toLowerCase());
-                        if (exactOffense) matchedPolicyCode = exactOffense.policyCode;
+                        const activeOffenses = getAppConfig().offenses.filter((o) => o.active);
+                        const KEYWORDS: Array<[RegExp, RegExp]> = [
+                          [/cyber|social media|bully|harass/, /bullying/],
+                          [/fight|physical|away|assault|hit/, /physical assault/],
+                          [/vape|vaping|smok|cigarette|sigarilyo/, /smoking/],
+                          [/extort|threat|money|pera/, /extortion/],
+                          [/weapon|blade|matalim|knife/, /deadly weapons/],
+                          [/vandal|damage|property|sira/, /damage of school property/],
+                          [/cutting|class cut|truan/, /class cut/],
+                          [/forg|tamper|signature|pirma|record/, /forgery/],
+                          [/uniform|dress/, /uniform/],
+                          [/haircut|hair|gupit/, /hairstyle/],
+                          [/\bid\b|school id/, /wearing of id/],
+                          [/noise|ingay|disrupt/, /unnecessary noise/],
+                          [/litter|kalat|waste/, /littering/],
+                          [/phone|gadget|cellphone/, /cell phone/],
+                          [/drug|droga/, /prohibited drugs/],
+                          [/alcohol|alak|drink/, /alcoholic/],
+                          [/cheat|copy|kopya/, /cheating/],
+                          [/gambl|sugal/, /gambling/],
+                          [/disrespect|galang/, /disrespect/],
+                        ];
+                        const exactOffense = activeOffenses.find((o) => o.titleEn.trim().toLowerCase() === reportTypeLower.trim());
+                        const kw = KEYWORDS.find(([test]) => test.test(reportTypeLower));
+                        const kwOffense = kw ? activeOffenses.find((o) => kw[1].test(o.titleEn.toLowerCase())) : undefined;
+                        const matchedPolicyCode = (exactOffense ?? kwOffense)?.policyCode;
 
                         onCreateCase({
                           concernId: selected.id,
