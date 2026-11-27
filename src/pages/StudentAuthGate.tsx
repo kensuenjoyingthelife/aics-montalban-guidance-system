@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
+import { PrivacyTerms, LegalLinks, type LegalTab } from '../components/legal/PrivacyTerms';
 import {
   User,
   Lock,
@@ -250,6 +251,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   // Privacy Terms & Conditions Modal State
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [privacyAgreed, setPrivacyAgreed] = useState(false);
+  // Privacy & Terms page (Privacy Notice · Terms of Use · Browser storage)
+  const [legalTab, setLegalTab] = useState<LegalTab | null>(null);
 
   // ID & Photo Verification State
   const [studentIdFile, setStudentIdFile] = useState<File | null>(null);
@@ -1190,6 +1193,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   {isTl ? '+ Gumawa ng account' : '+ Create account'}
                 </button>
               </div>
+              <LegalLinks isTl={isTl} onOpen={setLegalTab} className="pt-2" />
 
               {/* Download Android APK & PWA Install (Mobile Screen Only - hidden on desktop website) */}
               <div className={`lg:hidden pt-3 space-y-2.5 ${isCapacitorNativeApp() ? '!hidden' : ''}`}>
@@ -1573,6 +1577,12 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       </>
                     )}
                   </button>
+                  <p className="text-center text-[12px] text-[#8E8E93]" data-legal-agree>
+                    {isTl ? 'Sa paggawa ng account, sumasang-ayon ka sa ' : 'By creating an account, you agree to the '}
+                    <button type="button" onClick={() => setLegalTab('privacy')} className="underline underline-offset-2">Privacy Notice</button>
+                    {isTl ? ' at ' : ' and '}
+                    <button type="button" onClick={() => setLegalTab('terms')} className="underline underline-offset-2">Terms of Use</button>.
+                  </p>
 
 
                 </div>
@@ -2171,6 +2181,12 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 </div>
               </div>
 
+              <p className="px-5 pb-3 text-[12px] text-slate-600 dark:text-slate-300">
+                {isTl ? 'Buong detalye: ' : 'Full details: '}
+                <button type="button" onClick={() => setLegalTab('privacy')} className="font-semibold text-[#007AFF] underline-offset-2 hover:underline">Privacy Notice</button>
+                {' · '}
+                <button type="button" onClick={() => setLegalTab('terms')} className="font-semibold text-[#007AFF] underline-offset-2 hover:underline">Terms of Use</button>
+              </p>
               {/* Apple Action Bar */}
               <div className="p-4 bg-white/70 dark:bg-[#2C2C2E]/70 backdrop-blur-lg border-t border-slate-300/60 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2.5 safe-area-bottom">
                 <button
@@ -2203,6 +2219,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
         )}
 
     </div>
+      <PrivacyTerms open={!!legalTab} initialTab={legalTab ?? 'privacy'} isTl={isTl} onClose={() => setLegalTab(null)} />
     </MotionConfig>
   );
 };

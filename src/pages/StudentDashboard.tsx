@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
+import { PrivacyTerms, type LegalTab } from '../components/legal/PrivacyTerms';
 import { useConfirmChange } from '../components/ui/ConfirmChange';
 import {
   Menu,
@@ -810,6 +811,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
   const [mRepId, setMRepId] = useState<number | null>(null);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const [legalTab, setLegalTab] = useState<LegalTab | null>(null);
   // Change password (phones / APK)
   const [showPw, setShowPw] = useState(false);
   const [pwCur, setPwCur] = useState('');
@@ -1236,6 +1238,10 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
               </button>
               <button type="button" onClick={() => { setIsMenuOpen(false); setShowMobileTour(true); }} className="sd-row w-full text-left">
                 <span className="flex items-center gap-3"><span className="w-7 h-7 rounded-lg tile-grad tile-teal text-white flex items-center justify-center"><HelpCircle className="w-4 h-4" /></span><span className="sd-row-label">{isTl ? 'Gabay sa paggamit' : 'How to use'}</span></span>
+                <ChevronRight className="w-4 h-4 text-[#C7C7CC]" />
+              </button>
+              <button type="button" data-legal-row onClick={() => setLegalTab('privacy')} className="sd-row w-full text-left">
+                <span className="flex items-center gap-3"><span className="w-7 h-7 rounded-lg bg-[#5856D6] text-white flex items-center justify-center"><ShieldIcon className="w-4 h-4" /></span><span className="sd-row-label">{isTl ? 'Privacy at Terms' : 'Privacy & Terms'}</span></span>
                 <ChevronRight className="w-4 h-4 text-[#C7C7CC]" />
               </button>
               <button type="button" onClick={() => window.location.reload()} className="sd-row w-full text-left">
@@ -2488,6 +2494,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onSign
       </nav>
 
       {/* phones + tablets: a real app tab bar, fixed to the bottom, full width ("+ Report" in the middle) */}
+      {/* Privacy & Terms (opened from the Menu or the Me tab; rendered once) */}
+      <PrivacyTerms open={!!legalTab} initialTab={legalTab ?? 'privacy'} isTl={isTl} onClose={() => setLegalTab(null)} />
       <nav className="m-tabbar lg:hidden fixed bottom-0 inset-x-0 z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} aria-label="Sections">
         <div className="h-[58px] grid grid-cols-5 items-stretch max-w-xl mx-auto">
           {([
