@@ -10,3 +10,8 @@ dist
 # Tauri build output
 src-tauri/target
 backups/
+
+# local-only: installers/builds and Word documents (not code)
+release/
+docs/
+demo-files/AICS_MASTERLIST_400_STUDENTS.csv
