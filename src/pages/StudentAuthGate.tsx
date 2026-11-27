@@ -1193,7 +1193,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   {isTl ? '+ Gumawa ng account' : '+ Create account'}
                 </button>
               </div>
-              <LegalLinks isTl={isTl} onOpen={setLegalTab} className="pt-2" />
 
               {/* Download Android APK & PWA Install (Mobile Screen Only - hidden on desktop website) */}
               <div className={`lg:hidden pt-3 space-y-2.5 ${isCapacitorNativeApp() ? '!hidden' : ''}`}>
@@ -1262,6 +1261,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   </span>
                 </a>
               </div>
+              {/* very bottom of the card (like other school portals) */}
+              <LegalLinks isTl={isTl} onOpen={setLegalTab} className="pt-3 border-t border-white/10" />
             </div>
           )}
 
