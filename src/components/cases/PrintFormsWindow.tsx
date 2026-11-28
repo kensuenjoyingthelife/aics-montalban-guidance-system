@@ -280,66 +280,134 @@ export const PrintFormsWindow: React.FC<{
               {kind === 'suspension' && <p className="text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Hindi binibilang ang Sabado, Linggo at mga araw na walang pasok sa Settings.' : 'Weekends and closed days from Settings are skipped.'}</p>}
             </div>
           ) : (
-            /* Live 1-Page Paper Sheet Preview */
-            <div className="flex flex-col items-center">
-              {/* who signs this form: edit here, it updates the preview right away */}
-              <div className="w-full max-w-[760px] mb-3 rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 p-4 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-[14px] font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">{isTl ? 'Pipirma sa form' : 'Who signs this form'}</span>
-                  <span className="text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Pwedeng palitan. Makikita agad sa preview.' : 'You can change it. The preview updates right away.'}</span>
+            /* Live 1-Page Paper Sheet Preview with Signatory Editor docked right at the bottom */
+            <div className="flex flex-col items-center space-y-4">
+              <div className="w-full max-w-[760px] flex items-center justify-between text-xs font-semibold text-[#6E6E73] dark:text-[#A1A1A6]">
+                <div className="flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5" aria-hidden />
+                  <span>{isTl ? 'Ganito ang lalabas sa A4 na papel' : 'A4 Official Document Live Preview'}</span>
                 </div>
-                <ul className="space-y-2">
-                  {rows.map((r, i) => (
-                    <li key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center">
-                      <input data-sig-name={i} value={r.name} onChange={(e) => setRow(i, { name: e.target.value.slice(0, 80) })} placeholder={isTl ? 'Pangalan (o iwang blangko)' : 'Name (or leave blank)'} aria-label={isTl ? 'Pangalan' : 'Name'} className={input} />
-                      <input data-sig-title={i} value={r.title} onChange={(e) => setRow(i, { title: e.target.value.slice(0, 80) })} placeholder={isTl ? 'Posisyon' : 'Position'} aria-label={isTl ? 'Posisyon' : 'Position'} className={input} />
-                      <button type="button" onClick={() => { setRows((x) => x.filter((_, j) => j !== i)); setSigMsg(''); }} title={isTl ? 'Alisin ang pipirma' : 'Remove signer'} aria-label={isTl ? 'Alisin' : 'Remove'} className="w-9 h-9 rounded-full flex items-center justify-center text-[#6E6E73] hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40">
-                        <XIcon className="w-4 h-4" aria-hidden />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-                {rows.length < 6 ? (
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-[12px] text-[#6E6E73] dark:text-[#A1A1A6] mr-1">{isTl ? 'Magdagdag:' : 'Add:'}</span>
-                    {SUGGEST.map((s) => (
-                      <button key={s.title} type="button" onClick={() => { setRows((x) => [...x, s].slice(0, 6)); setSigMsg(''); }} className="h-8 px-3 rounded-full text-[12px] font-medium text-[#007AFF] dark:text-[#409CFF] bg-[#007AFF]/[0.08] dark:bg-white/[0.08] hover:bg-[#007AFF]/[0.14] inline-flex items-center gap-1">
-                        <Plus className="w-3.5 h-3.5" aria-hidden />
-                        {s.title}
-                      </button>
-                    ))}
-                    <button type="button" onClick={() => { setRows((x) => [...x, { name: '', title: '' }].slice(0, 6)); setSigMsg(''); }} className="h-8 px-3 rounded-full text-[12px] font-medium text-[#007AFF] dark:text-[#409CFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] inline-flex items-center gap-1">
-                      <Plus className="w-3.5 h-3.5" aria-hidden />
-                      {isTl ? 'Iba pa' : 'Other'}
-                    </button>
-                  </div>
-                ) : (
-                  <p className="text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">{isTl ? 'Hanggang 6 na pipirma lang (3 bawat hanay).' : 'Up to 6 signers (3 per row).'}</p>
-                )}
-                {(sigChanged || sigMsg) && (
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-[12px] text-[#6E6E73] dark:text-[#A1A1A6]">
-                      {sigMsg || (isTl ? 'Para sa print na ito lang, maliban kung gawing default.' : 'For this print only, unless you make it the default.')}
-                    </span>
-                    {sigChanged && !sigMsg && (
-                      <button type="button" onClick={() => void saveSigDefault()} className="h-9 px-4 rounded-full text-[13px] font-medium text-[#007AFF] dark:text-[#409CFF] bg-[#007AFF]/[0.08] dark:bg-white/[0.08] hover:bg-[#007AFF]/[0.14]">
-                        {isTl ? 'Gawing default sa lahat ng form' : 'Make this the default for all forms'}
-                      </button>
-                    )}
-                  </div>
-                )}
+                <span className="text-[11px] text-[#007AFF] dark:text-[#409CFF] font-medium">
+                  {isTl ? 'Baguhin ang mga pipirma sa ibaba ng papel' : 'Edit signatory names & positions below'}
+                </span>
               </div>
-              <div className="mb-2 text-xs font-semibold text-[#6E6E73] dark:text-[#A1A1A6] flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5" aria-hidden />
-                <span>{isTl ? 'Ganito ang lalabas sa A4 na papel' : 'This is how it prints on A4 paper'}</span>
-              </div>
-              <div className="w-full max-w-[760px] bg-white rounded-lg shadow-xl border border-slate-300 dark:border-slate-700 overflow-hidden text-[#1D1D1F] p-2">
+
+              {/* A4 Paper Document Preview Container */}
+              <div className="w-full max-w-[760px] bg-white rounded-xl shadow-xl border border-slate-300 dark:border-slate-700 overflow-hidden text-[#1D1D1F] p-2">
                 <iframe
                   title="Document 1-Page Preview"
                   srcDoc={previewHtml}
                   className="w-full h-[580px] border-0 rounded bg-white"
                   sandbox="allow-same-origin"
                 />
+              </div>
+
+              {/* DOCKED AT BOTTOM: Signatory Customization Bar (Names & Positions directly visible beneath the paper) */}
+              <div className="w-full max-w-[760px] rounded-2xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-white/10 p-5 space-y-3.5 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-black/[0.06] dark:border-white/[0.08] pb-3">
+                  <div>
+                    <h4 className="text-[14px] font-bold text-[#1D1D1F] dark:text-[#F5F5F7]">
+                      {isTl ? 'Mga Pipirma sa Dokumento (Signatories)' : 'Official Signatories (End of Document)'}
+                    </h4>
+                    <p className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6] mt-0.5">
+                      {isTl
+                        ? 'I-type ang pangalan at posisyon. Kung walang tiyak na pangalan, iwang blangko upang guhit lamang ang lumabas para sa manual na pirmahan.'
+                        : 'Type the name and title. Leave name blank if you only want a clean signature line for manual signing on paper.'}
+                    </p>
+                  </div>
+                </div>
+
+                <ul className="space-y-2">
+                  {rows.map((r, i) => (
+                    <li key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2.5 items-center">
+                      <div>
+                        <label className="block text-[10px] font-bold text-[#6E6E73] dark:text-[#A1A1A6] mb-0.5">
+                          {isTl ? `Pangalan #${i + 1} (iwan blangko para sa guhit)` : `Signer Name #${i + 1} (blank = clean line)`}
+                        </label>
+                        <input
+                          data-sig-name={i}
+                          value={r.name}
+                          onChange={(e) => setRow(i, { name: e.target.value.slice(0, 80) })}
+                          placeholder={isTl ? 'Pangalan ng Pipirma (o blangko)' : 'Full Name (or leave blank)'}
+                          aria-label={isTl ? 'Pangalan' : 'Name'}
+                          className={input}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-[#6E6E73] dark:text-[#A1A1A6] mb-0.5">
+                          {isTl ? `Posisyon / Tanggapan #${i + 1}` : `Position / Office Title #${i + 1}`}
+                        </label>
+                        <input
+                          data-sig-title={i}
+                          value={r.title}
+                          onChange={(e) => setRow(i, { title: e.target.value.slice(0, 80) })}
+                          placeholder={isTl ? 'Posisyon (hal. Guidance Counselor)' : 'Position (e.g. Class Adviser)'}
+                          aria-label={isTl ? 'Posisyon' : 'Position'}
+                          className={input}
+                        />
+                      </div>
+                      <div className="pt-4">
+                        <button
+                          type="button"
+                          onClick={() => { setRows((x) => x.filter((_, j) => j !== i)); setSigMsg(''); }}
+                          title={isTl ? 'Alisin ang pipirma' : 'Remove signer'}
+                          aria-label={isTl ? 'Alisin' : 'Remove'}
+                          className="w-9 h-9 rounded-xl flex items-center justify-center text-[#6E6E73] hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 transition-colors"
+                        >
+                          <XIcon className="w-4 h-4" aria-hidden />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+
+                {rows.length < 6 ? (
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-[12px] font-medium text-[#6E6E73] dark:text-[#A1A1A6] mr-1">
+                      {isTl ? 'Mabilis na Idagdag:' : 'Quick Add Signer:'}
+                    </span>
+                    {SUGGEST.map((s) => (
+                      <button
+                        key={s.title}
+                        type="button"
+                        onClick={() => { setRows((x) => [...x, s].slice(0, 6)); setSigMsg(''); }}
+                        className="h-8 px-3 rounded-xl text-[11px] font-semibold text-[#007AFF] dark:text-[#409CFF] bg-[#007AFF]/[0.08] dark:bg-white/[0.08] hover:bg-[#007AFF]/[0.14] inline-flex items-center gap-1 transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" aria-hidden />
+                        {s.title}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => { setRows((x) => [...x, { name: '', title: '' }].slice(0, 6)); setSigMsg(''); }}
+                      className="h-8 px-3 rounded-xl text-[11px] font-semibold text-[#007AFF] dark:text-[#409CFF] bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] inline-flex items-center gap-1 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" aria-hidden />
+                      {isTl ? '+ Bagong Linya' : '+ New Signer Line'}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6] pt-1">
+                    {isTl ? 'Hanggang 6 na pipirma lamang ang kasya sa format.' : 'Maximum 6 official signatories accommodated on this document layout.'}
+                  </p>
+                )}
+
+                {(sigChanged || sigMsg) && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-black/[0.06] dark:border-white/[0.08]">
+                    <span className="text-[11px] text-[#6E6E73] dark:text-[#A1A1A6]">
+                      {sigMsg || (isTl ? 'Para sa print na ito lamang ang pagbabago, maliban kung i-save bilang default.' : 'Changes apply to this print job only, unless saved as system default.')}
+                    </span>
+                    {sigChanged && !sigMsg && (
+                      <button
+                        type="button"
+                        onClick={() => void saveSigDefault()}
+                        className="h-8 px-3.5 rounded-xl text-[12px] font-semibold text-[#007AFF] dark:text-[#409CFF] bg-[#007AFF]/[0.08] dark:bg-white/[0.08] hover:bg-[#007AFF]/[0.14] transition-colors"
+                      >
+                        {isTl ? 'I-save bilang default sa lahat ng form' : 'Save as Default for All Forms'}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}

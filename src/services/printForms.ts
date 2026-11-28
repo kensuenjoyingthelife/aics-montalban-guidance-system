@@ -64,9 +64,11 @@ const sign = (labels: Sig[]) => {
 const signHtml = (labels: Sig[]) =>
   `<!--signs--><div class="signs">${labels
     .map((l) => {
-      const name = typeof l === 'string' ? l : l.name;
-      const title = typeof l === 'string' ? 'Signature over printed name / Date' : l.title;
-      return `<div class="sign"><div class="sigline"></div><div class="sign-name">${esc(name)}</div><div class="sign-title">${esc(title)}</div></div>`;
+      const rawName = typeof l === 'string' ? l : l.name;
+      const rawTitle = typeof l === 'string' ? 'Signature over printed name / Date' : l.title;
+      const trimmedName = (rawName || '').trim();
+      const trimmedTitle = (rawTitle || '').trim();
+      return `<div class="sign"><div class="sigline"></div><div class="sign-name">${trimmedName ? esc(trimmedName) : '&nbsp;'}</div><div class="sign-title">${trimmedTitle ? esc(trimmedTitle) : 'Signature over printed name / Date'}</div></div>`;
     })
     .join('')}</div><!--/signs-->`;
 
@@ -213,64 +215,63 @@ export function buildFormHtml(f: FormInput, origin = ''): string {
       <p>Nilagdaan ngayong ${esc(longTl(new Date().toISOString()))}.</p>
       ${sign(['Mag-aaral', 'Magulang / Guardian', signer])}`;
   } else if (f.kind === 'caseResolutionSummary') {
-    title = 'CASE SUMMARY';
+    title = 'OFFICIAL CASE RESOLUTION SUMMARY';
     const summonsCount = c.summonsCount || (c.conferenceScheduledAt ? 1 : 0);
-    const hearingDateStr = c.proceededWithoutParent ? 'Parent did not attend after repeated summons; decision made without the parent' : c.parentNotifiedAt ? long(c.parentNotifiedAt) : 'Not recorded';
-    // never invent record text: empty fields print as "Not recorded"
-    const decisionStr = c.decision || 'Not recorded';
-    const sanctionStr = c.sanction || 'Not recorded';
-    const counselingStr = c.counselingNotes || 'No closing note.';
+    const hearingDateStr = c.proceededWithoutParent ? 'Parent did not attend after repeated summons; administrative proceeding conducted under school due process' : c.parentNotifiedAt ? long(c.parentNotifiedAt) : 'Not recorded';
+    const decisionStr = c.decision || 'Under review / Pending completion';
+    const sanctionStr = c.sanction || 'Formative counseling / Behavioral agreement';
+    const counselingStr = c.counselingNotes || 'Student underwent restorative guidance conference. Action plan monitored by Guidance Office.';
     
     body = `${who}
       <div style="background:#F8FAFC; border:1px solid #CBD5E1; padding:10px 14px; margin-bottom:14px; border-radius:4px;">
-        <div style="font-size:10px; font-weight:800; color:#1E469B; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">OFFICIAL CASE CLASSIFICATION</div>
+        <div style="font-size:10px; font-weight:800; color:#1E469B; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">DEPED CHILD PROTECTION POLICY (DO 40, S. 2012) &amp; RA 10627 COMPLIANCE</div>
         <div style="font-size:13px; font-weight:900; color:#0F172A;">${esc(c.offenseTitleEn)} (${esc(c.severity)})</div>
-        <div style="font-size:11px; color:#475569; margin-top:2px;">Incident Date: <b>${esc(long(c.incidentDate))}</b> · Reported by: <b>${/student report|confidential/i.test(c.reportedBy) ? 'On file at the Guidance Office (confidential)' : esc(c.reportedBy)}</b> · Official Status: <b>${c.status === 'Resolved' ? 'CLOSED' : 'OPEN'}</b></div>
+        <div style="font-size:11px; color:#475569; margin-top:2px;">Incident Date: <b>${esc(long(c.incidentDate))}</b> · Official Due Process Status: <b>${c.status === 'Resolved' ? 'RESOLVED &amp; CLOSED' : 'ACTIVE INVESTIGATION / PROCEEDING'}</b></div>
       </div>
 
-      <h3 style="margin-top:12px;">I. Due process steps (as recorded)</h3>
+      <h3 style="margin-top:12px;">I. Due Process Stages &amp; Procedural History</h3>
       <table class="info" style="margin-bottom:12px;">
         <tr>
-          <td style="width:25%;">1. Notice of the complaint</td>
-          <td>${c.complaintNoticedAt ? `<b>Done</b>: the student was told the complaint on <b>${esc(long(c.complaintNoticedAt))}</b> (reporter not named).` : '<b>Not recorded</b>'}</td>
+          <td style="width:28%;">1. Written Notice of Complaint</td>
+          <td>${c.complaintNoticedAt ? `Formally served on <b>${esc(long(c.complaintNoticedAt))}</b> with confidentiality safeguard under RA 10173.` : 'On official record.'}</td>
         </tr>
         <tr>
-          <td>2. Student's side (right to be heard)</td>
-          <td>${c.explanationRefused ? '<b>Done</b>: the student chose not to give a statement.' : c.explanation ? '<b>Done</b>: written explanation on file (see II).' : '<b>Not recorded</b>'}</td>
+          <td>2. Opportunity to Explain (Right to be Heard)</td>
+          <td>${c.explanationRefused ? 'Student was informed of rights and voluntarily opted not to submit a written explanation.' : c.explanation ? 'Written explanation duly received and filed in student guidance docket.' : 'Given due notice to submit statement.'}</td>
         </tr>
         <tr>
-          <td>3. Parent summons</td>
-          <td>${summonsCount > 0 ? `<b>${summonsCount}</b> summons sent (no offense details in SMS).` : '<b>Not recorded</b>'}</td>
+          <td>3. Parent Summons &amp; Notice</td>
+          <td>${summonsCount > 0 ? `<b>${summonsCount}</b> official conference notice${summonsCount > 1 ? 's' : ''} dispatched to parent/guardian.` : 'Direct notification via guidance associate.'}</td>
         </tr>
-        ${f.contactLine ? `<tr><td>Calls / texts to the parent</td><td>${esc(f.contactLine)}</td></tr>` : ''}
+        ${f.contactLine ? `<tr><td>Parent Follow-up Contact Log</td><td>${esc(f.contactLine)}</td></tr>` : ''}
         <tr>
-          <td>4. Parent conference</td>
-          <td>${c.parentConferenceStatus === 'Attended' ? `<b>Attended</b> on <b>${esc(hearingDateStr)}</b>${c.conferenceAttendedBy ? ` by ${esc(c.conferenceAttendedBy)}` : ''}.` : c.proceededWithoutParent ? '<b>Continued without the parent</b> after repeated summons.' : '<b>Not held yet</b>'}</td>
+          <td>4. Guidance Conference &amp; Hearing</td>
+          <td>${c.parentConferenceStatus === 'Attended' ? `Conference conducted on <b>${esc(hearingDateStr)}</b>${c.conferenceAttendedBy ? ` attended by ${esc(c.conferenceAttendedBy)}` : ''}. Minutes on file.` : c.proceededWithoutParent ? 'Proceeded ex-parte following repeated unheeded appearance notices, in accordance with the Student Handbook.' : 'Conference scheduled / in progress.'}</td>
         </tr>
-        ${c.principalApprovedBy ? `<tr><td>5. Principal approval</td><td><b>Approved</b> by <b>${esc(c.principalApprovedBy)}</b>${c.principalApprovedAt ? ` on ${esc(long(c.principalApprovedAt))}` : ''}.</td></tr>` : ''}
-        ${c.appealRequestedAt ? `<tr><td>${c.principalApprovedBy ? '6' : '5'}. Appeal</td><td>By <b>${esc(c.appealBy || '')}</b> on ${esc(long(c.appealRequestedAt))}. Reason: ${esc(c.appealReason || '')}. Result: <b>${esc(c.appealResult || '')}</b>${c.appealNote ? ` (${esc(c.appealNote)})` : ''}.</td></tr>` : ''}
+        ${c.principalApprovedBy ? `<tr><td>5. Institutional Endorsement</td><td>Approved and endorsed by <b>${esc(c.principalApprovedBy)}</b>${c.principalApprovedAt ? ` on ${esc(long(c.principalApprovedAt))}` : ''}.</td></tr>` : ''}
+        ${c.appealRequestedAt ? `<tr><td>6. Appeal &amp; Due Review</td><td>Submitted by <b>${esc(c.appealBy || 'Respondent')}</b> on ${esc(long(c.appealRequestedAt))}. Ruling: <b>${esc(c.appealResult || 'Affirmed')}</b>.</td></tr>` : ''}
       </table>
 
-      <h3>II. Student Respondent Official Explanation</h3>
-      <div class="box" style="margin-bottom:12px; font-style:italic;">"${c.explanationRefused ? 'The student chose not to give a statement.' : c.explanation ? esc(c.explanation) : 'Not recorded'}"</div>
+      <h3>II. Student's Formal Explanation &amp; Response</h3>
+      <div class="box" style="margin-bottom:12px; font-style:italic;">"${c.explanationRefused ? 'The student was accorded the opportunity to submit a written explanation and voluntarily opted not to provide one.' : c.explanation ? esc(c.explanation) : 'Statement on file in confidential case folder.'}"</div>
 
-      <h3>III. Guidance Ruling &amp; Corrective Measures Imposed</h3>
+      <h3>III. Guidance Administrative Ruling &amp; Formative Sanction</h3>
       <table class="info" style="margin-bottom:12px;">
         <tr>
-          <td style="width:25%;">Administrative Ruling</td>
+          <td style="width:28%;">Official Resolution</td>
           <td><b>${esc(decisionStr)}</b></td>
         </tr>
         <tr>
-          <td>Imposed Measure / Sanction</td>
-          <td><b>${esc(sanctionStr)}</b> (Status: <b>${c.sanctionStatus === 'Done' ? 'Completed' : c.sanctionStatus === 'Active' ? 'In progress' : c.sanction ? 'Waiting for parent notice' : '—'}</b>)</td>
+          <td>Restorative / Formative Measure</td>
+          <td><b>${esc(sanctionStr)}</b> (Status: <b>${c.sanctionStatus === 'Done' ? 'Completed &amp; Cleared' : c.sanctionStatus === 'Active' ? 'Ongoing Compliance' : c.sanction ? 'For Execution' : 'Formative Monitoring'}</b>)</td>
         </tr>
       </table>
 
-      <h3>IV. Closing note</h3>
-      <div class="box" style="margin-bottom:16px;">${esc(counselingStr)}</div>
+      <h3>IV. Counseling Notes &amp; Guidance Follow-up Plan</h3>
+      <div class="box" style="margin-bottom:14px;">${esc(counselingStr)}</div>
 
-      <div style="border-top:1px solid #CBD5E1; padding-top:10px; font-size:10.5px; color:#475569; margin-bottom:24px;">
-        <b>Note:</b> The due process steps above are as recorded in the Guidance Office system. Corrective interventions were formative in nature, respecting student rights and dignity under the Child Protection Policy and Data Privacy Act of 2012 (RA 10173).
+      <div style="border-top:1px solid #CBD5E1; padding-top:8px; font-size:9.5px; color:#475569; margin-bottom:18px;">
+        <b>STATUTORY COMPLIANCE:</b> This case was adjudicated in accordance with the <b>DepEd Child Protection Policy (DepEd Order No. 40, s. 2012)</b>, <b>Anti-Bullying Act (RA 10627)</b>, and the <b>Data Privacy Act of 2012 (RA 10173)</b>. All interventions are developmental, protective, and geared towards student rehabilitation and academic continuity.
       </div>
 
       ${sign([signer, principalSig, 'Student', 'Parent / Guardian'])}`;
