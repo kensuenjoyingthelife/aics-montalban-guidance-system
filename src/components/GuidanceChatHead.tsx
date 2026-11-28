@@ -508,14 +508,14 @@ export const GuidanceChatHead: React.FC = () => {
       cursor: 'pointer',
     };
     if (dockCorner === 'bottom-right') {
-      style.bottom = '20px';
-      style.right = '20px';
+      style.bottom = '28px';
+      style.right = '28px';
     } else if (dockCorner === 'bottom-left') {
-      style.bottom = '20px';
+      style.bottom = '28px';
       style.left = '84px';
     } else if (dockCorner === 'top-right') {
       style.top = '76px';
-      style.right = '20px';
+      style.right = '24px';
     } else if (dockCorner === 'top-left') {
       style.top = '76px';
       style.left = '84px';

@@ -2177,7 +2177,7 @@ export const Stage3CasesHub: React.FC<Stage3CasesHubProps> = ({
       {/* ====================================================================
           DIRECT, CLEAN SUB-TAB BAR WITH PROMINENT ACTION BUTTONS
           ==================================================================== */}
-      <div className="shrink-0 py-2 sm:h-[58px] flex flex-wrap items-center justify-between gap-3 border-b border-[#E5E5EA] dark:border-[#38383A]">
+      <div className="shrink-0 py-3 sm:min-h-[64px] mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-[#E5E5EA] dark:border-[#38383A]">
         <div className="seg-track overflow-x-auto">
           {(
             [

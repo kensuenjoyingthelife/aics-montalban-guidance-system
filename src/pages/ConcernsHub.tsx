@@ -1661,7 +1661,9 @@ const Bubbles = React.memo(function Bubbles({ msgs, showAll, studentName, when, 
 });
 
 // DEV only — lets us try the page before the student portal exists
-const PracticeButton: React.FC<{ students: StudentRecord[]; onDone: (ok: boolean) => void }> = ({ students, onDone }) => (
+const PracticeButton: React.FC<{ students: StudentRecord[]; onDone: (ok: boolean) => void }> = ({ students, onDone }) => {
+  if (!import.meta.env.DEV) return null;
+  return (
   <details className="relative">
     <summary
       title="Practice data (dev server only)"
@@ -1713,6 +1715,7 @@ const PracticeButton: React.FC<{ students: StudentRecord[]; onDone: (ok: boolean
     </button>
     </div>
   </details>
-);
+  );
+};
 
 export default ConcernsHub;

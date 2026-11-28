@@ -860,6 +860,12 @@ export const LoginGate: React.FC<LoginGateProps> = ({
                           ))}
                         </div>
 
+                        <p className="text-center text-[11px] font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                          {locale === 'tl'
+                            ? 'Paalala: Ang code ay walang 0, 1, I, o O para maiwasan ang kalituhan.'
+                            : 'Note: Verification codes exclude 0, 1, I, and O to prevent ambiguity.'}
+                        </p>
+
                         {otpSecondsLeft <= 0 ? (
                           <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 text-center">
                             <p className="text-xs font-bold text-rose-600 dark:text-rose-300">

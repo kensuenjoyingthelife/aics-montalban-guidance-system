@@ -44,9 +44,12 @@ export function applyTextSize(size: TextSize = getTextSize()) {
       });
     return;
   }
-  // Browser standard CSS zoom on root
+  // Browser standard CSS zoom on root (w-screen and min-w-full prevent unpainted viewport strips)
   root.style.setProperty('zoom', String(z));
   root.style.setProperty('--app-zoom', String(z));
+  // In normal zoom (1.0) ensure width is standard; under custom zoom ensure no clipping edge
+  root.style.minWidth = `${100 / z}vw`;
+  root.style.overflowX = 'hidden';
   // Invert zoom on floating chathead & window so its layout, font size & 1:1 Messenger geometry stay perfectly stable!
   root.style.setProperty('--aicy-inv-zoom', String(1 / z));
 }
