@@ -668,6 +668,71 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     passwordStatus.type === 'correct' &&
     confirmPasswordStatus.type === 'correct';
 
+  // ==========================================
+  // ADAPTIVE VISUAL INPUT FEEDBACK (RED, ORANGE, GREEN)
+  // - Green: 100% Valid & Complete
+  // - Orange: Almost Complete / In-Progress (e.g. 09XX typing, user@g... typing, password 4-5 chars)
+  // - Red: Invalid / Incorrect format when user entered data
+  // - Neutral: Untouched / empty
+  // ==========================================
+
+  // Contact Number state: 'empty' | 'valid' | 'progress' | 'error'
+  const contactProgress = useMemo<'empty' | 'valid' | 'progress' | 'error'>(() => {
+    const raw = regContactNumber.trim().replace(/\D/g, '');
+    if (!raw) return 'empty';
+    if (!raw.startsWith('09')) return 'error';
+    if (raw.length === 11) return 'valid';
+    if (raw.length >= 2 && raw.length < 11) return 'progress';
+    return 'error';
+  }, [regContactNumber]);
+
+  // Gmail state: 'empty' | 'valid' | 'progress' | 'error'
+  const emailProgress = useMemo<'empty' | 'valid' | 'progress' | 'error'>(() => {
+    const e = regEmail.trim().toLowerCase();
+    if (!e) return 'empty';
+    if (e.endsWith('@gmail.com') && e.length > 10 && /^[^\s@]+@gmail\.com$/.test(e)) return 'valid';
+    if (e.includes('@') || e.length >= 3) return 'progress';
+    return 'progress';
+  }, [regEmail]);
+
+  // Password state: 'empty' | 'valid' | 'progress' | 'error'
+  const passwordProgress = useMemo<'empty' | 'valid' | 'progress' | 'error'>(() => {
+    if (!regPassword) return 'empty';
+    const allPassed =
+      passwordCriteria.length &&
+      passwordCriteria.number &&
+      passwordCriteria.uppercase &&
+      passwordCriteria.special;
+    if (allPassed) return 'valid';
+    if (regPassword.length >= 3) return 'progress';
+    return 'error';
+  }, [regPassword, passwordCriteria]);
+
+  // Confirm password state: 'empty' | 'valid' | 'progress' | 'error'
+  const confirmPasswordProgress = useMemo<'empty' | 'valid' | 'progress' | 'error'>(() => {
+    if (!regConfirmPassword) return 'empty';
+    if (regConfirmPassword === regPassword && regPassword.length >= 6) return 'valid';
+    if (regPassword.startsWith(regConfirmPassword) || regConfirmPassword.startsWith(regPassword)) return 'progress';
+    return 'error';
+  }, [regConfirmPassword, regPassword]);
+
+  // Helper for adaptive border styling
+  const getFieldBorderClass = (state: 'empty' | 'valid' | 'progress' | 'error', isAutofilled = false) => {
+    if (isAutofilled) {
+      return 'border-emerald-500/60 focus:border-emerald-400 bg-emerald-500/[0.04] text-emerald-100 shadow-[0_0_8px_rgba(16,185,129,0.15)]';
+    }
+    switch (state) {
+      case 'valid':
+        return 'border-emerald-500/80 focus:border-emerald-400 bg-emerald-500/[0.05] text-white shadow-[0_0_12px_rgba(16,185,129,0.22)] ring-1 ring-emerald-500/30';
+      case 'progress':
+        return 'border-amber-400/80 focus:border-amber-300 bg-amber-400/[0.05] text-white shadow-[0_0_12px_rgba(251,191,36,0.22)] ring-1 ring-amber-400/30';
+      case 'error':
+        return 'border-rose-500/80 focus:border-rose-400 bg-rose-500/[0.05] text-white shadow-[0_0_12px_rgba(244,63,94,0.22)] ring-1 ring-rose-500/30';
+      default:
+        return 'border-white/15 focus:border-sky-400 bg-black/30 text-white';
+    }
+  };
+
   // Badge render helper - Subtle, clean Apple/Linear typographic status without emojis or loud checkmarks
   const renderBadge = (status: { type: string; label: string }) => {
     if (status.type === 'wrong') {
@@ -1620,14 +1685,21 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     <button
                       type="button"
                       onClick={() => setStudentDropdownOpen((prev) => !prev)}
-                      className="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/15 text-left font-mono font-bold flex items-center justify-between transition-all focus:outline-none focus:border-sky-400 hover:border-white/30 cursor-pointer"
+                      className={`w-full px-4 py-3 rounded-xl text-left font-mono font-bold flex items-center justify-between transition-all duration-200 focus:outline-none cursor-pointer ${
+                        regStudentNumber
+                          ? 'border-emerald-500/80 bg-emerald-500/[0.05] shadow-[0_0_12px_rgba(16,185,129,0.22)] ring-1 ring-emerald-500/30'
+                          : 'border-white/15 bg-black/30 hover:border-white/30'
+                      }`}
                     >
                       <span className={regStudentNumber ? 'text-white text-sm' : 'text-slate-400 font-sans font-normal text-xs'}>
                         {regStudentNumber
                           ? `${regStudentNumber} — ${regLastName ? `${regLastName}, ${regFirstName}` : ''}`
                           : (isTl ? `Pumili ng Grade ${regGradeLevel} Student Number...` : `Select Grade ${regGradeLevel} Student Number...`)}
                       </span>
-                      <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${studentDropdownOpen ? 'rotate-180' : ''}`} />
+                      <div className="flex items-center gap-2">
+                        {regStudentNumber && <Check className="w-4 h-4 text-emerald-400" />}
+                        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${studentDropdownOpen ? 'rotate-180' : ''}`} />
+                      </div>
                     </button>
 
                     {/* Dropdown Menu: Max 5 items visible (~210px), with internal search bar */}
@@ -1711,30 +1783,36 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
                     <div className="md:col-span-5 space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-300">
-                        {isTl ? 'Apelyido (Last Name)' : 'Last Name'}
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-slate-300">
+                          {isTl ? 'Apelyido (Last Name)' : 'Last Name'}
+                        </label>
+                        {regLastName && <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1"><Check className="w-3 h-3" /> Auto</span>}
+                      </div>
                       <input
                         type="text"
                         required
                         placeholder="DELA CRUZ"
                         value={regLastName}
                         onChange={(e) => setRegLastName(e.target.value.toUpperCase())}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-black/30 border border-white/15 text-xs font-semibold text-white focus:outline-none focus:border-sky-400"
+                        className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold transition-all duration-200 focus:outline-none ${getFieldBorderClass(regLastName ? 'valid' : 'empty', !!regStudentNumber)}`}
                       />
                     </div>
 
                     <div className="md:col-span-5 space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-300">
-                        {isTl ? 'Pangalan (First Name)' : 'First Name'}
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-slate-300">
+                          {isTl ? 'Pangalan (First Name)' : 'First Name'}
+                        </label>
+                        {regFirstName && <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1"><Check className="w-3 h-3" /> Auto</span>}
+                      </div>
                       <input
                         type="text"
                         required
                         placeholder="JANSEN"
                         value={regFirstName}
                         onChange={(e) => setRegFirstName(e.target.value.toUpperCase())}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-black/30 border border-white/15 text-xs font-semibold text-white focus:outline-none focus:border-sky-400"
+                        className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold transition-all duration-200 focus:outline-none ${getFieldBorderClass(regFirstName ? 'valid' : 'empty', !!regStudentNumber)}`}
                       />
                     </div>
 
@@ -1746,7 +1824,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                         placeholder="K."
                         value={regMiddleInitial}
                         onChange={(e) => setRegMiddleInitial(e.target.value.toUpperCase())}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-black/30 border border-white/15 text-xs font-semibold text-white text-center focus:outline-none focus:border-sky-400"
+                        className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold text-center transition-all duration-200 focus:outline-none ${getFieldBorderClass(regMiddleInitial ? 'valid' : 'empty', !!regStudentNumber)}`}
                       />
                     </div>
                   </div>
@@ -1776,19 +1854,34 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                           <Phone className="w-3.5 h-3.5 text-slate-400" />
                           <span>{isTl ? 'Contact Number' : 'Contact Number'}</span>
                         </label>
-                        {regContactNumber.length > 0 && regContactNumber.length !== 11 && (
-                          <span className="text-[10px] text-amber-400 font-medium">11 digits (09XX)</span>
+                        {contactProgress === 'error' && (
+                          <span className="text-[10px] text-rose-400 font-semibold">Dapat 09XX at 11 digits</span>
+                        )}
+                        {contactProgress === 'progress' && (
+                          <span className="text-[10px] text-amber-300 font-semibold">{regContactNumber.length}/11 digits</span>
+                        )}
+                        {contactProgress === 'valid' && (
+                          <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+                            <Check className="w-3 h-3" /> Tama (11 digits)
+                          </span>
                         )}
                       </div>
-                      <input
-                        type="text"
-                        maxLength={11}
-                        required
-                        placeholder="09XXXXXXXXX"
-                        value={regContactNumber}
-                        onChange={(e) => setRegContactNumber(e.target.value.replace(/\D/g, ''))}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-black/30 border border-white/15 text-xs font-mono font-semibold text-white focus:outline-none focus:border-sky-400"
-                      />
+                      <div className="relative">
+                        <input
+                          type="text"
+                          maxLength={11}
+                          required
+                          placeholder="09XXXXXXXXX"
+                          value={regContactNumber}
+                          onChange={(e) => setRegContactNumber(e.target.value.replace(/\D/g, ''))}
+                          className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-mono font-semibold transition-all duration-200 focus:outline-none ${getFieldBorderClass(contactProgress)}`}
+                        />
+                        {contactProgress === 'valid' && (
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-400">
+                            <Check className="w-4 h-4 stroke-[2.5]" />
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1806,18 +1899,35 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
                   {/* Gmail Address */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                      <Mail className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{isTl ? 'Personal Gmail Address' : 'Personal Gmail Address'}</span>
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      placeholder="yourname@gmail.com"
-                      value={regEmail}
-                      onChange={(e) => setRegEmail(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-black/30 border border-white/15 text-xs font-semibold text-white focus:outline-none focus:border-sky-400"
-                    />
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{isTl ? 'Personal Gmail Address' : 'Personal Gmail Address'}</span>
+                      </label>
+                      {emailProgress === 'progress' && (
+                        <span className="text-[10px] text-amber-300 font-semibold">Kailangan magtapos sa @gmail.com</span>
+                      )}
+                      {emailProgress === 'valid' && (
+                        <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+                          <Check className="w-3 h-3" /> Valid Gmail
+                        </span>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        required
+                        placeholder="yourname@gmail.com"
+                        value={regEmail}
+                        onChange={(e) => setRegEmail(e.target.value)}
+                        className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold transition-all duration-200 focus:outline-none ${getFieldBorderClass(emailProgress)}`}
+                      />
+                      {emailProgress === 'valid' && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-400">
+                          <Check className="w-4 h-4 stroke-[2.5]" />
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[11px] text-sky-300/80">
                       {isTl ? 'Dito ipapadala ang code kapag nakalimutan mo ang iyong password.' : 'Used for official password reset codes.'}
                     </p>
@@ -1826,9 +1936,19 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   {/* Password & Confirm Password */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-300">
-                        {isTl ? 'Password' : 'Password'}
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-slate-300">
+                          {isTl ? 'Password' : 'Password'}
+                        </label>
+                        {passwordProgress === 'progress' && (
+                          <span className="text-[10px] text-amber-300 font-semibold">Halos kumpleto na</span>
+                        )}
+                        {passwordProgress === 'valid' && (
+                          <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+                            <Check className="w-3 h-3" /> Malakas na Password
+                          </span>
+                        )}
+                      </div>
                       <div className="relative">
                         <input
                           type={showRegPassword ? 'text' : 'password'}
@@ -1836,7 +1956,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                           placeholder={isTl ? 'Min. 6 na karakter' : 'Min. 6 characters'}
                           value={regPassword}
                           onChange={(e) => setRegPassword(e.target.value)}
-                          className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-black/30 border border-white/15 text-xs font-semibold text-white focus:outline-none focus:border-sky-400"
+                          className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl border text-xs font-semibold transition-all duration-200 focus:outline-none ${getFieldBorderClass(passwordProgress)}`}
                         />
                         <button
                           type="button"
@@ -1853,9 +1973,22 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-300">
-                        {isTl ? 'Ulitin ang Password' : 'Confirm Password'}
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-slate-300">
+                          {isTl ? 'Ulitin ang Password' : 'Confirm Password'}
+                        </label>
+                        {confirmPasswordProgress === 'error' && (
+                          <span className="text-[10px] text-rose-400 font-semibold">Hindi tumutugma</span>
+                        )}
+                        {confirmPasswordProgress === 'progress' && (
+                          <span className="text-[10px] text-amber-300 font-semibold">Itugma ang password</span>
+                        )}
+                        {confirmPasswordProgress === 'valid' && (
+                          <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+                            <Check className="w-3 h-3" /> Tumugma
+                          </span>
+                        )}
+                      </div>
                       <div className="relative">
                         <input
                           type={showRegConfirmPassword ? 'text' : 'password'}
@@ -1863,7 +1996,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                           placeholder={isTl ? 'Ulitin ang password' : 'Repeat password'}
                           value={regConfirmPassword}
                           onChange={(e) => setRegConfirmPassword(e.target.value)}
-                          className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-black/30 border border-white/15 text-xs font-semibold text-white focus:outline-none focus:border-sky-400"
+                          className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl border text-xs font-semibold transition-all duration-200 focus:outline-none ${getFieldBorderClass(confirmPasswordProgress)}`}
                         />
                         <button
                           type="button"
