@@ -685,21 +685,18 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     const raw = regContactNumber.trim().replace(/\D/g, '');
     if (!raw) return { state: 'empty', label: '' };
     if (!raw.startsWith('09')) {
-      return { state: 'error', label: isTl ? 'Mali: Dapat magsimula sa 09' : 'Invalid: Must start with 09' };
+      return { state: 'error', label: isTl ? 'Dapat 09' : 'Start with 09' };
     }
     if (raw.length === 11) {
-      return { state: 'valid', label: isTl ? 'Tama: 11-digit mobile number' : 'Correct: 11-digit mobile number' };
+      return { state: 'valid', label: isTl ? '11 digits' : '11 digits' };
     }
     if (raw.length < 11) {
-      const remaining = 11 - raw.length;
       return {
         state: 'progress',
-        label: isTl
-          ? `Kulang pa: ${raw.length}/11 digits (mag-type pa ng ${remaining})`
-          : `Almost complete: ${raw.length}/11 digits (type ${remaining} more)`,
+        label: `${raw.length}/11`,
       };
     }
-    return { state: 'error', label: isTl ? 'Mali: Lumagpas sa 11 digits' : 'Invalid: Exceeded 11 digits' };
+    return { state: 'error', label: isTl ? 'Sobra sa 11' : '> 11 digits' };
   }, [regContactNumber, isTl]);
 
   // Gmail: Personal Gmail account
@@ -707,21 +704,21 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     const e = regEmail.trim().toLowerCase();
     if (!e) return { state: 'empty', label: '' };
     if (e.endsWith('@gmail.com') && e.length > 10 && /^[^\s@]+@gmail\.com$/.test(e)) {
-      return { state: 'valid', label: isTl ? 'Tama: Valid personal Gmail' : 'Correct: Valid personal Gmail' };
+      return { state: 'valid', label: isTl ? 'Valid Gmail' : 'Valid Gmail' };
     }
     if (e.includes('@') && !e.endsWith('@gmail.com')) {
       return {
         state: 'progress',
-        label: isTl ? 'Kulang pa: Dapat magtapos sa @gmail.com' : 'Almost there: Must end with @gmail.com',
+        label: '@gmail.com',
       };
     }
     if (e.length >= 3) {
       return {
         state: 'progress',
-        label: isTl ? 'Kulang pa: Dugtungan ng @gmail.com' : 'In progress: Append @gmail.com',
+        label: isTl ? 'Kulang pa' : 'Incomplete',
       };
     }
-    return { state: 'progress', label: isTl ? 'Kulang pa: Ilagay ang buong Gmail' : 'In progress: Enter full Gmail' };
+    return { state: 'progress', label: isTl ? 'Kulang pa' : 'Incomplete' };
   }, [regEmail, isTl]);
 
   // Password: 6+ chars, number, uppercase, special
@@ -733,71 +730,68 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       passwordCriteria.uppercase &&
       passwordCriteria.special;
     if (allPassed) {
-      return { state: 'valid', label: isTl ? 'Tama: Malakas at ligtas na password' : 'Correct: Strong password' };
+      return { state: 'valid', label: isTl ? 'Malakas' : 'Strong' };
     }
     if (regPassword.length >= 4) {
       return {
         state: 'progress',
-        label: isTl ? 'Kulang pa: Kumpletuhin ang checklist sa ibaba' : 'Almost there: Complete the checklist below',
+        label: isTl ? 'Kulang pa' : 'Incomplete',
       };
     }
-    return { state: 'error', label: isTl ? 'Mali: Masyadong maikli (min 6 chars)' : 'Invalid: Too short (min 6 chars)' };
+    return { state: 'error', label: isTl ? 'Maikli' : 'Short' };
   }, [regPassword, passwordCriteria, isTl]);
 
   // Confirm password
   const confirmPasswordFeedback = useMemo<{ state: 'empty' | 'valid' | 'progress' | 'error'; label: string }>(() => {
     if (!regConfirmPassword) return { state: 'empty', label: '' };
     if (regConfirmPassword === regPassword && regPassword.length >= 6) {
-      return { state: 'valid', label: isTl ? 'Tama: Eksaktong tumugma' : 'Correct: Exact match' };
+      return { state: 'valid', label: isTl ? 'Tumugma' : 'Matched' };
     }
     if (regPassword.startsWith(regConfirmPassword) || regConfirmPassword.startsWith(regPassword)) {
       return {
         state: 'progress',
-        label: isTl ? 'Kulang pa: Ituloy ang pag-type hanggang tumugma' : 'Almost there: Continue typing to match',
+        label: isTl ? 'I-type pa' : 'Typing...',
       };
     }
-    return { state: 'error', label: isTl ? 'Mali: Hindi tumutugma sa password' : 'Invalid: Does not match password' };
+    return { state: 'error', label: isTl ? 'Di tumugma' : 'Mismatch' };
   }, [regConfirmPassword, regPassword, isTl]);
 
   // Helper for adaptive border & background styling
   const getFieldBorderClass = (state: 'empty' | 'valid' | 'progress' | 'error', isLocked = false) => {
     if (isLocked) {
-      return 'border-sky-500/40 bg-sky-950/20 text-slate-200 cursor-not-allowed select-none opacity-90';
+      return 'border-white/10 bg-black/40 text-slate-200 cursor-not-allowed select-none opacity-85';
     }
     switch (state) {
       case 'valid':
-        return 'border-emerald-500 bg-emerald-500/10 text-white shadow-[0_0_14px_rgba(16,185,129,0.25)] ring-1 ring-emerald-500/40';
+        return 'border-emerald-500 bg-emerald-500/10 text-white shadow-[0_0_12px_rgba(16,185,129,0.22)] ring-1 ring-emerald-500/40';
       case 'progress':
-        return 'border-amber-400 bg-amber-400/10 text-white shadow-[0_0_14px_rgba(251,191,36,0.25)] ring-1 ring-amber-400/40';
+        return 'border-amber-400 bg-amber-400/10 text-white shadow-[0_0_12px_rgba(251,191,36,0.22)] ring-1 ring-amber-400/40';
       case 'error':
-        return 'border-rose-500 bg-rose-500/10 text-white shadow-[0_0_14px_rgba(244,63,94,0.25)] ring-1 ring-rose-500/40';
+        return 'border-rose-500 bg-rose-500/10 text-white shadow-[0_0_12px_rgba(244,63,94,0.22)] ring-1 ring-rose-500/40';
       default:
         return 'border-white/15 focus:border-sky-400 bg-black/30 text-white';
     }
   };
 
-  // Status Badge Component: High-contrast clear feedback tag
+  // Status indicator: Plain concise text (no box/pill, no check icons, clean mobile typography)
   const renderStatusBadge = (feedback: { state: 'empty' | 'valid' | 'progress' | 'error'; label: string }) => {
     if (feedback.state === 'empty' || !feedback.label) return null;
     if (feedback.state === 'valid') {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-in fade-in duration-150">
-          <Check className="w-3 h-3 stroke-[2.5]" />
+        <span className="text-[11px] font-semibold text-emerald-400 shrink-0">
           {feedback.label}
         </span>
       );
     }
     if (feedback.state === 'progress') {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-in fade-in duration-150">
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+        <span className="text-[11px] font-semibold text-amber-300 shrink-0">
           {feedback.label}
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 animate-in fade-in duration-150">
-        <XCircle className="w-3 h-3" />
+      <span className="text-[11px] font-semibold text-rose-400 shrink-0">
         {feedback.label}
       </span>
     );
@@ -1317,16 +1311,22 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
             </motion.div>
           )}
 
-          {/* Right Column: Original Form Card */}
+          {/* Right Column: Form Area */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35 }}
             className={`w-full ${
-              mode === 'register' ? 'max-w-5xl xl:max-w-6xl' : mode === 'forgot' ? 'max-w-[540px]' : 'max-w-[430px]'
-            } cosmic-glass-card login-glass p-4 sm:p-6 sm:py-6 space-y-4 sm:space-y-5 relative z-10 order-2 lg:order-none`}
+              mode === 'register'
+                ? 'max-w-5xl xl:max-w-6xl bg-transparent border-0 shadow-none p-0 space-y-4 sm:space-y-5'
+                : mode === 'forgot'
+                ? 'max-w-[540px] cosmic-glass-card login-glass p-4 sm:p-6 sm:py-6 space-y-4 sm:space-y-5'
+                : 'max-w-[430px] cosmic-glass-card login-glass p-4 sm:p-6 sm:py-6 space-y-4 sm:space-y-5'
+            } relative z-10 order-2 lg:order-none`}
           >
-          <ChristmasLights className="lg:hidden absolute z-[2] -top-1 left-5 right-5 h-8 w-[calc(100%-2.5rem)]" />
+          {mode !== 'register' && (
+            <ChristmasLights className="lg:hidden absolute z-[2] -top-1 left-5 right-5 h-8 w-[calc(100%-2.5rem)]" />
+          )}
           {/* ====================================================
               MODE: LOGIN SCREEN
               ==================================================== */}
@@ -1733,8 +1733,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                         {isTl ? 'Student ID Number' : 'Student ID Number'}
                       </label>
                       {regStudentNumber && (
-                        <span className="text-[11px] font-semibold text-emerald-400 flex items-center gap-1">
-                          <Check className="w-3 h-3" /> Selected
+                        <span className="text-[11px] font-semibold text-emerald-400">
+                          {isTl ? 'Napili na' : 'Selected'}
                         </span>
                       )}
                     </div>
@@ -1754,7 +1754,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                           : (isTl ? `Pumili ng Grade ${regGradeLevel} Student Number...` : `Select Grade ${regGradeLevel} Student Number...`)}
                       </span>
                       <div className="flex items-center gap-2">
-                        {regStudentNumber && <Check className="w-4 h-4 text-emerald-400" />}
                         <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${studentDropdownOpen ? 'rotate-180' : ''}`} />
                       </div>
                     </button>
@@ -1977,11 +1976,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                           onChange={(e) => setRegContactNumber(e.target.value.replace(/\D/g, ''))}
                           className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-mono font-semibold transition-all duration-200 focus:outline-none ${getFieldBorderClass(contactFeedback.state)}`}
                         />
-                        {contactFeedback.state === 'valid' && (
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-400">
-                            <Check className="w-4 h-4 stroke-[2.5]" />
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -2016,11 +2010,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                         onChange={(e) => setRegEmail(e.target.value)}
                         className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold transition-all duration-200 focus:outline-none ${getFieldBorderClass(emailFeedback.state)}`}
                       />
-                      {emailFeedback.state === 'valid' && (
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-400">
-                          <Check className="w-4 h-4 stroke-[2.5]" />
-                        </span>
-                      )}
                     </div>
                     <p className="text-[11px] text-sky-300/80">
                       {isTl ? 'Dito ipapadala ang code kapag nakalimutan mo ang iyong password.' : 'Used for official password reset codes.'}
