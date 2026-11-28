@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
+import jsPDF from 'jspdf';
 import { PrivacyTerms, LegalLinks, type LegalTab } from '../components/legal/PrivacyTerms';
 import {
   User,
@@ -14,7 +15,10 @@ import {
   Download,
   XCircle,
   CheckCircle2,
+  ChevronDown,
+  Search,
 } from 'lucide-react';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../services/supabaseClient';
 import { StudentPairInteractiveWing } from '../components/auth/StudentEncouragementWing';
 import { soundFX } from '../services/soundEngine';
 import { isCapacitorNativeApp } from '../services/devicePerformance';
@@ -234,19 +238,120 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   // ==========================================
   // REGISTER FORM STATE
   // ==========================================
+  const [regGradeLevel, setRegGradeLevel] = useState('11');
+  const [regStudentNumber, setRegStudentNumber] = useState('');
   const [regLastName, setRegLastName] = useState('');
   const [regFirstName, setRegFirstName] = useState('');
   const [regMiddleInitial, setRegMiddleInitial] = useState('');
   const [regContactNumber, setRegContactNumber] = useState('');
   const [regEmail, setRegEmail] = useState('');
-  const [regStudentNumber, setRegStudentNumber] = useState('');
-  const [regGradeLevel, setRegGradeLevel] = useState('11');
   const [regStrand, setRegStrand] = useState('ICT');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [regQuickPin, setRegQuickPin] = useState('');
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
+
+  // Available students list from masterlist (excluding already-registered portal accounts)
+  const [allMasterlistStudents, setAllMasterlistStudents] = useState<Array<{ student_number: string; full_name: string; grade_section: string; parent_phone?: string; parent_email?: string }>>([]);
+  const [registeredNumbers, setRegisteredNumbers] = useState<Set<string>>(new Set());
+  const [studentDropdownOpen, setStudentDropdownOpen] = useState(false);
+  const [studentSearchQuery, setStudentSearchQuery] = useState('');
+  const studentDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Load masterlist and registered accounts
+  useEffect(() => {
+    let mounted = true;
+    const loadStudentData = async () => {
+      try {
+        const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
+        const [studRes, portalRes] = await Promise.all([
+          fetch(`${SUPABASE_URL}/rest/v1/students?select=student_number,full_name,grade_section,parent_phone,parent_email&order=student_number.asc&limit=1000`, { headers }),
+          fetch(`${SUPABASE_URL}/rest/v1/portal_accounts?select=student_number`, { headers }),
+        ]);
+        if (mounted && studRes.ok) {
+          const sData = await studRes.json();
+          setAllMasterlistStudents(sData || []);
+        }
+        if (mounted && portalRes.ok) {
+          const pData = await portalRes.json();
+          const pSet = new Set<string>((pData || []).map((p: any) => String(p.student_number || '').trim()));
+          setRegisteredNumbers(pSet);
+        }
+      } catch (err) {
+        console.error('Failed to load student directory for registration:', err);
+      }
+    };
+    loadStudentData();
+    return () => { mounted = false; };
+  }, [mode]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (studentDropdownRef.current && !studentDropdownRef.current.contains(e.target as Node)) {
+        setStudentDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  // Filter available students: match selected Grade Level, exclude registered, match search
+  const availableStudentsForGrade = useMemo(() => {
+    const gradePrefix = regGradeLevel === '11' ? '25-' : '26-';
+    return allMasterlistStudents.filter((s) => {
+      const sNum = String(s.student_number || '').trim();
+      const numClean = sNum.replace('-', '');
+      // Exclude if already registered
+      if (registeredNumbers.has(sNum) || registeredNumbers.has(numClean)) return false;
+      // Filter by Grade Level
+      if (!sNum.startsWith(gradePrefix) && !s.grade_section?.includes(`Grade ${regGradeLevel}`)) return false;
+      // Search filter
+      if (studentSearchQuery.trim()) {
+        const q = studentSearchQuery.toLowerCase();
+        return sNum.toLowerCase().includes(q) || s.full_name?.toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }, [allMasterlistStudents, registeredNumbers, regGradeLevel, studentSearchQuery]);
+
+  // Handle student selection from dropdown with automatic fillup
+  const handleSelectStudentNumber = (s: { student_number: string; full_name: string; grade_section: string; parent_phone?: string; parent_email?: string }) => {
+    soundFX.playStepUnlock();
+    setRegStudentNumber(s.student_number);
+    setStudentDropdownOpen(false);
+    setStudentSearchQuery('');
+
+    // Parse LAST NAME, FIRST NAME MIDDLE INITIAL.
+    // e.g. "RAMOS, LEXTER F." -> Last: "RAMOS", First: "LEXTER", MI: "F."
+    const parts = (s.full_name || '').split(',');
+    if (parts.length >= 2) {
+      const lName = parts[0].trim();
+      const rest = parts[1].trim().split(' ');
+      const mi = rest.length > 1 && rest[rest.length - 1].length <= 2 ? rest.pop() || '' : '';
+      const fName = rest.join(' ').trim();
+      setRegLastName(lName);
+      setRegFirstName(fName);
+      setRegMiddleInitial(mi.replace('.', ''));
+    } else {
+      setRegLastName(s.full_name || '');
+    }
+
+    // Auto-detect strand from grade_section (e.g. "Grade 11 - STEM 2")
+    if (s.grade_section) {
+      if (s.grade_section.includes('STEM')) setRegStrand('STEM');
+      else if (s.grade_section.includes('ICT')) setRegStrand('ICT');
+      else if (s.grade_section.includes('ABM')) setRegStrand('ABM');
+      else if (s.grade_section.includes('HUMSS')) setRegStrand('HUMSS');
+      else if (s.grade_section.includes('GAS')) setRegStrand('GAS');
+    }
+
+    // Default contact if present
+    if (s.parent_phone && !regContactNumber) {
+      setRegContactNumber(s.parent_phone);
+    }
+  };
 
   // Privacy Terms & Conditions Modal State
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
@@ -321,14 +426,124 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
   const [scanPendingAccount, setScanPendingAccount] = useState<any>(null);
   const [scanForcedError, setScanForcedError] = useState<string | null>(null);
 
-  // Success Modal State & Post-Registration PIN Verification Flow
+  // Success Modal State with Credential Preview & PDF Backup
   const [successData, setSuccessData] = useState<{
     username: string;
     account: StudentPortalUser;
+    plainPassword?: string;
   } | null>(null);
+  const [showBackupPassword, setShowBackupPassword] = useState(false);
   const [postRegPinStep, setPostRegPinStep] = useState<boolean>(false);
   const [postRegPinInput, setPostRegPinInput] = useState<string>('');
   const [postRegPinError, setPostRegPinError] = useState<string | null>(null);
+
+  // Download PDF Backup of Account Credentials
+  const downloadCredentialBackupPdf = () => {
+    soundFX.playToggleSwitch(true);
+    try {
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a6', // Clean compact pocket-sized ID card format (105 x 148 mm)
+      });
+
+      // Background header fill
+      doc.setFillColor(11, 30, 72); // Deep AICS Blue #0B1E48
+      doc.rect(0, 0, 105, 32, 'F');
+
+      // Header Text
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('AICS MONTALBAN BRANCH', 52.5, 12, { align: 'center' });
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(155, 203, 255);
+      doc.text('GUIDANCE & DISCIPLINE OFFICE', 52.5, 18, { align: 'center' });
+      doc.text('STUDENT PORTAL LOGIN BACKUP CARD', 52.5, 24, { align: 'center' });
+
+      // Body Card Container
+      doc.setDrawColor(210, 225, 245);
+      doc.setFillColor(248, 250, 253);
+      doc.roundedRect(6, 36, 93, 76, 3, 3, 'FD');
+
+      // Student Full Name
+      const fullName = `${regLastName}, ${regFirstName} ${regMiddleInitial ? regMiddleInitial + '.' : ''}`.trim();
+      doc.setTextColor(30, 41, 59);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text(fullName || 'STUDENT ACCOUNT', 10, 44);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Grade ${regGradeLevel} · ${regStrand}`, 10, 50);
+
+      // Divider Line
+      doc.setDrawColor(226, 232, 240);
+      doc.line(10, 53, 95, 53);
+
+      // Student ID Box
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(100, 116, 139);
+      doc.text('STUDENT NUMBER (USERNAME):', 10, 60);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(14, 116, 144); // Sky cyan #0E7490
+      doc.text(regStudentNumber || successData?.username || '—', 10, 67);
+
+      // Gmail Box
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(100, 116, 139);
+      doc.text('REGISTERED GMAIL ADDRESS:', 10, 75);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9.5);
+      doc.setTextColor(30, 41, 59);
+      doc.text(regEmail || '—', 10, 81);
+
+      // Password Box
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(100, 116, 139);
+      doc.text('ACCOUNT PASSWORD:', 10, 89);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(225, 29, 72); // Rose/Crimson
+      doc.text(successData?.plainPassword || regPassword || '••••••••', 10, 96);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.5);
+      doc.setTextColor(100, 116, 139);
+      doc.text('Date Created: ' + new Date().toLocaleDateString('en-PH', { dateStyle: 'medium' }), 10, 106);
+
+      // Security Notice Footer
+      doc.setFillColor(254, 243, 199); // Amber tint
+      doc.setDrawColor(251, 191, 36);
+      doc.roundedRect(6, 115, 93, 26, 2, 2, 'FD');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(146, 64, 14);
+      doc.text('PAUNAWA / CONFIDENTIALITY NOTICE:', 10, 121);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.5);
+      doc.setTextColor(120, 53, 15);
+      doc.text('1. Itabi at huwag ibahagi ang dokumentong ito sa kaklase.', 10, 126);
+      doc.text('2. Gamitin ang Student ID at Password para makapag-log in.', 10, 130);
+      doc.text('3. Protektado sa ilalim ng RA 10173 (Data Privacy Act of 2012).', 10, 134);
+
+      doc.save(`AICS_Login_Credentials_${regStudentNumber || 'Student'}.pdf`);
+    } catch (err) {
+      console.error('Failed to generate PDF backup:', err);
+    }
+  };
 
   // ==========================================
   // FORGOT PASSWORD STATE
@@ -574,7 +789,11 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       } else {
         studentRegisterRateLimiter.reset();
         soundFX.playSuccessCheck();
-        setSuccessData({ username: res.account.studentNumber, account: res.account });
+        setSuccessData({
+          username: res.account.studentNumber,
+          account: res.account,
+          plainPassword: regPassword,
+        });
         setPostRegPinStep(false);
         setPostRegPinInput('');
       }
@@ -1321,11 +1540,166 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   />
                 </div>
 
-                {/* 1. STUDENT IDENTITY */}
+                {/* 1. GRADE LEVEL & STUDENT NUMBER SELECTION (FIRST) */}
+                <div className="space-y-4 p-5 rounded-2xl register-section-card">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">1</span>
+                      <span>{isTl ? 'Baitang at Student Number' : 'Grade Level & Student ID'}</span>
+                    </h3>
+                    <span className="text-[11px] font-semibold text-sky-700 dark:text-sky-300">
+                      {availableStudentsForGrade.length} {isTl ? 'available slots' : 'available slots'}
+                    </span>
+                  </div>
+
+                  {/* Grade Level Selector Buttons */}
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-bold register-label block">
+                      {isTl ? 'Pumili ng Baitang (Grade Level)' : 'Select Grade Level'}
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundFX.playToggleSwitch(true);
+                          setRegGradeLevel('11');
+                          setRegStudentNumber('');
+                          setRegLastName('');
+                          setRegFirstName('');
+                          setRegMiddleInitial('');
+                        }}
+                        className={`btn-press py-3 px-4 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all ${
+                          regGradeLevel === '11'
+                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-900/30 ring-2 ring-blue-400'
+                            : 'bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-white/80 hover:bg-slate-200 dark:hover:bg-white/10'
+                        }`}
+                      >
+                        <span className="text-base">🎓</span>
+                        <span>Grade 11 (25-XXXX)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundFX.playToggleSwitch(true);
+                          setRegGradeLevel('12');
+                          setRegStudentNumber('');
+                          setRegLastName('');
+                          setRegFirstName('');
+                          setRegMiddleInitial('');
+                        }}
+                        className={`btn-press py-3 px-4 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all ${
+                          regGradeLevel === '12'
+                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-900/30 ring-2 ring-blue-400'
+                            : 'bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-white/80 hover:bg-slate-200 dark:hover:bg-white/10'
+                        }`}
+                      >
+                        <span className="text-base">🎓</span>
+                        <span>Grade 12 (26-XXXX)</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Student Number Searchable Dropdown (Locked to 5 items max visible height: 210px with scroll) */}
+                  <div className="space-y-1.5 relative" ref={studentDropdownRef}>
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-bold register-label flex items-center gap-1.5">
+                        <User className="w-4 h-4 text-blue-600 dark:text-sky-400" />
+                        <span>{isTl ? 'Student ID Number' : 'Student ID Number'}</span>
+                      </label>
+                      {renderBadge(studentNumberStatus)}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setStudentDropdownOpen((prev) => !prev)}
+                      className="w-full px-4 py-3.5 rounded-xl cosmic-input text-left font-mono font-bold flex items-center justify-between transition-all focus:outline-none"
+                    >
+                      <span className={regStudentNumber ? 'text-slate-900 dark:text-white text-base' : 'text-slate-400 dark:text-white/40 font-sans font-normal text-sm'}>
+                        {regStudentNumber
+                          ? `${regStudentNumber} — ${regLastName ? `${regLastName}, ${regFirstName}` : ''}`
+                          : (isTl ? `Pumili ng Grade ${regGradeLevel} Student Number...` : `Select Grade ${regGradeLevel} Student Number...`)}
+                      </span>
+                      <ChevronDown className={`w-4 h-4 text-slate-400 dark:text-white/60 transition-transform ${studentDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {/* Dropdown Menu: Max 5 items visible (~210px), with internal search bar */}
+                    {studentDropdownOpen && (
+                      <div className="absolute left-0 right-0 top-full mt-1.5 z-40 rounded-2xl bg-white dark:bg-[#0B1E48] border-2 border-blue-500/50 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                        {/* Search Filter Header */}
+                        <div className="p-2.5 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 flex items-center gap-2">
+                          <Search className="w-4 h-4 text-slate-400 dark:text-white/50 shrink-0 ml-1" />
+                          <input
+                            type="text"
+                            autoFocus
+                            placeholder={isTl ? 'Mag-search ng ID o Pangalan...' : 'Search ID or Name...'}
+                            value={studentSearchQuery}
+                            onChange={(e) => setStudentSearchQuery(e.target.value)}
+                            className="w-full bg-transparent text-xs font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/40 focus:outline-none"
+                          />
+                          {studentSearchQuery && (
+                            <button
+                              type="button"
+                              onClick={() => setStudentSearchQuery('')}
+                              className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-white px-1.5 py-0.5 rounded"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Dropdown Items List: max 5 items visible (each item ~42px, max-h-[210px]) */}
+                        <div className="max-h-[210px] overflow-y-auto divide-y divide-slate-100 dark:divide-white/5">
+                          {availableStudentsForGrade.length === 0 ? (
+                            <div className="p-4 text-center text-xs font-medium text-slate-500 dark:text-white/60">
+                              {studentSearchQuery
+                                ? (isTl ? 'Walang nahanap na Student ID.' : 'No matching Student ID found.')
+                                : (isTl ? 'Lahat ng Student ID sa baitang na ito ay nakarehistro na.' : 'All Student IDs for this grade are already registered.')}
+                            </div>
+                          ) : (
+                            availableStudentsForGrade.map((student) => (
+                              <button
+                                key={student.student_number}
+                                type="button"
+                                onClick={() => handleSelectStudentNumber(student)}
+                                className={`w-full px-4 py-2.5 text-left text-xs flex items-center justify-between hover:bg-blue-50 dark:hover:bg-white/10 transition-colors ${
+                                  regStudentNumber === student.student_number ? 'bg-blue-100/70 dark:bg-blue-900/40 font-bold' : ''
+                                }`}
+                              >
+                                <div className="min-w-0 pr-2">
+                                  <span className="font-mono font-black text-blue-700 dark:text-sky-300 text-sm block">
+                                    {student.student_number}
+                                  </span>
+                                  <span className="text-[11px] text-slate-700 dark:text-white/80 truncate block">
+                                    {student.full_name}
+                                  </span>
+                                </div>
+                                <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-white/70 font-semibold shrink-0">
+                                  {student.grade_section}
+                                </span>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 2. AUTO-FILLED STUDENT IDENTITY & STRAND */}
                 <div className="space-y-3 p-5 rounded-2xl register-section-card">
-                  <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase">
-                    {isTl ? 'Pangalan' : 'Your name'}
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">2</span>
+                      <span>{isTl ? 'Impormasyon ng Estudyante (Auto-filled)' : 'Student Identity (Auto-filled)'}</span>
+                    </h3>
+                    {regStudentNumber && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                        <Check className="w-3 h-3" /> Auto-matched
+                      </span>
+                    )}
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                     <div className="md:col-span-5 space-y-1.5">
                       <div className="flex items-center justify-between">
@@ -1335,7 +1709,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Dela Cruz"
+                        placeholder="e.g. DELA CRUZ"
                         value={regLastName}
                         onChange={(e) => setRegLastName(e.target.value.toUpperCase())}
                         className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-semibold focus:outline-none"
@@ -1350,7 +1724,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Jansen"
+                        placeholder="e.g. JANSEN"
                         value={regFirstName}
                         onChange={(e) => setRegFirstName(e.target.value.toUpperCase())}
                         className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-semibold focus:outline-none"
@@ -1359,7 +1733,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
 
                     <div className="md:col-span-2 space-y-1.5">
                       <div className="flex items-center justify-between gap-1">
-                        <label className="text-xs sm:text-sm font-bold register-label">M.I. <span className="font-normal opacity-70">{isTl ? '(kung meron)' : '(optional)'}</span></label>
+                        <label className="text-xs sm:text-sm font-bold register-label">M.I.</label>
                         {miStatus.type === 'wrong' ? renderBadge(miStatus) : null}
                       </div>
                       <input
@@ -1372,14 +1746,25 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       />
                     </div>
                   </div>
-                </div>
 
-                {/* 2. CONTACT DETAILS & STUDENT ID */}
-                <div className="space-y-3 p-5 rounded-2xl register-section-card">
-                  <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase">
-                    {isTl ? 'Contact at student number' : 'Contact and student number'}
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold register-label">
+                        {isTl ? 'Strand' : 'Academic Strand'}
+                      </label>
+                      <select
+                        value={regStrand}
+                        onChange={(e) => setRegStrand(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-bold focus:outline-none bg-slate-900 text-white"
+                      >
+                        <option value="STEM" className="bg-slate-900 text-white">STEM (Science, Tech, Eng, Math)</option>
+                        <option value="ICT" className="bg-slate-900 text-white">ICT (Information & Comm Tech)</option>
+                        <option value="ABM" className="bg-slate-900 text-white">ABM (Accountancy & Business)</option>
+                        <option value="HUMSS" className="bg-slate-900 text-white">HUMSS (Humanities & Social Sci)</option>
+                        <option value="GAS" className="bg-slate-900 text-white">GAS (General Academic Strand)</option>
+                      </select>
+                    </div>
+
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-bold register-label">{isTl ? 'Contact No.' : 'Contact No.'}</label>
@@ -1391,86 +1776,45 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                         required
                         placeholder="09XXXXXXXXX"
                         value={regContactNumber}
-                        onChange={(e) => setRegContactNumber(e.target.value.replace(/\D/g, ""))}
+                        onChange={(e) => setRegContactNumber(e.target.value.replace(/\D/g, ''))}
                         className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-mono font-semibold focus:outline-none"
                       />
-                    </div>
-
-                    <div className="space-y-1.5 md:col-span-1 lg:col-span-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold register-label">
-                          Gmail
-                        </label>
-                        {renderBadge(emailStatus)}
-                      </div>
-                      <input
-                        type="email"
-                        required
-                        placeholder="yourname@gmail.com"
-                        value={regEmail}
-                        onChange={(e) => setRegEmail(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-semibold focus:outline-none"
-                      />
-                      <p className="text-[11px] font-bold text-blue-700 dark:text-sky-300">
-                        {isTl ? 'Dito ipapadala ang code kapag nakalimutan mo ang password.' : 'We send a code here if you forget your password.'}
-                      </p>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold register-label">{isTl ? 'Student Number' : 'Student Number'}</label>
-                        {renderBadge(studentNumberStatus)}
-                      </div>
-                      <input
-                        type="text"
-                        required
-                        inputMode="numeric"
-                        maxLength={7}
-                        placeholder="e.g. 23-0001"
-                        value={regStudentNumber}
-                        onChange={(e) => setRegStudentNumber(maskStudentId(e.target.value, regStudentNumber))}
-                        className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-mono font-bold focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-sm font-bold register-label">
-                        {isTl ? 'Baitang (Grade Level)' : 'Grade Level'}
-                      </label>
-                      <select
-                        value={regGradeLevel}
-                        onChange={(e) => setRegGradeLevel(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-bold focus:outline-none bg-slate-900 text-white"
-                      >
-                        <option value="11" className="bg-slate-900 text-white">Grade 11</option>
-                        <option value="12" className="bg-slate-900 text-white">Grade 12</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-sm font-bold register-label">
-                        {isTl ? 'Strand' : 'Strand'}
-                      </label>
-                      <select
-                        value={regStrand}
-                        onChange={(e) => setRegStrand(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-bold focus:outline-none bg-slate-900 text-white"
-                      >
-                        <option value="HUMSS" className="bg-slate-900 text-white">HUMSS</option>
-                        <option value="ABM" className="bg-slate-900 text-white">ABM</option>
-                        <option value="ICT" className="bg-slate-900 text-white">ICT</option>
-                        <option value="GAS" className="bg-slate-900 text-white">GAS</option>
-                      </select>
                     </div>
                   </div>
                 </div>
 
-                {/* 4. PASSWORD & SECURITY CHECKLIST */}
-                <div className="space-y-3 p-5 rounded-2xl register-section-card">
-                  <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase">
-                    {isTl ? 'Password' : 'Password'}
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* 3. CREDENTIALS & LOGIN SETUP (GMAIL + PASSWORD TOGETHER) */}
+                <div className="space-y-4 p-5 rounded-2xl register-section-card">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">3</span>
+                      <span>{isTl ? 'Gmail at Password (Manual na Ilalagay)' : 'Gmail & Password Credentials'}</span>
+                    </h3>
+                  </div>
+
+                  {/* Gmail Address */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-bold register-label">
+                        {isTl ? 'Personal Gmail Address' : 'Personal Gmail Address'}
+                      </label>
+                      {renderBadge(emailStatus)}
+                    </div>
+                    <input
+                      type="email"
+                      required
+                      placeholder="yourname@gmail.com"
+                      value={regEmail}
+                      onChange={(e) => setRegEmail(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-semibold focus:outline-none"
+                    />
+                    <p className="text-[11px] font-bold text-blue-700 dark:text-sky-300">
+                      {isTl ? 'Dito ipapadala ang OTP verification code kapag nakalimutan mo ang password.' : 'Used for official AICS verification and password resets.'}
+                    </p>
+                  </div>
+
+                  {/* Password & Confirm Password */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-bold register-label">{isTl ? 'Password' : 'Password'}</label>
@@ -1543,7 +1887,6 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                       {passwordCriteria.special ? '✓' : '○'} {isTl ? '1+ Simbolo (!@#$)' : '1+ Special (!@#$)'}
                     </div>
                   </div>
-
                 </div>
 
                 {/* Bottom Inline Status Notification (High Contrast & Visible in Light/Dark Mode) */}
@@ -1893,74 +2236,124 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
       )}
 
       {/* ====================================================
-          ACCOUNT CREATED: success mini-card (privacy, safety, how to use) — no animation
+          ACCOUNT CREATED: CREDENTIALS PREVIEW & PDF BACKUP MODAL
           ==================================================== */}
       {successData && (
-        <div className="fixed inset-0 z-50 bg-[#06122B]/90 flex items-center justify-center p-3 sm:p-6" data-reg-success>
-          <div role="dialog" aria-modal="true" aria-label={isTl ? 'Nagawa ang account' : 'Account created'} className="w-full max-w-md max-h-[92vh] overflow-y-auto rounded-3xl bg-[#0B1E48] border-2 border-emerald-400 p-5 sm:p-6 space-y-4 shadow-2xl text-left">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 shrink-0 rounded-full bg-emerald-500 flex items-center justify-center text-white font-extrabold">
+        <div className="fixed inset-0 z-50 bg-[#06122B]/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6" data-reg-success>
+          <div role="dialog" aria-modal="true" aria-label={isTl ? 'Nagawa ang account' : 'Account created'} className="w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-3xl bg-[#0B1E48] border-2 border-emerald-400 p-5 sm:p-7 space-y-5 shadow-2xl text-left text-white">
+            <div className="flex items-center gap-3.5 border-b border-white/10 pb-4">
+              <div className="w-12 h-12 shrink-0 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white font-extrabold shadow-lg shadow-emerald-950/50">
                 <Check className="w-7 h-7 text-white stroke-[3]" />
               </div>
               <div className="min-w-0">
-                <h3 className="text-lg font-extrabold text-white leading-tight">{isTl ? 'Nagawa na ang account mo!' : 'Your account is ready!'}</h3>
-                <p className="text-xs text-[#9BCBFF]">
-                  {isTl ? 'Username mo ang Student No.:' : 'Your username is your Student No.:'} <b className="font-mono text-emerald-300">{successData.username}</b>
-                </p>
+                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-400/30">
+                  {isTl ? 'MATAGUMPAY NA REHISTRO' : 'REGISTRATION SUCCESSFUL'}
+                </span>
+                <h3 className="text-xl font-black text-white leading-tight mt-1">
+                  {isTl ? 'Nagawa na ang iyong Account!' : 'Your Account is Ready!'}
+                </h3>
               </div>
             </div>
 
-            <section className="rounded-2xl bg-white/5 border border-white/15 p-3.5 space-y-1">
-              <p className="text-xs font-extrabold text-white flex items-center gap-1.5">
-                <Lock className="w-4 h-4 text-emerald-400" />
-                <span>{isTl ? 'Ang iyong privacy (RA 10173)' : 'Your privacy (RA 10173)'}</span>
-              </p>
-              <ul className="text-xs text-white/85 leading-relaxed list-disc pl-4 space-y-0.5">
-                <li>{isTl ? 'Ang Guidance Office lang ang makakakita ng impormasyon at mga report mo.' : 'Only the Guidance Office can see your information and reports.'}</li>
-                <li>{isTl ? 'Hindi ito ibibigay sa isinumbong mo, sa ibang estudyante, o sa magulang.' : 'They are never shared with the student you report, other students, or parents.'}</li>
-                <li>{isTl ? 'Ginagamit lang ang student number mo para itugma ka sa listahan ng school.' : 'Your student number is used only to match you with the school list.'}</li>
-              </ul>
-            </section>
+            {/* Credential Preview Card */}
+            <div className="rounded-2xl bg-white/10 dark:bg-black/30 border border-white/20 p-4.5 space-y-3.5 shadow-inner">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-sky-200">
+                  {isTl ? 'Mga Detalye sa Pag-login (Credentials)' : 'Your Login Credentials'}
+                </span>
+                <span className="text-[10px] text-amber-300 font-semibold bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/30">
+                  {isTl ? 'Huwag Iwala' : 'Keep Confidential'}
+                </span>
+              </div>
 
-            <section className="rounded-2xl bg-white/5 border border-white/15 p-3.5 space-y-1">
-              <p className="text-xs font-extrabold text-white flex items-center gap-1.5">
-                <Shield className="w-4 h-4 text-sky-400" />
-                <span>{isTl ? 'Para maging ligtas ka' : 'Staying safe'}</span>
-              </p>
-              <ul className="text-xs text-white/85 leading-relaxed list-disc pl-4 space-y-0.5">
-                <li>{isTl ? 'Huwag ibigay kahit kanino ang password mo.' : 'Never share your password with anyone.'}</li>
-                <li>{isTl ? 'Mag-Sign Out pagkatapos, lalo na sa computer ng school o computer shop. Kusa rin itong nagsa-sign out pagkalipas ng 15 minuto.' : 'Sign out when done, especially on school or shop computers. It also signs out by itself after 15 minutes.'}</li>
-                <li>{isTl ? 'Kung may panganib ngayon mismo, pumunta agad sa guro, guard o Guidance Office. Hindi pang-emergency ang portal.' : 'If you are in danger right now, go to a teacher, the guard or the Guidance Office. The portal is not for emergencies.'}</li>
-              </ul>
-            </section>
+              {/* Student Number (Username) */}
+              <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] font-bold text-slate-300 block">STUDENT NUMBER (USERNAME)</span>
+                  <span className="text-lg font-mono font-black text-emerald-300 tracking-wider">
+                    {successData.username}
+                  </span>
+                </div>
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-400/30">
+                  Official ID
+                </span>
+              </div>
 
-            <section className="rounded-2xl bg-white/5 border border-white/15 p-3.5 space-y-1">
-              <p className="text-xs font-extrabold text-white">📝 {isTl ? 'Paano gamitin' : 'How to use it'}</p>
-              <ol className="text-xs text-white/85 leading-relaxed list-decimal pl-4 space-y-0.5">
-                <li>{isTl ? '"Report Concern": piliin ang uri, isulat ang nangyari, tapos i-submit.' : '"Report Concern": pick the type, write what happened, then submit.'}</li>
-                <li>{isTl ? '"My Reports": dito mo makikita kung na-review na ng Guidance Office.' : '"My Reports": see whether the Guidance Office has reviewed it.'}</li>
-                <li>{isTl ? '"Guidance Chat": magbubukas kapag na-approve ang report mo.' : '"Guidance Chat": opens once your report is approved.'}</li>
-              </ol>
-            </section>
+              {/* Gmail Address */}
+              <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
+                <div className="min-w-0 pr-2">
+                  <span className="text-[11px] font-bold text-slate-300 block">REGISTERED GMAIL</span>
+                  <span className="text-sm font-semibold text-white truncate block">
+                    {regEmail || successData.account.email || '—'}
+                  </span>
+                </div>
+                <span className="text-xs font-semibold px-2 py-1 rounded-lg bg-sky-500/15 text-sky-300 border border-sky-400/30 shrink-0">
+                  Gmail OTP
+                </span>
+              </div>
 
+              {/* Password Preview */}
+              <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] font-bold text-slate-300 block">PASSWORD</span>
+                  <span className="text-base font-mono font-bold text-rose-300 tracking-wide">
+                    {showBackupPassword ? (successData.plainPassword || regPassword || '••••••••') : '••••••••••••'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playToggleSwitch(true);
+                    setShowBackupPassword((prev) => !prev);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-slate-200 transition-colors flex items-center gap-1.5"
+                >
+                  {showBackupPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  <span>{showBackupPassword ? 'Hide' : 'Show'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Prominent PDF Backup Download Banner */}
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-sky-600/20 via-blue-600/30 to-sky-600/20 border border-sky-400/40 space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-sky-500 text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div className="text-xs leading-relaxed text-slate-200">
+                  <p className="font-bold text-white text-sm">
+                    {isTl ? 'I-download ang PDF Backup Form' : 'Download Credential Backup PDF'}
+                  </p>
+                  <p className="text-sky-200/90 text-[11px] mt-0.5">
+                    {isTl
+                      ? 'Kung sakaling makalimutan mo ang iyong password o student number, i-download itong opisyal na PDF file para may kopya ka anumang oras.'
+                      : 'Save this official AICS credential slip to your phone or computer so you never lose access to your account.'}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={downloadCredentialBackupPdf}
+                className="btn-press w-full py-3 px-4 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-extrabold text-xs shadow-lg shadow-sky-950/50 flex items-center justify-center gap-2 cursor-pointer transition-all border border-white/20"
+              >
+                <Download className="w-4 h-4" />
+                <span>{isTl ? 'I-DOWNLOAD ANG PDF BACKUP FORM' : 'DOWNLOAD PDF BACKUP CARD'}</span>
+              </button>
+            </div>
+
+            {/* Proceed to Dashboard Button */}
             <button
               type="button"
               data-reg-success-go
               onClick={() => {
                 soundFX.playSuccessCheck();
-                if (isMobileDevice && regQuickPin.trim()) {
-                  setPostRegPinStep(true);
-                } else {
-                  onLoginSuccess(successData.account);
-                }
+                onLoginSuccess(successData.account);
               }}
-              className="btn-press w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:opacity-95 text-white font-extrabold text-sm shadow-xl flex items-center justify-center gap-2 cursor-pointer"
+              className="btn-press w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:opacity-95 text-white font-extrabold text-sm shadow-xl flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>
-                {isMobileDevice && regQuickPin.trim()
-                  ? (isTl ? 'I-verify ang 5-Digit PIN (Mobile App) →' : 'Verify 5-Digit PIN (Mobile App) →')
-                  : (isTl ? 'Naintindihan ko — Pumasok sa Dashboard →' : 'Got it — Enter Student Dashboard →')}
-              </span>
+              <span>{isTl ? 'Naintindihan ko — Pumasok sa Dashboard' : 'Got it — Enter Student Dashboard'}</span>
+              <span>→</span>
             </button>
           </div>
         </div>
