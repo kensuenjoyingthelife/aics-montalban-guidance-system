@@ -17,6 +17,12 @@ import {
   CheckCircle2,
   ChevronDown,
   Search,
+  GraduationCap,
+  Sparkles,
+  ArrowRight,
+  Mail,
+  Phone,
+  BookOpen,
 } from 'lucide-react';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../services/supabaseClient';
 import { StudentPairInteractiveWing } from '../components/auth/StudentEncouragementWing';
@@ -662,23 +668,17 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
     passwordStatus.type === 'correct' &&
     confirmPasswordStatus.type === 'correct';
 
-  // Badge render helper
+  // Badge render helper - Subtle, clean Apple/Linear typographic status without emojis or loud checkmarks
   const renderBadge = (status: { type: string; label: string }) => {
-    if (status.type === 'correct') {
-      return (
-        <span className="inline-flex items-center gap-1.5 text-xs font-extrabold px-3 py-1 rounded-full badge-correct shadow-xs">
-          <span>✓</span> {status.label}
-        </span>
-      );
-    }
     if (status.type === 'wrong') {
       return (
-        <span className="inline-flex items-center gap-1.5 text-xs font-extrabold px-3 py-1 rounded-full badge-wrong shadow-xs">
-          <span>✕</span> {status.label}
+        <span className="text-[11px] font-semibold text-rose-400">
+          {status.label}
         </span>
       );
     }
-    return null; // empty field: no badge until the student types
+    // Clean, subtle confirmation only when relevant error state needs clearing (no noisy green checks)
+    return null;
   };
 
   // Image Upload Handlers
@@ -1486,14 +1486,23 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
           )}
 
           {/* ====================================================
-              MODE: CREATE ACCOUNT (SPACIOUS & ORGANIZED LAYOUT)
+              MODE: CREATE ACCOUNT (2026 WORLD-CLASS APPLE / LINEAR ARCHITECTURE)
+              - Zero Emojis (SVG Vector Icons only)
+              - Zero Boring Slop (Sleek grouped segmented cards, clean typography, live dot indicators)
+              - Streamlined Flow: Grade Toggle -> Filtered Student ID -> Identity Card -> Credentials
               ==================================================== */}
           {mode === 'register' && (
-            <div className="space-y-8">
+            <div className="space-y-6">
               {/* Header inside Card */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/15 dark:border-white/15 pb-5">
-                <div>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight card-title-text">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 dark:border-white/10 pb-4">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-sky-300">
+                      Official Student Registration
+                    </span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
                     {isTl ? 'Gumawa ng Student Account' : 'Create Student Account'}
                   </h2>
                 </div>
@@ -1503,30 +1512,28 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                     soundFX.playBackspace();
                     setMode('login');
                   }}
-                  className="btn-press px-5 py-2.5 rounded-xl card-back-button text-xs font-extrabold self-start sm:self-auto"
+                  className="btn-press px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-white text-xs font-semibold self-start sm:self-auto transition-colors cursor-pointer"
                 >
                   {isTl ? '← Bumalik sa Sign In' : '← Back to Login'}
                 </button>
               </div>
 
               {regError && (
-                <div className="p-3.5 sm:p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/80 border-1.5 border-rose-500/80 dark:border-rose-400 text-rose-950 dark:text-rose-100 flex items-start gap-3 shadow-md">
-                  <div className="w-5.5 h-5.5 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                  </div>
+                <div className="p-3.5 sm:p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-200 flex items-start gap-3">
+                  <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-extrabold uppercase tracking-wider text-rose-700 dark:text-rose-300">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-rose-400">
                       {isTl ? 'Paunawa sa Pagpaparehistro' : 'Registration Notice'}
                     </p>
-                    <p className="mt-1 text-xs font-normal text-rose-900 dark:text-rose-200 leading-relaxed">
+                    <p className="mt-0.5 text-xs text-rose-200 leading-relaxed font-normal">
                       {regError}
                     </p>
                   </div>
                 </div>
               )}
 
-              <form onSubmit={handleRegisterSubmit} className="space-y-8">
-                {/* Invisible Honeypot Anti-Bot Field for Register */}
+              <form onSubmit={handleRegisterSubmit} className="space-y-6">
+                {/* Invisible Honeypot Anti-Bot Field */}
                 <div className="opacity-0 absolute -left-[9999px] -top-[9999px] pointer-events-none select-none h-0 w-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
                   <label htmlFor="reg_hp_code">Do not fill this</label>
                   <input
@@ -1540,118 +1547,118 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   />
                 </div>
 
-                {/* 1. GRADE LEVEL & STUDENT NUMBER SELECTION (FIRST) */}
-                <div className="space-y-4 p-5 rounded-2xl register-section-card">
+                {/* SECTION 1: STUDENT ID & GRADE LEVEL */}
+                <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">1</span>
-                      <span>{isTl ? 'Baitang at Student Number' : 'Grade Level & Student ID'}</span>
-                    </h3>
-                    <span className="text-[11px] font-semibold text-sky-700 dark:text-sky-300">
-                      {availableStudentsForGrade.length} {isTl ? 'available slots' : 'available slots'}
+                    <div className="flex items-center gap-2">
+                      <GraduationCap className="w-4 h-4 text-sky-400" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-sky-200">
+                        {isTl ? 'Baitang at Student ID' : 'Grade Level & Student ID'}
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-medium text-slate-300">
+                      {availableStudentsForGrade.length} {isTl ? 'natitirang ID' : 'available IDs'}
                     </span>
                   </div>
 
-                  {/* Grade Level Selector Buttons */}
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-bold register-label block">
-                      {isTl ? 'Pumili ng Baitang (Grade Level)' : 'Select Grade Level'}
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          soundFX.playToggleSwitch(true);
-                          setRegGradeLevel('11');
-                          setRegStudentNumber('');
-                          setRegLastName('');
-                          setRegFirstName('');
-                          setRegMiddleInitial('');
-                        }}
-                        className={`btn-press py-3 px-4 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all ${
-                          regGradeLevel === '11'
-                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-900/30 ring-2 ring-blue-400'
-                            : 'bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-white/80 hover:bg-slate-200 dark:hover:bg-white/10'
-                        }`}
-                      >
-                        <span className="text-base">🎓</span>
-                        <span>Grade 11 (25-XXXX)</span>
-                      </button>
+                  {/* Segmented Grade Level Switcher (Apple iOS Segmented Control) */}
+                  <div className="p-1 rounded-xl bg-black/40 border border-white/10 grid grid-cols-2 gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundFX.playToggleSwitch(true);
+                        setRegGradeLevel('11');
+                        setRegStudentNumber('');
+                        setRegLastName('');
+                        setRegFirstName('');
+                        setRegMiddleInitial('');
+                      }}
+                      className={`py-2.5 px-4 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                        regGradeLevel === '11'
+                          ? 'bg-[#2557BE] text-white shadow-sm ring-1 ring-sky-300/40'
+                          : 'text-slate-400 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <GraduationCap className="w-3.5 h-3.5" />
+                      <span>Grade 11 (25-XXXX)</span>
+                    </button>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          soundFX.playToggleSwitch(true);
-                          setRegGradeLevel('12');
-                          setRegStudentNumber('');
-                          setRegLastName('');
-                          setRegFirstName('');
-                          setRegMiddleInitial('');
-                        }}
-                        className={`btn-press py-3 px-4 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all ${
-                          regGradeLevel === '12'
-                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-900/30 ring-2 ring-blue-400'
-                            : 'bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-white/80 hover:bg-slate-200 dark:hover:bg-white/10'
-                        }`}
-                      >
-                        <span className="text-base">🎓</span>
-                        <span>Grade 12 (26-XXXX)</span>
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundFX.playToggleSwitch(true);
+                        setRegGradeLevel('12');
+                        setRegStudentNumber('');
+                        setRegLastName('');
+                        setRegFirstName('');
+                        setRegMiddleInitial('');
+                      }}
+                      className={`py-2.5 px-4 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                        regGradeLevel === '12'
+                          ? 'bg-[#2557BE] text-white shadow-sm ring-1 ring-sky-300/40'
+                          : 'text-slate-400 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <GraduationCap className="w-3.5 h-3.5" />
+                      <span>Grade 12 (26-XXXX)</span>
+                    </button>
                   </div>
 
-                  {/* Student Number Searchable Dropdown (Locked to 5 items max visible height: 210px with scroll) */}
+                  {/* Searchable Student Number Dropdown */}
                   <div className="space-y-1.5 relative" ref={studentDropdownRef}>
                     <div className="flex items-center justify-between">
-                      <label className="text-sm font-bold register-label flex items-center gap-1.5">
-                        <User className="w-4 h-4 text-blue-600 dark:text-sky-400" />
-                        <span>{isTl ? 'Student ID Number' : 'Student ID Number'}</span>
+                      <label className="text-xs font-semibold text-slate-200">
+                        {isTl ? 'Student ID Number' : 'Student ID Number'}
                       </label>
-                      {renderBadge(studentNumberStatus)}
+                      {regStudentNumber && (
+                        <span className="text-[11px] font-semibold text-emerald-400 flex items-center gap-1">
+                          <Check className="w-3 h-3" /> Selected
+                        </span>
+                      )}
                     </div>
 
                     <button
                       type="button"
                       onClick={() => setStudentDropdownOpen((prev) => !prev)}
-                      className="w-full px-4 py-3.5 rounded-xl cosmic-input text-left font-mono font-bold flex items-center justify-between transition-all focus:outline-none"
+                      className="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/15 text-left font-mono font-bold flex items-center justify-between transition-all focus:outline-none focus:border-sky-400 hover:border-white/30 cursor-pointer"
                     >
-                      <span className={regStudentNumber ? 'text-slate-900 dark:text-white text-base' : 'text-slate-400 dark:text-white/40 font-sans font-normal text-sm'}>
+                      <span className={regStudentNumber ? 'text-white text-sm' : 'text-slate-400 font-sans font-normal text-xs'}>
                         {regStudentNumber
                           ? `${regStudentNumber} — ${regLastName ? `${regLastName}, ${regFirstName}` : ''}`
                           : (isTl ? `Pumili ng Grade ${regGradeLevel} Student Number...` : `Select Grade ${regGradeLevel} Student Number...`)}
                       </span>
-                      <ChevronDown className={`w-4 h-4 text-slate-400 dark:text-white/60 transition-transform ${studentDropdownOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${studentDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
 
                     {/* Dropdown Menu: Max 5 items visible (~210px), with internal search bar */}
                     {studentDropdownOpen && (
-                      <div className="absolute left-0 right-0 top-full mt-1.5 z-40 rounded-2xl bg-white dark:bg-[#0B1E48] border-2 border-blue-500/50 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                      <div className="absolute left-0 right-0 top-full mt-1.5 z-40 rounded-xl bg-[#0B1E48] border border-white/20 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                         {/* Search Filter Header */}
-                        <div className="p-2.5 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 flex items-center gap-2">
-                          <Search className="w-4 h-4 text-slate-400 dark:text-white/50 shrink-0 ml-1" />
+                        <div className="p-2.5 border-b border-white/10 bg-black/20 flex items-center gap-2">
+                          <Search className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
                           <input
                             type="text"
                             autoFocus
                             placeholder={isTl ? 'Mag-search ng ID o Pangalan...' : 'Search ID or Name...'}
                             value={studentSearchQuery}
                             onChange={(e) => setStudentSearchQuery(e.target.value)}
-                            className="w-full bg-transparent text-xs font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/40 focus:outline-none"
+                            className="w-full bg-transparent text-xs font-semibold text-white placeholder:text-slate-400 focus:outline-none"
                           />
                           {studentSearchQuery && (
                             <button
                               type="button"
                               onClick={() => setStudentSearchQuery('')}
-                              className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-white px-1.5 py-0.5 rounded"
+                              className="text-xs text-slate-400 hover:text-white px-1.5 py-0.5 rounded cursor-pointer"
                             >
-                              ✕
+                              <XCircle className="w-3.5 h-3.5" />
                             </button>
                           )}
                         </div>
 
                         {/* Dropdown Items List: max 5 items visible (each item ~42px, max-h-[210px]) */}
-                        <div className="max-h-[210px] overflow-y-auto divide-y divide-slate-100 dark:divide-white/5">
+                        <div className="max-h-[210px] overflow-y-auto divide-y divide-white/5">
                           {availableStudentsForGrade.length === 0 ? (
-                            <div className="p-4 text-center text-xs font-medium text-slate-500 dark:text-white/60">
+                            <div className="p-4 text-center text-xs font-medium text-slate-400">
                               {studentSearchQuery
                                 ? (isTl ? 'Walang nahanap na Student ID.' : 'No matching Student ID found.')
                                 : (isTl ? 'Lahat ng Student ID sa baitang na ito ay nakarehistro na.' : 'All Student IDs for this grade are already registered.')}
@@ -1662,19 +1669,19 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                                 key={student.student_number}
                                 type="button"
                                 onClick={() => handleSelectStudentNumber(student)}
-                                className={`w-full px-4 py-2.5 text-left text-xs flex items-center justify-between hover:bg-blue-50 dark:hover:bg-white/10 transition-colors ${
-                                  regStudentNumber === student.student_number ? 'bg-blue-100/70 dark:bg-blue-900/40 font-bold' : ''
+                                className={`w-full px-4 py-2.5 text-left text-xs flex items-center justify-between hover:bg-white/10 transition-colors cursor-pointer ${
+                                  regStudentNumber === student.student_number ? 'bg-sky-500/20 font-bold' : ''
                                 }`}
                               >
                                 <div className="min-w-0 pr-2">
-                                  <span className="font-mono font-black text-blue-700 dark:text-sky-300 text-sm block">
+                                  <span className="font-mono font-bold text-sky-300 text-xs block">
                                     {student.student_number}
                                   </span>
-                                  <span className="text-[11px] text-slate-700 dark:text-white/80 truncate block">
+                                  <span className="text-[11px] text-slate-200 truncate block">
                                     {student.full_name}
                                   </span>
                                 </div>
-                                <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-white/70 font-semibold shrink-0">
+                                <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-slate-300 font-medium shrink-0">
                                   {student.grade_section}
                                 </span>
                               </button>
@@ -1686,89 +1693,92 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   </div>
                 </div>
 
-                {/* 2. AUTO-FILLED STUDENT IDENTITY & STRAND */}
-                <div className="space-y-3 p-5 rounded-2xl register-section-card">
+                {/* SECTION 2: AUTO-FILLED STUDENT PROFILE */}
+                <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">2</span>
-                      <span>{isTl ? 'Impormasyon ng Estudyante (Auto-filled)' : 'Student Identity (Auto-filled)'}</span>
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-sky-400" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-sky-200">
+                        {isTl ? 'Pangalan at Strand' : 'Student Identity'}
+                      </span>
+                    </div>
                     {regStudentNumber && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                        <Check className="w-3 h-3" /> Auto-matched
+                      <span className="text-[11px] font-semibold text-emerald-400 flex items-center gap-1">
+                        <Check className="w-3 h-3" /> Auto-populated
                       </span>
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
                     <div className="md:col-span-5 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold register-label">{isTl ? 'Apelyido (Last Name)' : 'Last Name'}</label>
-                        {renderBadge(lastNameStatus)}
-                      </div>
+                      <label className="text-xs font-semibold text-slate-300">
+                        {isTl ? 'Apelyido (Last Name)' : 'Last Name'}
+                      </label>
                       <input
                         type="text"
                         required
-                        placeholder="e.g. DELA CRUZ"
+                        placeholder="DELA CRUZ"
                         value={regLastName}
                         onChange={(e) => setRegLastName(e.target.value.toUpperCase())}
-                        className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-semibold focus:outline-none"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-black/30 border border-white/15 text-xs font-semibold text-white focus:outline-none focus:border-sky-400"
                       />
                     </div>
 
                     <div className="md:col-span-5 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold register-label">{isTl ? 'Pangalan (First Name)' : 'First Name'}</label>
-                        {renderBadge(firstNameStatus)}
-                      </div>
+                      <label className="text-xs font-semibold text-slate-300">
+                        {isTl ? 'Pangalan (First Name)' : 'First Name'}
+                      </label>
                       <input
                         type="text"
                         required
-                        placeholder="e.g. JANSEN"
+                        placeholder="JANSEN"
                         value={regFirstName}
                         onChange={(e) => setRegFirstName(e.target.value.toUpperCase())}
-                        className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-semibold focus:outline-none"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-black/30 border border-white/15 text-xs font-semibold text-white focus:outline-none focus:border-sky-400"
                       />
                     </div>
 
                     <div className="md:col-span-2 space-y-1.5">
-                      <div className="flex items-center justify-between gap-1">
-                        <label className="text-xs sm:text-sm font-bold register-label">M.I.</label>
-                        {miStatus.type === 'wrong' ? renderBadge(miStatus) : null}
-                      </div>
+                      <label className="text-xs font-semibold text-slate-300">M.I.</label>
                       <input
                         type="text"
                         maxLength={2}
                         placeholder="K."
                         value={regMiddleInitial}
                         onChange={(e) => setRegMiddleInitial(e.target.value.toUpperCase())}
-                        className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-semibold text-center focus:outline-none"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-black/30 border border-white/15 text-xs font-semibold text-white text-center focus:outline-none focus:border-sky-400"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                     <div className="space-y-1.5">
-                      <label className="text-sm font-bold register-label">
-                        {isTl ? 'Strand' : 'Academic Strand'}
+                      <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                        <BookOpen className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{isTl ? 'Strand' : 'Academic Strand'}</span>
                       </label>
                       <select
                         value={regStrand}
                         onChange={(e) => setRegStrand(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-bold focus:outline-none bg-slate-900 text-white"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-black/30 border border-white/15 text-xs font-semibold text-white focus:outline-none focus:border-sky-400"
                       >
-                        <option value="STEM" className="bg-slate-900 text-white">STEM (Science, Tech, Eng, Math)</option>
-                        <option value="ICT" className="bg-slate-900 text-white">ICT (Information & Comm Tech)</option>
-                        <option value="ABM" className="bg-slate-900 text-white">ABM (Accountancy & Business)</option>
-                        <option value="HUMSS" className="bg-slate-900 text-white">HUMSS (Humanities & Social Sci)</option>
-                        <option value="GAS" className="bg-slate-900 text-white">GAS (General Academic Strand)</option>
+                        <option value="STEM" className="bg-[#0B1E48] text-white">STEM (Science, Tech, Eng, Math)</option>
+                        <option value="ICT" className="bg-[#0B1E48] text-white">ICT (Information & Comm Tech)</option>
+                        <option value="ABM" className="bg-[#0B1E48] text-white">ABM (Accountancy & Business)</option>
+                        <option value="HUMSS" className="bg-[#0B1E48] text-white">HUMSS (Humanities & Social Sci)</option>
+                        <option value="GAS" className="bg-[#0B1E48] text-white">GAS (General Academic Strand)</option>
                       </select>
                     </div>
 
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold register-label">{isTl ? 'Contact No.' : 'Contact No.'}</label>
-                        {renderBadge(phoneStatus)}
+                        <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{isTl ? 'Contact Number' : 'Contact Number'}</span>
+                        </label>
+                        {regContactNumber.length > 0 && regContactNumber.length !== 11 && (
+                          <span className="text-[10px] text-amber-400 font-medium">11 digits (09XX)</span>
+                        )}
                       </div>
                       <input
                         type="text"
@@ -1777,57 +1787,56 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                         placeholder="09XXXXXXXXX"
                         value={regContactNumber}
                         onChange={(e) => setRegContactNumber(e.target.value.replace(/\D/g, ''))}
-                        className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-mono font-semibold focus:outline-none"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-black/30 border border-white/15 text-xs font-mono font-semibold text-white focus:outline-none focus:border-sky-400"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* 3. CREDENTIALS & LOGIN SETUP (GMAIL + PASSWORD TOGETHER) */}
-                <div className="space-y-4 p-5 rounded-2xl register-section-card">
+                {/* SECTION 3: CREDENTIALS (GMAIL & PASSWORD) */}
+                <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-extrabold tracking-wider register-section-title uppercase flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">3</span>
-                      <span>{isTl ? 'Gmail at Password (Manual na Ilalagay)' : 'Gmail & Password Credentials'}</span>
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-sky-400" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-sky-200">
+                        {isTl ? 'Login Credentials' : 'Login Credentials'}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Gmail Address */}
                   <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-bold register-label">
-                        {isTl ? 'Personal Gmail Address' : 'Personal Gmail Address'}
-                      </label>
-                      {renderBadge(emailStatus)}
-                    </div>
+                    <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                      <Mail className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{isTl ? 'Personal Gmail Address' : 'Personal Gmail Address'}</span>
+                    </label>
                     <input
                       type="email"
                       required
                       placeholder="yourname@gmail.com"
                       value={regEmail}
                       onChange={(e) => setRegEmail(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl cosmic-input text-sm font-semibold focus:outline-none"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-black/30 border border-white/15 text-xs font-semibold text-white focus:outline-none focus:border-sky-400"
                     />
-                    <p className="text-[11px] font-bold text-blue-700 dark:text-sky-300">
-                      {isTl ? 'Dito ipapadala ang OTP verification code kapag nakalimutan mo ang password.' : 'Used for official AICS verification and password resets.'}
+                    <p className="text-[11px] text-sky-300/80">
+                      {isTl ? 'Dito ipapadala ang code kapag nakalimutan mo ang iyong password.' : 'Used for official password reset codes.'}
                     </p>
                   </div>
 
                   {/* Password & Confirm Password */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                     <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold register-label">{isTl ? 'Password' : 'Password'}</label>
-                        {renderBadge(passwordStatus)}
-                      </div>
+                      <label className="text-xs font-semibold text-slate-300">
+                        {isTl ? 'Password' : 'Password'}
+                      </label>
                       <div className="relative">
                         <input
                           type={showRegPassword ? 'text' : 'password'}
                           required
-                          placeholder={isTl ? 'Hindi bababa sa 6 na karakter' : 'At least 6 characters'}
+                          placeholder={isTl ? 'Min. 6 na karakter' : 'Min. 6 characters'}
                           value={regPassword}
                           onChange={(e) => setRegPassword(e.target.value)}
-                          className="w-full pl-4 pr-11 py-3 rounded-xl cosmic-input text-sm font-semibold focus:outline-none"
+                          className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-black/30 border border-white/15 text-xs font-semibold text-white focus:outline-none focus:border-sky-400"
                         />
                         <button
                           type="button"
@@ -1835,19 +1844,18 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                             soundFX.playToggleSwitch(true);
                             setShowRegPassword((prev) => !prev);
                           }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-white/60 dark:hover:text-white text-sm"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs cursor-pointer"
                           title={showRegPassword ? 'Hide password' : 'Show password'}
                         >
-                          {showRegPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {showRegPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                         </button>
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold register-label">{isTl ? 'Ulitin ang Password' : 'Confirm Password'}</label>
-                        {renderBadge(confirmPasswordStatus)}
-                      </div>
+                      <label className="text-xs font-semibold text-slate-300">
+                        {isTl ? 'Ulitin ang Password' : 'Confirm Password'}
+                      </label>
                       <div className="relative">
                         <input
                           type={showRegConfirmPassword ? 'text' : 'password'}
@@ -1855,7 +1863,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                           placeholder={isTl ? 'Ulitin ang password' : 'Repeat password'}
                           value={regConfirmPassword}
                           onChange={(e) => setRegConfirmPassword(e.target.value)}
-                          className="w-full pl-4 pr-11 py-3 rounded-xl cosmic-input text-sm font-semibold focus:outline-none"
+                          className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-black/30 border border-white/15 text-xs font-semibold text-white focus:outline-none focus:border-sky-400"
                         />
                         <button
                           type="button"
@@ -1863,72 +1871,58 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                             soundFX.playToggleSwitch(true);
                             setShowRegConfirmPassword((prev) => !prev);
                           }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-white/60 dark:hover:text-white text-sm"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs cursor-pointer"
                           title={showRegConfirmPassword ? 'Hide password' : 'Show password'}
                         >
-                          {showRegConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {showRegConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                         </button>
                       </div>
                     </div>
                   </div>
 
-                  {/* Password Checklist Bar */}
-                  <div className="p-3.5 rounded-xl checklist-bar grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                    <div className={passwordCriteria.length ? 'text-emerald-500 dark:text-emerald-400 font-extrabold' : 'checklist-dim'}>
-                      {passwordCriteria.length ? '✓' : '○'} {isTl ? '6+ karakter' : '6+ characters'}
+                  {/* Clean Minimal Password Checklist (Linear style pills with small dots, no raw text symbols) */}
+                  <div className="p-3 rounded-xl bg-black/25 border border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                    <div className={`flex items-center gap-1.5 ${passwordCriteria.length ? 'text-emerald-400 font-semibold' : 'text-slate-400'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${passwordCriteria.length ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+                      <span>{isTl ? '6+ karakter' : '6+ characters'}</span>
                     </div>
-                    <div className={passwordCriteria.number ? 'text-emerald-500 dark:text-emerald-400 font-extrabold' : 'checklist-dim'}>
-                      {passwordCriteria.number ? '✓' : '○'} {isTl ? '1+ Numero (0-9)' : '1+ Number (0-9)'}
+                    <div className={`flex items-center gap-1.5 ${passwordCriteria.number ? 'text-emerald-400 font-semibold' : 'text-slate-400'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${passwordCriteria.number ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+                      <span>{isTl ? '1+ numero' : '1+ number'}</span>
                     </div>
-                    <div className={passwordCriteria.uppercase ? 'text-emerald-500 dark:text-emerald-400 font-extrabold' : 'checklist-dim'}>
-                      {passwordCriteria.uppercase ? '✓' : '○'} {isTl ? '1+ Malaking Letra (A-Z)' : '1+ Uppercase (A-Z)'}
+                    <div className={`flex items-center gap-1.5 ${passwordCriteria.uppercase ? 'text-emerald-400 font-semibold' : 'text-slate-400'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${passwordCriteria.uppercase ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+                      <span>{isTl ? '1+ malaking titik' : '1+ uppercase'}</span>
                     </div>
-                    <div className={passwordCriteria.special ? 'text-emerald-500 dark:text-emerald-400 font-extrabold' : 'checklist-dim'}>
-                      {passwordCriteria.special ? '✓' : '○'} {isTl ? '1+ Simbolo (!@#$)' : '1+ Special (!@#$)'}
+                    <div className={`flex items-center gap-1.5 ${passwordCriteria.special ? 'text-emerald-400 font-semibold' : 'text-slate-400'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${passwordCriteria.special ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+                      <span>{isTl ? '1+ simbolo' : '1+ special symbol'}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Bottom Inline Status Notification (High Contrast & Visible in Light/Dark Mode) */}
-                {regError && (
-                  <div className="p-3.5 sm:p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/80 border-1.5 border-rose-500/80 dark:border-rose-400 text-rose-950 dark:text-rose-100 flex items-start gap-3 shadow-md">
-                    <div className="w-5.5 h-5.5 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
-                      <AlertTriangle className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-extrabold uppercase tracking-wider text-rose-700 dark:text-rose-300">
-                        {isTl ? 'Kailangan Ayusin Bago Magpatuloy' : 'Action Required Before Submitting'}
-                      </p>
-                      <p className="mt-1 text-xs font-normal text-rose-900 dark:text-rose-200 leading-relaxed">
-                        {regError}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
                 {/* Big Submit Button */}
-                <div className="space-y-2">
+                <div className="space-y-2 pt-2">
                   <button
                     type="submit"
                     disabled={regLoading}
-                    className="btn-press w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:opacity-95 text-white text-base font-extrabold shadow-xl shadow-emerald-950/60 border border-white/20 disabled:opacity-45 transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+                    className="btn-press w-full py-3.5 rounded-xl bg-[#2557BE] hover:bg-[#1E469B] text-white text-sm font-bold shadow-lg shadow-blue-950/40 border border-white/15 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {regLoading ? (
                       <span>{isTl ? 'Ginagawa ang account…' : 'Creating your account…'}</span>
                     ) : (
                       <>
-                        <span>{isTl ? 'Gumawa ng account' : 'Create account'}</span>
+                        <span>{isTl ? 'Gumawa ng Account' : 'Create Account'}</span>
+                        <ArrowRight className="w-4 h-4" />
                       </>
                     )}
                   </button>
-                  <p className="text-center text-[12px] text-[#8E8E93]" data-legal-agree>
+                  <p className="text-center text-[11px] text-slate-400" data-legal-agree>
                     {isTl ? 'Sa paggawa ng account, sumasang-ayon ka sa ' : 'By creating an account, you agree to the '}
-                    <button type="button" onClick={() => setLegalTab('privacy')} className="underline underline-offset-2">Privacy Notice</button>
+                    <button type="button" onClick={() => setLegalTab('privacy')} className="text-sky-300 underline underline-offset-2 hover:text-white cursor-pointer">Privacy Notice</button>
                     {isTl ? ' at ' : ' and '}
-                    <button type="button" onClick={() => setLegalTab('terms')} className="underline underline-offset-2">Terms of Use</button>.
+                    <button type="button" onClick={() => setLegalTab('terms')} className="text-sky-300 underline underline-offset-2 hover:text-white cursor-pointer">Terms of Use</button>.
                   </p>
-
-
                 </div>
               </form>
             </div>
@@ -2206,8 +2200,8 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   <ul className="space-y-1.5">
                     {regStatusModal.details.map((item, idx) => (
                       <li key={idx} className="flex items-start gap-2 text-xs font-semibold text-slate-200">
-                        <span className="w-4 h-4 rounded-full bg-rose-500/30 text-rose-300 flex items-center justify-center text-[10px] shrink-0 font-bold mt-0.5">
-                          ✕
+                        <span className="w-4 h-4 rounded-full bg-rose-500/30 text-rose-300 flex items-center justify-center shrink-0 mt-0.5">
+                          <XCircle className="w-3 h-3" />
                         </span>
                         <span>{item}</span>
                       </li>
@@ -2444,7 +2438,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                 }}
                 className="btn-press w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:opacity-95 text-white font-extrabold text-sm shadow-xl shadow-emerald-950/60 flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>{isTl ? '✓ Kumpirmahin at Pumasok sa Dashboard' : '✓ Confirm PIN & Open Dashboard'}</span>
+                <span>{isTl ? 'Kumpirmahin at Pumasok sa Dashboard' : 'Confirm PIN & Open Dashboard'}</span>
                 <span>→</span>
               </button>
 
@@ -2498,7 +2492,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
                   }}
                   className="w-7 h-7 rounded-full bg-slate-200/80 dark:bg-white/15 hover:bg-slate-300 dark:hover:bg-white/25 flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer"
                 >
-                  ✕
+                  <XCircle className="w-4 h-4" />
                 </button>
               </div>
 
@@ -2506,7 +2500,7 @@ export const StudentAuthGate: React.FC<StudentAuthGateProps> = ({
               <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-[13px] leading-relaxed">
                 {/* Info Callout */}
                 <div className="p-3.5 rounded-2xl bg-blue-500/10 dark:bg-blue-500/15 border border-blue-400/30 text-blue-900 dark:text-blue-200 text-xs font-semibold flex items-start gap-2.5">
-                  <span className="text-sm">🛡️</span>
+                  <Shield className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
                   <span>
                     {isTl
                       ? 'Nilikha ang portal na ito upang protektahan ang iyong kaligtasan at kapakanan sa AICS Montalban. Pakisuyong basahin ang kasunduan bago magparehistro.'
